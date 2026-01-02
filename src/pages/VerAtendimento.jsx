@@ -27,8 +27,6 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import OrcamentoPDF from '../components/pdf/OrcamentoPDF';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -94,31 +92,58 @@ export default function VerAtendimento() {
     }
   });
 
-  const generatePDF = async () => {
-    if (!pdfRef.current) return;
-    
+  const generatePDF = () => {
     setIsGeneratingPDF(true);
-    try {
-      const canvas = await html2canvas(pdfRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`orcamento-${atendimento.placa}-${format(new Date(), 'ddMMyyyy')}.pdf`);
-      
-      toast.success('PDF gerado com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao gerar PDF');
-    } finally {
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Permita pop-ups para gerar o PDF');
       setIsGeneratingPDF(false);
+      return;
     }
+
+    const content = pdfRef.current?.innerHTML || '';
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Orçamento - ${atendimento.placa}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+            * { box-sizing: border-box; }
+            .bg-slate-800 { background-color: #1e293b; color: white; }
+            .bg-slate-50 { background-color: #f8fafc; }
+            .bg-slate-100 { background-color: #f1f5f9; }
+            .bg-red-50 { background-color: #fef2f2; }
+            .bg-yellow-50 { background-color: #fefce8; }
+            .text-slate-800 { color: #1e293b; }
+            .text-slate-600 { color: #475569; }
+            .text-slate-500 { color: #64748b; }
+            .text-red-500 { color: #ef4444; }
+            .text-orange-400 { color: #fb923c; }
+            .text-green-600 { color: #16a34a; }
+            .border-orange-500 { border-color: #f97316; }
+            .border-yellow-500 { border-color: #eab308; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 8px; text-align: left; border: 1px solid #e2e8f0; }
+            th { background-color: #f1f5f9; }
+            .rounded-lg { border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+            @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+          </style>
+        </head>
+        <body>
+          ${content}
+          <script>
+            window.onload = function() { window.print(); window.close(); }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    
+    setIsGeneratingPDF(false);
+    toast.success('PDF pronto para impressão!');
   };
 
   const shareWhatsApp = () => {
