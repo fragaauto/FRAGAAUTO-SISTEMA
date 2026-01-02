@@ -43,7 +43,6 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import * as XLSX from 'xlsx';
 
 const CATEGORIAS = [
   { value: 'eletrica', label: 'Elétrica', color: 'bg-yellow-100 text-yellow-800' },
@@ -182,32 +181,52 @@ export default function Produtos() {
 
     setIsImporting(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const data = new Uint8Array(event.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        const produtos = jsonData.map(row => ({
-          nome: row.nome || row.Nome || row.NOME || '',
-          categoria: (row.categoria || row.Categoria || row.CATEGORIA || 'outros').toLowerCase(),
-          valor: parseFloat(row.valor || row.Valor || row.VALOR || 0),
-          descricao: row.descricao || row.Descricao || row.DESCRICAO || '',
-          ativo: true
-        })).filter(p => p.nome && p.valor > 0);
-
-        if (produtos.length === 0) {
-          toast.error('Nenhum produto válido encontrado no arquivo');
-          setIsImporting(false);
-          return;
-        }
-
-        await bulkCreateMutation.mutateAsync(produtos);
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        toast.error('Arquivo vazio ou inválido');
         setIsImporting(false);
-      };
-      reader.readAsArrayBuffer(file);
+        return;
+      }
+
+      const headers = lines[0].split(/[,;]/).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+      const nomeIdx = headers.findIndex(h => h === 'nome');
+      const categoriaIdx = headers.findIndex(h => h === 'categoria');
+      const valorIdx = headers.findIndex(h => h === 'valor');
+      const descricaoIdx = headers.findIndex(h => h === 'descricao');
+
+      if (nomeIdx === -1 || valorIdx === -1) {
+        toast.error('O arquivo deve ter colunas "nome" e "valor"');
+        setIsImporting(false);
+        return;
+      }
+
+      const produtos = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(/[,;]/).map(v => v.trim().replace(/"/g, ''));
+        const nome = values[nomeIdx];
+        const valor = parseFloat(values[valorIdx]?.replace(',', '.')) || 0;
+        
+        if (nome && valor > 0) {
+          produtos.push({
+            nome,
+            categoria: (values[categoriaIdx] || 'outros').toLowerCase(),
+            valor,
+            descricao: values[descricaoIdx] || '',
+            ativo: true
+          });
+        }
+      }
+
+      if (produtos.length === 0) {
+        toast.error('Nenhum produto válido encontrado no arquivo');
+        setIsImporting(false);
+        return;
+      }
+
+      await bulkCreateMutation.mutateAsync(produtos);
+      setIsImporting(false);
     } catch (error) {
       toast.error('Erro ao importar arquivo');
       setIsImporting(false);
@@ -217,14 +236,12 @@ export default function Produtos() {
   };
 
   const downloadTemplate = () => {
-    const template = [
-      { nome: 'Exemplo Serviço', categoria: 'eletrica', valor: 150.00, descricao: 'Descrição do serviço' },
-      { nome: 'Exemplo Produto', categoria: 'portas', valor: 89.90, descricao: 'Descrição do produto' }
-    ];
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
-    XLSX.writeFile(wb, 'modelo_produtos.xlsx');
+    const csvContent = "nome;categoria;valor;descricao\nExemplo Serviço;eletrica;150.00;Descrição do serviço\nExemplo Produto;portas;89.90;Descrição do produto";
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'modelo_produtos.csv';
+    link.click();
   };
 
   return (
@@ -241,7 +258,7 @@ export default function Produtos() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".xlsx,.xls,.csv"
+                accept=".csv"
                 onChange={handleFileUpload}
                 className="hidden"
               />
