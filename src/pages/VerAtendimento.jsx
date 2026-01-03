@@ -72,15 +72,16 @@ export default function VerAtendimento() {
   const { data: atendimento, isLoading, error } = useQuery({
     queryKey: ['atendimento', id],
     queryFn: async () => {
+      if (!id) return null;
       const list = await base44.entities.Atendimento.list();
       const found = list.find(a => a.id === id);
-      if (!found) throw new Error('Atendimento não encontrado');
-      return found;
+      return found || null;
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
-    retry: 1
+    retry: false,
+    refetchOnWindowFocus: false
   });
 
   const updateMutation = useMutation({
