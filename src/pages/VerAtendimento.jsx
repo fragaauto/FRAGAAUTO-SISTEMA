@@ -69,16 +69,19 @@ export default function VerAtendimento() {
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
 
-  const { data: atendimentos, isLoading } = useQuery({
+  const { data: atendimento, isLoading, error } = useQuery({
     queryKey: ['atendimento', id],
     queryFn: async () => {
       const list = await base44.entities.Atendimento.list();
-      return list;
+      const found = list.find(a => a.id === id);
+      if (!found) throw new Error('Atendimento não encontrado');
+      return found;
     },
-    enabled: !!id
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    retry: 1
   });
-
-  const atendimento = atendimentos?.find(a => a.id === id);
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Atendimento.update(id, data),
@@ -542,20 +545,30 @@ export default function VerAtendimento() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  if (isLoading || !atendimentos) {
+  if (!id) {
+    navigate(createPageUrl('Atendimentos'));
+    return null;
+  }
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-orange-50/30">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-2" />
+          <p className="text-slate-500 text-sm">Carregando atendimento...</p>
+        </div>
       </div>
     );
   }
 
-  if (!atendimento) {
+  if (error || !atendimento) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-slate-500">Atendimento não encontrado</p>
-        <p className="text-xs text-slate-400">ID: {id}</p>
-        <Button onClick={() => navigate(createPageUrl('Atendimentos'))}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-50 to-orange-50/30">
+        <XCircle className="w-12 h-12 text-red-400" />
+        <p className="text-slate-700 font-semibold">Atendimento não encontrado</p>
+        <p className="text-sm text-slate-500">ID: {id}</p>
+        <Button onClick={() => navigate(createPageUrl('Atendimentos'))} className="bg-orange-500 hover:bg-orange-600">
+          <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar para lista
         </Button>
       </div>
