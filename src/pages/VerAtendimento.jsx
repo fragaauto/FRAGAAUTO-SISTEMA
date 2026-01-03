@@ -107,9 +107,10 @@ export default function VerAtendimento() {
 
       printWindow.document.write(`
         <!DOCTYPE html>
-        <html>
+        <html lang="pt-BR">
           <head>
             <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Orçamento - ${atendimento.placa}</title>
             <style>
               * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -519,11 +520,14 @@ export default function VerAtendimento() {
       `);
       
       printWindow.document.close();
-      toast.success('PDF aberto! Use Ctrl+P ou ⌘+P para salvar');
+      
+      setTimeout(() => {
+        setIsGeneratingPDF(false);
+        toast.success('PDF aberto! Clique no botão para imprimir');
+      }, 500);
     } catch (error) {
       toast.error('Erro ao gerar PDF');
       console.error(error);
-    } finally {
       setIsGeneratingPDF(false);
     }
   };
