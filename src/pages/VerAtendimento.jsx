@@ -69,11 +69,16 @@ export default function VerAtendimento() {
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
 
-  const { data: atendimento, isLoading } = useQuery({
+  const { data: atendimentos, isLoading } = useQuery({
     queryKey: ['atendimento', id],
-    queryFn: () => base44.entities.Atendimento.list().then(list => list.find(a => a.id === id)),
+    queryFn: async () => {
+      const list = await base44.entities.Atendimento.list();
+      return list;
+    },
     enabled: !!id
   });
+
+  const atendimento = atendimentos?.find(a => a.id === id);
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Atendimento.update(id, data),
