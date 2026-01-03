@@ -542,7 +542,7 @@ export default function VerAtendimento() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  if (isLoading) {
+  if (isLoading || !atendimentos) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
@@ -554,6 +554,7 @@ export default function VerAtendimento() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="text-slate-500">Atendimento não encontrado</p>
+        <p className="text-xs text-slate-400">ID: {id}</p>
         <Button onClick={() => navigate(createPageUrl('Atendimentos'))}>
           Voltar para lista
         </Button>
