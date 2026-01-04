@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -25,9 +25,9 @@ import {
 
 export default function UsuariosPage() {
   const queryClient = useQueryClient();
-  const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('user');
+  const [showInviteDialog, setShowInviteDialog] = React.useState(false);
+  const [inviteEmail, setInviteEmail] = React.useState('');
+  const [inviteRole, setInviteRole] = React.useState('user');
 
   const { data: usuarios = [], isLoading } = useQuery({
     queryKey: ['usuarios'],

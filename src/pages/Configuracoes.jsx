@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Settings, Upload, Loader2, Save } from 'lucide-react';
 
 export default function Configuracoes() {
   const queryClient = useQueryClient();
-  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = React.useState(false);
 
   const { data: configs = [], isLoading } = useQuery({
     queryKey: ['configuracoes'],
@@ -20,7 +20,7 @@ export default function Configuracoes() {
 
   const config = configs[0] || {};
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = React.useState({
     nome_empresa: config.nome_empresa || 'Fraga Auto Portas',
     endereco: config.endereco || '',
     telefone: config.telefone || '',

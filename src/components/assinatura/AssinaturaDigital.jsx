@@ -1,14 +1,14 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X, PenTool } from 'lucide-react';
 
 export default function AssinaturaDigital({ onSave, onClose, title = "Assinar" }) {
-  const canvasRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [isEmpty, setIsEmpty] = useState(true);
+  const canvasRef = React.useRef(null);
+  const [isDrawing, setIsDrawing] = React.useState(false);
+  const [isEmpty, setIsEmpty] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 

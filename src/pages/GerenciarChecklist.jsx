@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -38,10 +38,10 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 export default function GerenciarChecklist() {
   const queryClient = useQueryClient();
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
-  const [formData, setFormData] = useState({
+  const [showDialog, setShowDialog] = React.useState(false);
+  const [editingItem, setEditingItem] = React.useState(null);
+  const [deleteId, setDeleteId] = React.useState(null);
+  const [formData, setFormData] = React.useState({
     item: '',
     categoria: '',
     obrigatorio: false,
