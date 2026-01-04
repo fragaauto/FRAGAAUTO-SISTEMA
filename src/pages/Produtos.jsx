@@ -73,6 +73,8 @@ export default function Produtos() {
     categoria: '',
     valor: '',
     descricao: '',
+    vantagens: '',
+    desvantagens: '',
     ativo: true
   });
 
@@ -130,6 +132,8 @@ export default function Produtos() {
         categoria: produto.categoria,
         valor: produto.valor,
         descricao: produto.descricao || '',
+        vantagens: produto.vantagens || '',
+        desvantagens: produto.desvantagens || '',
         ativo: produto.ativo !== false
       });
     } else {
@@ -139,6 +143,8 @@ export default function Produtos() {
         categoria: '',
         valor: '',
         descricao: '',
+        vantagens: '',
+        desvantagens: '',
         ativo: true
       });
     }
@@ -194,7 +200,9 @@ export default function Produtos() {
       const nomeIdx = headers.findIndex(h => h === 'nome');
       const categoriaIdx = headers.findIndex(h => h === 'categoria');
       const valorIdx = headers.findIndex(h => h === 'valor');
-      const descricaoIdx = headers.findIndex(h => h === 'descricao');
+      const descricaoIdx = headers.findIndex(h => h === 'descricao' || h === 'descrição');
+      const vantagensIdx = headers.findIndex(h => h === 'vantagens');
+      const desvantagensIdx = headers.findIndex(h => h === 'desvantagens');
 
       if (nomeIdx === -1 || valorIdx === -1) {
         toast.error('O arquivo deve ter colunas "nome" e "valor"');
@@ -214,6 +222,8 @@ export default function Produtos() {
             categoria: (values[categoriaIdx] || 'outros').toLowerCase(),
             valor,
             descricao: values[descricaoIdx] || '',
+            vantagens: values[vantagensIdx] || '',
+            desvantagens: values[desvantagensIdx] || '',
             ativo: true
           });
         }
@@ -236,7 +246,7 @@ export default function Produtos() {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "nome;categoria;valor;descricao\nExemplo Serviço;eletrica;150.00;Descrição do serviço\nExemplo Produto;portas;89.90;Descrição do produto";
+    const csvContent = "nome;categoria;valor;descricao;vantagens;desvantagens\nExemplo Serviço;eletrica;150.00;Descrição do serviço;Melhora a segurança;Pode causar falhas\nExemplo Produto;portas;89.90;Descrição do produto;Evita infiltrações;Danos ao veículo";
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -399,7 +409,7 @@ export default function Produtos() {
 
       {/* Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingProduto ? 'Editar Produto' : 'Novo Produto'}
@@ -449,7 +459,25 @@ export default function Produtos() {
                 value={formData.descricao}
                 onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                 placeholder="Observações sobre o produto..."
-                className="min-h-[80px]"
+                className="min-h-[60px]"
+              />
+            </div>
+            <div>
+              <Label>Vantagens de Fazer</Label>
+              <Textarea
+                value={formData.vantagens}
+                onChange={(e) => setFormData({ ...formData, vantagens: e.target.value })}
+                placeholder="Benefícios de realizar o serviço..."
+                className="min-h-[60px]"
+              />
+            </div>
+            <div>
+              <Label>Desvantagens de Não Fazer</Label>
+              <Textarea
+                value={formData.desvantagens}
+                onChange={(e) => setFormData({ ...formData, desvantagens: e.target.value })}
+                placeholder="Riscos de não realizar o serviço..."
+                className="min-h-[60px]"
               />
             </div>
           </div>
