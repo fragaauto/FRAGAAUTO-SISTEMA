@@ -4,6 +4,9 @@ import Home from './pages/Home';
 import NovoAtendimento from './pages/NovoAtendimento';
 import Produtos from './pages/Produtos';
 import VerAtendimento from './pages/VerAtendimento';
+import Configuracoes from './pages/Configuracoes';
+import Usuarios from './pages/Usuarios';
+import GerenciarChecklist from './pages/GerenciarChecklist';
 import __Layout from './Layout.jsx';
 
 
@@ -14,6 +17,9 @@ export const PAGES = {
     "NovoAtendimento": NovoAtendimento,
     "Produtos": Produtos,
     "VerAtendimento": VerAtendimento,
+    "Configuracoes": Configuracoes,
+    "Usuarios": Usuarios,
+    "GerenciarChecklist": GerenciarChecklist,
 }
 
 export const pagesConfig = {
