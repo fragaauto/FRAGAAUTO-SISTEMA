@@ -21,6 +21,9 @@ const NAV_ITEMS = [
   { name: 'Atendimentos', icon: FileText, path: 'Atendimentos' },
   { name: 'Produtos', icon: Package, path: 'Produtos' },
   { name: 'Clientes', icon: Users, path: 'Clientes' },
+  { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist' },
+  { name: 'Configurações', icon: Wrench, path: 'Configuracoes' },
+  { name: 'Usuários', icon: Users, path: 'Usuarios' },
 ];
 
 export default function Layout({ children, currentPageName }) {
