@@ -45,7 +45,13 @@ export default function GerenciarChecklist() {
     item: '',
     categoria: '',
     obrigatorio: false,
+    produtos_padrao: [],
     ativo: true
+  });
+
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list()
   });
 
   const { data: items = [], isLoading } = useQuery({
@@ -114,6 +120,7 @@ export default function GerenciarChecklist() {
       item: item.item,
       categoria: item.categoria,
       obrigatorio: item.obrigatorio,
+      produtos_padrao: item.produtos_padrao || [],
       ativo: item.ativo
     });
     setShowDialog(true);
@@ -249,6 +256,36 @@ export default function GerenciarChecklist() {
                 onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
                 placeholder="Ex: Limpeza e Visibilidade"
               />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Item Obrigatório</Label>
+              <Switch
+                checked={formData.obrigatorio}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, obrigatorio: checked }))}
+              />
+            </div>
+            <div>
+              <Label>Produtos Padrão (Opcionais)</Label>
+              <p className="text-xs text-slate-500 mb-2">Produtos sugeridos quando este item tiver defeito</p>
+              <div className="border rounded-lg p-2 max-h-40 overflow-y-auto space-y-1">
+                {produtos.map(p => (
+                  <label key={p.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.produtos_padrao.includes(p.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({ ...prev, produtos_padrao: [...prev.produtos_padrao, p.id] }));
+                        } else {
+                          setFormData(prev => ({ ...prev, produtos_padrao: prev.produtos_padrao.filter(id => id !== p.id) }));
+                        }
+                      }}
+                      className="rounded"
+                    />
+                    <span className="text-sm">{p.nome}</span>
+                  </label>
+                ))}
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <Label>Item Obrigatório</Label>

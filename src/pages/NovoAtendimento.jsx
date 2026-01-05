@@ -46,14 +46,18 @@ export default function NovoAtendimento() {
     ano: '',
     km_atual: '',
     data_entrada: new Date().toISOString(),
+    queixa_inicial: '',
+    itens_queixa: [],
     checklist: {},
     pre_diagnostico: '',
     itens_orcamento: [],
+    subtotal_queixa: 0,
+    subtotal_checklist: 0,
     subtotal: 0,
     desconto: 0,
     valor_final: 0,
     observacoes: '',
-    status: 'em_andamento'
+    status: 'queixa_pendente'
   });
 
   const { data: produtos = [] } = useQuery({
@@ -84,10 +88,12 @@ export default function NovoAtendimento() {
 
   // Calculate totals
   useEffect(() => {
-    const subtotal = formData.itens_orcamento.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const subtotal_queixa = formData.itens_queixa.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const subtotal_checklist = formData.itens_orcamento.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const subtotal = subtotal_queixa + subtotal_checklist;
     const valor_final = subtotal - (formData.desconto || 0);
-    setFormData(prev => ({ ...prev, subtotal, valor_final }));
-  }, [formData.itens_orcamento, formData.desconto]);
+    setFormData(prev => ({ ...prev, subtotal_queixa, subtotal_checklist, subtotal, valor_final }));
+  }, [formData.itens_queixa, formData.itens_orcamento, formData.desconto]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -109,12 +115,23 @@ export default function NovoAtendimento() {
       nome: produto.nome,
       quantidade: 1,
       valor_unitario: produto.valor,
-      valor_total: produto.valor
+      valor_total: produto.valor,
+      vantagens: produto.vantagens || '',
+      desvantagens: produto.desvantagens || '',
+      status_aprovacao: 'pendente'
     };
-    setFormData(prev => ({
-      ...prev,
-      itens_orcamento: [...prev.itens_orcamento, newItem]
-    }));
+    
+    if (activeTab === 'queixa') {
+      setFormData(prev => ({
+        ...prev,
+        itens_queixa: [...prev.itens_queixa, newItem]
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        itens_orcamento: [...prev.itens_orcamento, newItem]
+      }));
+    }
     setShowProdutoModal(false);
     toast.success('Produto adicionado ao orçamento');
   };
@@ -163,6 +180,7 @@ export default function NovoAtendimento() {
 
   const tabs = [
     { id: 'dados', label: 'Dados', icon: Car },
+    { id: 'queixa', label: 'Queixa', icon: FileText },
     { id: 'checklist', label: 'Checklist', icon: ClipboardCheck },
     { id: 'orcamento', label: 'Orçamento', icon: FileText }
   ];
@@ -329,6 +347,98 @@ export default function NovoAtendimento() {
 
               <div className="flex justify-end">
                 <Button 
+                  onClick={() => setActiveTab('queixa')}
+                  className="bg-slate-800 hover:bg-slate-700"
+                >
+                  Próximo: Queixa Inicial
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* QUEIXA TAB */}
+          {activeTab === 'queixa' && (
+            <motion.div
+              key="queixa"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-6"
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Queixa Inicial do Cliente</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Descreva a queixa inicial do cliente..."
+                    value={formData.queixa_inicial}
+                    onChange={(e) => handleInputChange('queixa_inicial', e.target.value)}
+                    className="min-h-[100px] text-base"
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">Orçamento da Queixa</CardTitle>
+                  <Button
+                    onClick={() => setShowProdutoModal(true)}
+                    className="bg-green-500 hover:bg-green-600"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {formData.itens_queixa.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <p>Adicione serviços/produtos relacionados à queixa</p>
+                    </div>
+                  ) : (
+                    formData.itens_queixa.map((item, index) => (
+                      <ItemOrcamento
+                        key={index}
+                        item={item}
+                        onUpdate={(updated) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            itens_queixa: prev.itens_queixa.map((it, i) => i === index ? updated : it)
+                          }));
+                        }}
+                        onRemove={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            itens_queixa: prev.itens_queixa.filter((_, i) => i !== index)
+                          }));
+                        }}
+                      />
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+
+              {formData.itens_queixa.length > 0 && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-center text-lg font-bold">
+                      <span>Subtotal da Queixa:</span>
+                      <span className="text-blue-600">R$ {formData.subtotal_queixa.toFixed(2)}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="flex justify-between">
+                <Button 
+                  variant="outline"
+                  onClick={() => setActiveTab('dados')}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
                   onClick={() => setActiveTab('checklist')}
                   className="bg-slate-800 hover:bg-slate-700"
                 >
@@ -378,7 +488,7 @@ export default function NovoAtendimento() {
               <div className="flex justify-between">
                 <Button 
                   variant="outline"
-                  onClick={() => setActiveTab('dados')}
+                  onClick={() => setActiveTab('queixa')}
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
@@ -446,7 +556,19 @@ export default function NovoAtendimento() {
               {/* Totals */}
               <Card className="bg-slate-800 text-white">
                 <CardContent className="pt-6 space-y-4">
-                  <div className="flex justify-between items-center">
+                  {formData.subtotal_queixa > 0 && (
+                    <div className="flex justify-between items-center text-blue-300">
+                      <span>Queixa:</span>
+                      <span className="font-semibold">R$ {formData.subtotal_queixa.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {formData.subtotal_checklist > 0 && (
+                    <div className="flex justify-between items-center text-green-300">
+                      <span>Checklist:</span>
+                      <span className="font-semibold">R$ {formData.subtotal_checklist.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center border-t border-white/20 pt-4">
                     <span>Subtotal:</span>
                     <span className="font-semibold">R$ {formData.subtotal.toFixed(2)}</span>
                   </div>
