@@ -22,8 +22,11 @@ import {
   Loader2,
   Edit,
   Trash2,
-  MessageCircle
+  MessageCircle,
+  PenTool
 } from 'lucide-react';
+import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
+import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -46,11 +49,17 @@ import {
 } from "@/components/ui/select";
 
 const STATUS_CONFIG = {
-  em_andamento: { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800' },
-  aguardando_aprovacao: { label: 'Aguardando Aprovação', color: 'bg-yellow-100 text-yellow-800' },
-  aprovado: { label: 'Aprovado', color: 'bg-green-100 text-green-800' },
-  reprovado: { label: 'Reprovado', color: 'bg-red-100 text-red-800' },
-  concluido: { label: 'Concluído', color: 'bg-purple-100 text-purple-800' }
+  rascunho: { label: 'Rascunho', color: 'bg-gray-100 text-gray-800' },
+  queixa_pendente: { label: 'Queixa Pendente', color: 'bg-yellow-100 text-yellow-800' },
+  queixa_aprovada: { label: 'Queixa Aprovada', color: 'bg-blue-100 text-blue-800' },
+  queixa_reprovada: { label: 'Queixa Reprovada', color: 'bg-red-100 text-red-800' },
+  em_diagnostico: { label: 'Em Diagnóstico', color: 'bg-orange-100 text-orange-800' },
+  aguardando_aprovacao_checklist: { label: 'Aguardando Aprovação', color: 'bg-yellow-100 text-yellow-800' },
+  checklist_aprovado: { label: 'Checklist Aprovado', color: 'bg-green-100 text-green-800' },
+  checklist_reprovado: { label: 'Checklist Reprovado', color: 'bg-red-100 text-red-800' },
+  em_execucao: { label: 'Em Execução', color: 'bg-purple-100 text-purple-800' },
+  concluido: { label: 'Concluído', color: 'bg-green-100 text-green-800' },
+  cancelado: { label: 'Cancelado', color: 'bg-slate-100 text-slate-800' }
 };
 
 const STATUS_ICON = {
@@ -65,6 +74,8 @@ export default function VerAtendimento() {
   const queryClient = useQueryClient();
   const pdfRef = useRef(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showAssinaturaQueixa, setShowAssinaturaQueixa] = useState(false);
+  const [showAssinaturaChecklist, setShowAssinaturaChecklist] = useState(false);
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -88,9 +99,31 @@ export default function VerAtendimento() {
     mutationFn: (data) => base44.entities.Atendimento.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['atendimento', id]);
-      toast.success('Status atualizado!');
+      toast.success('Atualizado com sucesso!');
     }
   });
+
+  const handleSaveAssinatura = (tipo, assinaturaDataUrl) => {
+    const data = tipo === 'queixa' 
+      ? { assinatura_cliente_queixa: assinaturaDataUrl, data_aprovacao_queixa: new Date().toISOString() }
+      : { assinatura_cliente_checklist: assinaturaDataUrl, data_aprovacao_checklist: new Date().toISOString() };
+    
+    updateMutation.mutate(data);
+    if (tipo === 'queixa') setShowAssinaturaQueixa(false);
+    else setShowAssinaturaChecklist(false);
+  };
+
+  const handleUpdateItemQueixa = (index, updatedItem) => {
+    const novosItens = [...(atendimento.itens_queixa || [])];
+    novosItens[index] = updatedItem;
+    updateMutation.mutate({ itens_queixa: novosItens });
+  };
+
+  const handleUpdateItemChecklist = (index, updatedItem) => {
+    const novosItens = [...(atendimento.itens_orcamento || [])];
+    novosItens[index] = updatedItem;
+    updateMutation.mutate({ itens_orcamento: novosItens });
+  };
 
   const deleteMutation = useMutation({
     mutationFn: () => base44.entities.Atendimento.delete(id),
@@ -631,8 +664,10 @@ export default function VerAtendimento() {
         <Tabs defaultValue="resumo">
           <TabsList className="mb-6">
             <TabsTrigger value="resumo">Resumo</TabsTrigger>
+            <TabsTrigger value="queixa">Queixa</TabsTrigger>
             <TabsTrigger value="checklist">Checklist</TabsTrigger>
             <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
+            <TabsTrigger value="aprovacao">Aprovação</TabsTrigger>
           </TabsList>
 
           <TabsContent value="resumo" className="space-y-6">
@@ -766,6 +801,74 @@ export default function VerAtendimento() {
                 </AlertDialog>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="queixa" className="space-y-4">
+            {atendimento.queixa_inicial && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Queixa Inicial do Cliente</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-slate-700 whitespace-pre-wrap">{atendimento.queixa_inicial}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {atendimento.itens_queixa?.length > 0 && (
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Orçamento da Queixa</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {atendimento.itens_queixa.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                          <div>
+                            <p className="font-medium">{item.nome}</p>
+                            <p className="text-sm text-slate-500">
+                              {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                            </p>
+                          </div>
+                          <p className="font-bold text-green-600">
+                            R$ {item.valor_total?.toFixed(2)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-center text-lg font-bold text-blue-600">
+                      <span>Subtotal da Queixa:</span>
+                      <span>R$ {atendimento.subtotal_queixa?.toFixed(2) || '0.00'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {atendimento.assinatura_cliente_queixa && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PenTool className="w-5 h-5 text-green-500" />
+                    Assinatura do Cliente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <img src={atendimento.assinatura_cliente_queixa} alt="Assinatura" className="border rounded-lg max-w-xs" />
+                  {atendimento.data_aprovacao_queixa && (
+                    <p className="text-sm text-slate-500 mt-2">
+                      Aprovado em: {format(new Date(atendimento.data_aprovacao_queixa), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="checklist" className="space-y-4">
@@ -910,10 +1013,84 @@ export default function VerAtendimento() {
               </>
             )}
           </TabsContent>
+
+          <TabsContent value="aprovacao" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Aprovação da Queixa</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {atendimento.itens_queixa?.length > 0 ? (
+                  atendimento.itens_queixa.map((item, idx) => (
+                    <ItemAprovacao
+                      key={idx}
+                      item={item}
+                      onUpdate={(updated) => handleUpdateItemQueixa(idx, updated)}
+                    />
+                  ))
+                ) : (
+                  <p className="text-center text-slate-500 py-4">Nenhum item na queixa</p>
+                )}
+
+                {atendimento.itens_queixa?.length > 0 && !atendimento.assinatura_cliente_queixa && (
+                  <Button
+                    onClick={() => setShowAssinaturaQueixa(true)}
+                    className="w-full bg-blue-500 hover:bg-blue-600"
+                  >
+                    <PenTool className="w-4 h-4 mr-2" />
+                    Assinar Aprovação da Queixa
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Aprovação do Checklist</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {atendimento.itens_orcamento?.length > 0 ? (
+                  atendimento.itens_orcamento.map((item, idx) => (
+                    <ItemAprovacao
+                      key={idx}
+                      item={item}
+                      onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
+                    />
+                  ))
+                ) : (
+                  <p className="text-center text-slate-500 py-4">Nenhum item no checklist</p>
+                )}
+
+                {atendimento.itens_orcamento?.length > 0 && !atendimento.assinatura_cliente_checklist && (
+                  <Button
+                    onClick={() => setShowAssinaturaChecklist(true)}
+                    className="w-full bg-green-500 hover:bg-green-600"
+                  >
+                    <PenTool className="w-4 h-4 mr-2" />
+                    Assinar Aprovação do Checklist
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
+      {showAssinaturaQueixa && (
+        <AssinaturaDigital
+          title="Assinar Aprovação da Queixa"
+          onSave={(dataUrl) => handleSaveAssinatura('queixa', dataUrl)}
+          onClose={() => setShowAssinaturaQueixa(false)}
+        />
+      )}
 
+      {showAssinaturaChecklist && (
+        <AssinaturaDigital
+          title="Assinar Aprovação do Checklist"
+          onSave={(dataUrl) => handleSaveAssinatura('checklist', dataUrl)}
+          onClose={() => setShowAssinaturaChecklist(false)}
+        />
+      )}
     </div>
   );
 }

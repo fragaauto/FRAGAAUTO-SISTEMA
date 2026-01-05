@@ -29,11 +29,17 @@ import {
 } from "@/components/ui/select";
 
 const STATUS_CONFIG = {
-  em_andamento: { label: 'Em Andamento', color: 'bg-blue-100 text-blue-800' },
-  aguardando_aprovacao: { label: 'Aguardando', color: 'bg-yellow-100 text-yellow-800' },
-  aprovado: { label: 'Aprovado', color: 'bg-green-100 text-green-800' },
-  reprovado: { label: 'Reprovado', color: 'bg-red-100 text-red-800' },
-  concluido: { label: 'Concluído', color: 'bg-purple-100 text-purple-800' }
+  rascunho: { label: 'Rascunho', color: 'bg-gray-100 text-gray-800' },
+  queixa_pendente: { label: 'Queixa Pendente', color: 'bg-yellow-100 text-yellow-800' },
+  queixa_aprovada: { label: 'Queixa Aprovada', color: 'bg-blue-100 text-blue-800' },
+  queixa_reprovada: { label: 'Queixa Reprovada', color: 'bg-red-100 text-red-800' },
+  em_diagnostico: { label: 'Em Diagnóstico', color: 'bg-orange-100 text-orange-800' },
+  aguardando_aprovacao_checklist: { label: 'Aguardando Aprovação', color: 'bg-yellow-100 text-yellow-800' },
+  checklist_aprovado: { label: 'Checklist Aprovado', color: 'bg-green-100 text-green-800' },
+  checklist_reprovado: { label: 'Checklist Reprovado', color: 'bg-red-100 text-red-800' },
+  em_execucao: { label: 'Em Execução', color: 'bg-purple-100 text-purple-800' },
+  concluido: { label: 'Concluído', color: 'bg-green-100 text-green-800' },
+  cancelado: { label: 'Cancelado', color: 'bg-slate-100 text-slate-800' }
 };
 
 export default function Atendimentos() {
@@ -96,10 +102,11 @@ export default function Atendimentos() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="em_andamento">Em Andamento</SelectItem>
-              <SelectItem value="aguardando_aprovacao">Aguardando</SelectItem>
-              <SelectItem value="aprovado">Aprovado</SelectItem>
-              <SelectItem value="reprovado">Reprovado</SelectItem>
+              <SelectItem value="queixa_pendente">Queixa Pendente</SelectItem>
+              <SelectItem value="em_diagnostico">Em Diagnóstico</SelectItem>
+              <SelectItem value="aguardando_aprovacao_checklist">Aguardando Aprovação</SelectItem>
+              <SelectItem value="checklist_aprovado">Checklist Aprovado</SelectItem>
+              <SelectItem value="em_execucao">Em Execução</SelectItem>
               <SelectItem value="concluido">Concluído</SelectItem>
             </SelectContent>
           </Select>

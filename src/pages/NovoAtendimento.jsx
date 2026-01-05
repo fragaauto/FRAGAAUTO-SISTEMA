@@ -24,7 +24,6 @@ import {
   Calculator
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CHECKLIST_ITEMS, CATEGORIAS } from '../components/checklist/ChecklistData';
 import ChecklistSection from '../components/checklist/ChecklistSection';
 import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import SeletorProdutos from '../components/orcamento/SeletorProdutos';
@@ -74,6 +73,15 @@ export default function NovoAtendimento() {
     cacheTime: 10 * 60 * 1000
   });
 
+  const { data: checklistItems = [] } = useQuery({
+    queryKey: ['checklist-items'],
+    queryFn: async () => {
+      const items = await base44.entities.ChecklistItem.list();
+      return items.filter(i => i.ativo).sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+    },
+    staleTime: 10 * 60 * 1000
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Atendimento.create(data),
     onSuccess: (result) => {
@@ -107,6 +115,36 @@ export default function NovoAtendimento() {
         [itemId]: value
       }
     }));
+
+    // Se marcou como defeito e tem produtos padrão, adicionar automaticamente ao orçamento
+    if (value.status === 'com_defeito' && value.incluir_orcamento) {
+      const checklistItem = checklistItems.find(i => i.id === itemId);
+      if (checklistItem?.produtos_padrao?.length > 0) {
+        const produtosParaAdicionar = produtos.filter(p => 
+          checklistItem.produtos_padrao.includes(p.id)
+        );
+        
+        const novosItens = produtosParaAdicionar.map(produto => ({
+          produto_id: produto.id,
+          nome: produto.nome,
+          quantidade: 1,
+          valor_unitario: produto.valor,
+          valor_total: produto.valor,
+          vantagens: produto.vantagens || '',
+          desvantagens: produto.desvantagens || '',
+          status_aprovacao: 'pendente'
+        }));
+
+        setFormData(prev => ({
+          ...prev,
+          itens_orcamento: [...prev.itens_orcamento, ...novosItens]
+        }));
+
+        if (novosItens.length > 0) {
+          toast.success(`${novosItens.length} serviço(s) adicionado(s) ao orçamento`);
+        }
+      }
+    }
   };
 
   const handleAddProduto = (produto) => {
@@ -458,17 +496,29 @@ export default function NovoAtendimento() {
               exit={{ opacity: 0, x: 20 }}
               className="space-y-4"
             >
-              {CATEGORIAS.map(categoria => (
-                <ChecklistSection
-                  key={categoria}
-                  categoria={categoria}
-                  items={CHECKLIST_ITEMS.filter(item => item.categoria === categoria)}
-                  values={formData.checklist}
-                  onChange={handleChecklistChange}
-                  isOpen={openSections[categoria] ?? false}
-                  onToggle={() => toggleSection(categoria)}
-                />
-              ))}
+              {checklistItems.length === 0 ? (
+                <Card className="py-8">
+                  <CardContent className="text-center text-slate-500">
+                    <p>Nenhum item no checklist</p>
+                    <p className="text-sm mt-2">Configure os itens em <strong>Gerenciar Checklist</strong></p>
+                  </CardContent>
+                </Card>
+              ) : (
+                (() => {
+                  const categorias = [...new Set(checklistItems.map(i => i.categoria))];
+                  return categorias.map(categoria => (
+                    <ChecklistSection
+                      key={categoria}
+                      categoria={categoria}
+                      items={checklistItems.filter(item => item.categoria === categoria)}
+                      values={formData.checklist}
+                      onChange={handleChecklistChange}
+                      isOpen={openSections[categoria] ?? false}
+                      onToggle={() => toggleSection(categoria)}
+                    />
+                  ));
+                })()
+              )}
 
               {/* Pre-diagnosis */}
               <Card className="mt-6">
