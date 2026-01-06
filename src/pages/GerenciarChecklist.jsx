@@ -16,7 +16,10 @@ import {
   GripVertical,
   Loader2,
   Save,
-  X
+  X,
+  Upload,
+  Download,
+  FileSpreadsheet
 } from 'lucide-react';
 import {
   Dialog,
@@ -38,9 +41,11 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 export default function GerenciarChecklist() {
   const queryClient = useQueryClient();
+  const fileInputRef = React.useRef(null);
   const [showDialog, setShowDialog] = React.useState(false);
   const [editingItem, setEditingItem] = React.useState(null);
   const [deleteId, setDeleteId] = React.useState(null);
+  const [isImporting, setIsImporting] = React.useState(false);
   const [formData, setFormData] = React.useState({
     item: '',
     categoria: '',
@@ -51,7 +56,8 @@ export default function GerenciarChecklist() {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list()
+    queryFn: () => base44.entities.Produto.list(),
+    staleTime: 10 * 60 * 1000
   });
 
   const { data: items = [], isLoading } = useQuery({
@@ -59,7 +65,8 @@ export default function GerenciarChecklist() {
     queryFn: async () => {
       const list = await base44.entities.ChecklistItem.list();
       return list.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
-    }
+    },
+    staleTime: 5 * 60 * 1000
   });
 
   const saveMutation = useMutation({
@@ -134,6 +141,95 @@ export default function GerenciarChecklist() {
     saveMutation.mutate(formData);
   };
 
+  const bulkCreateMutation = useMutation({
+    mutationFn: (data) => base44.entities.ChecklistItem.bulkCreate(data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries(['checklist-items']);
+      toast.success(`${result.length} itens importados!`);
+    }
+  });
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        toast.error('Arquivo vazio ou inválido');
+        setIsImporting(false);
+        return;
+      }
+
+      const headers = lines[0].split(/[,;]/).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+      const itemIdx = headers.findIndex(h => h === 'item' || h === 'nome');
+      const categoriaIdx = headers.findIndex(h => h === 'categoria');
+      const obrigatorioIdx = headers.findIndex(h => h === 'obrigatorio' || h === 'obrigatório');
+
+      if (itemIdx === -1 || categoriaIdx === -1) {
+        toast.error('O arquivo deve ter colunas "item" e "categoria"');
+        setIsImporting(false);
+        return;
+      }
+
+      const novosItens = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(/[,;]/).map(v => v.trim().replace(/"/g, ''));
+        const item = values[itemIdx];
+        const categoria = values[categoriaIdx];
+        
+        if (item && categoria) {
+          novosItens.push({
+            item,
+            categoria,
+            ordem: items.length + i - 1,
+            obrigatorio: obrigatorioIdx !== -1 ? (values[obrigatorioIdx]?.toLowerCase() === 'sim' || values[obrigatorioIdx] === '1') : false,
+            ativo: true
+          });
+        }
+      }
+
+      if (novosItens.length === 0) {
+        toast.error('Nenhum item válido encontrado no arquivo');
+        setIsImporting(false);
+        return;
+      }
+
+      await bulkCreateMutation.mutateAsync(novosItens);
+      setIsImporting(false);
+    } catch (error) {
+      toast.error('Erro ao importar arquivo');
+      setIsImporting(false);
+    }
+    
+    e.target.value = '';
+  };
+
+  const downloadTemplate = () => {
+    const csvContent = "item;categoria;obrigatorio\nEsguicho para-brisa dianteiro;Limpeza e Visibilidade;nao\nFarol dianteiro esquerdo;Iluminação;sim\nTravas elétricas;Elétrica;nao";
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'modelo_checklist.csv';
+    link.click();
+  };
+
+  const exportToExcel = () => {
+    const csvContent = 'item;categoria;obrigatorio;ordem\n' + 
+      items.map(item => 
+        `${item.item};${item.categoria};${item.obrigatorio ? 'sim' : 'nao'};${item.ordem || 0}`
+      ).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `checklist_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    toast.success('Checklist exportado!');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
       <div className="bg-white border-b border-slate-200">
@@ -144,19 +240,55 @@ export default function GerenciarChecklist() {
                 <ClipboardCheck className="w-6 h-6 text-orange-500" />
                 Gerenciar Checklist
               </h1>
-              <p className="text-slate-500">Personalize os itens e ordem do checklist</p>
+              <p className="text-slate-500">Personalize os itens e ordem (arraste para reordenar)</p>
             </div>
-            <Button
-              onClick={() => {
-                setEditingItem(null);
-                setFormData({ item: '', categoria: '', obrigatorio: false, ativo: true });
-                setShowDialog(true);
-              }}
-              className="bg-orange-500 hover:bg-orange-600"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Item
-            </Button>
+            <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isImporting}
+              >
+                {isImporting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                Importar
+              </Button>
+              <Button
+                variant="outline"
+                onClick={exportToExcel}
+                disabled={items.length === 0}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </Button>
+              <Button
+                variant="outline"
+                onClick={downloadTemplate}
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Modelo
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditingItem(null);
+                  setFormData({ item: '', categoria: '', obrigatorio: false, produtos_padrao: [], ativo: true });
+                  setShowDialog(true);
+                }}
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Novo
+              </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -62,15 +62,13 @@ export default function NovoAtendimento() {
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list(),
-    staleTime: 10 * 60 * 1000,
-    cacheTime: 15 * 60 * 1000
+    staleTime: 10 * 60 * 1000
   });
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
     queryFn: () => base44.entities.Cliente.list(),
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000
+    staleTime: 5 * 60 * 1000
   });
 
   const { data: checklistItems = [] } = useQuery({

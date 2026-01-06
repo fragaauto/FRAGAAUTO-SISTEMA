@@ -89,8 +89,7 @@ export default function VerAtendimento() {
       return found || null;
     },
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
     retry: false,
     refetchOnWindowFocus: false
   });

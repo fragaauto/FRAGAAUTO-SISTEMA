@@ -80,7 +80,8 @@ export default function Produtos() {
 
   const { data: produtos = [], isLoading } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list()
+    queryFn: () => base44.entities.Produto.list(),
+    staleTime: 5 * 60 * 1000
   });
 
   const createMutation = useMutation({

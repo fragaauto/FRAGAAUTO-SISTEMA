@@ -50,8 +50,7 @@ export default function Atendimentos() {
   const { data: atendimentos = [], isLoading } = useQuery({
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list('-created_date'),
-    staleTime: 2 * 60 * 1000,
-    cacheTime: 5 * 60 * 1000
+    staleTime: 2 * 60 * 1000
   });
 
   const filteredAtendimentos = atendimentos.filter(a => {
