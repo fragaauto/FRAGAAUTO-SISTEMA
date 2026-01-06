@@ -59,15 +59,13 @@ export default function Clientes() {
   const { data: clientes = [], isLoading } = useQuery({
     queryKey: ['clientes'],
     queryFn: () => base44.entities.Cliente.list('-created_date'),
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000
+    staleTime: 5 * 60 * 1000
   });
 
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list(),
-    staleTime: 2 * 60 * 1000,
-    cacheTime: 5 * 60 * 1000
+    staleTime: 2 * 60 * 1000
   });
 
   const createMutation = useMutation({
