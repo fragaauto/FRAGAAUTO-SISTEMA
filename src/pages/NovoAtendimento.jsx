@@ -27,6 +27,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ChecklistSection from '../components/checklist/ChecklistSection';
 import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import SeletorProdutos from '../components/orcamento/SeletorProdutos';
+import ModalCadastroProduto from '../components/produtos/ModalCadastroProduto';
 
 export default function NovoAtendimento() {
   const navigate = useNavigate();
@@ -35,6 +36,8 @@ export default function NovoAtendimento() {
   const [activeTab, setActiveTab] = useState('dados');
   const [openSections, setOpenSections] = useState({});
   const [showProdutoModal, setShowProdutoModal] = useState(false);
+  const [showCadastroProduto, setShowCadastroProduto] = useState(false);
+  const [cadastrandoProduto, setCadastrandoProduto] = useState(false);
   
   const [formData, setFormData] = useState({
     cliente_nome: '',
@@ -92,14 +95,59 @@ export default function NovoAtendimento() {
     }
   });
 
-  // Calculate totals
+  // Calculate totals and consolidate products from checklist
   useEffect(() => {
+    // Consolidar produtos do checklist
+    const produtosDoChecklist = [];
+    Object.entries(formData.checklist).forEach(([itemId, data]) => {
+      if (data.produtos && data.produtos.length > 0) {
+        data.produtos.forEach(pv => {
+          const produto = produtos.find(p => p.id === pv.id);
+          if (produto) {
+            produtosDoChecklist.push({
+              produto_id: produto.id,
+              nome: produto.nome,
+              quantidade: pv.quantidade,
+              valor_unitario: produto.valor,
+              valor_total: produto.valor * pv.quantidade,
+              vantagens: produto.vantagens || '',
+              desvantagens: produto.desvantagens || '',
+              status_aprovacao: 'pendente',
+              origem: 'checklist',
+              item_checklist: data.item
+            });
+          }
+        });
+      }
+    });
+
+    // Consolidar produtos duplicados (somar quantidades)
+    const produtosConsolidados = {};
+    [...formData.itens_orcamento.filter(i => i.origem !== 'checklist'), ...produtosDoChecklist].forEach(item => {
+      if (produtosConsolidados[item.produto_id]) {
+        produtosConsolidados[item.produto_id].quantidade += item.quantidade;
+        produtosConsolidados[item.produto_id].valor_total += item.valor_total;
+      } else {
+        produtosConsolidados[item.produto_id] = { ...item };
+      }
+    });
+
+    const itensConsolidados = Object.values(produtosConsolidados);
+
     const subtotal_queixa = formData.itens_queixa.reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const subtotal_checklist = formData.itens_orcamento.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const subtotal_checklist = itensConsolidados.reduce((acc, item) => acc + (item.valor_total || 0), 0);
     const subtotal = subtotal_queixa + subtotal_checklist;
     const valor_final = subtotal - (formData.desconto || 0);
-    setFormData(prev => ({ ...prev, subtotal_queixa, subtotal_checklist, subtotal, valor_final }));
-  }, [formData.itens_queixa, formData.itens_orcamento, formData.desconto]);
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      itens_orcamento: itensConsolidados,
+      subtotal_queixa, 
+      subtotal_checklist, 
+      subtotal, 
+      valor_final 
+    }));
+  }, [formData.checklist, formData.itens_queixa, formData.desconto, produtos]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -212,6 +260,57 @@ export default function NovoAtendimento() {
       ...prev,
       [categoria]: !prev[categoria]
     }));
+  };
+
+  const createProdutoMutation = useMutation({
+    mutationFn: (data) => base44.entities.Produto.create(data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries(['produtos']);
+      toast.success('Produto cadastrado e adicionado!');
+      setCadastrandoProduto(false);
+      setShowCadastroProduto(false);
+      
+      // Adicionar ao orçamento automaticamente
+      const newItem = {
+        produto_id: result.id,
+        nome: result.nome,
+        quantidade: 1,
+        valor_unitario: result.valor,
+        valor_total: result.valor,
+        vantagens: result.vantagens || '',
+        desvantagens: result.desvantagens || '',
+        status_aprovacao: 'pendente'
+      };
+      
+      if (activeTab === 'queixa') {
+        setFormData(prev => ({
+          ...prev,
+          itens_queixa: [...prev.itens_queixa, newItem]
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          itens_orcamento: [...prev.itens_orcamento, newItem]
+        }));
+      }
+    },
+    onError: () => {
+      toast.error('Erro ao cadastrar produto');
+      setCadastrandoProduto(false);
+    }
+  });
+
+  const handleCadastrarProduto = (data) => {
+    setCadastrandoProduto(true);
+    createProdutoMutation.mutate({
+      nome: data.nome,
+      categoria: data.categoria,
+      valor: parseFloat(data.valor),
+      descricao: data.descricao,
+      vantagens: data.vantagens,
+      desvantagens: data.desvantagens,
+      ativo: true
+    });
   };
 
   const tabs = [
@@ -513,6 +612,8 @@ export default function NovoAtendimento() {
                       onChange={handleChecklistChange}
                       isOpen={openSections[categoria] ?? false}
                       onToggle={() => toggleSection(categoria)}
+                      produtos={produtos}
+                      onOpenCadastro={() => setShowCadastroProduto(true)}
                     />
                   ));
                 })()
@@ -565,15 +666,25 @@ export default function NovoAtendimento() {
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Calculator className="w-5 h-5 text-green-500" />
-                    Itens do Orçamento
+                    Orçamento Consolidado
                   </CardTitle>
-                  <Button
-                    onClick={() => setShowProdutoModal(true)}
-                    className="bg-green-500 hover:bg-green-600"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Adicionar
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setShowProdutoModal(true)}
+                      className="bg-green-500 hover:bg-green-600"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar Existente
+                    </Button>
+                    <Button
+                      onClick={() => setShowCadastroProduto(true)}
+                      variant="outline"
+                      className="border-green-500 text-green-600 hover:bg-green-50"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Cadastrar Novo
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {formData.itens_orcamento.length === 0 ? (
@@ -589,14 +700,34 @@ export default function NovoAtendimento() {
                       </Button>
                     </div>
                   ) : (
-                    formData.itens_orcamento.map((item, index) => (
-                      <ItemOrcamento
-                        key={index}
-                        item={item}
-                        onUpdate={(updated) => handleUpdateItem(index, updated)}
-                        onRemove={() => handleRemoveItem(index)}
-                      />
-                    ))
+                    <>
+                      {formData.itens_orcamento.map((item, index) => (
+                        <div key={index} className="space-y-2">
+                          {item.origem === 'checklist' && index === 0 && (
+                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-2">
+                              Do Checklist
+                            </div>
+                          )}
+                          {item.origem === 'checklist' && (
+                            <div className="pl-3 border-l-2 border-blue-400">
+                              <p className="text-xs text-blue-600 mb-1">↳ {item.item_checklist}</p>
+                              <ItemOrcamento
+                                item={item}
+                                onUpdate={(updated) => handleUpdateItem(index, updated)}
+                                onRemove={() => handleRemoveItem(index)}
+                              />
+                            </div>
+                          )}
+                          {!item.origem && (
+                            <ItemOrcamento
+                              item={item}
+                              onUpdate={(updated) => handleUpdateItem(index, updated)}
+                              onRemove={() => handleRemoveItem(index)}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </>
                   )}
                 </CardContent>
               </Card>
@@ -688,8 +819,17 @@ export default function NovoAtendimento() {
         produtos={produtos}
         onSelect={handleAddProduto}
       />
-    </div>
-  );
-}
+
+      <ModalCadastroProduto
+        open={showCadastroProduto}
+        onClose={() => setShowCadastroProduto(false)}
+        onSave={handleCadastrarProduto}
+        isLoading={cadastrandoProduto}
+      />
+      </div>
+      );
+      }
+
+      import { Package } from 'lucide-react';
 
 import { Package } from 'lucide-react';
