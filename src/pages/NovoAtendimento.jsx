@@ -21,7 +21,8 @@ import {
   Loader2,
   Plus,
   Percent,
-  Calculator
+  Calculator,
+  Package
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChecklistSection from '../components/checklist/ChecklistSection';
@@ -826,10 +827,6 @@ export default function NovoAtendimento() {
         onSave={handleCadastrarProduto}
         isLoading={cadastrandoProduto}
       />
-      </div>
-      );
-      }
-
-      import { Package } from 'lucide-react';
-
-import { Package } from 'lucide-react';
+    </div>
+  );
+}
