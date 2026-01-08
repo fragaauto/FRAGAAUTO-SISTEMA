@@ -122,22 +122,39 @@ export default function NovoAtendimento() {
       }
     });
 
-    // Consolidar produtos duplicados (somar quantidades)
+    // Consolidar TODOS os produtos (queixa + checklist), eliminando duplicatas e somando quantidades
+    const todosOsItens = [...formData.itens_queixa, ...produtosDoChecklist];
     const produtosConsolidados = {};
-    [...formData.itens_orcamento.filter(i => i.origem !== 'checklist'), ...produtosDoChecklist].forEach(item => {
+    
+    todosOsItens.forEach(item => {
       if (produtosConsolidados[item.produto_id]) {
+        // Produto já existe - somar quantidade
         produtosConsolidados[item.produto_id].quantidade += item.quantidade;
-        produtosConsolidados[item.produto_id].valor_total += item.valor_total;
+        produtosConsolidados[item.produto_id].valor_total = 
+          produtosConsolidados[item.produto_id].quantidade * produtosConsolidados[item.produto_id].valor_unitario;
+        // Manter múltiplas origens
+        if (!produtosConsolidados[item.produto_id].origens) {
+          produtosConsolidados[item.produto_id].origens = [produtosConsolidados[item.produto_id].origem || 'queixa'];
+        }
+        if (item.origem && !produtosConsolidados[item.produto_id].origens.includes(item.origem)) {
+          produtosConsolidados[item.produto_id].origens.push(item.origem);
+        }
       } else {
-        produtosConsolidados[item.produto_id] = { ...item };
+        produtosConsolidados[item.produto_id] = { 
+          ...item,
+          origem: item.origem || 'queixa'
+        };
       }
     });
 
     const itensConsolidados = Object.values(produtosConsolidados);
 
+    // Calcular subtotais separadamente para exibição
     const subtotal_queixa = formData.itens_queixa.reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const subtotal_checklist = itensConsolidados.reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const subtotal = subtotal_queixa + subtotal_checklist;
+    const subtotal_checklist = produtosDoChecklist.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    
+    // Subtotal REAL sem duplicatas
+    const subtotal = itensConsolidados.reduce((acc, item) => acc + (item.valor_total || 0), 0);
     const valor_final = subtotal - (formData.desconto || 0);
     
     setFormData(prev => ({ 
@@ -195,6 +212,22 @@ export default function NovoAtendimento() {
   };
 
   const handleAddProduto = (produto) => {
+    // Verificar se já existe na queixa ou checklist
+    const jaExisteNaQueixa = formData.itens_queixa.some(i => i.produto_id === produto.id);
+    const jaExisteNoChecklist = Object.values(formData.checklist).some(data => 
+      data.produtos?.some(p => p.id === produto.id)
+    );
+    
+    if (activeTab === 'queixa' && jaExisteNoChecklist) {
+      toast.error('Este item já foi incluído no orçamento pelo checklist.');
+      return;
+    }
+    
+    if (activeTab === 'checklist' && jaExisteNaQueixa) {
+      toast.error('Este item já foi incluído no orçamento pela queixa inicial.');
+      return;
+    }
+
     const newItem = {
       produto_id: produto.id,
       nome: produto.nome,
@@ -519,13 +552,23 @@ export default function NovoAtendimento() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">Orçamento da Queixa</CardTitle>
-                  <Button
-                    onClick={() => setShowProdutoModal(true)}
-                    className="bg-green-500 hover:bg-green-600"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Adicionar
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setShowProdutoModal(true)}
+                      className="bg-green-500 hover:bg-green-600"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar Existente
+                    </Button>
+                    <Button
+                      onClick={() => setShowCadastroProduto(true)}
+                      variant="outline"
+                      className="border-green-500 text-green-600 hover:bg-green-50"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Cadastrar Novo
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {formData.itens_queixa.length === 0 ? (
@@ -534,22 +577,29 @@ export default function NovoAtendimento() {
                     </div>
                   ) : (
                     formData.itens_queixa.map((item, index) => (
-                      <ItemOrcamento
-                        key={index}
-                        item={item}
-                        onUpdate={(updated) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            itens_queixa: prev.itens_queixa.map((it, i) => i === index ? updated : it)
-                          }));
-                        }}
-                        onRemove={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            itens_queixa: prev.itens_queixa.filter((_, i) => i !== index)
-                          }));
-                        }}
-                      />
+                     <div key={index}>
+                       <ItemOrcamento
+                         item={item}
+                         onUpdate={(updated) => {
+                           setFormData(prev => ({
+                             ...prev,
+                             itens_queixa: prev.itens_queixa.map((it, i) => i === index ? updated : it)
+                           }));
+                         }}
+                         onRemove={() => {
+                           setFormData(prev => ({
+                             ...prev,
+                             itens_queixa: prev.itens_queixa.filter((_, i) => i !== index)
+                           }));
+                         }}
+                       />
+                       {item.desvantagens && (
+                         <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                           <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                           <p className="text-sm text-amber-700">{item.desvantagens}</p>
+                         </div>
+                       )}
+                     </div>
                     ))
                   )}
                 </CardContent>
@@ -704,28 +754,27 @@ export default function NovoAtendimento() {
                     <>
                       {formData.itens_orcamento.map((item, index) => (
                         <div key={index} className="space-y-2">
-                          {item.origem === 'checklist' && index === 0 && (
-                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-2">
-                              Do Checklist
-                            </div>
-                          )}
-                          {item.origem === 'checklist' && (
-                            <div className="pl-3 border-l-2 border-blue-400">
-                              <p className="text-xs text-blue-600 mb-1">↳ {item.item_checklist}</p>
-                              <ItemOrcamento
-                                item={item}
-                                onUpdate={(updated) => handleUpdateItem(index, updated)}
-                                onRemove={() => handleRemoveItem(index)}
-                              />
-                            </div>
-                          )}
-                          {!item.origem && (
+                          <div className={item.origem === 'checklist' ? 'pl-3 border-l-2 border-blue-400' : ''}>
+                            {item.origem === 'checklist' && (
+                              <p className="text-xs text-blue-600 mb-1">↳ Do Checklist: {item.item_checklist}</p>
+                            )}
+                            {item.origens?.length > 1 && (
+                              <p className="text-xs text-amber-600 mb-1 font-semibold">
+                                ⚠️ Item presente em: {item.origens.join(' + ')}
+                              </p>
+                            )}
                             <ItemOrcamento
                               item={item}
                               onUpdate={(updated) => handleUpdateItem(index, updated)}
                               onRemove={() => handleRemoveItem(index)}
                             />
-                          )}
+                            {item.desvantagens && (
+                              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                                <p className="text-sm text-amber-700">{item.desvantagens}</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </>
