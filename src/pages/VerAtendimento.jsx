@@ -25,7 +25,8 @@ import {
   MessageCircle,
   PenTool,
   RotateCcw,
-  AlertTriangle
+  AlertTriangle,
+  Save
 } from 'lucide-react';
 import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
@@ -78,8 +79,11 @@ export default function VerAtendimento() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showAssinaturaQueixa, setShowAssinaturaQueixa] = useState(false);
   const [showAssinaturaChecklist, setShowAssinaturaChecklist] = useState(false);
-  const [modoEdicao, setModoEdicao] = useState(false);
+  const [modoEdicaoQueixa, setModoEdicaoQueixa] = useState(false);
+  const [modoEdicaoOrcamento, setModoEdicaoOrcamento] = useState(false);
   const [user, setUser] = useState(null);
+  const [itensQueixaEdit, setItensQueixaEdit] = useState([]);
+  const [itensOrcamentoEdit, setItensOrcamentoEdit] = useState([]);
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -125,6 +129,92 @@ export default function VerAtendimento() {
     const novosItens = [...(atendimento.itens_queixa || [])];
     novosItens[index] = updatedItem;
     updateMutation.mutate({ itens_queixa: novosItens });
+  };
+
+  const iniciarEdicaoQueixa = () => {
+    setItensQueixaEdit([...atendimento.itens_queixa || []]);
+    setModoEdicaoQueixa(true);
+  };
+
+  const salvarEdicaoQueixa = () => {
+    const subtotal_queixa = itensQueixaEdit.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const subtotal = subtotal_queixa + (atendimento.subtotal_checklist || 0);
+    const valor_final = subtotal - (atendimento.desconto || 0);
+
+    const historicoItem = {
+      data: new Date().toISOString(),
+      usuario: user?.email || 'Sistema',
+      campo_editado: 'queixa',
+      descricao: 'Orçamento da queixa editado'
+    };
+
+    updateMutation.mutate({
+      itens_queixa: itensQueixaEdit,
+      subtotal_queixa,
+      subtotal,
+      valor_final,
+      assinatura_cliente_queixa: null,
+      data_aprovacao_queixa: null,
+      status: 'queixa_pendente',
+      historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
+    });
+    
+    setModoEdicaoQueixa(false);
+  };
+
+  const atualizarItemQueixaEdit = (index, field, value) => {
+    const novosItens = [...itensQueixaEdit];
+    novosItens[index] = { ...novosItens[index], [field]: value };
+    if (field === 'quantidade' || field === 'valor_unitario') {
+      novosItens[index].valor_total = (novosItens[index].quantidade || 0) * (novosItens[index].valor_unitario || 0);
+    }
+    setItensQueixaEdit(novosItens);
+  };
+
+  const removerItemQueixaEdit = (index) => {
+    setItensQueixaEdit(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const iniciarEdicaoOrcamento = () => {
+    setItensOrcamentoEdit([...atendimento.itens_orcamento || []]);
+    setModoEdicaoOrcamento(true);
+  };
+
+  const salvarEdicaoOrcamento = () => {
+    const subtotal = itensOrcamentoEdit.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const valor_final = subtotal - (atendimento.desconto || 0);
+
+    const historicoItem = {
+      data: new Date().toISOString(),
+      usuario: user?.email || 'Sistema',
+      campo_editado: 'orcamento',
+      descricao: 'Orçamento editado'
+    };
+
+    updateMutation.mutate({
+      itens_orcamento: itensOrcamentoEdit,
+      subtotal,
+      valor_final,
+      assinatura_cliente_checklist: null,
+      data_aprovacao_checklist: null,
+      status: 'em_diagnostico',
+      historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
+    });
+    
+    setModoEdicaoOrcamento(false);
+  };
+
+  const atualizarItemOrcamentoEdit = (index, field, value) => {
+    const novosItens = [...itensOrcamentoEdit];
+    novosItens[index] = { ...novosItens[index], [field]: value };
+    if (field === 'quantidade' || field === 'valor_unitario') {
+      novosItens[index].valor_total = (novosItens[index].quantidade || 0) * (novosItens[index].valor_unitario || 0);
+    }
+    setItensOrcamentoEdit(novosItens);
+  };
+
+  const removerItemOrcamentoEdit = (index) => {
+    setItensOrcamentoEdit(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleUpdateItemChecklist = (index, updatedItem) => {
@@ -921,25 +1011,103 @@ export default function VerAtendimento() {
             {atendimento.itens_queixa?.length > 0 && (
               <>
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Orçamento da Queixa</CardTitle>
+                    {isAdmin && !modoEdicaoQueixa && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={iniciarEdicaoQueixa}
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar
+                      </Button>
+                    )}
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      {atendimento.itens_queixa.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                          <div>
-                            <p className="font-medium">{item.nome}</p>
-                            <p className="text-sm text-slate-500">
-                              {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                    {modoEdicaoQueixa ? (
+                      <div className="space-y-4">
+                        {itensQueixaEdit.map((item, idx) => (
+                          <div key={idx} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <div className="flex items-start justify-between mb-3">
+                              <p className="font-medium">{item.nome}</p>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removerItemQueixaEdit(idx)}
+                                className="text-red-500"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label className="text-xs">Quantidade</Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={item.quantidade}
+                                  onChange={(e) => atualizarItemQueixaEdit(idx, 'quantidade', parseInt(e.target.value) || 1)}
+                                  className="h-9"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs">Valor Unitário</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={item.valor_unitario}
+                                  onChange={(e) => atualizarItemQueixaEdit(idx, 'valor_unitario', parseFloat(e.target.value) || 0)}
+                                  className="h-9"
+                                />
+                              </div>
+                            </div>
+                            <div className="mt-2 text-right">
+                              <span className="text-sm font-bold text-green-600">
+                                Total: R$ {item.valor_total?.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="flex gap-2 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            onClick={() => setModoEdicaoQueixa(false)}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            onClick={salvarEdicaoQueixa}
+                            disabled={updateMutation.isPending}
+                            className="bg-orange-500 hover:bg-orange-600"
+                          >
+                            {updateMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Save className="w-4 h-4 mr-2" />
+                            )}
+                            Salvar Alterações
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {atendimento.itens_queixa.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <div>
+                              <p className="font-medium">{item.nome}</p>
+                              <p className="text-sm text-slate-500">
+                                {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                              </p>
+                            </div>
+                            <p className="font-bold text-green-600">
+                              R$ {item.valor_total?.toFixed(2)}
                             </p>
                           </div>
-                          <p className="font-bold text-green-600">
-                            R$ {item.valor_total?.toFixed(2)}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -1132,25 +1300,108 @@ export default function VerAtendimento() {
             ) : (
               <>
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Itens do Orçamento</CardTitle>
+                    {isAdmin && !modoEdicaoOrcamento && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={iniciarEdicaoOrcamento}
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar
+                      </Button>
+                    )}
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      {atendimento.itens_orcamento?.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                          <div>
-                            <p className="font-medium">{item.nome}</p>
-                            <p className="text-sm text-slate-500">
-                              {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                    {modoEdicaoOrcamento ? (
+                      <div className="space-y-4">
+                        {itensOrcamentoEdit.map((item, idx) => (
+                          <div key={idx} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <p className="font-medium">{item.nome}</p>
+                                {item.origem === 'checklist' && (
+                                  <p className="text-xs text-blue-600">Do checklist: {item.item_checklist}</p>
+                                )}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removerItemOrcamentoEdit(idx)}
+                                className="text-red-500"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label className="text-xs">Quantidade</Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  value={item.quantidade}
+                                  onChange={(e) => atualizarItemOrcamentoEdit(idx, 'quantidade', parseInt(e.target.value) || 1)}
+                                  className="h-9"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs">Valor Unitário</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={item.valor_unitario}
+                                  onChange={(e) => atualizarItemOrcamentoEdit(idx, 'valor_unitario', parseFloat(e.target.value) || 0)}
+                                  className="h-9"
+                                />
+                              </div>
+                            </div>
+                            <div className="mt-2 text-right">
+                              <span className="text-sm font-bold text-green-600">
+                                Total: R$ {item.valor_total?.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="flex gap-2 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            onClick={() => setModoEdicaoOrcamento(false)}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            onClick={salvarEdicaoOrcamento}
+                            disabled={updateMutation.isPending}
+                            className="bg-orange-500 hover:bg-orange-600"
+                          >
+                            {updateMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Save className="w-4 h-4 mr-2" />
+                            )}
+                            Salvar Alterações
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {atendimento.itens_orcamento?.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <div>
+                              <p className="font-medium">{item.nome}</p>
+                              <p className="text-sm text-slate-500">
+                                {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                              </p>
+                            </div>
+                            <p className="font-bold text-green-600">
+                              R$ {item.valor_total?.toFixed(2)}
                             </p>
                           </div>
-                          <p className="font-bold text-green-600">
-                            R$ {item.valor_total?.toFixed(2)}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
