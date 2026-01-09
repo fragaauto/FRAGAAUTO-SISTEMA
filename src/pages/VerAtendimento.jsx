@@ -651,7 +651,15 @@ export default function VerAtendimento() {
                   <tbody>
                     ${atendimento.itens_orcamento.map(item => `
                       <tr>
-                        <td>${item.nome}</td>
+                        <td>
+                          ${item.nome}
+                          ${item.desvantagens ? `
+                            <div style="margin-top: 6px; padding: 8px; background: #fef2f2; border-left: 3px solid #f59e0b; border-radius: 4px;">
+                              <strong style="font-size: 11px; color: #92400e;">⚠️ Riscos de não realizar:</strong>
+                              <p style="font-size: 11px; color: #78350f; margin: 4px 0 0 0;">${item.desvantagens}</p>
+                            </div>
+                          ` : ''}
+                        </td>
                         <td style="text-align: center;">${item.quantidade}</td>
                         <td style="text-align: right;">R$ ${item.valor_unitario?.toFixed(2)}</td>
                         <td style="text-align: right; font-weight: 600;">R$ ${item.valor_total?.toFixed(2)}</td>
@@ -1484,12 +1492,19 @@ export default function VerAtendimento() {
                 
                 {atendimento.itens_queixa?.length > 0 ? (
                   atendimento.itens_queixa.map((item, idx) => (
-                    <ItemAprovacao
-                      key={idx}
-                      item={item}
-                      onUpdate={(updated) => handleUpdateItemQueixa(idx, updated)}
-                      readOnly={queixaAssinada && !isAdmin}
-                    />
+                    <div key={idx} className="space-y-2">
+                      <ItemAprovacao
+                        item={item}
+                        onUpdate={(updated) => handleUpdateItemQueixa(idx, updated)}
+                        readOnly={queixaAssinada && !isAdmin}
+                      />
+                      {item.desvantagens && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                          <p className="text-sm text-amber-700">{item.desvantagens}</p>
+                        </div>
+                      )}
+                    </div>
                   ))
                 ) : (
                   <p className="text-center text-slate-500 py-4">Nenhum item na queixa</p>
@@ -1550,12 +1565,19 @@ export default function VerAtendimento() {
                 
                 {atendimento.itens_orcamento?.length > 0 ? (
                   atendimento.itens_orcamento.map((item, idx) => (
-                    <ItemAprovacao
-                      key={idx}
-                      item={item}
-                      onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
-                      readOnly={checklistAssinado && !isAdmin}
-                    />
+                    <div key={idx} className="space-y-2">
+                      <ItemAprovacao
+                        item={item}
+                        onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
+                        readOnly={checklistAssinado && !isAdmin}
+                      />
+                      {item.desvantagens && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                          <p className="text-sm text-amber-700">{item.desvantagens}</p>
+                        </div>
+                      )}
+                    </div>
                   ))
                 ) : (
                   <p className="text-center text-slate-500 py-4">Nenhum item no checklist</p>
