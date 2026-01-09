@@ -44,28 +44,30 @@ export default function EditarAtendimento() {
       const found = list.find(a => a.id === id);
       return found || null;
     },
-    enabled: !!id,
-    onSuccess: (data) => {
-      if (data) {
-        // Converter checklist array para objeto
-        const checklistObj = {};
-        (data.checklist || []).forEach(item => {
-          checklistObj[item.item_id || item.id] = {
-            item: item.item,
-            status: item.status,
-            comentario: item.comentario,
-            incluir_orcamento: item.incluir_orcamento
-          };
-        });
-        
-        setFormData({
-          checklist: checklistObj,
-          pre_diagnostico: data.pre_diagnostico || '',
-          itens_orcamento: data.itens_orcamento || []
-        });
-      }
-    }
+    enabled: !!id
   });
+
+  useEffect(() => {
+    if (atendimento) {
+      // Converter checklist array para objeto
+      const checklistObj = {};
+      (atendimento.checklist || []).forEach(item => {
+        checklistObj[item.item_id || item.id] = {
+          item: item.item,
+          status: item.status,
+          comentario: item.comentario,
+          incluir_orcamento: item.incluir_orcamento,
+          produtos: item.produtos || []
+        };
+      });
+      
+      setFormData({
+        checklist: checklistObj,
+        pre_diagnostico: atendimento.pre_diagnostico || '',
+        itens_orcamento: atendimento.itens_orcamento || []
+      });
+    }
+  }, [atendimento]);
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
