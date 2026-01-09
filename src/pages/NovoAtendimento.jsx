@@ -107,6 +107,7 @@ export default function NovoAtendimento() {
           if (produto) {
             produtosDoChecklist.push({
               produto_id: produto.id,
+              codigo_produto: produto.codigo || '',
               nome: produto.nome,
               quantidade: pv.quantidade,
               valor_unitario: produto.valor,
@@ -230,6 +231,7 @@ export default function NovoAtendimento() {
 
     const newItem = {
       produto_id: produto.id,
+      codigo_produto: produto.codigo || '',
       nome: produto.nome,
       quantidade: 1,
       valor_unitario: produto.valor,
@@ -307,6 +309,7 @@ export default function NovoAtendimento() {
       // Adicionar ao orçamento automaticamente
       const newItem = {
         produto_id: result.id,
+        codigo_produto: result.codigo || '',
         nome: result.nome,
         quantidade: 1,
         valor_unitario: result.valor,
@@ -337,6 +340,7 @@ export default function NovoAtendimento() {
   const handleCadastrarProduto = (data) => {
     setCadastrandoProduto(true);
     createProdutoMutation.mutate({
+      codigo: data.codigo,
       nome: data.nome,
       categoria: data.categoria,
       valor: parseFloat(data.valor),

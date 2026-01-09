@@ -155,7 +155,16 @@ export default function GerenciarChecklist() {
 
     setIsImporting(true);
     try {
-      const text = await file.text();
+      const arrayBuffer = await file.arrayBuffer();
+      const decoder = new TextDecoder('utf-8');
+      let text = decoder.decode(arrayBuffer);
+      
+      // Tentar ISO-8859-1 se UTF-8 falhar
+      if (text.includes('�')) {
+        const decoderLatin = new TextDecoder('iso-8859-1');
+        text = decoderLatin.decode(arrayBuffer);
+      }
+      
       const lines = text.split('\n').filter(line => line.trim());
       
       if (lines.length < 2) {
@@ -164,10 +173,10 @@ export default function GerenciarChecklist() {
         return;
       }
 
-      const headers = lines[0].split(/[,;]/).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+      const headers = lines[0].split(/[,;]/).map(h => h.trim().toLowerCase().replace(/"/g, '').normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
       const itemIdx = headers.findIndex(h => h === 'item' || h === 'nome');
       const categoriaIdx = headers.findIndex(h => h === 'categoria');
-      const obrigatorioIdx = headers.findIndex(h => h === 'obrigatorio' || h === 'obrigatório');
+      const obrigatorioIdx = headers.findIndex(h => h.includes('obrigatorio'));
 
       if (itemIdx === -1 || categoriaIdx === -1) {
         toast.error('O arquivo deve ter colunas "item" e "categoria"');
@@ -202,6 +211,7 @@ export default function GerenciarChecklist() {
       setIsImporting(false);
     } catch (error) {
       toast.error('Erro ao importar arquivo');
+      console.error(error);
       setIsImporting(false);
     }
     

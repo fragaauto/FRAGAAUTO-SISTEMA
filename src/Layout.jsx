@@ -16,9 +16,10 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { name: 'Home', icon: Home, path: 'Home' },
+  { name: 'Dashboard', icon: Home, path: 'Dashboard' },
   { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento' },
   { name: 'Atendimentos', icon: FileText, path: 'Atendimentos' },
+  { name: 'Relatórios', icon: FileText, path: 'Relatorios' },
   { name: 'Produtos', icon: Package, path: 'Produtos' },
   { name: 'Clientes', icon: Users, path: 'Clientes' },
   { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist' },
@@ -54,9 +55,9 @@ export default function Layout({ children, currentPageName }) {
   );
 
   // Don't show nav on certain pages
-  const hideNav = ['Home'].includes(currentPageName);
+  const hideNav = ['Home', 'Dashboard'].includes(currentPageName) === false;
 
-  if (hideNav) {
+  if (!hideNav) {
     return <>{children}</>;
   }
 

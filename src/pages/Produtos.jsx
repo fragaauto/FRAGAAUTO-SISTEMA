@@ -69,6 +69,7 @@ export default function Produtos() {
   const [isImporting, setIsImporting] = useState(false);
   
   const [formData, setFormData] = useState({
+    codigo: '',
     nome: '',
     categoria: '',
     valor: '',
