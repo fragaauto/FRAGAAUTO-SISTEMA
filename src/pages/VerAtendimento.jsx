@@ -23,7 +23,9 @@ import {
   Edit,
   Trash2,
   MessageCircle,
-  PenTool
+  PenTool,
+  RotateCcw,
+  AlertTriangle
 } from 'lucide-react';
 import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
@@ -76,9 +78,16 @@ export default function VerAtendimento() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showAssinaturaQueixa, setShowAssinaturaQueixa] = useState(false);
   const [showAssinaturaChecklist, setShowAssinaturaChecklist] = useState(false);
+  const [modoEdicao, setModoEdicao] = useState(false);
+  const [user, setUser] = useState(null);
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
+
+  // Carregar usuário atual
+  React.useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => setUser(null));
+  }, []);
 
   const { data: atendimento, isLoading, error } = useQuery({
     queryKey: ['atendimento', id],
@@ -121,7 +130,60 @@ export default function VerAtendimento() {
   const handleUpdateItemChecklist = (index, updatedItem) => {
     const novosItens = [...(atendimento.itens_orcamento || [])];
     novosItens[index] = updatedItem;
-    updateMutation.mutate({ itens_orcamento: novosItens });
+    
+    // Recalcular totais
+    const subtotal = novosItens.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const valor_final = subtotal - (atendimento.desconto || 0);
+    
+    const historicoItem = {
+      data: new Date().toISOString(),
+      usuario: user?.email || 'Sistema',
+      campo_editado: 'itens_orcamento',
+      descricao: `Item "${updatedItem.nome}" editado - status: ${updatedItem.status_aprovacao}`
+    };
+    
+    updateMutation.mutate({ 
+      itens_orcamento: novosItens,
+      subtotal,
+      valor_final,
+      historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
+    });
+  };
+
+  const reabrirQueixa = () => {
+    const historicoItem = {
+      data: new Date().toISOString(),
+      usuario: user?.email || 'Sistema',
+      campo_editado: 'queixa',
+      descricao: 'Queixa reaberta para edição'
+    };
+    
+    updateMutation.mutate({
+      assinatura_cliente_queixa: null,
+      data_aprovacao_queixa: null,
+      status: 'queixa_pendente',
+      historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
+    });
+    
+    toast.warning('Queixa reaberta - assinatura anterior invalidada');
+  };
+
+  const reabrirChecklist = () => {
+    const historicoItem = {
+      data: new Date().toISOString(),
+      usuario: user?.email || 'Sistema',
+      campo_editado: 'checklist',
+      descricao: 'Checklist/Orçamento reaberto para edição'
+    };
+    
+    updateMutation.mutate({
+      assinatura_cliente_checklist: null,
+      data_aprovacao_checklist: null,
+      status: 'em_diagnostico',
+      historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
+    });
+    
+    toast.warning('Checklist reaberto - assinatura anterior invalidada');
   };
 
   const deleteMutation = useMutation({
@@ -609,6 +671,9 @@ export default function VerAtendimento() {
   }
 
   const defeitosCount = atendimento.checklist?.filter(i => i.status === 'com_defeito').length || 0;
+  const isAdmin = user?.role === 'admin';
+  const queixaAssinada = !!atendimento.assinatura_cliente_queixa;
+  const checklistAssinado = !!atendimento.assinatura_cliente_checklist;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
@@ -776,30 +841,60 @@ export default function VerAtendimento() {
                   </SelectContent>
                 </Select>
                 
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" className="sm:ml-auto">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Excluir
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Excluir atendimento?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta ação não pode ser desfeita. O atendimento será removido permanentemente.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => deleteMutation.mutate()}>
+                {isAdmin && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="sm:ml-auto">
+                        <Trash2 className="w-4 h-4 mr-2" />
                         Excluir
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir atendimento?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita. O atendimento será removido permanentemente.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteMutation.mutate()}>
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </CardContent>
             </Card>
+
+            {/* Histórico de Edições */}
+            {atendimento.historico_edicoes?.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Histórico de Alterações</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {atendimento.historico_edicoes.slice(-5).reverse().map((item, idx) => (
+                      <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-slate-800">{item.descricao}</p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {format(new Date(item.data), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {item.usuario?.split('@')[0]}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="queixa" className="space-y-4">
@@ -852,11 +947,39 @@ export default function VerAtendimento() {
 
             {atendimento.assinatura_cliente_queixa && (
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <PenTool className="w-5 h-5 text-green-500" />
                     Assinatura do Cliente
                   </CardTitle>
+                  {isAdmin && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-amber-600 border-amber-300">
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Reabrir Queixa
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5 text-amber-500" />
+                            Reabrir Queixa Assinada?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação irá invalidar a assinatura atual e permitir nova edição.
+                            O cliente precisará assinar novamente após as alterações.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={reabrirQueixa} className="bg-amber-500 hover:bg-amber-600">
+                            Confirmar Reabertura
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <img src={atendimento.assinatura_cliente_queixa} alt="Assinatura" className="border rounded-lg max-w-xs" />
@@ -949,6 +1072,48 @@ export default function VerAtendimento() {
           </TabsContent>
 
           <TabsContent value="orcamento" className="space-y-4">
+            {checklistAssinado && isAdmin && (
+              <Card className="bg-amber-50 border-amber-200">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-amber-900 mb-1">Orçamento Assinado</p>
+                      <p className="text-sm text-amber-700 mb-3">
+                        Este orçamento foi aprovado e assinado. Para editar, é necessário reabrir e invalidar a assinatura.
+                      </p>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="bg-white border-amber-300 text-amber-700 hover:bg-amber-50">
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Reabrir Orçamento
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                              <AlertTriangle className="w-5 h-5 text-amber-500" />
+                              Reabrir Orçamento Assinado?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta ação irá invalidar a assinatura atual e permitir edição do orçamento.
+                              O cliente precisará revisar e assinar novamente.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={reabrirChecklist} className="bg-amber-500 hover:bg-amber-600">
+                              Confirmar Reabertura
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             {atendimento.itens_orcamento?.length === 0 ? (
               <Card className="py-8">
                 <CardContent className="text-center text-slate-500">
@@ -1015,16 +1180,53 @@ export default function VerAtendimento() {
 
           <TabsContent value="aprovacao" className="space-y-4">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Aprovação da Queixa</CardTitle>
+                {queixaAssinada && isAdmin && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-amber-600 border-amber-300">
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Reabrir
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                          <AlertTriangle className="w-5 h-5 text-amber-500" />
+                          Reabrir Queixa Assinada?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Isso invalidará a assinatura e permitirá nova edição.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={reabrirQueixa} className="bg-amber-500 hover:bg-amber-600">
+                          Confirmar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </CardHeader>
               <CardContent className="space-y-3">
+                {queixaAssinada && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Queixa aprovada e assinada
+                    </p>
+                  </div>
+                )}
+                
                 {atendimento.itens_queixa?.length > 0 ? (
                   atendimento.itens_queixa.map((item, idx) => (
                     <ItemAprovacao
                       key={idx}
                       item={item}
                       onUpdate={(updated) => handleUpdateItemQueixa(idx, updated)}
+                      readOnly={queixaAssinada && !isAdmin}
                     />
                   ))
                 ) : (
@@ -1044,16 +1246,53 @@ export default function VerAtendimento() {
             </Card>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Aprovação do Checklist</CardTitle>
+                {checklistAssinado && isAdmin && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-amber-600 border-amber-300">
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Reabrir
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                          <AlertTriangle className="w-5 h-5 text-amber-500" />
+                          Reabrir Checklist Assinado?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Isso invalidará a assinatura e permitirá nova edição.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={reabrirChecklist} className="bg-amber-500 hover:bg-amber-600">
+                          Confirmar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </CardHeader>
               <CardContent className="space-y-3">
+                {checklistAssinado && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Checklist aprovado e assinado
+                    </p>
+                  </div>
+                )}
+                
                 {atendimento.itens_orcamento?.length > 0 ? (
                   atendimento.itens_orcamento.map((item, idx) => (
                     <ItemAprovacao
                       key={idx}
                       item={item}
                       onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
+                      readOnly={checklistAssinado && !isAdmin}
                     />
                   ))
                 ) : (
