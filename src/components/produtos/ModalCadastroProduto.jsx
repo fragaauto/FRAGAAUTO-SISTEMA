@@ -21,6 +21,7 @@ import { Loader2, Plus, Save } from 'lucide-react';
 
 export default function ModalCadastroProduto({ open, onClose, onSave, isLoading }) {
   const [formData, setFormData] = useState({
+    codigo: '',
     nome: '',
     categoria: 'outros',
     valor: '',
@@ -30,12 +31,13 @@ export default function ModalCadastroProduto({ open, onClose, onSave, isLoading 
   });
 
   const handleSave = () => {
-    if (!formData.nome || !formData.valor) return;
+    if (!formData.codigo || !formData.nome || !formData.valor) return;
     onSave(formData);
   };
 
   const resetForm = () => {
     setFormData({
+      codigo: '',
       nome: '',
       categoria: 'outros',
       valor: '',
@@ -63,11 +65,34 @@ export default function ModalCadastroProduto({ open, onClose, onSave, isLoading 
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <Label>Código do Produto *</Label>
+              <Input
+                value={formData.codigo}
+                onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                placeholder="Ex: P001"
+                className="h-12"
+              />
+            </div>
+            <div>
               <Label>Nome do Produto/Serviço *</Label>
               <Input
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                 placeholder="Ex: Troca de fechadura"
+                className="h-12"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Valor (R$) *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.valor}
+                onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                placeholder="0.00"
                 className="h-12"
               />
             </div>
@@ -92,18 +117,6 @@ export default function ModalCadastroProduto({ open, onClose, onSave, isLoading 
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div>
-            <Label>Valor (R$) *</Label>
-            <Input
-              type="number"
-              step="0.01"
-              value={formData.valor}
-              onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-              placeholder="0.00"
-              className="h-12"
-            />
           </div>
 
           <div>
@@ -143,7 +156,7 @@ export default function ModalCadastroProduto({ open, onClose, onSave, isLoading 
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!formData.nome || !formData.valor || isLoading}
+            disabled={!formData.codigo || !formData.nome || !formData.valor || isLoading}
             className="bg-orange-500 hover:bg-orange-600"
           >
             {isLoading ? (

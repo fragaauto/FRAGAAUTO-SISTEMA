@@ -130,6 +130,7 @@ export default function Produtos() {
     if (produto) {
       setEditingProduto(produto);
       setFormData({
+        codigo: produto.codigo || '',
         nome: produto.nome,
         categoria: produto.categoria,
         valor: produto.valor,
@@ -141,6 +142,7 @@ export default function Produtos() {
     } else {
       setEditingProduto(null);
       setFormData({
+        codigo: '',
         nome: '',
         categoria: '',
         valor: '',
@@ -157,17 +159,20 @@ export default function Produtos() {
     setShowModal(false);
     setEditingProduto(null);
     setFormData({
+      codigo: '',
       nome: '',
       categoria: '',
       valor: '',
       descricao: '',
+      vantagens: '',
+      desvantagens: '',
       ativo: true
     });
   };
 
   const handleSave = () => {
-    if (!formData.nome || !formData.categoria || !formData.valor) {
-      toast.error('Preencha todos os campos obrigatórios');
+    if (!formData.codigo || !formData.nome || !formData.categoria || !formData.valor) {
+      toast.error('Preencha todos os campos obrigatórios (código, nome, categoria, valor)');
       return;
     }
 
@@ -365,11 +370,16 @@ export default function Produtos() {
                           <Package className="w-6 h-6 text-slate-600" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-slate-800">{produto.nome}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge className={getCategoriaColor(produto.categoria)}>
-                              {produto.categoria}
-                            </Badge>
+                         <div className="flex items-center gap-2 mb-1">
+                           <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                             {produto.codigo || 'S/C'}
+                           </span>
+                           <h3 className="font-semibold text-slate-800">{produto.nome}</h3>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <Badge className={getCategoriaColor(produto.categoria)}>
+                             {produto.categoria}
+                           </Badge>
                             {produto.descricao && (
                               <span className="text-xs text-slate-500 truncate max-w-[200px]">
                                 {produto.descricao}
@@ -418,6 +428,15 @@ export default function Produtos() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div>
+              <Label>Código *</Label>
+              <Input
+                value={formData.codigo}
+                onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                placeholder="Ex: P001"
+                className="h-12"
+              />
+            </div>
             <div>
               <Label>Nome *</Label>
               <Input
