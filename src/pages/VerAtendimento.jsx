@@ -700,6 +700,15 @@ export default function VerAtendimento() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(createPageUrl(`EditarAtendimento?id=${id}`))}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar Checklist
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="icon"

@@ -55,9 +55,9 @@ export default function Layout({ children, currentPageName }) {
   );
 
   // Don't show nav on certain pages
-  const hideNav = ['Home', 'Dashboard'].includes(currentPageName) === false;
+  const hideNav = ['Home'].includes(currentPageName);
 
-  if (!hideNav) {
+  if (hideNav) {
     return <>{children}</>;
   }
 

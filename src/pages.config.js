@@ -9,6 +9,7 @@ import Produtos from './pages/Produtos';
 import Relatorios from './pages/Relatorios';
 import Usuarios from './pages/Usuarios';
 import VerAtendimento from './pages/VerAtendimento';
+import EditarAtendimento from './pages/EditarAtendimento';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +25,7 @@ export const PAGES = {
     "Relatorios": Relatorios,
     "Usuarios": Usuarios,
     "VerAtendimento": VerAtendimento,
+    "EditarAtendimento": EditarAtendimento,
 }
 
 export const pagesConfig = {
