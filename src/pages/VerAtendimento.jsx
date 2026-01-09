@@ -653,6 +653,12 @@ export default function VerAtendimento() {
                       <tr>
                         <td>
                           ${item.nome}
+                          ${item.vantagens ? `
+                            <div style="margin-top: 6px; padding: 8px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px;">
+                              <strong style="font-size: 11px; color: #166534;">✓ Benefícios de realizar:</strong>
+                              <p style="font-size: 11px; color: #15803d; margin: 4px 0 0 0;">${item.vantagens}</p>
+                            </div>
+                          ` : ''}
                           ${item.desvantagens ? `
                             <div style="margin-top: 6px; padding: 8px; background: #fef2f2; border-left: 3px solid #f59e0b; border-radius: 4px;">
                               <strong style="font-size: 11px; color: #92400e;">⚠️ Riscos de não realizar:</strong>
@@ -1498,6 +1504,12 @@ export default function VerAtendimento() {
                         onUpdate={(updated) => handleUpdateItemQueixa(idx, updated)}
                         readOnly={queixaAssinada && !isAdmin}
                       />
+                      {item.vantagens && (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
+                          <p className="text-sm text-green-700">{item.vantagens}</p>
+                        </div>
+                      )}
                       {item.desvantagens && (
                         <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                           <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
@@ -1571,6 +1583,12 @@ export default function VerAtendimento() {
                         onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
                         readOnly={checklistAssinado && !isAdmin}
                       />
+                      {item.vantagens && (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
+                          <p className="text-sm text-green-700">{item.vantagens}</p>
+                        </div>
+                      )}
                       {item.desvantagens && (
                         <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                           <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
