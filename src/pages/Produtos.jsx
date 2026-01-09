@@ -204,6 +204,7 @@ export default function Produtos() {
       }
 
       const headers = lines[0].split(/[,;]/).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+      const codigoIdx = headers.findIndex(h => h === 'codigo' || h === 'código');
       const nomeIdx = headers.findIndex(h => h === 'nome');
       const categoriaIdx = headers.findIndex(h => h === 'categoria');
       const valorIdx = headers.findIndex(h => h === 'valor');
@@ -211,8 +212,8 @@ export default function Produtos() {
       const vantagensIdx = headers.findIndex(h => h === 'vantagens');
       const desvantagensIdx = headers.findIndex(h => h === 'desvantagens');
 
-      if (nomeIdx === -1 || valorIdx === -1) {
-        toast.error('O arquivo deve ter colunas "nome" e "valor"');
+      if (codigoIdx === -1 || nomeIdx === -1 || valorIdx === -1) {
+        toast.error('O arquivo deve ter colunas "codigo", "nome" e "valor"');
         setIsImporting(false);
         return;
       }
@@ -220,11 +221,13 @@ export default function Produtos() {
       const produtos = [];
       for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(/[,;]/).map(v => v.trim().replace(/"/g, ''));
+        const codigo = values[codigoIdx];
         const nome = values[nomeIdx];
         const valor = parseFloat(values[valorIdx]?.replace(',', '.')) || 0;
         
-        if (nome && valor > 0) {
+        if (codigo && nome && valor > 0) {
           produtos.push({
+            codigo,
             nome,
             categoria: (values[categoriaIdx] || 'outros').toLowerCase(),
             valor,
@@ -253,7 +256,7 @@ export default function Produtos() {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "nome;categoria;valor;descricao;vantagens;desvantagens\nExemplo Serviço;eletrica;150.00;Descrição do serviço;Melhora a segurança;Pode causar falhas\nExemplo Produto;portas;89.90;Descrição do produto;Evita infiltrações;Danos ao veículo";
+    const csvContent = "codigo;nome;categoria;valor;descricao;vantagens;desvantagens\nP001;Exemplo Serviço;eletrica;150.00;Descrição do serviço;Melhora a segurança;Pode causar falhas\nP002;Exemplo Produto;portas;89.90;Descrição do produto;Evita infiltrações;Danos ao veículo";
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
