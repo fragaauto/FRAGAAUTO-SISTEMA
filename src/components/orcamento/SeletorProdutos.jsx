@@ -22,7 +22,8 @@ export default function SeletorProdutos({ open, onClose, produtos, onSelect }) {
   const [categoriaFilter, setCategoriaFilter] = useState('');
 
   const filteredProdutos = produtos.filter(p => {
-    const matchSearch = p.nome.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = p.nome.toLowerCase().includes(search.toLowerCase()) ||
+                        p.codigo?.toLowerCase().includes(search.toLowerCase());
     const matchCategoria = !categoriaFilter || p.categoria === categoriaFilter;
     return matchSearch && matchCategoria && p.ativo !== false;
   });
