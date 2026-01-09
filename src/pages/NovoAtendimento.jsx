@@ -213,19 +213,15 @@ export default function NovoAtendimento() {
   };
 
   const handleAddProduto = (produto) => {
-    // Verificar se já existe na queixa ou checklist
+    // Verificar se já existe em QUALQUER lugar (queixa, checklist ou orçamento)
     const jaExisteNaQueixa = formData.itens_queixa.some(i => i.produto_id === produto.id);
     const jaExisteNoChecklist = Object.values(formData.checklist).some(data => 
       data.produtos?.some(p => p.id === produto.id)
     );
+    const jaExisteNoOrcamento = formData.itens_orcamento.some(i => i.produto_id === produto.id);
     
-    if (activeTab === 'queixa' && jaExisteNoChecklist) {
-      toast.error('Este item já foi incluído no orçamento pelo checklist.');
-      return;
-    }
-    
-    if (activeTab === 'checklist' && jaExisteNaQueixa) {
-      toast.error('Este item já foi incluído no orçamento pela queixa inicial.');
+    if (jaExisteNaQueixa || jaExisteNoChecklist || jaExisteNoOrcamento) {
+      toast.error('Este produto já foi adicionado ao orçamento.');
       return;
     }
 
