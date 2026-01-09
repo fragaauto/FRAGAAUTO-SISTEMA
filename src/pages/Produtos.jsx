@@ -121,7 +121,8 @@ export default function Produtos() {
   });
 
   const filteredProdutos = produtos.filter(p => {
-    const matchSearch = p.nome?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = p.nome?.toLowerCase().includes(search.toLowerCase()) || 
+                        p.codigo?.toLowerCase().includes(search.toLowerCase());
     const matchCategoria = categoriaFilter === 'all' || p.categoria === categoriaFilter;
     return matchSearch && matchCategoria;
   });
