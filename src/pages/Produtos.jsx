@@ -287,9 +287,16 @@ export default function Produtos() {
         return;
       }
 
+      // Limitar a 2000 itens
+      if (produtos.length > 2000) {
+        toast.error(`Limite de 2000 produtos por importação. Arquivo contém ${produtos.length} produtos.`);
+        setIsImporting(false);
+        return;
+      }
+
       // Importar em lotes para mostrar progresso
       setImportProgress(0);
-      const batchSize = 50;
+      const batchSize = 100;
       const total = produtos.length;
       
       for (let i = 0; i < produtos.length; i += batchSize) {
