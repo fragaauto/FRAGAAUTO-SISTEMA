@@ -67,6 +67,8 @@ export default function Produtos() {
   const [editingProduto, setEditingProduto] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showDeleteMultiple, setShowDeleteMultiple] = useState(false);
   
   const [formData, setFormData] = useState({
     codigo: '',
@@ -81,7 +83,7 @@ export default function Produtos() {
 
   const { data: produtos = [], isLoading } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryFn: () => base44.entities.Produto.list('', 3000),
     staleTime: 5 * 60 * 1000
   });
 
@@ -112,6 +114,20 @@ export default function Produtos() {
     }
   });
 
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (ids) => {
+      for (const id of ids) {
+        await base44.entities.Produto.delete(id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['produtos']);
+      toast.success(`${selectedIds.length} produto(s) excluído(s)!`);
+      setSelectedIds([]);
+      setShowDeleteMultiple(false);
+    }
+  });
+
   const bulkCreateMutation = useMutation({
     mutationFn: (data) => base44.entities.Produto.bulkCreate(data),
     onSuccess: (result) => {
@@ -126,6 +142,20 @@ export default function Produtos() {
     const matchCategoria = categoriaFilter === 'all' || p.categoria === categoriaFilter;
     return matchSearch && matchCategoria;
   });
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredProdutos.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredProdutos.map(p => p.id));
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
   const openModal = (produto = null) => {
     if (produto) {
@@ -273,9 +303,20 @@ export default function Produtos() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-slate-800">Produtos e Serviços</h1>
-              <p className="text-slate-500">{produtos.length} cadastrados</p>
+              <p className="text-slate-500">
+                {produtos.length} cadastrados
+                {selectedIds.length > 0 && ` • ${selectedIds.length} selecionado(s)`}
+              </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2">{selectedIds.length > 0 && (
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteMultiple(true)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Excluir ({selectedIds.length})
+                </Button>
+              )}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -317,6 +358,17 @@ export default function Produtos() {
       {/* Filters */}
       <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="flex flex-col sm:flex-row gap-3">
+          {filteredProdutos.length > 0 && (
+            <label className="flex items-center gap-2 px-3 h-12 border rounded-lg bg-white cursor-pointer hover:bg-slate-50">
+              <input
+                type="checkbox"
+                checked={selectedIds.length === filteredProdutos.length}
+                onChange={toggleSelectAll}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">Selecionar todos</span>
+            </label>
+          )}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <Input
@@ -370,6 +422,13 @@ export default function Produtos() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(produto.id)}
+                          onChange={() => toggleSelect(produto.id)}
+                          className="w-4 h-4 cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        />
                         <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
                           <Package className="w-6 h-6 text-slate-600" />
                         </div>
@@ -540,6 +599,35 @@ export default function Produtos() {
               className="bg-red-500 hover:bg-red-600"
             >
               Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Multiple Confirmation */}
+      <AlertDialog open={showDeleteMultiple} onOpenChange={setShowDeleteMultiple}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selectedIds.length} produto(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Todos os produtos selecionados serão excluídos permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteMultipleMutation.mutate(selectedIds)}
+              disabled={deleteMultipleMutation.isPending}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {deleteMultipleMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                'Excluir Todos'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
