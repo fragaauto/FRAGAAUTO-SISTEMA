@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, MinusCircle, HelpCircle, ShoppingCart, Plus, Package, Trash2, ChevronDown } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { CheckCircle2, XCircle, MinusCircle, HelpCircle, ShoppingCart, Plus, Package, Trash2, ChevronDown, Search } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import {
   Collapsible,
@@ -20,6 +21,7 @@ const STATUS_CONFIG = {
 
 export default function ChecklistItem({ item, value, onChange, produtos = [], onOpenCadastro }) {
   const [showProdutos, setShowProdutos] = useState(false);
+  const [searchProduto, setSearchProduto] = useState('');
   const currentStatus = value?.status || 'nao_verificado';
   const produtosVinculados = value?.produtos || [];
   const StatusIcon = STATUS_CONFIG[currentStatus]?.icon || HelpCircle;
@@ -211,33 +213,53 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
                     );
                   })}
                   
-                  <div className="flex gap-2">
-                    <select
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          handleAddProduto(e.target.value);
-                          e.target.value = '';
-                        }
-                      }}
-                      className="flex-1 h-10 px-3 border rounded-lg text-sm"
-                    >
-                      <option value="">Selecionar produto existente...</option>
-                      {produtos
-                        .filter(p => !produtosVinculados.some(pv => pv.id === p.id))
-                        .map(p => (
-                          <option key={p.id} value={p.id}>{p.nome}</option>
-                        ))}
-                    </select>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      onClick={onOpenCadastro}
-                      className="whitespace-nowrap"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Novo
-                    </Button>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input
+                        placeholder="Buscar por nome ou código..."
+                        value={searchProduto}
+                        onChange={(e) => setSearchProduto(e.target.value)}
+                        className="pl-9 h-10 text-sm"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAddProduto(e.target.value);
+                            e.target.value = '';
+                            setSearchProduto('');
+                          }
+                        }}
+                        className="flex-1 h-10 px-3 border rounded-lg text-sm"
+                      >
+                        <option value="">Selecionar produto existente...</option>
+                        {produtos
+                          .filter(p => !produtosVinculados.some(pv => pv.id === p.id))
+                          .filter(p => {
+                            if (!searchProduto) return true;
+                            const search = searchProduto.toLowerCase();
+                            return p.nome?.toLowerCase().includes(search) ||
+                                   p.codigo?.toLowerCase().includes(search);
+                          })
+                          .map(p => (
+                            <option key={p.id} value={p.id}>
+                              {p.codigo ? `${p.codigo} - ` : ''}{p.nome}
+                            </option>
+                          ))}
+                      </select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        onClick={onOpenCadastro}
+                        className="whitespace-nowrap"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Novo
+                      </Button>
+                    </div>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
