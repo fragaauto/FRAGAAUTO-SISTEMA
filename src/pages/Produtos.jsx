@@ -71,6 +71,14 @@ export default function Produtos() {
   const [showDeleteMultiple, setShowDeleteMultiple] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState(0);
   const [importProgress, setImportProgress] = useState(0);
+  const [importStats, setImportStats] = useState({
+    total: 0,
+    processed: 0,
+    success: 0,
+    updated: 0,
+    errors: 0,
+    errorDetails: []
+  });
   
   const [formData, setFormData] = useState({
     codigo: '',
@@ -235,7 +243,18 @@ export default function Produtos() {
     if (!file) return;
 
     setIsImporting(true);
+    setImportProgress(0);
+    setImportStats({
+      total: 0,
+      processed: 0,
+      success: 0,
+      updated: 0,
+      errors: 0,
+      errorDetails: []
+    });
+
     try {
+      // Ler arquivo com encoding UTF-8
       const text = await file.text();
       const lines = text.split('\n').filter(line => line.trim());
       
@@ -260,55 +279,163 @@ export default function Produtos() {
         return;
       }
 
-      const produtos = [];
+      // Parse e validação de produtos
+      const produtosParaImportar = [];
+      const erros = [];
+      
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(/[,;]/).map(v => v.trim().replace(/"/g, ''));
-        const codigo = values[codigoIdx];
-        const nome = values[nomeIdx];
-        const valor = parseFloat(values[valorIdx]?.replace(',', '.')) || 0;
-        
-        if (codigo && nome && valor > 0) {
-          produtos.push({
+        const lineNumber = i + 1;
+        try {
+          const values = lines[i].split(/[,;]/).map(v => v.trim().replace(/^"|"$/g, ''));
+          const codigo = values[codigoIdx]?.trim();
+          const nome = values[nomeIdx]?.trim();
+          const valorStr = values[valorIdx]?.trim();
+          
+          // Validações
+          if (!codigo) {
+            erros.push({ linha: lineNumber, erro: 'Código obrigatório' });
+            continue;
+          }
+          if (!nome) {
+            erros.push({ linha: lineNumber, erro: 'Nome obrigatório' });
+            continue;
+          }
+          
+          const valor = parseFloat(valorStr?.replace(',', '.'));
+          if (!valor || valor <= 0) {
+            erros.push({ linha: lineNumber, erro: 'Valor inválido ou menor que zero' });
+            continue;
+          }
+          
+          const categoria = (values[categoriaIdx]?.trim() || 'outros').toLowerCase();
+          const categoriasValidas = CATEGORIAS.map(c => c.value);
+          if (!categoriasValidas.includes(categoria)) {
+            erros.push({ linha: lineNumber, erro: `Categoria "${categoria}" inválida. Use: ${categoriasValidas.join(', ')}` });
+            continue;
+          }
+          
+          produtosParaImportar.push({
             codigo,
             nome,
-            categoria: (values[categoriaIdx] || 'outros').toLowerCase(),
+            categoria,
             valor,
-            descricao: values[descricaoIdx] || '',
-            vantagens: values[vantagensIdx] || '',
-            desvantagens: values[desvantagensIdx] || '',
+            descricao: values[descricaoIdx]?.trim() || '',
+            vantagens: values[vantagensIdx]?.trim() || '',
+            desvantagens: values[desvantagensIdx]?.trim() || '',
             ativo: true
           });
+        } catch (err) {
+          erros.push({ linha: lineNumber, erro: 'Erro ao processar linha' });
         }
       }
 
-      if (produtos.length === 0) {
+      if (produtosParaImportar.length === 0) {
         toast.error('Nenhum produto válido encontrado no arquivo');
         setIsImporting(false);
         return;
       }
 
-      // Limitar a 2000 itens
-      if (produtos.length > 2000) {
-        toast.error(`Limite de 2000 produtos por importação. Arquivo contém ${produtos.length} produtos.`);
+      if (produtosParaImportar.length > 2000) {
+        toast.error(`Limite de 2000 produtos por importação. Arquivo contém ${produtosParaImportar.length} produtos válidos.`);
         setIsImporting(false);
         return;
       }
 
-      // Importar em lotes para mostrar progresso
-      setImportProgress(0);
-      const batchSize = 100;
-      const total = produtos.length;
+      // Inicializar estatísticas
+      setImportStats({
+        total: produtosParaImportar.length,
+        processed: 0,
+        success: 0,
+        updated: 0,
+        errors: erros.length,
+        errorDetails: erros
+      });
+
+      // Buscar produtos existentes para detectar duplicatas
+      const produtosExistentes = produtos;
+      const codigosExistentes = new Map(produtosExistentes.map(p => [p.codigo, p]));
+
+      // Separar em novos e atualizações
+      const novos = [];
+      const atualizacoes = [];
       
-      for (let i = 0; i < produtos.length; i += batchSize) {
-        const batch = produtos.slice(i, i + batchSize);
-        await bulkCreateMutation.mutateAsync(batch);
-        setImportProgress(Math.min(((i + batchSize) / total) * 100, 100));
+      for (const prod of produtosParaImportar) {
+        if (codigosExistentes.has(prod.codigo)) {
+          const existente = codigosExistentes.get(prod.codigo);
+          atualizacoes.push({ id: existente.id, data: prod });
+        } else {
+          novos.push(prod);
+        }
       }
+
+      // Importar em lotes com progresso detalhado
+      const batchSize = 50;
+      let processados = 0;
+      let sucessos = 0;
+      let atualizados = 0;
+      const errosImportacao = [...erros];
+
+      // Processar novos produtos
+      for (let i = 0; i < novos.length; i += batchSize) {
+        const batch = novos.slice(i, i + batchSize);
+        try {
+          await bulkCreateMutation.mutateAsync(batch);
+          sucessos += batch.length;
+          processados += batch.length;
+        } catch (err) {
+          errosImportacao.push({ 
+            linha: `Lote ${Math.floor(i / batchSize) + 1}`, 
+            erro: 'Erro ao criar produtos' 
+          });
+          processados += batch.length;
+        }
+        
+        setImportStats(prev => ({
+          ...prev,
+          processed: processados,
+          success: sucessos,
+          errors: errosImportacao.length,
+          errorDetails: errosImportacao
+        }));
+        setImportProgress((processados / produtosParaImportar.length) * 100);
+      }
+
+      // Processar atualizações (uma a uma para precisão)
+      for (const { id, data } of atualizacoes) {
+        try {
+          await updateMutation.mutateAsync({ id, data });
+          atualizados++;
+          processados++;
+        } catch (err) {
+          errosImportacao.push({ 
+            linha: `Código ${data.codigo}`, 
+            erro: 'Erro ao atualizar produto existente' 
+          });
+          processados++;
+        }
+        
+        setImportStats(prev => ({
+          ...prev,
+          processed: processados,
+          updated: atualizados,
+          errors: errosImportacao.length,
+          errorDetails: errosImportacao
+        }));
+        setImportProgress((processados / produtosParaImportar.length) * 100);
+      }
+
+      // Finalizar
+      await queryClient.invalidateQueries(['produtos']);
       
-      setIsImporting(false);
-      setImportProgress(0);
+      // Mostrar resumo
+      setTimeout(() => {
+        const mensagem = `✅ Importação concluída!\n${sucessos} criados, ${atualizados} atualizados${errosImportacao.length > 0 ? `, ${errosImportacao.length} erros` : ''}`;
+        toast.success(mensagem);
+        setIsImporting(false);
+      }, 500);
+
     } catch (error) {
-      toast.error('Erro ao importar arquivo');
+      toast.error('Erro ao processar arquivo. Verifique o formato e tente novamente.');
       setIsImporting(false);
     }
     
@@ -349,7 +476,7 @@ export default function Produtos() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx"
                 onChange={handleFileUpload}
                 className="hidden"
                 disabled={isImporting}
@@ -426,25 +553,79 @@ export default function Produtos() {
       {isImporting && (
         <div className="max-w-4xl mx-auto px-4 py-4">
           <Card className="border-orange-200 bg-orange-50">
-            <CardContent className="pt-6 space-y-3">
+            <CardContent className="pt-6 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-orange-900">
-                  Importando produtos...
+                <span className="text-base font-bold text-orange-900">
+                  Importação em andamento...
                 </span>
-                <span className="text-sm font-bold text-orange-700">
+                <span className="text-lg font-bold text-orange-700">
                   {Math.round(importProgress)}%
                 </span>
               </div>
-              <div className="w-full bg-orange-200 rounded-full h-3 overflow-hidden">
+              
+              <div className="w-full bg-orange-200 rounded-full h-4 overflow-hidden">
                 <div 
-                  className="bg-orange-500 h-full transition-all duration-300 rounded-full"
+                  className="bg-orange-500 h-full transition-all duration-300 rounded-full flex items-center justify-end pr-2"
                   style={{ width: `${importProgress}%` }}
-                />
+                >
+                  {importProgress > 10 && (
+                    <span className="text-xs font-semibold text-white">
+                      {Math.round(importProgress)}%
+                    </span>
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-orange-700 text-center flex items-center justify-center gap-2">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Por favor, aguarde. Não saia desta página.
-              </p>
+
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-orange-800 font-medium">
+                  Importando item {importStats.processed} de {importStats.total}
+                </span>
+                <span className="text-orange-700">
+                  {importStats.total > 0 && Math.max(1, Math.round((importStats.total - importStats.processed) / 10))} seg restantes
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 pt-2">
+                <div className="bg-green-100 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-green-700">{importStats.success}</div>
+                  <div className="text-xs text-green-600">Criados</div>
+                </div>
+                <div className="bg-blue-100 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-blue-700">{importStats.updated}</div>
+                  <div className="text-xs text-blue-600">Atualizados</div>
+                </div>
+                <div className="bg-red-100 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-red-700">{importStats.errors}</div>
+                  <div className="text-xs text-red-600">Erros</div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 pt-2 border-t border-orange-300">
+                <Loader2 className="w-4 h-4 animate-spin text-orange-700" />
+                <p className="text-sm text-orange-800 font-medium">
+                  Não saia desta página durante a importação
+                </p>
+              </div>
+
+              {importStats.errorDetails.length > 0 && (
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs text-red-700 font-semibold hover:text-red-800">
+                    Ver detalhes dos erros ({importStats.errorDetails.length})
+                  </summary>
+                  <div className="mt-2 max-h-32 overflow-y-auto bg-white rounded p-2 space-y-1">
+                    {importStats.errorDetails.slice(0, 10).map((err, idx) => (
+                      <div key={idx} className="text-xs text-red-600">
+                        <strong>Linha {err.linha}:</strong> {err.erro}
+                      </div>
+                    ))}
+                    {importStats.errorDetails.length > 10 && (
+                      <div className="text-xs text-red-500 italic">
+                        ... e mais {importStats.errorDetails.length - 10} erro(s)
+                      </div>
+                    )}
+                  </div>
+                </details>
+              )}
             </CardContent>
           </Card>
         </div>
