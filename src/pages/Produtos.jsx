@@ -70,6 +70,7 @@ export default function Produtos() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [showDeleteMultiple, setShowDeleteMultiple] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState(0);
+  const [importProgress, setImportProgress] = useState(0);
   
   const [formData, setFormData] = useState({
     codigo: '',
@@ -286,8 +287,19 @@ export default function Produtos() {
         return;
       }
 
-      await bulkCreateMutation.mutateAsync(produtos);
+      // Importar em lotes para mostrar progresso
+      setImportProgress(0);
+      const batchSize = 50;
+      const total = produtos.length;
+      
+      for (let i = 0; i < produtos.length; i += batchSize) {
+        const batch = produtos.slice(i, i + batchSize);
+        await bulkCreateMutation.mutateAsync(batch);
+        setImportProgress(Math.min(((i + batchSize) / total) * 100, 100));
+      }
+      
       setIsImporting(false);
+      setImportProgress(0);
     } catch (error) {
       toast.error('Erro ao importar arquivo');
       setIsImporting(false);
@@ -333,6 +345,7 @@ export default function Produtos() {
                 accept=".csv"
                 onChange={handleFileUpload}
                 className="hidden"
+                disabled={isImporting}
               />
               <Button
                 variant="outline"
@@ -401,6 +414,34 @@ export default function Produtos() {
           </Select>
         </div>
       </div>
+
+      {/* Import Progress */}
+      {isImporting && (
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <Card className="border-orange-200 bg-orange-50">
+            <CardContent className="pt-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-orange-900">
+                  Importando produtos...
+                </span>
+                <span className="text-sm font-bold text-orange-700">
+                  {Math.round(importProgress)}%
+                </span>
+              </div>
+              <div className="w-full bg-orange-200 rounded-full h-3 overflow-hidden">
+                <div 
+                  className="bg-orange-500 h-full transition-all duration-300 rounded-full"
+                  style={{ width: `${importProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-orange-700 text-center flex items-center justify-center gap-2">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Por favor, aguarde. Não saia desta página.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* List */}
       <div className="max-w-4xl mx-auto px-4 pb-8">
