@@ -214,41 +214,16 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
                   })}
                   
                   <div className="space-y-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input
-                        placeholder="Buscar por nome ou código..."
-                        value={searchProduto}
-                        onChange={(e) => setSearchProduto(e.target.value)}
-                        className="pl-9 h-10 text-sm"
-                      />
-                    </div>
                     <div className="flex gap-2">
-                      <select
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            handleAddProduto(e.target.value);
-                            e.target.value = '';
-                            setSearchProduto('');
-                          }
-                        }}
-                        className="flex-1 h-10 px-3 border rounded-lg text-sm"
-                      >
-                        <option value="">Selecionar produto existente...</option>
-                        {produtos
-                          .filter(p => !produtosVinculados.some(pv => pv.id === p.id))
-                          .filter(p => {
-                            if (!searchProduto) return true;
-                            const search = searchProduto.toLowerCase();
-                            return p.nome?.toLowerCase().includes(search) ||
-                                   p.codigo?.toLowerCase().includes(search);
-                          })
-                          .map(p => (
-                            <option key={p.id} value={p.id}>
-                              {p.codigo ? `${p.codigo} - ` : ''}{p.nome}
-                            </option>
-                          ))}
-                      </select>
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input
+                          placeholder="Buscar por nome ou código..."
+                          value={searchProduto}
+                          onChange={(e) => setSearchProduto(e.target.value)}
+                          className="pl-9 h-10 text-sm"
+                        />
+                      </div>
                       <Button
                         variant="outline"
                         size="sm"
@@ -260,6 +235,48 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
                         Novo
                       </Button>
                     </div>
+                    
+                    {searchProduto && (
+                      <div className="max-h-48 overflow-y-auto space-y-1 border rounded-lg p-2 bg-white">
+                        {produtos
+                          .filter(p => !produtosVinculados.some(pv => pv.id === p.id))
+                          .filter(p => {
+                            const search = searchProduto.toLowerCase();
+                            return p.nome?.toLowerCase().includes(search) ||
+                                   p.codigo?.toLowerCase().includes(search);
+                          })
+                          .map(p => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                handleAddProduto(p.id);
+                                setSearchProduto('');
+                              }}
+                              className="w-full text-left p-2 hover:bg-slate-100 rounded text-sm flex items-center justify-between"
+                            >
+                              <span>
+                                {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
+                                {p.nome}
+                              </span>
+                              <span className="text-green-600 font-semibold text-xs">
+                                R$ {p.valor?.toFixed(2)}
+                              </span>
+                            </button>
+                          ))}
+                        {produtos
+                          .filter(p => !produtosVinculados.some(pv => pv.id === p.id))
+                          .filter(p => {
+                            const search = searchProduto.toLowerCase();
+                            return p.nome?.toLowerCase().includes(search) ||
+                                   p.codigo?.toLowerCase().includes(search);
+                          }).length === 0 && (
+                          <p className="text-center py-2 text-slate-500 text-sm">
+                            Nenhum produto encontrado
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
