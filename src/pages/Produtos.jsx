@@ -40,7 +40,8 @@ import {
   Trash2,
   Upload,
   Loader2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  AlertTriangle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -70,6 +71,13 @@ export default function Produtos() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [showDeleteMultiple, setShowDeleteMultiple] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState(0);
+  const [deleteStats, setDeleteStats] = useState({
+    total: 0,
+    processed: 0,
+    success: 0,
+    errors: 0,
+    errorDetails: []
+  });
   const [importProgress, setImportProgress] = useState(0);
   const [importStats, setImportStats] = useState({
     total: 0,
@@ -79,6 +87,9 @@ export default function Produtos() {
     errors: 0,
     errorDetails: []
   });
+  const [preValidation, setPreValidation] = useState(null);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [pendingImport, setPendingImport] = useState(null);
   
   const [formData, setFormData] = useState({
     codigo: '',
@@ -127,23 +138,64 @@ export default function Produtos() {
   const deleteMultipleMutation = useMutation({
     mutationFn: async (ids) => {
       setDeleteProgress(0);
+      setDeleteStats({
+        total: ids.length,
+        processed: 0,
+        success: 0,
+        errors: 0,
+        errorDetails: []
+      });
+
       const total = ids.length;
+      let sucessos = 0;
+      const erros = [];
       
       for (let i = 0; i < ids.length; i++) {
-        await base44.entities.Produto.delete(ids[i]);
+        try {
+          const produto = produtos.find(p => p.id === ids[i]);
+          await base44.entities.Produto.delete(ids[i]);
+          sucessos++;
+        } catch (error) {
+          const produto = produtos.find(p => p.id === ids[i]);
+          erros.push({
+            codigo: produto?.codigo || 'N/A',
+            nome: produto?.nome || 'Produto não encontrado',
+            erro: 'Erro ao excluir (pode estar vinculado a orçamentos)'
+          });
+        }
+        
+        setDeleteStats({
+          total,
+          processed: i + 1,
+          success: sucessos,
+          errors: erros.length,
+          errorDetails: erros
+        });
         setDeleteProgress(((i + 1) / total) * 100);
       }
+
+      return { sucessos, erros };
     },
-    onSuccess: () => {
+    onSuccess: ({ sucessos, erros }) => {
       queryClient.invalidateQueries(['produtos']);
-      toast.success(`${selectedIds.length} produto(s) excluído(s)!`);
+      
+      if (erros.length === 0) {
+        toast.success(`✅ ${sucessos} produto(s) excluído(s) com sucesso!`);
+      } else {
+        toast.warning(`⚠️ ${sucessos} excluídos, ${erros.length} com erro. Veja o relatório.`);
+      }
+      
       setSelectedIds([]);
-      setShowDeleteMultiple(false);
-      setDeleteProgress(0);
+      setTimeout(() => {
+        if (erros.length === 0) {
+          setShowDeleteMultiple(false);
+          setDeleteProgress(0);
+          setDeleteStats({ total: 0, processed: 0, success: 0, errors: 0, errorDetails: [] });
+        }
+      }, 3000);
     },
     onError: () => {
-      setDeleteProgress(0);
-      toast.error('Erro ao excluir produtos');
+      toast.error('Erro crítico ao processar exclusões');
     }
   });
 
@@ -238,21 +290,7 @@ export default function Produtos() {
     }
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsImporting(true);
-    setImportProgress(0);
-    setImportStats({
-      total: 0,
-      processed: 0,
-      success: 0,
-      updated: 0,
-      errors: 0,
-      errorDetails: []
-    });
-
+  const validateAndPrepareImport = async (file) => {
     try {
       // Ler arquivo com encoding UTF-8
       const text = await file.text();
@@ -260,8 +298,7 @@ export default function Produtos() {
       
       if (lines.length < 2) {
         toast.error('Arquivo vazio ou inválido');
-        setIsImporting(false);
-        return;
+        return null;
       }
 
       const headers = lines[0].split(/[,;]/).map(h => h.trim().toLowerCase().replace(/"/g, ''));
@@ -275,13 +312,13 @@ export default function Produtos() {
 
       if (codigoIdx === -1 || nomeIdx === -1 || valorIdx === -1) {
         toast.error('O arquivo deve ter colunas "codigo", "nome" e "valor"');
-        setIsImporting(false);
-        return;
+        return null;
       }
 
       // Parse e validação de produtos
-      const produtosParaImportar = [];
+      const produtosValidos = [];
       const erros = [];
+      const codigosNaPlanilha = new Set();
       
       for (let i = 1; i < lines.length; i++) {
         const lineNumber = i + 1;
@@ -293,28 +330,36 @@ export default function Produtos() {
           
           // Validações
           if (!codigo) {
-            erros.push({ linha: lineNumber, erro: 'Código obrigatório' });
+            erros.push({ linha: lineNumber, codigo: '-', erro: 'Código obrigatório' });
             continue;
           }
+          
+          // Verificar duplicata na própria planilha
+          if (codigosNaPlanilha.has(codigo)) {
+            erros.push({ linha: lineNumber, codigo, erro: 'Código duplicado na planilha' });
+            continue;
+          }
+          codigosNaPlanilha.add(codigo);
+          
           if (!nome) {
-            erros.push({ linha: lineNumber, erro: 'Nome obrigatório' });
+            erros.push({ linha: lineNumber, codigo, erro: 'Nome obrigatório' });
             continue;
           }
           
           const valor = parseFloat(valorStr?.replace(',', '.'));
           if (!valor || valor <= 0) {
-            erros.push({ linha: lineNumber, erro: 'Valor inválido ou menor que zero' });
+            erros.push({ linha: lineNumber, codigo, erro: 'Valor inválido ou ≤ 0' });
             continue;
           }
           
           const categoria = (values[categoriaIdx]?.trim() || 'outros').toLowerCase();
           const categoriasValidas = CATEGORIAS.map(c => c.value);
           if (!categoriasValidas.includes(categoria)) {
-            erros.push({ linha: lineNumber, erro: `Categoria "${categoria}" inválida. Use: ${categoriasValidas.join(', ')}` });
+            erros.push({ linha: lineNumber, codigo, erro: `Categoria inválida (use: ${categoriasValidas.slice(0, 3).join(', ')}, etc.)` });
             continue;
           }
           
-          produtosParaImportar.push({
+          produtosValidos.push({
             codigo,
             nome,
             categoria,
@@ -325,41 +370,26 @@ export default function Produtos() {
             ativo: true
           });
         } catch (err) {
-          erros.push({ linha: lineNumber, erro: 'Erro ao processar linha' });
+          erros.push({ linha: lineNumber, codigo: '-', erro: 'Erro ao processar linha' });
         }
       }
 
-      if (produtosParaImportar.length === 0) {
+      if (produtosValidos.length === 0) {
         toast.error('Nenhum produto válido encontrado no arquivo');
-        setIsImporting(false);
-        return;
+        return null;
       }
 
-      if (produtosParaImportar.length > 2000) {
-        toast.error(`Limite de 2000 produtos por importação. Arquivo contém ${produtosParaImportar.length} produtos válidos.`);
-        setIsImporting(false);
-        return;
+      if (produtosValidos.length > 2000) {
+        toast.error(`Limite de 2000 produtos por importação. Arquivo contém ${produtosValidos.length} produtos válidos.`);
+        return null;
       }
 
-      // Inicializar estatísticas
-      setImportStats({
-        total: produtosParaImportar.length,
-        processed: 0,
-        success: 0,
-        updated: 0,
-        errors: erros.length,
-        errorDetails: erros
-      });
-
-      // Buscar produtos existentes para detectar duplicatas
-      const produtosExistentes = produtos;
-      const codigosExistentes = new Map(produtosExistentes.map(p => [p.codigo, p]));
-
-      // Separar em novos e atualizações
+      // Detectar duplicatas com produtos existentes
+      const codigosExistentes = new Map(produtos.map(p => [p.codigo, p]));
       const novos = [];
       const atualizacoes = [];
       
-      for (const prod of produtosParaImportar) {
+      for (const prod of produtosValidos) {
         if (codigosExistentes.has(prod.codigo)) {
           const existente = codigosExistentes.get(prod.codigo);
           atualizacoes.push({ id: existente.id, data: prod });
@@ -368,27 +398,82 @@ export default function Produtos() {
         }
       }
 
-      // Importar em lotes com progresso detalhado
+      return {
+        validos: produtosValidos.length,
+        novos: novos.length,
+        atualizacoes: atualizacoes.length,
+        erros: erros.length,
+        errorDetails: erros,
+        data: { novos, atualizacoes }
+      };
+
+    } catch (error) {
+      toast.error('Erro ao ler arquivo. Verifique o formato e codificação UTF-8.');
+      return null;
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // PRÉ-VALIDAÇÃO
+    const validation = await validateAndPrepareImport(file);
+    
+    if (!validation) {
+      e.target.value = '';
+      return;
+    }
+
+    // Mostrar modal de confirmação
+    setPreValidation(validation);
+    setPendingImport({ novos: validation.data.novos, atualizacoes: validation.data.atualizacoes });
+    setShowValidationModal(true);
+    
+    e.target.value = '';
+  };
+
+  const executeImport = async () => {
+    if (!pendingImport) return;
+
+    setShowValidationModal(false);
+    setIsImporting(true);
+    setImportProgress(0);
+    setImportStats({
+      total: pendingImport.novos.length + pendingImport.atualizacoes.length,
+      processed: 0,
+      success: 0,
+      updated: 0,
+      errors: preValidation.erros,
+      errorDetails: preValidation.errorDetails
+    });
+
+    try {
+      const { novos, atualizacoes } = pendingImport;
+      const total = novos.length + atualizacoes.length;
+      
       const batchSize = 50;
       let processados = 0;
       let sucessos = 0;
       let atualizados = 0;
-      const errosImportacao = [...erros];
+      const errosImportacao = [...preValidation.errorDetails];
 
-      // Processar novos produtos
+      // Processar novos produtos em lotes
       for (let i = 0; i < novos.length; i += batchSize) {
         const batch = novos.slice(i, i + batchSize);
         try {
           await bulkCreateMutation.mutateAsync(batch);
           sucessos += batch.length;
-          processados += batch.length;
         } catch (err) {
-          errosImportacao.push({ 
-            linha: `Lote ${Math.floor(i / batchSize) + 1}`, 
-            erro: 'Erro ao criar produtos' 
-          });
-          processados += batch.length;
+          for (const item of batch) {
+            errosImportacao.push({ 
+              linha: '-',
+              codigo: item.codigo, 
+              erro: 'Erro ao criar produto' 
+            });
+          }
         }
+        processados += batch.length;
         
         setImportStats(prev => ({
           ...prev,
@@ -397,22 +482,22 @@ export default function Produtos() {
           errors: errosImportacao.length,
           errorDetails: errosImportacao
         }));
-        setImportProgress((processados / produtosParaImportar.length) * 100);
+        setImportProgress((processados / total) * 100);
       }
 
-      // Processar atualizações (uma a uma para precisão)
+      // Processar atualizações individualmente
       for (const { id, data } of atualizacoes) {
         try {
           await updateMutation.mutateAsync({ id, data });
           atualizados++;
-          processados++;
         } catch (err) {
           errosImportacao.push({ 
-            linha: `Código ${data.codigo}`, 
-            erro: 'Erro ao atualizar produto existente' 
+            linha: '-',
+            codigo: data.codigo, 
+            erro: 'Erro ao atualizar produto' 
           });
-          processados++;
         }
+        processados++;
         
         setImportStats(prev => ({
           ...prev,
@@ -421,25 +506,36 @@ export default function Produtos() {
           errors: errosImportacao.length,
           errorDetails: errosImportacao
         }));
-        setImportProgress((processados / produtosParaImportar.length) * 100);
+        setImportProgress((processados / total) * 100);
       }
 
       // Finalizar
       await queryClient.invalidateQueries(['produtos']);
       
-      // Mostrar resumo
       setTimeout(() => {
-        const mensagem = `✅ Importação concluída!\n${sucessos} criados, ${atualizados} atualizados${errosImportacao.length > 0 ? `, ${errosImportacao.length} erros` : ''}`;
-        toast.success(mensagem);
-        setIsImporting(false);
+        const msg = sucessos + atualizados > 0 
+          ? `✅ Importação concluída! ${sucessos} criados, ${atualizados} atualizados${errosImportacao.length > 0 ? `, ${errosImportacao.length} com erro` : ''}`
+          : '❌ Nenhum produto foi importado';
+        
+        if (sucessos + atualizados > 0) {
+          toast.success(msg);
+        } else {
+          toast.error(msg);
+        }
+        
+        if (errosImportacao.length === 0) {
+          setIsImporting(false);
+          setImportProgress(0);
+        }
       }, 500);
 
     } catch (error) {
-      toast.error('Erro ao processar arquivo. Verifique o formato e tente novamente.');
+      toast.error('Erro crítico durante importação');
       setIsImporting(false);
     }
     
-    e.target.value = '';
+    setPendingImport(null);
+    setPreValidation(null);
   };
 
   const downloadTemplate = () => {
@@ -845,51 +941,199 @@ export default function Produtos() {
 
       {/* Delete Multiple Confirmation */}
       <AlertDialog open={showDeleteMultiple} onOpenChange={setShowDeleteMultiple}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir {selectedIds.length} produto(s)?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação não pode ser desfeita. Todos os produtos selecionados serão excluídos permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
           {deleteMultipleMutation.isPending && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">Excluindo produtos...</span>
-                <span className="font-semibold text-slate-700">{Math.round(deleteProgress)}%</span>
+            <div className="space-y-3 py-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-slate-700">
+                  Excluindo item {deleteStats.processed} de {deleteStats.total}
+                </span>
+                <span className="text-sm font-bold text-slate-900">{Math.round(deleteProgress)}%</span>
               </div>
+              
               <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
                 <div 
                   className="bg-red-500 h-full transition-all duration-300 rounded-full"
                   style={{ width: `${deleteProgress}%` }}
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-green-50 rounded p-2 text-center">
+                  <div className="text-lg font-bold text-green-700">{deleteStats.success}</div>
+                  <div className="text-xs text-green-600">Excluídos</div>
+                </div>
+                <div className="bg-red-50 rounded p-2 text-center">
+                  <div className="text-lg font-bold text-red-700">{deleteStats.errors}</div>
+                  <div className="text-xs text-red-600">Erros</div>
+                </div>
+              </div>
+
               <p className="text-xs text-slate-500 text-center">
                 Por favor, aguarde. Não feche esta janela.
               </p>
             </div>
           )}
+
+          {!deleteMultipleMutation.isPending && deleteStats.errorDetails.length > 0 && (
+            <div className="border-t pt-4">
+              <h4 className="text-sm font-semibold text-red-700 mb-2">
+                ⚠️ Relatório de Erros ({deleteStats.errorDetails.length})
+              </h4>
+              <div className="max-h-40 overflow-y-auto bg-red-50 rounded p-3 space-y-1">
+                {deleteStats.errorDetails.map((err, idx) => (
+                  <div key={idx} className="text-xs">
+                    <strong className="text-red-800">{err.codigo} - {err.nome}:</strong>
+                    <span className="text-red-600 ml-1">{err.erro}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-600 mt-2">
+                💡 Produtos podem estar vinculados a orçamentos existentes
+              </p>
+            </div>
+          )}
+          
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMultipleMutation.isPending}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => deleteMultipleMutation.mutate(selectedIds)}
+            <AlertDialogCancel 
               disabled={deleteMultipleMutation.isPending}
-              className="bg-red-500 hover:bg-red-600"
+              onClick={() => {
+                setDeleteProgress(0);
+                setDeleteStats({ total: 0, processed: 0, success: 0, errors: 0, errorDetails: [] });
+              }}
             >
-              {deleteMultipleMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Excluindo...
-                </>
-              ) : (
-                'Excluir Todos'
-              )}
-            </AlertDialogAction>
+              {deleteStats.errorDetails.length > 0 ? 'Fechar' : 'Cancelar'}
+            </AlertDialogCancel>
+            {deleteStats.errorDetails.length === 0 && (
+              <AlertDialogAction 
+                onClick={() => deleteMultipleMutation.mutate(selectedIds)}
+                disabled={deleteMultipleMutation.isPending}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                {deleteMultipleMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Excluindo...
+                  </>
+                ) : (
+                  'Confirmar Exclusão'
+                )}
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Validation Modal */}
+      <Dialog open={showValidationModal} onOpenChange={setShowValidationModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {preValidation?.erros === 0 ? '✅' : '⚠️'} Validação da Importação
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Summary */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-blue-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-blue-700">{preValidation?.novos || 0}</div>
+                <div className="text-xs text-blue-600">Novos produtos</div>
+              </div>
+              <div className="bg-amber-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-amber-700">{preValidation?.atualizacoes || 0}</div>
+                <div className="text-xs text-amber-600">Atualizações</div>
+              </div>
+              <div className="bg-red-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-red-700">{preValidation?.erros || 0}</div>
+                <div className="text-xs text-red-600">Com erro</div>
+              </div>
+            </div>
+
+            {/* Error Details */}
+            {preValidation?.erros > 0 && (
+              <div className="border border-red-200 rounded-lg p-4 bg-red-50">
+                <h4 className="font-semibold text-red-800 mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Erros Encontrados ({preValidation.erros})
+                </h4>
+                <div className="max-h-64 overflow-y-auto space-y-2">
+                  {preValidation.errorDetails.slice(0, 20).map((err, idx) => (
+                    <div key={idx} className="text-sm bg-white rounded p-2 border border-red-100">
+                      <div className="flex items-start gap-2">
+                        <span className="font-mono text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
+                          Linha {err.linha}
+                        </span>
+                        {err.codigo !== '-' && (
+                          <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                            {err.codigo}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-red-600 mt-1 text-xs">{err.erro}</p>
+                    </div>
+                  ))}
+                  {preValidation.errorDetails.length > 20 && (
+                    <p className="text-xs text-red-600 text-center italic">
+                      ... e mais {preValidation.errorDetails.length - 20} erro(s)
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Confirmation Message */}
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+              <p className="text-sm text-slate-700">
+                {preValidation?.erros === 0 ? (
+                  <>
+                    ✅ <strong>Todos os {preValidation?.validos} registros estão válidos!</strong>
+                    <br />
+                    Deseja iniciar a importação?
+                  </>
+                ) : (
+                  <>
+                    ⚠️ <strong>Foram encontrados {preValidation?.erros} erro(s).</strong>
+                    <br />
+                    Deseja continuar a importação dos {preValidation?.validos} registros válidos?
+                    <br />
+                    <span className="text-xs text-slate-500 mt-1 block">
+                      Os registros com erro serão ignorados automaticamente.
+                    </span>
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowValidationModal(false);
+                setPendingImport(null);
+                setPreValidation(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={executeImport}
+              className="bg-orange-500 hover:bg-orange-600"
+              disabled={preValidation?.validos === 0}
+            >
+              {preValidation?.erros > 0 ? 'Importar Apenas Válidos' : 'Confirmar Importação'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
