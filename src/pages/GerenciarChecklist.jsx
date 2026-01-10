@@ -19,7 +19,8 @@ import {
   X,
   Upload,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Search
 } from 'lucide-react';
 import {
   Dialog,
@@ -53,6 +54,7 @@ export default function GerenciarChecklist() {
     produtos_padrao: [],
     ativo: true
   });
+  const [searchProduto, setSearchProduto] = React.useState('');
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
@@ -409,24 +411,53 @@ export default function GerenciarChecklist() {
             <div>
               <Label>Produtos Padrão (Opcionais)</Label>
               <p className="text-xs text-slate-500 mb-2">Produtos sugeridos quando este item tiver defeito</p>
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Buscar por nome ou código..."
+                  value={searchProduto}
+                  onChange={(e) => setSearchProduto(e.target.value)}
+                  className="pl-9 h-10 text-sm"
+                />
+              </div>
               <div className="border rounded-lg p-2 max-h-40 overflow-y-auto space-y-1">
-                {produtos.map(p => (
-                  <label key={p.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.produtos_padrao.includes(p.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData(prev => ({ ...prev, produtos_padrao: [...prev.produtos_padrao, p.id] }));
-                        } else {
-                          setFormData(prev => ({ ...prev, produtos_padrao: prev.produtos_padrao.filter(id => id !== p.id) }));
-                        }
-                      }}
-                      className="rounded"
-                    />
-                    <span className="text-sm">{p.nome}</span>
-                  </label>
-                ))}
+                {produtos
+                  .filter(p => {
+                    if (!searchProduto) return true;
+                    const search = searchProduto.toLowerCase();
+                    return p.nome?.toLowerCase().includes(search) ||
+                           p.codigo?.toLowerCase().includes(search);
+                  })
+                  .map(p => (
+                    <label key={p.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.produtos_padrao.includes(p.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData(prev => ({ ...prev, produtos_padrao: [...prev.produtos_padrao, p.id] }));
+                          } else {
+                            setFormData(prev => ({ ...prev, produtos_padrao: prev.produtos_padrao.filter(id => id !== p.id) }));
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <span className="text-sm">
+                        {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
+                        {p.nome}
+                      </span>
+                    </label>
+                  ))}
+                {produtos.filter(p => {
+                  if (!searchProduto) return true;
+                  const search = searchProduto.toLowerCase();
+                  return p.nome?.toLowerCase().includes(search) ||
+                         p.codigo?.toLowerCase().includes(search);
+                }).length === 0 && (
+                  <p className="text-center py-2 text-slate-500 text-sm">
+                    Nenhum produto encontrado
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-between">
