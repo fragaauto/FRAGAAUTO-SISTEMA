@@ -69,6 +69,7 @@ export default function Produtos() {
   const [isImporting, setIsImporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [showDeleteMultiple, setShowDeleteMultiple] = useState(false);
+  const [deleteProgress, setDeleteProgress] = useState(0);
   
   const [formData, setFormData] = useState({
     codigo: '',
@@ -116,8 +117,12 @@ export default function Produtos() {
 
   const deleteMultipleMutation = useMutation({
     mutationFn: async (ids) => {
-      for (const id of ids) {
-        await base44.entities.Produto.delete(id);
+      setDeleteProgress(0);
+      const total = ids.length;
+      
+      for (let i = 0; i < ids.length; i++) {
+        await base44.entities.Produto.delete(ids[i]);
+        setDeleteProgress(((i + 1) / total) * 100);
       }
     },
     onSuccess: () => {
@@ -125,6 +130,11 @@ export default function Produtos() {
       toast.success(`${selectedIds.length} produto(s) excluído(s)!`);
       setSelectedIds([]);
       setShowDeleteMultiple(false);
+      setDeleteProgress(0);
+    },
+    onError: () => {
+      setDeleteProgress(0);
+      toast.error('Erro ao excluir produtos');
     }
   });
 
@@ -613,8 +623,27 @@ export default function Produtos() {
               Esta ação não pode ser desfeita. Todos os produtos selecionados serão excluídos permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteMultipleMutation.isPending && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-600">Excluindo produtos...</span>
+                <span className="font-semibold text-slate-700">{Math.round(deleteProgress)}%</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                <div 
+                  className="bg-red-500 h-full transition-all duration-300 rounded-full"
+                  style={{ width: `${deleteProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-slate-500 text-center">
+                Por favor, aguarde. Não feche esta janela.
+              </p>
+            </div>
+          )}
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMultipleMutation.isPending}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => deleteMultipleMutation.mutate(selectedIds)}
               disabled={deleteMultipleMutation.isPending}
