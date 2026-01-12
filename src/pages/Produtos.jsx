@@ -809,11 +809,14 @@ export default function Produtos() {
         try {
           await updateMutation.mutateAsync({ id, data });
           atualizados++;
+          console.log(`🔄 Atualizado: ${data.codigo} - ${data.nome}`);
         } catch (err) {
+          console.error(`❌ Erro ao atualizar ${data.codigo}:`, err);
           errosImportacao.push({ 
             linha: '-',
-            codigo: data.codigo, 
-            erro: 'Erro ao atualizar produto' 
+            codigo: data.codigo,
+            nome: data.nome,
+            erro: `Erro ao atualizar: ${err.message || 'Erro desconhecido'}`
           });
         }
         processados++;
