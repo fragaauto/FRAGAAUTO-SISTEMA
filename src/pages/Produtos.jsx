@@ -595,8 +595,32 @@ export default function Produtos() {
 
       const totalValidos = produtosValidos.length + produtosComAviso.length;
       
+      console.log('📊 Resultado da validação:', {
+        validos: produtosValidos.length,
+        comAvisos: produtosComAviso.length,
+        erros: errosCriticos.length,
+        total: totalValidos
+      });
+      
       if (totalValidos === 0) {
-        toast.error('Nenhum produto válido encontrado no arquivo');
+        const msgErro = errosCriticos.length > 0 
+          ? `Nenhum produto válido. ${errosCriticos.length} erro(s) encontrado(s). Veja os detalhes.`
+          : 'Nenhum produto válido encontrado no arquivo';
+        toast.error(msgErro);
+        
+        // Retornar com erros para mostrar no modal
+        if (errosCriticos.length > 0) {
+          return {
+            validos: 0,
+            comAvisos: 0,
+            novos: 0,
+            atualizacoes: 0,
+            erros: errosCriticos.length,
+            errorDetails: errosCriticos,
+            avisoDetails: [],
+            data: { novos: [], atualizacoes: [], novosComAviso: [], atualizacoesComAviso: [] }
+          };
+        }
         return null;
       }
 
