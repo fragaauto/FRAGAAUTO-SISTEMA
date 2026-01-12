@@ -324,6 +324,7 @@ export default function Produtos() {
       }
 
       // Parser CSV robusto que respeita aspas e vírgulas dentro de campos
+      // CRÍTICO: Preservar UTF-8 - não fazer nenhuma conversão de encoding
       const parseCSVLine = (line) => {
         const result = [];
         let current = '';
@@ -341,13 +342,21 @@ export default function Produtos() {
               inQuotes = !inQuotes;
             }
           } else if ((char === ',' || char === ';') && !inQuotes) {
-            result.push(current.trim());
+            // Remover aspas duplas do início e fim, mas preservar o conteúdo UTF-8
+            const trimmed = current.trim();
+            result.push(trimmed.startsWith('"') && trimmed.endsWith('"') 
+              ? trimmed.slice(1, -1) 
+              : trimmed);
             current = '';
           } else {
             current += char;
           }
         }
-        result.push(current.trim());
+        // Processar último campo
+        const trimmed = current.trim();
+        result.push(trimmed.startsWith('"') && trimmed.endsWith('"') 
+          ? trimmed.slice(1, -1) 
+          : trimmed);
         return result;
       };
 
