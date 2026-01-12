@@ -1282,14 +1282,16 @@ export default function VerAtendimento() {
 
                 {/* Pre-diagnosis */}
                 {atendimento.pre_diagnostico && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Pré-Diagnóstico</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-slate-700 whitespace-pre-wrap">{atendimento.pre_diagnostico}</p>
-                    </CardContent>
-                  </Card>
+                  {atendimento.pre_diagnostico && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Pré-Diagnóstico</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-slate-700 whitespace-pre-wrap">{atendimento.pre_diagnostico}</p>
+                      </CardContent>
+                    </Card>
+                  )}
                 )}
               </>
             )}
@@ -1440,18 +1442,32 @@ export default function VerAtendimento() {
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {atendimento.itens_orcamento?.map((item, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                            <div>
-                              <p className="font-medium">{item.nome}</p>
-                              <p className="text-sm text-slate-500">
-                                {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                          <div key={idx} className="space-y-2">
+                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                              <div>
+                                <p className="font-medium">{item.nome}</p>
+                                <p className="text-sm text-slate-500">
+                                  {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                                </p>
+                              </div>
+                              <p className="font-bold text-green-600">
+                                R$ {item.valor_total?.toFixed(2)}
                               </p>
                             </div>
-                            <p className="font-bold text-green-600">
-                              R$ {item.valor_total?.toFixed(2)}
-                            </p>
+                            {item.vantagens && (
+                              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
+                                <p className="text-sm text-green-700">{item.vantagens}</p>
+                              </div>
+                            )}
+                            {item.desvantagens && (
+                              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                                <p className="text-sm text-amber-700">{item.desvantagens}</p>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

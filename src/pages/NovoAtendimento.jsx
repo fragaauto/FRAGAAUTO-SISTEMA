@@ -577,29 +577,35 @@ export default function NovoAtendimento() {
                     </div>
                   ) : (
                     formData.itens_queixa.map((item, index) => (
-                     <div key={index}>
-                       <ItemOrcamento
-                         item={item}
-                         onUpdate={(updated) => {
-                           setFormData(prev => ({
-                             ...prev,
-                             itens_queixa: prev.itens_queixa.map((it, i) => i === index ? updated : it)
-                           }));
-                         }}
-                         onRemove={() => {
-                           setFormData(prev => ({
-                             ...prev,
-                             itens_queixa: prev.itens_queixa.filter((_, i) => i !== index)
-                           }));
-                         }}
-                       />
-                       {item.desvantagens && (
-                         <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                           <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
-                           <p className="text-sm text-amber-700">{item.desvantagens}</p>
-                         </div>
-                       )}
-                     </div>
+                    <div key={index}>
+                      <ItemOrcamento
+                        item={item}
+                        onUpdate={(updated) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            itens_queixa: prev.itens_queixa.map((it, i) => i === index ? updated : it)
+                          }));
+                        }}
+                        onRemove={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            itens_queixa: prev.itens_queixa.filter((_, i) => i !== index)
+                          }));
+                        }}
+                      />
+                      {item.vantagens && (
+                        <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
+                          <p className="text-sm text-green-700">{item.vantagens}</p>
+                        </div>
+                      )}
+                      {item.desvantagens && (
+                        <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                          <p className="text-sm text-amber-700">{item.desvantagens}</p>
+                        </div>
+                      )}
+                    </div>
                     ))
                   )}
                 </CardContent>
@@ -768,6 +774,12 @@ export default function NovoAtendimento() {
                               onUpdate={(updated) => handleUpdateItem(index, updated)}
                               onRemove={() => handleRemoveItem(index)}
                             />
+                            {item.vantagens && (
+                              <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
+                                <p className="text-sm text-green-700">{item.vantagens}</p>
+                              </div>
+                            )}
                             {item.desvantagens && (
                               <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                                 <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
