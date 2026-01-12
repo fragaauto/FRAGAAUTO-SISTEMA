@@ -761,10 +761,12 @@ export default function Produtos() {
   };
 
   const downloadTemplate = () => {
+    // Adicionar BOM UTF-8 para garantir que Excel abra corretamente com acentos
+    const BOM = '\uFEFF';
     const csvContent = `codigo;nome;categoria;valor;descricao;vantagens;desvantagens
 P001;"Troca de motor de vidro elétrico";"eletrica";150.00;"Serviço completo de substituição";"Restaura o funcionamento completo do vidro, evita acidentes e melhora o conforto";"Sem o reparo, o vidro pode travar aberto ou fechado, comprometendo segurança e conforto"
 P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora o fechamento da porta, evita desgaste prematuro das travas";"Porta pode não fechar corretamente, permitindo entrada de água, sujeira e até furtos"`;
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'modelo_produtos.csv';
