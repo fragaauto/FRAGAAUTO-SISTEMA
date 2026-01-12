@@ -293,6 +293,8 @@ export default function Produtos() {
   };
 
   const validateAndPrepareImport = async (file) => {
+    console.log('🔍 Iniciando validação do arquivo:', file.name);
+    
     try {
       const fileName = file.name.toLowerCase();
       const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
@@ -300,17 +302,37 @@ export default function Produtos() {
       let lines = [];
       
       if (isExcel) {
-        // Processar arquivo Excel
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array', codepage: 65001 }); // UTF-8
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        
-        // Converter para CSV mantendo UTF-8
-        const csvText = XLSX.utils.sheet_to_csv(worksheet, { FS: ';', RS: '\n' });
-        lines = csvText.split('\n').filter(line => line.trim());
+        console.log('📊 Processando arquivo Excel...');
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, { 
+            type: 'array',
+            codepage: 65001, // UTF-8
+            raw: false // Processar como strings, não números brutos
+          });
+          
+          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            throw new Error('Arquivo Excel vazio ou sem planilhas');
+          }
+          
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          
+          // Converter para CSV mantendo UTF-8
+          const csvText = XLSX.utils.sheet_to_csv(worksheet, { 
+            FS: ';', 
+            RS: '\n',
+            blankrows: false // Ignorar linhas vazias
+          });
+          
+          lines = csvText.split('\n').filter(line => line.trim());
+          console.log(`✅ Excel processado: ${lines.length} linhas`);
+        } catch (excelError) {
+          console.error('❌ Erro ao processar Excel:', excelError);
+          throw new Error(`Erro ao ler Excel: ${excelError.message}`);
+        }
       } else {
-        // Processar arquivo CSV
+        console.log('📄 Processando arquivo CSV...');
         const text = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -321,19 +343,16 @@ export default function Produtos() {
               result = result.substring(1);
             }
             
-            // Validar se é UTF-8 válido detectando caracteres corrompidos
-            if (result.includes('�') || /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(result)) {
-              reject(new Error('ENCODING_ERROR'));
-              return;
-            }
-            
             resolve(result);
           };
-          reader.onerror = reject;
-          // CRÍTICO: Forçar UTF-8 na leitura
+          reader.onerror = (error) => {
+            console.error('❌ Erro ao ler arquivo:', error);
+            reject(error);
+          };
           reader.readAsText(file, 'UTF-8');
         });
         lines = text.split('\n').filter(line => line.trim());
+        console.log(`✅ CSV lido: ${lines.length} linhas`);
       }
       
       if (lines.length < 2) {
