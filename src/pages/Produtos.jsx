@@ -363,6 +363,11 @@ export default function Produtos() {
             continue;
           }
           
+          // Validar tamanho do nome (aviso se muito longo)
+          if (nome.length > 150) {
+            avisos.push(`Nome muito longo (${nome.length} caracteres), será truncado para 150`);
+          }
+          
           const valor = parseFloat(valorStr?.replace(',', '.'));
           if (!valor || valor <= 0) {
             errosCriticos.push({ 
@@ -391,7 +396,7 @@ export default function Produtos() {
           
           const produto = {
             codigo,
-            nome,
+            nome: nome.substring(0, 150),
             categoria: categoriaFinal,
             valor,
             descricao: values[descricaoIdx]?.trim() || '',
