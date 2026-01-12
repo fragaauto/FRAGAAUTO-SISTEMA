@@ -1004,8 +1004,7 @@ export default function VerAtendimento() {
                     </AlertDialogContent>
                   </AlertDialog>
                 )}
-                </CardContent>
-              </Card>
+              </CardContent>
             </Card>
 
             {/* Histórico de Edições */}
