@@ -561,8 +561,6 @@ export default function Produtos() {
             avisos.push('Sem descrição');
           }
           
-          // CRÍTICO: Criar objeto do produto preservando UTF-8 original
-          // NÃO fazer nenhuma conversão de encoding
           const produto = {
             codigo,
             nome: nome.substring(0, 150),
@@ -573,14 +571,6 @@ export default function Produtos() {
             desvantagens: desvantagens.substring(0, 500),
             ativo: true
           };
-          
-          // Log final do produto para debug
-          console.log(`📦 Produto preparado [${codigo}]:`, {
-            nome: produto.nome,
-            vantagens_ok: !produto.vantagens.includes('�'),
-            desvantagens_ok: !produto.desvantagens.includes('�'),
-            utf8_valid: true
-          });
           
           if (avisos.length > 0) {
             produtosComAviso.push({
