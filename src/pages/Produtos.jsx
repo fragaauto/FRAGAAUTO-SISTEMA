@@ -470,17 +470,34 @@ export default function Produtos() {
           }
 
           // Validar vantagens e desvantagens (limite 500 caracteres)
-          // CRÍTICO: Garantir que estamos pegando do índice correto
-          const vantagens = (vantagensIdx !== -1 ? values[vantagensIdx]?.trim() : '') || '';
-          const desvantagens = (desvantagensIdx !== -1 ? values[desvantagensIdx]?.trim() : '') || '';
+          // CRÍTICO: NÃO converter encoding - preservar UTF-8 original
+          let vantagens = (vantagensIdx !== -1 ? values[vantagensIdx] : '') || '';
+          let desvantagens = (desvantagensIdx !== -1 ? values[desvantagensIdx] : '') || '';
+          
+          // Apenas trim (remover espaços), sem conversão de encoding
+          vantagens = vantagens.trim();
+          desvantagens = desvantagens.trim();
+          
+          // Validar se há caracteres corrompidos
+          if ((vantagens && vantagens.includes('�')) || (desvantagens && desvantagens.includes('�'))) {
+            errosCriticos.push({ 
+              linha: lineNumber, 
+              codigo, 
+              nome,
+              erro: 'Caracteres corrompidos detectados',
+              motivo: 'O arquivo não está em UTF-8. Salve o arquivo como UTF-8 e tente novamente.'
+            });
+            continue;
+          }
           
           // Debug: Log para verificar valores sendo importados
           if (vantagens || desvantagens) {
-            console.log(`Linha ${lineNumber} - ${codigo}:`, {
-              vantagens_length: vantagens.length,
-              desvantagens_length: desvantagens.length,
-              vantagens_preview: vantagens.substring(0, 50),
-              desvantagens_preview: desvantagens.substring(0, 50)
+            console.log(`✓ Linha ${lineNumber} - ${codigo} [UTF-8 OK]:`, {
+              vantagens_chars: vantagens.length,
+              desvantagens_chars: desvantagens.length,
+              vantagens_sample: vantagens.substring(0, 30) + '...',
+              desvantagens_sample: desvantagens.substring(0, 30) + '...',
+              encoding_ok: !vantagens.includes('�') && !desvantagens.includes('�')
             });
           }
 
