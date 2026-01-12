@@ -321,25 +321,23 @@ export default function Produtos() {
       const produtosComAviso = [];
       const errosCriticos = [];
       const codigosNaPlanilha = new Set();
+      let autoCodeCounter = 1;
       
       for (let i = 1; i < lines.length; i++) {
         const lineNumber = i + 1;
         try {
           const values = lines[i].split(/[,;]/).map(v => v.trim().replace(/^"|"$/g, ''));
-          const codigo = values[codigoIdx]?.trim();
+          let codigo = values[codigoIdx]?.trim();
           const nome = values[nomeIdx]?.trim();
           const valorStr = values[valorIdx]?.trim();
           
           // Validações CRÍTICAS (impedem importação)
+          let avisos = [];
+          
+          // Se não tem código, gerar automaticamente
           if (!codigo) {
-            errosCriticos.push({ 
-              linha: lineNumber, 
-              codigo: '-', 
-              nome: nome || '-',
-              erro: 'Código obrigatório faltando',
-              motivo: 'Todo produto precisa de um código único para identificação'
-            });
-            continue;
+            codigo = `AUTO_${String(autoCodeCounter++).padStart(4, '0')}`;
+            avisos.push('Código gerado automaticamente');
           }
           
           if (codigosNaPlanilha.has(codigo)) {
@@ -378,7 +376,6 @@ export default function Produtos() {
           }
           
           // Validações COM AVISO (permite importação)
-          let avisos = [];
           const categoria = (values[categoriaIdx]?.trim() || 'outros').toLowerCase();
           const categoriasValidas = CATEGORIAS.map(c => c.value);
           
