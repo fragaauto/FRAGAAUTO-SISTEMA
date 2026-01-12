@@ -582,12 +582,13 @@ export default function Produtos() {
             produtosValidos.push(produto);
           }
         } catch (err) {
+          console.error(`❌ Erro na linha ${lineNumber}:`, err);
           errosCriticos.push({ 
             linha: lineNumber, 
             codigo: '-', 
             nome: '-',
             erro: 'Erro ao processar linha',
-            motivo: 'Formato de dados inválido ou corrompido'
+            motivo: err.message || 'Formato de dados inválido ou corrompido'
           });
         }
       }
