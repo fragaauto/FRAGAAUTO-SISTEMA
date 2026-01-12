@@ -83,10 +83,15 @@ export default function GerenciarChecklist() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['checklist-items']);
+      toast.success(editingItem ? 'Item atualizado!' : 'Item criado!');
       setShowDialog(false);
       setEditingItem(null);
-      setFormData({ item: '', categoria: '', obrigatorio: false, ativo: true });
-      toast.success(editingItem ? 'Item atualizado!' : 'Item criado!');
+      setFormData({ item: '', categoria: '', obrigatorio: false, produtos_padrao: [], ativo: true });
+      setSearchProduto('');
+    },
+    onError: (error) => {
+      toast.error('Erro ao salvar item. Tente novamente.');
+      console.error('Erro ao salvar:', error);
     }
   });
 
@@ -95,6 +100,12 @@ export default function GerenciarChecklist() {
     onSuccess: () => {
       queryClient.invalidateQueries(['checklist-items']);
       toast.success('Item excluído!');
+      setDeleteId(null);
+    },
+    onError: (error) => {
+      toast.error('Erro ao excluir item. Tente novamente.');
+      console.error('Erro ao excluir:', error);
+      setDeleteId(null);
     }
   });
 
@@ -109,6 +120,11 @@ export default function GerenciarChecklist() {
     onSuccess: () => {
       queryClient.invalidateQueries(['checklist-items']);
       toast.success('Ordem atualizada!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao reordenar itens.');
+      console.error('Erro ao reordenar:', error);
+      queryClient.invalidateQueries(['checklist-items']);
     }
   });
 
@@ -148,6 +164,12 @@ export default function GerenciarChecklist() {
     onSuccess: (result) => {
       queryClient.invalidateQueries(['checklist-items']);
       toast.success(`${result.length} itens importados!`);
+      setIsImporting(false);
+    },
+    onError: (error) => {
+      toast.error('Erro ao importar itens.');
+      console.error('Erro ao importar:', error);
+      setIsImporting(false);
     }
   });
 
@@ -500,10 +522,7 @@ export default function GerenciarChecklist() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              deleteMutation.mutate(deleteId);
-              setDeleteId(null);
-            }}>
+            <AlertDialogAction onClick={() => deleteMutation.mutate(deleteId)}>
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
