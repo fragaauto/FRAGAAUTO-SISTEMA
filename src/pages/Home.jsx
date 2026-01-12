@@ -82,7 +82,11 @@ export default function Home() {
           >
             <div className="flex-1 text-center md:text-left">
               <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
-                <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
+                <img src="/logo.png" alt="Fraga Auto" className="w-12 h-12 rounded-xl object-cover" onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextElementSibling.style.display = 'flex';
+                }} />
+                <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center" style={{display: 'none'}}>
                   <Wrench className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-orange-400 font-semibold tracking-wider text-sm">SISTEMA DE GESTÃO</span>
