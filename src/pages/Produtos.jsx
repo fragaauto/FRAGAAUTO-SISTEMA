@@ -302,7 +302,35 @@ export default function Produtos() {
         return null;
       }
 
-      const headers = lines[0].split(/[,;]/).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+      // Parser CSV robusto que respeita aspas e vírgulas dentro de campos
+      const parseCSVLine = (line) => {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          const nextChar = line[i + 1];
+          
+          if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+              current += '"';
+              i++;
+            } else {
+              inQuotes = !inQuotes;
+            }
+          } else if ((char === ',' || char === ';') && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.trim());
+        return result;
+      };
+
+      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/"/g, '').normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
       const codigoIdx = headers.findIndex(h => h === 'codigo' || h === 'código');
       const nomeIdx = headers.findIndex(h => h === 'nome');
       const categoriaIdx = headers.findIndex(h => h === 'categoria');
@@ -323,10 +351,13 @@ export default function Produtos() {
       const codigosNaPlanilha = new Set();
       let autoCodeCounter = 1;
       
+      // Mapear produtos existentes por código para UPSERT
+      const produtosExistentesMap = new Map(produtos.map(p => [p.codigo, p]));
+      
       for (let i = 1; i < lines.length; i++) {
         const lineNumber = i + 1;
         try {
-          const values = lines[i].split(/[,;]/).map(v => v.trim().replace(/^"|"$/g, ''));
+          const values = parseCSVLine(lines[i]);
           let codigo = values[codigoIdx]?.trim();
           const nome = values[nomeIdx]?.trim();
           const valorStr = values[valorIdx]?.trim();
@@ -367,6 +398,32 @@ export default function Produtos() {
           if (nome.length > 150) {
             avisos.push(`Nome muito longo (${nome.length} caracteres), será truncado para 150`);
           }
+
+          // Validar vantagens e desvantagens (limite 500 caracteres)
+          const vantagens = values[vantagensIdx]?.trim() || '';
+          const desvantagens = values[desvantagensIdx]?.trim() || '';
+
+          if (vantagens.length > 500) {
+            errosCriticos.push({ 
+              linha: lineNumber, 
+              codigo, 
+              nome,
+              erro: `Vantagens muito longas (${vantagens.length} caracteres)`,
+              motivo: 'O campo "vantagens" deve ter no máximo 500 caracteres'
+            });
+            continue;
+          }
+
+          if (desvantagens.length > 500) {
+            errosCriticos.push({ 
+              linha: lineNumber, 
+              codigo, 
+              nome,
+              erro: `Desvantagens muito longas (${desvantagens.length} caracteres)`,
+              motivo: 'O campo "desvantagens" deve ter no máximo 500 caracteres'
+            });
+            continue;
+          }
           
           const valor = parseFloat(valorStr?.replace(',', '.'));
           if (!valor || valor <= 0) {
@@ -400,8 +457,8 @@ export default function Produtos() {
             categoria: categoriaFinal,
             valor,
             descricao: values[descricaoIdx]?.trim() || '',
-            vantagens: values[vantagensIdx]?.trim() || '',
-            desvantagens: values[desvantagensIdx]?.trim() || '',
+            vantagens: vantagens.substring(0, 500),
+            desvantagens: desvantagens.substring(0, 500),
             ativo: true
           };
           
@@ -437,8 +494,7 @@ export default function Produtos() {
         return null;
       }
 
-      // Detectar duplicatas com produtos existentes
-      const codigosExistentes = new Map(produtos.map(p => [p.codigo, p]));
+      // Detectar novos vs atualizações (UPSERT)
       const novos = [];
       const atualizacoes = [];
       const novosComAviso = [];
@@ -446,9 +502,9 @@ export default function Produtos() {
       
       // Produtos 100% válidos
       for (const prod of produtosValidos) {
-        if (codigosExistentes.has(prod.codigo)) {
-          const existente = codigosExistentes.get(prod.codigo);
-          atualizacoes.push({ id: existente.id, data: prod });
+        if (produtosExistentesMap.has(prod.codigo)) {
+          const existente = produtosExistentesMap.get(prod.codigo);
+          atualizacoes.push({ id: existente.id, data: prod, produtoExistente: existente });
         } else {
           novos.push(prod);
         }
@@ -457,9 +513,9 @@ export default function Produtos() {
       // Produtos com avisos
       for (const prod of produtosComAviso) {
         const { _avisos, _linha, ...produtoLimpo } = prod;
-        if (codigosExistentes.has(produtoLimpo.codigo)) {
-          const existente = codigosExistentes.get(produtoLimpo.codigo);
-          atualizacoesComAviso.push({ id: existente.id, data: produtoLimpo, avisos: _avisos, linha: _linha });
+        if (produtosExistentesMap.has(produtoLimpo.codigo)) {
+          const existente = produtosExistentesMap.get(produtoLimpo.codigo);
+          atualizacoesComAviso.push({ id: existente.id, data: produtoLimpo, avisos: _avisos, linha: _linha, produtoExistente: existente });
         } else {
           novosComAviso.push({ ...produtoLimpo, _avisos, _linha });
         }
@@ -604,10 +660,18 @@ export default function Produtos() {
           : '❌ Nenhum produto foi importado';
         
         if (sucessos + atualizados > 0) {
-          toast.success(msg);
+          toast.success(msg, { duration: 5000 });
         } else {
           toast.error(msg);
         }
+
+        // Log resumo no console para debug
+        console.log('📊 Resumo da Importação:', {
+          novos_criados: sucessos,
+          produtos_atualizados: atualizados,
+          erros: errosImportacao.length,
+          total_processado: sucessos + atualizados + errosImportacao.length
+        });
         
         if (errosImportacao.length === 0) {
           setIsImporting(false);
@@ -625,7 +689,9 @@ export default function Produtos() {
   };
 
   const downloadTemplate = () => {
-    const csvContent = "codigo;nome;categoria;valor;descricao;vantagens;desvantagens\nP001;Exemplo Serviço;eletrica;150.00;Descrição do serviço;Melhora a segurança;Pode causar falhas\nP002;Exemplo Produto;portas;89.90;Descrição do produto;Evita infiltrações;Danos ao veículo";
+    const csvContent = `codigo;nome;categoria;valor;descricao;vantagens;desvantagens
+P001;"Troca de motor de vidro elétrico";"eletrica";150.00;"Serviço completo de substituição";"Restaura o funcionamento completo do vidro, evita acidentes e melhora o conforto";"Sem o reparo, o vidro pode travar aberto ou fechado, comprometendo segurança e conforto"
+P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora o fechamento da porta, evita desgaste prematuro das travas";"Porta pode não fechar corretamente, permitindo entrada de água, sujeira e até furtos"`;
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -1128,7 +1194,7 @@ export default function Produtos() {
 
           <div className="space-y-4 py-2">
             {/* Summary */}
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-green-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-green-700">{preValidation?.validos || 0}</div>
                 <div className="text-xs text-green-600">100% válidos</div>
@@ -1141,13 +1207,34 @@ export default function Produtos() {
                 <div className="text-2xl font-bold text-blue-700">
                   {(preValidation?.novos || 0) + (preValidation?.data?.novosComAviso?.length || 0)}
                 </div>
-                <div className="text-xs text-blue-600">Novos</div>
+                <div className="text-xs text-blue-600">🆕 Novos</div>
               </div>
-              <div className="bg-red-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-red-700">{preValidation?.erros || 0}</div>
-                <div className="text-xs text-red-600">Erros críticos</div>
+              <div className="bg-purple-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-purple-700">
+                  {(preValidation?.atualizacoes || 0) + (preValidation?.data?.atualizacoesComAviso?.length || 0)}
+                </div>
+                <div className="text-xs text-purple-600">🔄 Atualizar</div>
               </div>
             </div>
+
+            {((preValidation?.atualizacoes || 0) + (preValidation?.data?.atualizacoesComAviso?.length || 0)) > 0 && (
+              <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <p className="text-sm text-purple-800 font-semibold">
+                  🔄 {(preValidation?.atualizacoes || 0) + (preValidation?.data?.atualizacoesComAviso?.length || 0)} produto(s) já existem e serão atualizados com as novas informações
+                </p>
+                <p className="text-xs text-purple-600 mt-1">
+                  Os produtos existentes serão localizados pelo código e terão seus dados substituídos pelos valores da planilha
+                </p>
+              </div>
+            )}
+
+            {preValidation?.erros > 0 && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800 font-semibold">
+                  ❌ {preValidation.erros} produto(s) com erros críticos NÃO serão importados
+                </p>
+              </div>
+            )}
 
             {/* Warnings Details */}
             {preValidation?.comAvisos > 0 && (
@@ -1233,30 +1320,41 @@ export default function Produtos() {
 
             {/* Confirmation Message */}
             <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-              <p className="text-sm text-slate-700">
+              <p className="text-sm font-semibold text-slate-900 mb-2">
+                📋 Resumo da Operação
+              </p>
+              <div className="space-y-1 text-sm text-slate-700">
                 {preValidation?.erros === 0 && preValidation?.comAvisos === 0 ? (
                   <>
-                    ✅ <strong>Todos os {preValidation?.validos} registros estão 100% válidos!</strong>
-                    <br />
-                    Pronto para importar.
+                    <p>✅ <strong>Todos os {preValidation?.validos} registros estão 100% válidos!</strong></p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {(preValidation?.novos || 0) > 0 && `🆕 ${preValidation.novos} novos produtos`}
+                      {(preValidation?.novos || 0) > 0 && (preValidation?.atualizacoes || 0) > 0 && ' • '}
+                      {(preValidation?.atualizacoes || 0) > 0 && `🔄 ${preValidation.atualizacoes} atualizações`}
+                    </p>
                   </>
                 ) : (
                   <>
                     {preValidation?.validos > 0 && (
-                      <>✅ <strong>{preValidation.validos} produto(s) válidos</strong><br /></>
+                      <p>✅ {preValidation.validos} produto(s) 100% válidos</p>
                     )}
                     {preValidation?.comAvisos > 0 && (
-                      <>⚠️ <strong>{preValidation.comAvisos} produto(s) com avisos</strong> (podem ser importados)<br /></>
+                      <p>⚠️ {preValidation.comAvisos} produto(s) com avisos (podem ser importados)</p>
                     )}
                     {preValidation?.erros > 0 && (
-                      <>❌ <strong>{preValidation.erros} produto(s) com erros críticos</strong> (não podem ser importados)<br /></>
+                      <p>❌ {preValidation.erros} produto(s) com erros críticos (não serão importados)</p>
                     )}
-                    <span className="text-xs text-slate-500 mt-2 block">
-                      Escolha se deseja importar apenas os válidos ou incluir também os produtos com avisos.
-                    </span>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {(preValidation?.novos || 0) + (preValidation?.data?.novosComAviso?.length || 0) > 0 && 
+                        `🆕 ${(preValidation?.novos || 0) + (preValidation?.data?.novosComAviso?.length || 0)} novos`}
+                      {((preValidation?.novos || 0) + (preValidation?.data?.novosComAviso?.length || 0) > 0) && 
+                       ((preValidation?.atualizacoes || 0) + (preValidation?.data?.atualizacoesComAviso?.length || 0) > 0) && ' • '}
+                      {(preValidation?.atualizacoes || 0) + (preValidation?.data?.atualizacoesComAviso?.length || 0) > 0 && 
+                        `🔄 ${(preValidation?.atualizacoes || 0) + (preValidation?.data?.atualizacoesComAviso?.length || 0)} atualizações`}
+                    </p>
                   </>
                 )}
-              </p>
+              </div>
             </div>
           </div>
 
@@ -1289,8 +1387,8 @@ export default function Produtos() {
               disabled={preValidation?.validos === 0}
             >
               {preValidation?.comAvisos > 0 
-                ? `Importar Apenas Válidos (${preValidation.validos})` 
-                : `Confirmar Importação (${preValidation?.validos || 0})`
+                ? `Importar Válidos (${preValidation.validos})` 
+                : `✓ Confirmar Importação (${preValidation?.validos || 0})`
               }
             </Button>
           </DialogFooter>
