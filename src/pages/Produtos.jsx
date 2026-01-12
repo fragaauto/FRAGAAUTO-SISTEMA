@@ -360,7 +360,8 @@ export default function Produtos() {
         return result;
       };
 
-      // Normalizar headers removendo acentos, espaços extras e convertendo para minúsculas
+      // Normalizar APENAS headers (não o conteúdo!) removendo acentos para mapeamento
+      // CRÍTICO: Esta normalização é APENAS para comparar nomes de colunas, NÃO para dados
       const normalizeHeader = (header) => {
         return header
           .toLowerCase()
@@ -368,7 +369,7 @@ export default function Produtos() {
           .replace(/"/g, '')
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '')
-          .replace(/\s+/g, '_'); // Substituir espaços por underscores
+          .replace(/\s+/g, '_');
       };
       
       const rawHeaders = parseCSVLine(lines[0]);
