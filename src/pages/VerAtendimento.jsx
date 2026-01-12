@@ -166,9 +166,15 @@ export default function VerAtendimento() {
 
   const atualizarItemQueixaEdit = (index, field, value) => {
     const novosItens = [...itensQueixaEdit];
-    novosItens[index] = { ...novosItens[index], [field]: value };
+    if (field === 'quantidade') {
+      const qtd = value === '' ? '' : Math.max(1, parseInt(value) || 1);
+      novosItens[index] = { ...novosItens[index], [field]: qtd };
+    } else {
+      novosItens[index] = { ...novosItens[index], [field]: value };
+    }
     if (field === 'quantidade' || field === 'valor_unitario') {
-      novosItens[index].valor_total = (novosItens[index].quantidade || 0) * (novosItens[index].valor_unitario || 0);
+      const quantidade = novosItens[index].quantidade === '' ? 0 : novosItens[index].quantidade;
+      novosItens[index].valor_total = quantidade * (novosItens[index].valor_unitario || 0);
     }
     setItensQueixaEdit(novosItens);
   };
@@ -208,9 +214,15 @@ export default function VerAtendimento() {
 
   const atualizarItemOrcamentoEdit = (index, field, value) => {
     const novosItens = [...itensOrcamentoEdit];
-    novosItens[index] = { ...novosItens[index], [field]: value };
+    if (field === 'quantidade') {
+      const qtd = value === '' ? '' : Math.max(1, parseInt(value) || 1);
+      novosItens[index] = { ...novosItens[index], [field]: qtd };
+    } else {
+      novosItens[index] = { ...novosItens[index], [field]: value };
+    }
     if (field === 'quantidade' || field === 'valor_unitario') {
-      novosItens[index].valor_total = (novosItens[index].quantidade || 0) * (novosItens[index].valor_unitario || 0);
+      const quantidade = novosItens[index].quantidade === '' ? 0 : novosItens[index].quantidade;
+      novosItens[index].valor_total = quantidade * (novosItens[index].valor_unitario || 0);
     }
     setItensOrcamentoEdit(novosItens);
   };
@@ -1073,10 +1085,16 @@ export default function VerAtendimento() {
                                 <Label className="text-xs">Quantidade</Label>
                                 <Input
                                   type="number"
+                                  inputMode="numeric"
                                   min="1"
                                   value={item.quantidade}
-                                  onChange={(e) => atualizarItemQueixaEdit(idx, 'quantidade', parseInt(e.target.value) || 1)}
+                                  onChange={(e) => atualizarItemQueixaEdit(idx, 'quantidade', e.target.value)}
                                   onFocus={(e) => e.target.select()}
+                                  onBlur={(e) => {
+                                    if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                                      atualizarItemQueixaEdit(idx, 'quantidade', 1);
+                                    }
+                                  }}
                                   className="h-9"
                                 />
                               </div>
@@ -1368,10 +1386,16 @@ export default function VerAtendimento() {
                                 <Label className="text-xs">Quantidade</Label>
                                 <Input
                                   type="number"
+                                  inputMode="numeric"
                                   min="1"
                                   value={item.quantidade}
-                                  onChange={(e) => atualizarItemOrcamentoEdit(idx, 'quantidade', parseInt(e.target.value) || 1)}
+                                  onChange={(e) => atualizarItemOrcamentoEdit(idx, 'quantidade', e.target.value)}
                                   onFocus={(e) => e.target.select()}
+                                  onBlur={(e) => {
+                                    if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                                      atualizarItemOrcamentoEdit(idx, 'quantidade', 1);
+                                    }
+                                  }}
                                   className="h-9"
                                 />
                               </div>
