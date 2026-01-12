@@ -294,30 +294,47 @@ export default function Produtos() {
 
   const validateAndPrepareImport = async (file) => {
     try {
-      // Ler arquivo com encoding UTF-8 forçado
-      const text = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          let result = e.target.result;
-          
-          // Remover BOM UTF-8 se presente (0xFEFF)
-          if (result.charCodeAt(0) === 0xFEFF) {
-            result = result.substring(1);
-          }
-          
-          // Validar se é UTF-8 válido detectando caracteres corrompidos
-          if (result.includes('�') || /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(result)) {
-            reject(new Error('ENCODING_ERROR'));
-            return;
-          }
-          
-          resolve(result);
-        };
-        reader.onerror = reject;
-        // CRÍTICO: Forçar UTF-8 na leitura
-        reader.readAsText(file, 'UTF-8');
-      });
-      const lines = text.split('\n').filter(line => line.trim());
+      const fileName = file.name.toLowerCase();
+      const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+      
+      let lines = [];
+      
+      if (isExcel) {
+        // Processar arquivo Excel
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array', codepage: 65001 }); // UTF-8
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        
+        // Converter para CSV mantendo UTF-8
+        const csvText = XLSX.utils.sheet_to_csv(worksheet, { FS: ';', RS: '\n' });
+        lines = csvText.split('\n').filter(line => line.trim());
+      } else {
+        // Processar arquivo CSV
+        const text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            let result = e.target.result;
+            
+            // Remover BOM UTF-8 se presente (0xFEFF)
+            if (result.charCodeAt(0) === 0xFEFF) {
+              result = result.substring(1);
+            }
+            
+            // Validar se é UTF-8 válido detectando caracteres corrompidos
+            if (result.includes('�') || /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(result)) {
+              reject(new Error('ENCODING_ERROR'));
+              return;
+            }
+            
+            resolve(result);
+          };
+          reader.onerror = reject;
+          // CRÍTICO: Forçar UTF-8 na leitura
+          reader.readAsText(file, 'UTF-8');
+        });
+        lines = text.split('\n').filter(line => line.trim());
+      }
       
       if (lines.length < 2) {
         toast.error('Arquivo vazio ou inválido');
