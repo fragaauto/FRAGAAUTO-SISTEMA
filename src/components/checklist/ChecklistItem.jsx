@@ -76,7 +76,8 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
 
   const handleProdutoQuantidade = (index, quantidade) => {
     const novosProdutos = [...produtosVinculados];
-    novosProdutos[index] = { ...novosProdutos[index], quantidade: parseInt(quantidade) || 1 };
+    const qtd = quantidade === '' ? '' : Math.max(1, parseInt(quantidade) || 1);
+    novosProdutos[index] = { ...novosProdutos[index], quantidade: qtd };
     onChange({
       ...value,
       item: item.item,
@@ -189,10 +190,16 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
                           <div className="flex items-center gap-2 mt-2">
                             <input
                               type="number"
+                              inputMode="numeric"
                               min="1"
                               value={pv.quantidade}
                               onChange={(e) => handleProdutoQuantidade(idx, e.target.value)}
                               onFocus={(e) => e.target.select()}
+                              onBlur={(e) => {
+                                if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                                  handleProdutoQuantidade(idx, '1');
+                                }
+                              }}
                               className="w-16 h-8 px-2 border rounded text-sm"
                             />
                             <span className="text-xs text-slate-500">× R$ {produto.valor?.toFixed(2)}</span>

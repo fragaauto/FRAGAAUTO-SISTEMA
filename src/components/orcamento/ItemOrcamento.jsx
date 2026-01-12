@@ -5,7 +5,18 @@ import { Trash2 } from 'lucide-react';
 
 export default function ItemOrcamento({ item, onUpdate, onRemove }) {
   const handleQuantidadeChange = (e) => {
-    const quantidade = parseInt(e.target.value) || 1;
+    const value = e.target.value;
+    // Se estiver vazio, manter vazio temporariamente
+    if (value === '') {
+      onUpdate({
+        ...item,
+        quantidade: '',
+        valor_total: 0
+      });
+      return;
+    }
+    // Converter para número e garantir mínimo de 1
+    const quantidade = Math.max(1, parseInt(value) || 1);
     onUpdate({
       ...item,
       quantidade,
@@ -33,10 +44,16 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
           <span className="text-xs text-slate-500 mb-1">Qtd</span>
           <Input
             type="number"
+            inputMode="numeric"
             min="1"
             value={item.quantidade}
             onChange={handleQuantidadeChange}
             onFocus={(e) => e.target.select()}
+            onBlur={(e) => {
+              if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                handleQuantidadeChange({ target: { value: '1' } });
+              }
+            }}
             className="w-20 h-10 text-center"
           />
         </div>
