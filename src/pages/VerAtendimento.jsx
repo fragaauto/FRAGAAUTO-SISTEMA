@@ -1064,6 +1064,7 @@ export default function VerAtendimento() {
                                   min="1"
                                   value={item.quantidade}
                                   onChange={(e) => atualizarItemQueixaEdit(idx, 'quantidade', parseInt(e.target.value) || 1)}
+                                  onFocus={(e) => e.target.select()}
                                   className="h-9"
                                 />
                               </div>
@@ -1358,6 +1359,7 @@ export default function VerAtendimento() {
                                   min="1"
                                   value={item.quantidade}
                                   onChange={(e) => atualizarItemOrcamentoEdit(idx, 'quantidade', parseInt(e.target.value) || 1)}
+                                  onFocus={(e) => e.target.select()}
                                   className="h-9"
                                 />
                               </div>

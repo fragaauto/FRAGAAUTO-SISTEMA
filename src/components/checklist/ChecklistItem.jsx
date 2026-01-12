@@ -192,6 +192,7 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
                               min="1"
                               value={pv.quantidade}
                               onChange={(e) => handleProdutoQuantidade(idx, e.target.value)}
+                              onFocus={(e) => e.target.select()}
                               className="w-16 h-8 px-2 border rounded text-sm"
                             />
                             <span className="text-xs text-slate-500">× R$ {produto.valor?.toFixed(2)}</span>

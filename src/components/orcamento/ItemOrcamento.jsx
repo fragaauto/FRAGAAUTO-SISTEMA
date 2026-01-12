@@ -36,6 +36,7 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
             min="1"
             value={item.quantidade}
             onChange={handleQuantidadeChange}
+            onFocus={(e) => e.target.select()}
             className="w-20 h-10 text-center"
           />
         </div>
