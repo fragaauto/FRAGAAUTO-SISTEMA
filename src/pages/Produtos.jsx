@@ -293,8 +293,20 @@ export default function Produtos() {
 
   const validateAndPrepareImport = async (file) => {
     try {
-      // Ler arquivo com encoding UTF-8
-      const text = await file.text();
+      // Ler arquivo com encoding UTF-8 forçado
+      const text = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          let result = e.target.result;
+          // Remover BOM UTF-8 se presente
+          if (result.charCodeAt(0) === 0xFEFF) {
+            result = result.substring(1);
+          }
+          resolve(result);
+        };
+        reader.onerror = reject;
+        reader.readAsText(file, 'UTF-8');
+      });
       const lines = text.split('\n').filter(line => line.trim());
       
       if (lines.length < 2) {
