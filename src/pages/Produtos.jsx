@@ -330,19 +330,58 @@ export default function Produtos() {
         return result;
       };
 
-      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/"/g, '').normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
-      const codigoIdx = headers.findIndex(h => h === 'codigo' || h === 'código');
-      const nomeIdx = headers.findIndex(h => h === 'nome');
-      const categoriaIdx = headers.findIndex(h => h === 'categoria');
-      const valorIdx = headers.findIndex(h => h === 'valor');
-      const descricaoIdx = headers.findIndex(h => h === 'descricao' || h === 'descrição');
-      const vantagensIdx = headers.findIndex(h => h === 'vantagens');
-      const desvantagensIdx = headers.findIndex(h => h === 'desvantagens');
+      // Normalizar headers removendo acentos, espaços extras e convertendo para minúsculas
+      const normalizeHeader = (header) => {
+        return header
+          .toLowerCase()
+          .trim()
+          .replace(/"/g, '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, '_'); // Substituir espaços por underscores
+      };
+      
+      const rawHeaders = parseCSVLine(lines[0]);
+      const headers = rawHeaders.map(normalizeHeader);
+      
+      // Log para debug - mostrar mapeamento detectado
+      console.log('📋 Headers detectados:', headers);
+      
+      // Criar mapa de índices com validação estrita de nomes
+      const getHeaderIndex = (possibleNames) => {
+        for (const name of possibleNames) {
+          const idx = headers.findIndex(h => h === normalizeHeader(name));
+          if (idx !== -1) return idx;
+        }
+        return -1;
+      };
+      
+      const codigoIdx = getHeaderIndex(['codigo', 'código', 'code']);
+      const nomeIdx = getHeaderIndex(['nome', 'name', 'produto', 'servico', 'serviço']);
+      const categoriaIdx = getHeaderIndex(['categoria', 'category', 'tipo']);
+      const valorIdx = getHeaderIndex(['valor', 'preco', 'preço', 'price']);
+      const descricaoIdx = getHeaderIndex(['descricao', 'descrição', 'description', 'obs', 'observacao', 'observação']);
+      const vantagensIdx = getHeaderIndex(['vantagens', 'beneficios', 'benefícios', 'vantagens_de_fazer', 'vantagens_fazer']);
+      const desvantagensIdx = getHeaderIndex(['desvantagens', 'riscos', 'desvantagens_nao_fazer', 'desvantagens_de_nao_fazer']);
 
+      // Validação de colunas obrigatórias
       if (codigoIdx === -1 || nomeIdx === -1 || valorIdx === -1) {
-        toast.error('O arquivo deve ter colunas "codigo", "nome" e "valor"');
+        toast.error('❌ Arquivo inválido: colunas obrigatórias "codigo", "nome" e "valor" não encontradas');
+        console.error('Headers esperados:', ['codigo', 'nome', 'valor']);
+        console.error('Headers encontrados:', rawHeaders);
         return null;
       }
+      
+      // Log do mapeamento final
+      console.log('🗺️ Mapeamento de colunas:', {
+        codigo: rawHeaders[codigoIdx],
+        nome: rawHeaders[nomeIdx],
+        categoria: categoriaIdx !== -1 ? rawHeaders[categoriaIdx] : 'N/A',
+        valor: rawHeaders[valorIdx],
+        descricao: descricaoIdx !== -1 ? rawHeaders[descricaoIdx] : 'N/A',
+        vantagens: vantagensIdx !== -1 ? rawHeaders[vantagensIdx] : 'N/A',
+        desvantagens: desvantagensIdx !== -1 ? rawHeaders[desvantagensIdx] : 'N/A'
+      });
 
       // Parse e validação de produtos
       const produtosValidos = [];
@@ -400,8 +439,19 @@ export default function Produtos() {
           }
 
           // Validar vantagens e desvantagens (limite 500 caracteres)
-          const vantagens = values[vantagensIdx]?.trim() || '';
-          const desvantagens = values[desvantagensIdx]?.trim() || '';
+          // CRÍTICO: Garantir que estamos pegando do índice correto
+          const vantagens = (vantagensIdx !== -1 ? values[vantagensIdx]?.trim() : '') || '';
+          const desvantagens = (desvantagensIdx !== -1 ? values[desvantagensIdx]?.trim() : '') || '';
+          
+          // Debug: Log para verificar valores sendo importados
+          if (vantagens || desvantagens) {
+            console.log(`Linha ${lineNumber} - ${codigo}:`, {
+              vantagens_length: vantagens.length,
+              desvantagens_length: desvantagens.length,
+              vantagens_preview: vantagens.substring(0, 50),
+              desvantagens_preview: desvantagens.substring(0, 50)
+            });
+          }
 
           if (vantagens.length > 500) {
             errosCriticos.push({ 
@@ -534,7 +584,17 @@ export default function Produtos() {
           nome: p.nome,
           avisos: p._avisos
         })),
-        data: { novos, atualizacoes, novosComAviso, atualizacoesComAviso }
+        data: { novos, atualizacoes, novosComAviso, atualizacoesComAviso },
+        // Adicionar informação do mapeamento de colunas para exibir na validação
+        columnMapping: {
+          codigo: codigoIdx !== -1 ? rawHeaders[codigoIdx] : null,
+          nome: nomeIdx !== -1 ? rawHeaders[nomeIdx] : null,
+          categoria: categoriaIdx !== -1 ? rawHeaders[categoriaIdx] : null,
+          valor: valorIdx !== -1 ? rawHeaders[valorIdx] : null,
+          descricao: descricaoIdx !== -1 ? rawHeaders[descricaoIdx] : null,
+          vantagens: vantagensIdx !== -1 ? rawHeaders[vantagensIdx] : null,
+          desvantagens: desvantagensIdx !== -1 ? rawHeaders[desvantagensIdx] : null
+        }
       };
 
     } catch (error) {
@@ -1034,22 +1094,46 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
               />
             </div>
             <div>
-              <Label>Vantagens de Fazer</Label>
+              <Label className="flex items-center justify-between">
+                <span>Vantagens de Fazer</span>
+                <span className="text-xs text-slate-500">
+                  {formData.vantagens?.length || 0}/500
+                </span>
+              </Label>
               <Textarea
                 value={formData.vantagens}
-                onChange={(e) => setFormData({ ...formData, vantagens: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value.substring(0, 500);
+                  setFormData({ ...formData, vantagens: value });
+                }}
                 placeholder="Benefícios de realizar o serviço..."
                 className="min-h-[60px]"
+                maxLength={500}
               />
+              <p className="text-xs text-slate-500 mt-1">
+                Máximo 500 caracteres
+              </p>
             </div>
             <div>
-              <Label>Desvantagens de Não Fazer</Label>
+              <Label className="flex items-center justify-between">
+                <span>Desvantagens de Não Fazer</span>
+                <span className="text-xs text-slate-500">
+                  {formData.desvantagens?.length || 0}/500
+                </span>
+              </Label>
               <Textarea
                 value={formData.desvantagens}
-                onChange={(e) => setFormData({ ...formData, desvantagens: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value.substring(0, 500);
+                  setFormData({ ...formData, desvantagens: value });
+                }}
                 placeholder="Riscos de não realizar o serviço..."
                 className="min-h-[60px]"
+                maxLength={500}
               />
+              <p className="text-xs text-slate-500 mt-1">
+                Máximo 500 caracteres
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -1193,6 +1277,29 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Column Mapping Preview */}
+            {preValidation?.columnMapping && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                  🗺️ Mapeamento de Colunas Detectado
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  {Object.entries(preValidation.columnMapping).map(([campo, coluna]) => (
+                    coluna && (
+                      <div key={campo} className="bg-white rounded p-2 border border-blue-100">
+                        <span className="font-mono text-xs text-blue-700">{coluna}</span>
+                        <span className="text-slate-500 mx-2">→</span>
+                        <span className="font-semibold text-slate-700">{campo}</span>
+                      </div>
+                    )
+                  ))}
+                </div>
+                <p className="text-xs text-blue-700 mt-3">
+                  ✓ Verifique se o mapeamento está correto antes de prosseguir
+                </p>
+              </div>
+            )}
+            
             {/* Summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-green-50 rounded-lg p-4 text-center">
