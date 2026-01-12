@@ -646,7 +646,12 @@ export default function Produtos() {
       };
 
     } catch (error) {
-      toast.error('Erro ao ler arquivo. Verifique o formato e codificação UTF-8.');
+      if (error.message === 'ENCODING_ERROR') {
+        toast.error('❌ Arquivo com caracteres corrompidos. Salve como UTF-8 e tente novamente.');
+      } else {
+        toast.error('❌ Erro ao ler arquivo. Verifique o formato e certifique-se que está em UTF-8.');
+      }
+      console.error('Erro na importação:', error);
       return null;
     }
   };
