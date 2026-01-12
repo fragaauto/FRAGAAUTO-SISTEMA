@@ -712,19 +712,28 @@ export default function Produtos() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // PRÉ-VALIDAÇÃO
-    const validation = await validateAndPrepareImport(file);
+    console.log('📁 Arquivo selecionado:', file.name, `(${(file.size / 1024).toFixed(2)} KB)`);
     
-    if (!validation) {
-      e.target.value = '';
-      return;
-    }
+    try {
+      // PRÉ-VALIDAÇÃO
+      const validation = await validateAndPrepareImport(file);
+      
+      if (!validation) {
+        e.target.value = '';
+        return;
+      }
 
-    // Mostrar modal de confirmação
-    setPreValidation(validation);
-    setPendingImport(validation.data);
-    setShowValidationModal(true);
-    setShowAvisos(false);
+      console.log('✅ Validação concluída, abrindo modal de confirmação');
+      
+      // Mostrar modal de confirmação
+      setPreValidation(validation);
+      setPendingImport(validation.data);
+      setShowValidationModal(true);
+      setShowAvisos(false);
+    } catch (error) {
+      console.error('❌ Erro no handleFileUpload:', error);
+      toast.error('Erro inesperado ao processar arquivo. Veja o console.');
+    }
     
     e.target.value = '';
   };
