@@ -66,7 +66,11 @@ export default function Layout({ children, currentPageName }) {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
         <Link to={createPageUrl('Home')} className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+          <img src="/logo.png" alt="Fraga Auto" className="w-8 h-8 rounded-lg object-cover" onError={(e) => {
+            e.target.style.display = 'none';
+            e.target.nextElementSibling.style.display = 'flex';
+          }} />
+          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center" style={{display: 'none'}}>
             <Wrench className="w-4 h-4 text-white" />
           </div>
           <span className="font-bold text-slate-800">Fraga Auto</span>
@@ -81,7 +85,11 @@ export default function Layout({ children, currentPageName }) {
           <SheetContent side="left" className="w-72 p-0">
             <div className="p-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center">
+                <img src="/logo.png" alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextElementSibling.style.display = 'flex';
+                }} />
+                <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center" style={{display: 'none'}}>
                   <Wrench className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -102,7 +110,11 @@ export default function Layout({ children, currentPageName }) {
         <div className="flex flex-col flex-grow bg-white border-r border-slate-200">
           <div className="p-6 border-b border-slate-200">
             <Link to={createPageUrl('Home')} className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center">
+              <img src="/logo.png" alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'flex';
+              }} />
+              <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center" style={{display: 'none'}}>
                 <Wrench className="w-5 h-5 text-white" />
               </div>
               <div>

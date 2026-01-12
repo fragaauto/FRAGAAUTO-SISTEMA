@@ -809,10 +809,22 @@ export default function VerAtendimento() {
               {isAdmin && (
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => navigate(createPageUrl(`EditarAtendimento?id=${id}`))}
+                  className="hidden sm:flex"
                 >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar Checklist
+                  <Edit className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Editar Checklist</span>
+                </Button>
+              )}
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => navigate(createPageUrl(`EditarAtendimento?id=${id}`))}
+                  className="sm:hidden"
+                >
+                  <Edit className="w-4 h-4" />
                 </Button>
               )}
               <Button
