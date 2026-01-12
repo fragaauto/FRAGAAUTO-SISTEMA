@@ -778,14 +778,17 @@ export default function Produtos() {
       for (let i = 0; i < novos.length; i += batchSize) {
         const batch = novos.slice(i, i + batchSize);
         try {
-          await bulkCreateMutation.mutateAsync(batch);
+          const resultado = await bulkCreateMutation.mutateAsync(batch);
           sucessos += batch.length;
+          console.log(`✅ Lote ${Math.floor(i/batchSize) + 1} criado: ${batch.length} produtos`);
         } catch (err) {
+          console.error(`❌ Erro no lote ${Math.floor(i/batchSize) + 1}:`, err);
           for (const item of batch) {
             errosImportacao.push({ 
               linha: '-',
-              codigo: item.codigo, 
-              erro: 'Erro ao criar produto' 
+              codigo: item.codigo,
+              nome: item.nome,
+              erro: `Erro ao criar: ${err.message || 'Erro desconhecido'}`
             });
           }
         }
