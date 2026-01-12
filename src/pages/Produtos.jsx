@@ -683,12 +683,27 @@ export default function Produtos() {
       };
 
     } catch (error) {
-      if (error.message === 'ENCODING_ERROR') {
-        toast.error('❌ Arquivo com caracteres corrompidos. Salve como UTF-8 e tente novamente.');
+      console.error('❌ Erro crítico na validação:', error);
+      
+      let errorMsg = '❌ Erro ao processar arquivo: ';
+      if (error.message?.includes('Excel')) {
+        errorMsg += 'Arquivo Excel inválido ou corrompido. Tente salvar como CSV.';
+      } else if (error.message === 'ENCODING_ERROR') {
+        errorMsg += 'Caracteres corrompidos detectados. Salve como UTF-8.';
       } else {
-        toast.error('❌ Erro ao ler arquivo. Verifique o formato e certifique-se que está em UTF-8.');
+        errorMsg += error.message || 'Formato inválido. Verifique o arquivo.';
       }
-      console.error('Erro na importação:', error);
+      
+      toast.error(errorMsg, { duration: 5000 });
+      
+      // Mostrar erro técnico no console para debug
+      console.error('Detalhes do erro:', {
+        nome_arquivo: file?.name,
+        tamanho: file?.size,
+        tipo: file?.type,
+        erro_completo: error
+      });
+      
       return null;
     }
   };
