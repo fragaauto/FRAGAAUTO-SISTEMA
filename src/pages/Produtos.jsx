@@ -90,6 +90,7 @@ export default function Produtos() {
   const [preValidation, setPreValidation] = useState(null);
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [pendingImport, setPendingImport] = useState(null);
+  const [showAvisos, setShowAvisos] = useState(false);
   
   const [formData, setFormData] = useState({
     codigo: '',
@@ -317,7 +318,8 @@ export default function Produtos() {
 
       // Parse e validação de produtos
       const produtosValidos = [];
-      const erros = [];
+      const produtosComAviso = [];
+      const errosCriticos = [];
       const codigosNaPlanilha = new Set();
       
       for (let i = 1; i < lines.length; i++) {
@@ -328,59 +330,108 @@ export default function Produtos() {
           const nome = values[nomeIdx]?.trim();
           const valorStr = values[valorIdx]?.trim();
           
-          // Validações
+          // Validações CRÍTICAS (impedem importação)
           if (!codigo) {
-            erros.push({ linha: lineNumber, codigo: '-', erro: 'Código obrigatório' });
+            errosCriticos.push({ 
+              linha: lineNumber, 
+              codigo: '-', 
+              nome: nome || '-',
+              erro: 'Código obrigatório faltando',
+              motivo: 'Todo produto precisa de um código único para identificação'
+            });
             continue;
           }
           
-          // Verificar duplicata na própria planilha
           if (codigosNaPlanilha.has(codigo)) {
-            erros.push({ linha: lineNumber, codigo, erro: 'Código duplicado na planilha' });
+            errosCriticos.push({ 
+              linha: lineNumber, 
+              codigo, 
+              nome: nome || '-',
+              erro: 'Código duplicado na planilha',
+              motivo: `O código "${codigo}" aparece mais de uma vez no arquivo`
+            });
             continue;
           }
           codigosNaPlanilha.add(codigo);
           
           if (!nome) {
-            erros.push({ linha: lineNumber, codigo, erro: 'Nome obrigatório' });
+            errosCriticos.push({ 
+              linha: lineNumber, 
+              codigo, 
+              nome: '-',
+              erro: 'Nome obrigatório faltando',
+              motivo: 'Todo produto precisa de um nome descritivo'
+            });
             continue;
           }
           
           const valor = parseFloat(valorStr?.replace(',', '.'));
           if (!valor || valor <= 0) {
-            erros.push({ linha: lineNumber, codigo, erro: 'Valor inválido ou ≤ 0' });
+            errosCriticos.push({ 
+              linha: lineNumber, 
+              codigo, 
+              nome,
+              erro: `Valor inválido: "${valorStr}"`,
+              motivo: 'O valor deve ser um número maior que zero (ex: 150.00 ou 89,90)'
+            });
             continue;
           }
           
+          // Validações COM AVISO (permite importação)
+          let avisos = [];
           const categoria = (values[categoriaIdx]?.trim() || 'outros').toLowerCase();
           const categoriasValidas = CATEGORIAS.map(c => c.value);
+          
+          let categoriaFinal = categoria;
           if (!categoriasValidas.includes(categoria)) {
-            erros.push({ linha: lineNumber, codigo, erro: `Categoria inválida (use: ${categoriasValidas.slice(0, 3).join(', ')}, etc.)` });
-            continue;
+            avisos.push(`Categoria "${categoria}" não encontrada, será usado "outros"`);
+            categoriaFinal = 'outros';
           }
           
-          produtosValidos.push({
+          if (!values[descricaoIdx]?.trim()) {
+            avisos.push('Sem descrição');
+          }
+          
+          const produto = {
             codigo,
             nome,
-            categoria,
+            categoria: categoriaFinal,
             valor,
             descricao: values[descricaoIdx]?.trim() || '',
             vantagens: values[vantagensIdx]?.trim() || '',
             desvantagens: values[desvantagensIdx]?.trim() || '',
             ativo: true
-          });
+          };
+          
+          if (avisos.length > 0) {
+            produtosComAviso.push({
+              ...produto,
+              _avisos: avisos,
+              _linha: lineNumber
+            });
+          } else {
+            produtosValidos.push(produto);
+          }
         } catch (err) {
-          erros.push({ linha: lineNumber, codigo: '-', erro: 'Erro ao processar linha' });
+          errosCriticos.push({ 
+            linha: lineNumber, 
+            codigo: '-', 
+            nome: '-',
+            erro: 'Erro ao processar linha',
+            motivo: 'Formato de dados inválido ou corrompido'
+          });
         }
       }
 
-      if (produtosValidos.length === 0) {
+      const totalValidos = produtosValidos.length + produtosComAviso.length;
+      
+      if (totalValidos === 0) {
         toast.error('Nenhum produto válido encontrado no arquivo');
         return null;
       }
 
-      if (produtosValidos.length > 2000) {
-        toast.error(`Limite de 2000 produtos por importação. Arquivo contém ${produtosValidos.length} produtos válidos.`);
+      if (totalValidos > 2000) {
+        toast.error(`Limite de 2000 produtos por importação. Arquivo contém ${totalValidos} produtos.`);
         return null;
       }
 
@@ -388,7 +439,10 @@ export default function Produtos() {
       const codigosExistentes = new Map(produtos.map(p => [p.codigo, p]));
       const novos = [];
       const atualizacoes = [];
+      const novosComAviso = [];
+      const atualizacoesComAviso = [];
       
+      // Produtos 100% válidos
       for (const prod of produtosValidos) {
         if (codigosExistentes.has(prod.codigo)) {
           const existente = codigosExistentes.get(prod.codigo);
@@ -397,14 +451,32 @@ export default function Produtos() {
           novos.push(prod);
         }
       }
+      
+      // Produtos com avisos
+      for (const prod of produtosComAviso) {
+        const { _avisos, _linha, ...produtoLimpo } = prod;
+        if (codigosExistentes.has(produtoLimpo.codigo)) {
+          const existente = codigosExistentes.get(produtoLimpo.codigo);
+          atualizacoesComAviso.push({ id: existente.id, data: produtoLimpo, avisos: _avisos, linha: _linha });
+        } else {
+          novosComAviso.push({ ...produtoLimpo, _avisos, _linha });
+        }
+      }
 
       return {
         validos: produtosValidos.length,
+        comAvisos: produtosComAviso.length,
         novos: novos.length,
         atualizacoes: atualizacoes.length,
-        erros: erros.length,
-        errorDetails: erros,
-        data: { novos, atualizacoes }
+        erros: errosCriticos.length,
+        errorDetails: errosCriticos,
+        avisoDetails: produtosComAviso.map(p => ({
+          linha: p._linha,
+          codigo: p.codigo,
+          nome: p.nome,
+          avisos: p._avisos
+        })),
+        data: { novos, atualizacoes, novosComAviso, atualizacoesComAviso }
       };
 
     } catch (error) {
@@ -427,20 +499,33 @@ export default function Produtos() {
 
     // Mostrar modal de confirmação
     setPreValidation(validation);
-    setPendingImport({ novos: validation.data.novos, atualizacoes: validation.data.atualizacoes });
+    setPendingImport(validation.data);
     setShowValidationModal(true);
+    setShowAvisos(false);
     
     e.target.value = '';
   };
 
-  const executeImport = async () => {
+  const executeImport = async (incluirAvisos = false) => {
     if (!pendingImport) return;
 
     setShowValidationModal(false);
     setIsImporting(true);
     setImportProgress(0);
+    
+    let novos = [...pendingImport.novos];
+    let atualizacoes = [...pendingImport.atualizacoes];
+    
+    if (incluirAvisos) {
+      novos = [...novos, ...pendingImport.novosComAviso.map(p => {
+        const { _avisos, _linha, ...prod } = p;
+        return prod;
+      })];
+      atualizacoes = [...atualizacoes, ...pendingImport.atualizacoesComAviso];
+    }
+    
     setImportStats({
-      total: pendingImport.novos.length + pendingImport.atualizacoes.length,
+      total: novos.length + atualizacoes.length,
       processed: 0,
       success: 0,
       updated: 0,
@@ -449,7 +534,6 @@ export default function Produtos() {
     });
 
     try {
-      const { novos, atualizacoes } = pendingImport;
       const total = novos.length + atualizacoes.length;
       
       const batchSize = 50;
@@ -1042,32 +1126,86 @@ export default function Produtos() {
 
           <div className="space-y-4 py-2">
             {/* Summary */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-blue-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-blue-700">{preValidation?.novos || 0}</div>
-                <div className="text-xs text-blue-600">Novos produtos</div>
+            <div className="grid grid-cols-4 gap-3">
+              <div className="bg-green-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-green-700">{preValidation?.validos || 0}</div>
+                <div className="text-xs text-green-600">100% válidos</div>
               </div>
               <div className="bg-amber-50 rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-amber-700">{preValidation?.atualizacoes || 0}</div>
-                <div className="text-xs text-amber-600">Atualizações</div>
+                <div className="text-2xl font-bold text-amber-700">{preValidation?.comAvisos || 0}</div>
+                <div className="text-xs text-amber-600">Com avisos</div>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-blue-700">
+                  {(preValidation?.novos || 0) + (preValidation?.data?.novosComAviso?.length || 0)}
+                </div>
+                <div className="text-xs text-blue-600">Novos</div>
               </div>
               <div className="bg-red-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-red-700">{preValidation?.erros || 0}</div>
-                <div className="text-xs text-red-600">Com erro</div>
+                <div className="text-xs text-red-600">Erros críticos</div>
               </div>
             </div>
+
+            {/* Warnings Details */}
+            {preValidation?.comAvisos > 0 && (
+              <div className="border border-amber-200 rounded-lg p-4 bg-amber-50">
+                <button
+                  onClick={() => setShowAvisos(!showAvisos)}
+                  className="w-full flex items-center justify-between font-semibold text-amber-800 mb-2"
+                >
+                  <span className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    Produtos com Avisos ({preValidation.comAvisos})
+                  </span>
+                  <span className="text-xs">
+                    {showAvisos ? '▼ Ocultar' : '▶ Ver detalhes'}
+                  </span>
+                </button>
+                <p className="text-xs text-amber-700 mb-2">
+                  Estes produtos podem ser importados, mas contêm dados incompletos ou ajustados automaticamente.
+                </p>
+                {showAvisos && (
+                  <div className="max-h-64 overflow-y-auto space-y-2 mt-3">
+                    {preValidation.avisoDetails?.slice(0, 20).map((item, idx) => (
+                      <div key={idx} className="text-sm bg-white rounded p-2 border border-amber-100">
+                        <div className="flex items-start gap-2 mb-1">
+                          <span className="font-mono text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
+                            Linha {item.linha}
+                          </span>
+                          <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                            {item.codigo}
+                          </span>
+                        </div>
+                        <p className="text-slate-700 text-xs font-medium">{item.nome}</p>
+                        <ul className="mt-1 space-y-0.5">
+                          {item.avisos.map((aviso, i) => (
+                            <li key={i} className="text-amber-600 text-xs">⚠️ {aviso}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                    {preValidation.avisoDetails?.length > 20 && (
+                      <p className="text-xs text-amber-600 text-center italic">
+                        ... e mais {preValidation.avisoDetails.length - 20} produto(s)
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Error Details */}
             {preValidation?.erros > 0 && (
               <div className="border border-red-200 rounded-lg p-4 bg-red-50">
                 <h4 className="font-semibold text-red-800 mb-3 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
-                  Erros Encontrados ({preValidation.erros})
+                  Erros Críticos - Não Podem Ser Importados ({preValidation.erros})
                 </h4>
                 <div className="max-h-64 overflow-y-auto space-y-2">
                   {preValidation.errorDetails.slice(0, 20).map((err, idx) => (
-                    <div key={idx} className="text-sm bg-white rounded p-2 border border-red-100">
-                      <div className="flex items-start gap-2">
+                    <div key={idx} className="text-sm bg-white rounded p-3 border border-red-100">
+                      <div className="flex items-start gap-2 mb-1">
                         <span className="font-mono text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
                           Linha {err.linha}
                         </span>
@@ -1077,11 +1215,13 @@ export default function Produtos() {
                           </span>
                         )}
                       </div>
-                      <p className="text-red-600 mt-1 text-xs">{err.erro}</p>
+                      <p className="text-slate-700 text-xs font-medium mb-1">{err.nome}</p>
+                      <p className="text-red-600 font-semibold text-xs">❌ {err.erro}</p>
+                      <p className="text-red-500 text-xs mt-1">💡 {err.motivo}</p>
                     </div>
                   ))}
                   {preValidation.errorDetails.length > 20 && (
-                    <p className="text-xs text-red-600 text-center italic">
+                    <p className="text-xs text-red-600 text-center italic mt-2">
                       ... e mais {preValidation.errorDetails.length - 20} erro(s)
                     </p>
                   )}
@@ -1092,20 +1232,25 @@ export default function Produtos() {
             {/* Confirmation Message */}
             <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
               <p className="text-sm text-slate-700">
-                {preValidation?.erros === 0 ? (
+                {preValidation?.erros === 0 && preValidation?.comAvisos === 0 ? (
                   <>
-                    ✅ <strong>Todos os {preValidation?.validos} registros estão válidos!</strong>
+                    ✅ <strong>Todos os {preValidation?.validos} registros estão 100% válidos!</strong>
                     <br />
-                    Deseja iniciar a importação?
+                    Pronto para importar.
                   </>
                 ) : (
                   <>
-                    ⚠️ <strong>Foram encontrados {preValidation?.erros} erro(s).</strong>
-                    <br />
-                    Deseja continuar a importação dos {preValidation?.validos} registros válidos?
-                    <br />
-                    <span className="text-xs text-slate-500 mt-1 block">
-                      Os registros com erro serão ignorados automaticamente.
+                    {preValidation?.validos > 0 && (
+                      <>✅ <strong>{preValidation.validos} produto(s) válidos</strong><br /></>
+                    )}
+                    {preValidation?.comAvisos > 0 && (
+                      <>⚠️ <strong>{preValidation.comAvisos} produto(s) com avisos</strong> (podem ser importados)<br /></>
+                    )}
+                    {preValidation?.erros > 0 && (
+                      <>❌ <strong>{preValidation.erros} produto(s) com erros críticos</strong> (não podem ser importados)<br /></>
+                    )}
+                    <span className="text-xs text-slate-500 mt-2 block">
+                      Escolha se deseja importar apenas os válidos ou incluir também os produtos com avisos.
                     </span>
                   </>
                 )}
@@ -1113,23 +1258,38 @@ export default function Produtos() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button 
               variant="outline" 
               onClick={() => {
                 setShowValidationModal(false);
                 setPendingImport(null);
                 setPreValidation(null);
+                setShowAvisos(false);
               }}
             >
               Cancelar
             </Button>
+            
+            {preValidation?.comAvisos > 0 && (
+              <Button 
+                onClick={() => executeImport(true)}
+                className="bg-amber-500 hover:bg-amber-600"
+                disabled={(preValidation?.validos + preValidation?.comAvisos) === 0}
+              >
+                Importar Tudo ({(preValidation?.validos || 0) + (preValidation?.comAvisos || 0)})
+              </Button>
+            )}
+            
             <Button 
-              onClick={executeImport}
+              onClick={() => executeImport(false)}
               className="bg-orange-500 hover:bg-orange-600"
               disabled={preValidation?.validos === 0}
             >
-              {preValidation?.erros > 0 ? 'Importar Apenas Válidos' : 'Confirmar Importação'}
+              {preValidation?.comAvisos > 0 
+                ? `Importar Apenas Válidos (${preValidation.validos})` 
+                : `Confirmar Importação (${preValidation?.validos || 0})`
+              }
             </Button>
           </DialogFooter>
         </DialogContent>
