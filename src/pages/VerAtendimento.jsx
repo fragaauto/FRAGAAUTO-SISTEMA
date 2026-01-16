@@ -664,19 +664,25 @@ export default function VerAtendimento() {
                     ${atendimento.itens_orcamento.map(item => `
                       <tr>
                         <td>
-                          ${item.nome}
-                          ${item.vantagens ? `
-                            <div style="margin-top: 6px; padding: 8px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px;">
-                              <strong style="font-size: 11px; color: #166534;">✓ Benefícios de realizar:</strong>
-                              <p style="font-size: 11px; color: #15803d; margin: 4px 0 0 0;">${item.vantagens}</p>
-                            </div>
-                          ` : ''}
-                          ${item.desvantagens ? `
-                            <div style="margin-top: 6px; padding: 8px; background: #fef2f2; border-left: 3px solid #f59e0b; border-radius: 4px;">
-                              <strong style="font-size: 11px; color: #92400e;">⚠️ Riscos de não realizar:</strong>
-                              <p style="font-size: 11px; color: #78350f; margin: 4px 0 0 0;">${item.desvantagens}</p>
-                            </div>
-                          ` : ''}
+                         ${item.nome}
+                         ${item.observacao_item ? `
+                           <div style="margin-top: 6px; padding: 8px; background: #eff6ff; border-left: 3px solid #3b82f6; border-radius: 4px;">
+                             <strong style="font-size: 11px; color: #1e40af;">📝 Observações:</strong>
+                             <p style="font-size: 11px; color: #1e3a8a; margin: 4px 0 0 0;">${item.observacao_item}</p>
+                           </div>
+                         ` : ''}
+                         ${item.vantagens ? `
+                           <div style="margin-top: 6px; padding: 8px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px;">
+                             <strong style="font-size: 11px; color: #166534;">✓ Benefícios de realizar:</strong>
+                             <p style="font-size: 11px; color: #15803d; margin: 4px 0 0 0;">${item.vantagens}</p>
+                           </div>
+                         ` : ''}
+                         ${item.desvantagens ? `
+                           <div style="margin-top: 6px; padding: 8px; background: #fef2f2; border-left: 3px solid #f59e0b; border-radius: 4px;">
+                             <strong style="font-size: 11px; color: #92400e;">⚠️ Riscos de não realizar:</strong>
+                             <p style="font-size: 11px; color: #78350f; margin: 4px 0 0 0;">${item.desvantagens}</p>
+                           </div>
+                         ` : ''}
                         </td>
                         <td style="text-align: center;">${item.quantidade}</td>
                         <td style="text-align: right;">R$ ${item.valor_unitario?.toFixed(2)}</td>
@@ -1468,6 +1474,12 @@ export default function VerAtendimento() {
                                 R$ {item.valor_total?.toFixed(2)}
                               </p>
                             </div>
+                            {item.observacao_item && (
+                              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
+                                <p className="text-sm text-blue-700">{item.observacao_item}</p>
+                              </div>
+                            )}
                             {item.vantagens && (
                               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                                 <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
