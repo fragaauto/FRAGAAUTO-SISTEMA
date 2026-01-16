@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { CheckCircle2, XCircle, MinusCircle, HelpCircle, ShoppingCart, Plus, Package, Trash2, ChevronDown, Search } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import {
@@ -78,6 +79,28 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
     const novosProdutos = [...produtosVinculados];
     const qtd = quantidade === '' ? '' : Math.max(1, parseInt(quantidade) || 1);
     novosProdutos[index] = { ...novosProdutos[index], quantidade: qtd };
+    onChange({
+      ...value,
+      item: item.item,
+      categoria: item.categoria,
+      produtos: novosProdutos
+    });
+  };
+
+  const handleProdutoValor = (index, valor) => {
+    const novosProdutos = [...produtosVinculados];
+    novosProdutos[index] = { ...novosProdutos[index], valor_customizado: valor };
+    onChange({
+      ...value,
+      item: item.item,
+      categoria: item.categoria,
+      produtos: novosProdutos
+    });
+  };
+
+  const handleProdutoObservacao = (index, observacao) => {
+    const novosProdutos = [...produtosVinculados];
+    novosProdutos[index] = { ...novosProdutos[index], observacao };
     onChange({
       ...value,
       item: item.item,
@@ -183,40 +206,74 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
                   {produtosVinculados.map((pv, idx) => {
                     const produto = produtos.find(p => p.id === pv.id);
                     if (!produto) return null;
+                    const valorUnitario = pv.valor_customizado !== undefined ? pv.valor_customizado : produto.valor;
                     return (
-                      <div key={idx} className="flex items-start gap-2 p-3 bg-white rounded-lg border">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{produto.nome}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <input
-                              type="number"
-                              inputMode="numeric"
-                              min="1"
-                              value={pv.quantidade}
-                              onChange={(e) => handleProdutoQuantidade(idx, e.target.value)}
-                              onFocus={(e) => e.target.select()}
-                              onBlur={(e) => {
-                                if (e.target.value === '' || parseInt(e.target.value) < 1) {
-                                  handleProdutoQuantidade(idx, '1');
-                                }
-                              }}
-                              className="w-16 h-8 px-2 border rounded text-sm"
-                            />
-                            <span className="text-xs text-slate-500">× R$ {produto.valor?.toFixed(2)}</span>
-                            <span className="text-sm font-semibold text-green-600 ml-auto">
-                              R$ {(produto.valor * pv.quantidade).toFixed(2)}
-                            </span>
+                      <div key={idx} className="p-3 bg-white rounded-lg border space-y-3">
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1 space-y-3">
+                            <p className="font-medium text-sm">{produto.nome}</p>
+                            
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs text-slate-600">Quantidade</Label>
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  min="1"
+                                  value={pv.quantidade}
+                                  onChange={(e) => handleProdutoQuantidade(idx, e.target.value)}
+                                  onFocus={(e) => e.target.select()}
+                                  onBlur={(e) => {
+                                    if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                                      handleProdutoQuantidade(idx, '1');
+                                    }
+                                  }}
+                                  className="w-full h-9 px-2 border rounded text-sm"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs text-slate-600">Valor Unit.</Label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={valorUnitario}
+                                  onChange={(e) => handleProdutoValor(idx, parseFloat(e.target.value) || 0)}
+                                  onFocus={(e) => e.target.select()}
+                                  className="w-full h-9 px-2 border rounded text-sm"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <Label className="text-xs text-slate-600">Observações do Item</Label>
+                              <Textarea
+                                placeholder="Observações específicas deste item..."
+                                value={pv.observacao || ''}
+                                onChange={(e) => handleProdutoObservacao(idx, e.target.value)}
+                                className="min-h-[60px] text-sm resize-none"
+                              />
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2 border-t">
+                              <span className="text-xs text-slate-500">
+                                {pv.quantidade}x R$ {valorUnitario?.toFixed(2)}
+                              </span>
+                              <span className="text-sm font-semibold text-green-600">
+                                Total: R$ {(valorUnitario * pv.quantidade).toFixed(2)}
+                              </span>
+                            </div>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            onClick={() => handleRemoveProduto(idx)}
+                            className="text-red-500 hover:text-red-700 flex-shrink-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="button"
-                          onClick={() => handleRemoveProduto(idx)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
                       </div>
                     );
                   })}

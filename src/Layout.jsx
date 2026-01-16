@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
+  { name: 'Home', icon: Home, path: 'Home' },
   { name: 'Dashboard', icon: Home, path: 'Dashboard' },
   { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento' },
   { name: 'Atendimentos', icon: FileText, path: 'Atendimentos' },
