@@ -116,6 +116,7 @@ export default function NovoAtendimento() {
               vantagens: produto.vantagens || '',
               desvantagens: produto.desvantagens || '',
               status_aprovacao: 'pendente',
+              status_servico: 'aguardando_autorizacao',
               observacao_item: pv.observacao || '',
               origem: 'checklist',
               item_checklist: data.item

@@ -64,19 +64,25 @@ export default function EditarAtendimento() {
 
   useEffect(() => {
     if (atendimento && checklistItems.length > 0) {
-      // Converter checklist array para objeto, mapeando pelo nome do item para encontrar o ID correto
+      // Converter checklist array para objeto, preservando TODOS OS VALORES SALVOS
       const checklistObj = {};
       (atendimento.checklist || []).forEach(item => {
         // Encontrar o ChecklistItem correspondente pelo nome
         const checklistItemConfig = checklistItems.find(ci => ci.item === item.item);
         if (checklistItemConfig) {
+          // CRÍTICO: Preservar valores customizados e quantidades dos produtos salvos
           checklistObj[checklistItemConfig.id] = {
             item: item.item,
             categoria: item.categoria,
             status: item.status,
             comentario: item.comentario,
             incluir_orcamento: item.incluir_orcamento,
-            produtos: item.produtos || []
+            produtos: (item.produtos || []).map(p => ({
+              id: p.id,
+              quantidade: p.quantidade,
+              valor_customizado: p.valor_customizado, // PRESERVAR valor customizado
+              observacao: p.observacao
+            }))
           };
         }
       });
@@ -134,6 +140,7 @@ export default function EditarAtendimento() {
               vantagens: produto.vantagens || '',
               desvantagens: produto.desvantagens || '',
               status_aprovacao: 'pendente',
+              status_servico: 'aguardando_autorizacao',
               observacao_item: pv.observacao || '',
               origem: 'checklist',
               item_checklist: data.item
