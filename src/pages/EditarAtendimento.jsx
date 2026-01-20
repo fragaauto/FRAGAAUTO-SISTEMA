@@ -47,6 +47,21 @@ export default function EditarAtendimento() {
     enabled: !!id
   });
 
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list(),
+    staleTime: 10 * 60 * 1000
+  });
+
+  const { data: checklistItems = [] } = useQuery({
+    queryKey: ['checklist-items'],
+    queryFn: async () => {
+      const items = await base44.entities.ChecklistItem.list();
+      return items.filter(i => i.ativo).sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+    },
+    staleTime: 10 * 60 * 1000
+  });
+
   useEffect(() => {
     if (atendimento && checklistItems.length > 0) {
       // Converter checklist array para objeto, mapeando pelo nome do item para encontrar o ID correto
@@ -73,21 +88,6 @@ export default function EditarAtendimento() {
       });
     }
   }, [atendimento, checklistItems]);
-
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
-    staleTime: 10 * 60 * 1000
-  });
-
-  const { data: checklistItems = [] } = useQuery({
-    queryKey: ['checklist-items'],
-    queryFn: async () => {
-      const items = await base44.entities.ChecklistItem.list();
-      return items.filter(i => i.ativo).sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
-    },
-    staleTime: 10 * 60 * 1000
-  });
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Atendimento.update(id, data),
