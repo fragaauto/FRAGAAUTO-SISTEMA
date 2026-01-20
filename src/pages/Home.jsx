@@ -12,6 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import { 
   ClipboardCheck, 
   FileText, 
@@ -54,6 +57,7 @@ const FeatureCard = ({ icon: Icon, title, description, href, color, delay }) => 
 
 export default function Home() {
   const [periodo, setPeriodo] = useState('30');
+  const [dataEspecifica, setDataEspecifica] = useState(null);
 
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],
@@ -63,13 +67,21 @@ export default function Home() {
 
   const stats = useMemo(() => {
     const now = new Date();
-    const diasFiltro = parseInt(periodo);
     
     const atendimentosFiltrados = atendimentos.filter(a => {
-      if (diasFiltro === 0) return true;
       const dataAtendimento = new Date(a.created_date);
-      const diffDias = Math.floor((now - dataAtendimento) / (1000 * 60 * 60 * 24));
-      return diffDias <= diasFiltro;
+      
+      if (periodo === 'hoje') {
+        return dataAtendimento.toDateString() === now.toDateString();
+      } else if (periodo === 'especifica' && dataEspecifica) {
+        return dataAtendimento.toDateString() === dataEspecifica.toDateString();
+      } else if (periodo === '0') {
+        return true;
+      } else {
+        const diasFiltro = parseInt(periodo);
+        const diffDias = Math.floor((now - dataAtendimento) / (1000 * 60 * 60 * 24));
+        return diffDias <= diasFiltro;
+      }
     });
 
     const totalOrcamentos = atendimentosFiltrados.length;
@@ -103,7 +115,7 @@ export default function Home() {
       concluidos,
       emAndamento
     };
-  }, [atendimentos, periodo]);
+  }, [atendimentos, periodo, dataEspecifica]);
 
   const features = [
     {
@@ -224,20 +236,46 @@ export default function Home() {
       {/* Dashboard Stats */}
       <div className="bg-white border-t border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-4 sm:mb-0">Visão Geral</h2>
-            <Select value={periodo} onValueChange={setPeriodo}>
-              <SelectTrigger className="w-48">
-                <Calendar className="w-4 h-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Últimos 7 dias</SelectItem>
-                <SelectItem value="30">Últimos 30 dias</SelectItem>
-                <SelectItem value="90">Últimos 90 dias</SelectItem>
-                <SelectItem value="0">Todo o período</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-800">Visão Geral</h2>
+            <div className="flex items-center gap-3">
+              <Select value={periodo} onValueChange={(value) => {
+                setPeriodo(value);
+                if (value !== 'especifica') setDataEspecifica(null);
+              }}>
+                <SelectTrigger className="w-48">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hoje">Hoje</SelectItem>
+                  <SelectItem value="7">Últimos 7 dias</SelectItem>
+                  <SelectItem value="30">Últimos 30 dias</SelectItem>
+                  <SelectItem value="90">Últimos 90 dias</SelectItem>
+                  <SelectItem value="0">Todo o período</SelectItem>
+                  <SelectItem value="especifica">Data específica</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {periodo === 'especifica' && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-48">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {dataEspecifica ? format(dataEspecifica, 'dd/MM/yyyy') : 'Selecionar data'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dataEspecifica}
+                      onSelect={setDataEspecifica}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="hover:shadow-lg transition-shadow">
