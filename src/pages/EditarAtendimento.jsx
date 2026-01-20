@@ -118,16 +118,18 @@ export default function EditarAtendimento() {
         data.produtos.forEach(pv => {
           const produto = produtos.find(p => p.id === pv.id);
           if (produto) {
+            const valorUnitario = pv.valor_customizado !== undefined ? pv.valor_customizado : produto.valor;
             produtosDoChecklist.push({
               produto_id: produto.id,
               codigo_produto: produto.codigo || '',
               nome: produto.nome,
               quantidade: pv.quantidade,
-              valor_unitario: produto.valor,
-              valor_total: produto.valor * pv.quantidade,
+              valor_unitario: valorUnitario,
+              valor_total: valorUnitario * pv.quantidade,
               vantagens: produto.vantagens || '',
               desvantagens: produto.desvantagens || '',
               status_aprovacao: 'pendente',
+              observacao_item: pv.observacao || '',
               origem: 'checklist',
               item_checklist: data.item
             });
