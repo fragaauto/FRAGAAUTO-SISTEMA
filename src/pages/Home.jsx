@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -11,7 +13,11 @@ import {
   Car,
   ArrowRight,
   Wrench,
-  Shield
+  Shield,
+  CheckCircle,
+  XCircle,
+  DollarSign,
+  TrendingUp
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -39,6 +45,46 @@ const FeatureCard = ({ icon: Icon, title, description, href, color, delay }) => 
 );
 
 export default function Home() {
+  const { data: atendimentos = [] } = useQuery({
+    queryKey: ['atendimentos'],
+    queryFn: () => base44.entities.Atendimento.list('-created_date'),
+    staleTime: 2 * 60 * 1000
+  });
+
+  const stats = useMemo(() => {
+    const totalOrcamentos = atendimentos.length;
+    
+    let servicosAprovados = 0;
+    let servicosReprovados = 0;
+    let valorTotalAprovado = 0;
+    
+    atendimentos.forEach(atendimento => {
+      const todosItens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
+      todosItens.forEach(item => {
+        if (item.status_aprovacao === 'aprovado') {
+          servicosAprovados++;
+          valorTotalAprovado += item.valor_total || 0;
+        } else if (item.status_aprovacao === 'reprovado') {
+          servicosReprovados++;
+        }
+      });
+    });
+
+    const concluidos = atendimentos.filter(a => a.status === 'concluido').length;
+    const emAndamento = atendimentos.filter(a => 
+      ['queixa_pendente', 'em_diagnostico', 'aguardando_aprovacao_checklist', 'em_execucao'].includes(a.status)
+    ).length;
+
+    return {
+      totalOrcamentos,
+      servicosAprovados,
+      servicosReprovados,
+      valorTotalAprovado,
+      concluidos,
+      emAndamento
+    };
+  }, [atendimentos]);
+
   const features = [
     {
       icon: ClipboardCheck,
@@ -155,31 +201,94 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Dashboard Stats */}
       <div className="bg-white border-t border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16">
-            <div className="flex items-center gap-3">
-              <Shield className="w-8 h-8 text-orange-500" />
-              <div>
-                <p className="text-2xl font-bold text-slate-800">100%</p>
-                <p className="text-sm text-slate-500">Seguro</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <ClipboardCheck className="w-8 h-8 text-green-500" />
-              <div>
-                <p className="text-2xl font-bold text-slate-800">33</p>
-                <p className="text-sm text-slate-500">Itens no Checklist</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <FileText className="w-8 h-8 text-blue-500" />
-              <div>
-                <p className="text-2xl font-bold text-slate-800">PDF</p>
-                <p className="text-sm text-slate-500">Profissional</p>
-              </div>
-            </div>
+        <div className="max-w-6xl mx-auto px-4 py-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-slate-800">Visão Geral</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">Total de Orçamentos</p>
+                    <p className="text-3xl font-bold text-blue-600">{stats.totalOrcamentos}</p>
+                  </div>
+                  <div className="w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center">
+                    <FileText className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">Serviços Aprovados</p>
+                    <p className="text-3xl font-bold text-green-600">{stats.servicosAprovados}</p>
+                  </div>
+                  <div className="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">Serviços Reprovados</p>
+                    <p className="text-3xl font-bold text-red-600">{stats.servicosReprovados}</p>
+                  </div>
+                  <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center">
+                    <XCircle className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">Valor Aprovado</p>
+                    <p className="text-2xl font-bold text-emerald-600">R$ {stats.valorTotalAprovado.toFixed(2)}</p>
+                  </div>
+                  <div className="w-14 h-14 bg-emerald-500 rounded-xl flex items-center justify-center">
+                    <DollarSign className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">Concluídos</p>
+                    <p className="text-3xl font-bold text-purple-600">{stats.concluidos}</p>
+                  </div>
+                  <div className="w-14 h-14 bg-purple-500 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">Em Andamento</p>
+                    <p className="text-3xl font-bold text-orange-600">{stats.emAndamento}</p>
+                  </div>
+                  <div className="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center">
+                    <TrendingUp className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
