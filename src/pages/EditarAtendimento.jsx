@@ -48,17 +48,22 @@ export default function EditarAtendimento() {
   });
 
   useEffect(() => {
-    if (atendimento) {
-      // Converter checklist array para objeto
+    if (atendimento && checklistItems.length > 0) {
+      // Converter checklist array para objeto, mapeando pelo nome do item para encontrar o ID correto
       const checklistObj = {};
       (atendimento.checklist || []).forEach(item => {
-        checklistObj[item.item_id || item.id] = {
-          item: item.item,
-          status: item.status,
-          comentario: item.comentario,
-          incluir_orcamento: item.incluir_orcamento,
-          produtos: item.produtos || []
-        };
+        // Encontrar o ChecklistItem correspondente pelo nome
+        const checklistItemConfig = checklistItems.find(ci => ci.item === item.item);
+        if (checklistItemConfig) {
+          checklistObj[checklistItemConfig.id] = {
+            item: item.item,
+            categoria: item.categoria,
+            status: item.status,
+            comentario: item.comentario,
+            incluir_orcamento: item.incluir_orcamento,
+            produtos: item.produtos || []
+          };
+        }
       });
       
       setFormData({
@@ -67,7 +72,7 @@ export default function EditarAtendimento() {
         itens_orcamento: atendimento.itens_orcamento || []
       });
     }
-  }, [atendimento]);
+  }, [atendimento, checklistItems]);
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
