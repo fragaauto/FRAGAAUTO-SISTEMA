@@ -57,7 +57,7 @@ const FeatureCard = ({ icon: Icon, title, description, href, color, delay }) => 
 
 export default function Home() {
   const [periodo, setPeriodo] = useState('30');
-  const [dataEspecifica, setDataEspecifica] = useState(null);
+  const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
 
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],
@@ -70,11 +70,21 @@ export default function Home() {
     
     const atendimentosFiltrados = atendimentos.filter(a => {
       const dataAtendimento = new Date(a.created_date);
+      dataAtendimento.setHours(0, 0, 0, 0);
       
       if (periodo === 'hoje') {
         return dataAtendimento.toDateString() === now.toDateString();
-      } else if (periodo === 'especifica' && dataEspecifica) {
-        return dataAtendimento.toDateString() === dataEspecifica.toDateString();
+      } else if (periodo === 'especifica' && dataEspecifica.from) {
+        const from = new Date(dataEspecifica.from);
+        from.setHours(0, 0, 0, 0);
+        
+        if (dataEspecifica.to) {
+          const to = new Date(dataEspecifica.to);
+          to.setHours(23, 59, 59, 999);
+          return dataAtendimento >= from && dataAtendimento <= to;
+        } else {
+          return dataAtendimento.toDateString() === from.toDateString();
+        }
       } else if (periodo === '0') {
         return true;
       } else {
@@ -241,7 +251,7 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <Select value={periodo} onValueChange={(value) => {
                 setPeriodo(value);
-                if (value !== 'especifica') setDataEspecifica(null);
+                if (value !== 'especifica') setDataEspecifica({ from: null, to: null });
               }}>
                 <SelectTrigger className="w-48">
                   <Calendar className="w-4 h-4 mr-2" />
@@ -260,17 +270,26 @@ export default function Home() {
               {periodo === 'especifica' && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-48">
+                    <Button variant="outline" className="w-64">
                       <Calendar className="w-4 h-4 mr-2" />
-                      {dataEspecifica ? format(dataEspecifica, 'dd/MM/yyyy') : 'Selecionar data'}
+                      {dataEspecifica.from ? (
+                        dataEspecifica.to ? (
+                          `${format(dataEspecifica.from, 'dd/MM/yyyy')} - ${format(dataEspecifica.to, 'dd/MM/yyyy')}`
+                        ) : (
+                          format(dataEspecifica.from, 'dd/MM/yyyy')
+                        )
+                      ) : (
+                        'Selecionar período'
+                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <CalendarComponent
-                      mode="single"
+                      mode="range"
                       selected={dataEspecifica}
-                      onSelect={setDataEspecifica}
+                      onSelect={(range) => setDataEspecifica(range || { from: null, to: null })}
                       initialFocus
+                      numberOfMonths={2}
                     />
                   </PopoverContent>
                 </Popover>
