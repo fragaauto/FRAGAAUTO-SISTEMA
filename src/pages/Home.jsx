@@ -1,10 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   ClipboardCheck, 
   FileText, 
@@ -17,7 +24,8 @@ import {
   CheckCircle,
   XCircle,
   DollarSign,
-  TrendingUp
+  TrendingUp,
+  Calendar
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -45,6 +53,8 @@ const FeatureCard = ({ icon: Icon, title, description, href, color, delay }) => 
 );
 
 export default function Home() {
+  const [periodo, setPeriodo] = useState('30');
+
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list('-created_date'),
@@ -52,13 +62,23 @@ export default function Home() {
   });
 
   const stats = useMemo(() => {
-    const totalOrcamentos = atendimentos.length;
+    const now = new Date();
+    const diasFiltro = parseInt(periodo);
+    
+    const atendimentosFiltrados = atendimentos.filter(a => {
+      if (diasFiltro === 0) return true;
+      const dataAtendimento = new Date(a.created_date);
+      const diffDias = Math.floor((now - dataAtendimento) / (1000 * 60 * 60 * 24));
+      return diffDias <= diasFiltro;
+    });
+
+    const totalOrcamentos = atendimentosFiltrados.length;
     
     let servicosAprovados = 0;
     let servicosReprovados = 0;
     let valorTotalAprovado = 0;
     
-    atendimentos.forEach(atendimento => {
+    atendimentosFiltrados.forEach(atendimento => {
       const todosItens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
       todosItens.forEach(item => {
         if (item.status_aprovacao === 'aprovado') {
@@ -70,8 +90,8 @@ export default function Home() {
       });
     });
 
-    const concluidos = atendimentos.filter(a => a.status === 'concluido').length;
-    const emAndamento = atendimentos.filter(a => 
+    const concluidos = atendimentosFiltrados.filter(a => a.status === 'concluido').length;
+    const emAndamento = atendimentosFiltrados.filter(a => 
       ['queixa_pendente', 'em_diagnostico', 'aguardando_aprovacao_checklist', 'em_execucao'].includes(a.status)
     ).length;
 
@@ -83,7 +103,7 @@ export default function Home() {
       concluidos,
       emAndamento
     };
-  }, [atendimentos]);
+  }, [atendimentos, periodo]);
 
   const features = [
     {
@@ -204,7 +224,21 @@ export default function Home() {
       {/* Dashboard Stats */}
       <div className="bg-white border-t border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-slate-800">Visão Geral</h2>
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-4 sm:mb-0">Visão Geral</h2>
+            <Select value={periodo} onValueChange={setPeriodo}>
+              <SelectTrigger className="w-48">
+                <Calendar className="w-4 h-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Últimos 7 dias</SelectItem>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+                <SelectItem value="90">Últimos 90 dias</SelectItem>
+                <SelectItem value="0">Todo o período</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="hover:shadow-lg transition-shadow">
               <CardContent className="pt-6">
