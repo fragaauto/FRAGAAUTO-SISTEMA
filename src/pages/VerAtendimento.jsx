@@ -1058,6 +1058,14 @@ export default function VerAtendimento() {
           </TabsContent>
 
           <TabsContent value="queixa" className="space-y-4">
+            {!atendimento.queixa_inicial && (!atendimento.itens_queixa || atendimento.itens_queixa.length === 0) && (
+              <Card className="py-8">
+                <CardContent className="text-center text-slate-500">
+                  Nenhuma queixa registrada neste atendimento
+                </CardContent>
+              </Card>
+            )}
+
             {atendimento.queixa_inicial && (
               <Card>
                 <CardHeader>
