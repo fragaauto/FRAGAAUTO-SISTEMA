@@ -3,16 +3,33 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Clock, Settings } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ItemAprovacao({ item, onUpdate }) {
   const [observacao, setObservacao] = React.useState(item.observacao_cliente || '');
+  const [statusServico, setStatusServico] = React.useState(item.status_servico || 'aguardando_autorizacao');
 
   const handleAprovacao = (status) => {
     onUpdate({
       ...item,
       status_aprovacao: status,
-      observacao_cliente: observacao
+      observacao_cliente: observacao,
+      status_servico: statusServico
+    });
+  };
+
+  const handleStatusServicoChange = (newStatus) => {
+    setStatusServico(newStatus);
+    onUpdate({
+      ...item,
+      status_servico: newStatus
     });
   };
 
@@ -27,19 +44,75 @@ export default function ItemAprovacao({ item, onUpdate }) {
     }
   };
 
+  const getStatusServicoBadge = (status) => {
+    switch (status) {
+      case 'autorizado':
+        return (
+          <Badge className="bg-blue-100 text-blue-800">
+            <CheckCircle2 className="w-3 h-3 mr-1" />
+            Autorizado
+          </Badge>
+        );
+      case 'em_andamento':
+        return (
+          <Badge className="bg-purple-100 text-purple-800">
+            <Settings className="w-3 h-3 mr-1" />
+            Em Andamento
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-orange-100 text-orange-800">
+            <Clock className="w-3 h-3 mr-1" />
+            Aguardando Autorização
+          </Badge>
+        );
+    }
+  };
+
   return (
     <Card className={item.status_aprovacao === 'reprovado' ? 'border-red-200 bg-red-50/30' : ''}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <p className="font-semibold text-slate-800">{item.nome}</p>
               {getStatusBadge(item.status_aprovacao)}
+              {getStatusServicoBadge(statusServico)}
             </div>
             <p className="text-sm text-slate-500">
               {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = <strong>R$ {item.valor_total?.toFixed(2)}</strong>
             </p>
           </div>
+        </div>
+
+        <div className="mb-2">
+          <label className="text-xs font-medium text-slate-600 mb-1 block">Status do Serviço</label>
+          <Select value={statusServico} onValueChange={handleStatusServicoChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="aguardando_autorizacao">
+                <span className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Aguardando Autorização
+                </span>
+              </SelectItem>
+              <SelectItem value="autorizado">
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Autorizado
+                </span>
+              </SelectItem>
+              <SelectItem value="em_andamento">
+                <span className="flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  Em Andamento
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {(item.vantagens || item.desvantagens) && (

@@ -684,7 +684,22 @@ export default function VerAtendimento() {
                            </div>
                          ` : ''}
                         </td>
-                        <td style="text-align: center;">${item.quantidade}</td>
+                        <td style="text-align: center;">
+                         ${item.quantidade}
+                         ${item.status_servico ? `
+                           <div style="margin-top: 4px;">
+                             <span style="display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; ${
+                               item.status_servico === 'autorizado' ? 'background: #dbeafe; color: #1e40af;' :
+                               item.status_servico === 'em_andamento' ? 'background: #e9d5ff; color: #6b21a8;' :
+                               'background: #fed7aa; color: #92400e;'
+                             }">
+                               ${item.status_servico === 'autorizado' ? '✓ Autorizado' :
+                                 item.status_servico === 'em_andamento' ? '⚙ Em Andamento' :
+                                 '⏳ Aguardando'}
+                             </span>
+                           </div>
+                         ` : ''}
+                        </td>
                         <td style="text-align: right;">R$ ${item.valor_unitario?.toFixed(2)}</td>
                         <td style="text-align: right; font-weight: 600;">R$ ${item.valor_total?.toFixed(2)}</td>
                       </tr>
