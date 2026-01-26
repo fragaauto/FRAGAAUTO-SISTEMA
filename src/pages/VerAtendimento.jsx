@@ -168,13 +168,19 @@ export default function VerAtendimento() {
     const novosItens = [...itensQueixaEdit];
     if (field === 'quantidade') {
       const qtd = value === '' ? '' : Math.max(1, parseInt(value) || 1);
-      novosItens[index] = { ...novosItens[index], [field]: qtd };
+      novosItens[index] = { ...novosItens[index], quantidade: qtd };
+    } else if (field === 'valor_unitario') {
+      const valorNum = parseFloat(value) || 0;
+      novosItens[index] = { ...novosItens[index], valor_unitario: valorNum };
     } else {
       novosItens[index] = { ...novosItens[index], [field]: value };
     }
+    
+    // CRÍTICO: Recalcular total sempre que quantidade ou valor mudar
     if (field === 'quantidade' || field === 'valor_unitario') {
-      const quantidade = novosItens[index].quantidade === '' ? 0 : novosItens[index].quantidade;
-      novosItens[index].valor_total = quantidade * (novosItens[index].valor_unitario || 0);
+      const quantidade = novosItens[index].quantidade === '' ? 0 : Number(novosItens[index].quantidade);
+      const valorUnitario = Number(novosItens[index].valor_unitario) || 0;
+      novosItens[index].valor_total = quantidade * valorUnitario;
     }
     setItensQueixaEdit(novosItens);
   };
@@ -189,7 +195,15 @@ export default function VerAtendimento() {
   };
 
   const salvarEdicaoOrcamento = () => {
-    const subtotal = itensOrcamentoEdit.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    // CRÍTICO: Recalcular todos os totais corretamente
+    const itensAtualizados = itensOrcamentoEdit.map(item => ({
+      ...item,
+      valor_total: (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0)
+    }));
+
+    const subtotal_checklist = itensAtualizados.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const subtotal_queixa = (atendimento.itens_queixa || []).reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const subtotal = subtotal_queixa + subtotal_checklist;
     const valor_final = subtotal - (atendimento.desconto || 0);
 
     const historicoItem = {
@@ -200,7 +214,8 @@ export default function VerAtendimento() {
     };
 
     updateMutation.mutate({
-      itens_orcamento: itensOrcamentoEdit,
+      itens_orcamento: itensAtualizados,
+      subtotal_checklist,
       subtotal,
       valor_final,
       assinatura_cliente_checklist: null,
@@ -216,13 +231,19 @@ export default function VerAtendimento() {
     const novosItens = [...itensOrcamentoEdit];
     if (field === 'quantidade') {
       const qtd = value === '' ? '' : Math.max(1, parseInt(value) || 1);
-      novosItens[index] = { ...novosItens[index], [field]: qtd };
+      novosItens[index] = { ...novosItens[index], quantidade: qtd };
+    } else if (field === 'valor_unitario') {
+      const valorNum = parseFloat(value) || 0;
+      novosItens[index] = { ...novosItens[index], valor_unitario: valorNum };
     } else {
       novosItens[index] = { ...novosItens[index], [field]: value };
     }
+    
+    // CRÍTICO: Recalcular total sempre que quantidade ou valor mudar
     if (field === 'quantidade' || field === 'valor_unitario') {
-      const quantidade = novosItens[index].quantidade === '' ? 0 : novosItens[index].quantidade;
-      novosItens[index].valor_total = quantidade * (novosItens[index].valor_unitario || 0);
+      const quantidade = novosItens[index].quantidade === '' ? 0 : Number(novosItens[index].quantidade);
+      const valorUnitario = Number(novosItens[index].valor_unitario) || 0;
+      novosItens[index].valor_total = quantidade * valorUnitario;
     }
     setItensOrcamentoEdit(novosItens);
   };

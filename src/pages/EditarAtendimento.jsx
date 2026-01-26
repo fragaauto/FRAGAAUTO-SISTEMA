@@ -122,21 +122,26 @@ export default function EditarAtendimento() {
       ...data
     }));
 
-    // Consolidar produtos do checklist
+    // CRÍTICO: Consolidar produtos do checklist preservando valores customizados
     const produtosDoChecklist = [];
     Object.entries(formData.checklist).forEach(([itemId, data]) => {
       if (data.produtos && data.produtos.length > 0) {
         data.produtos.forEach(pv => {
           const produto = produtos.find(p => p.id === pv.id);
           if (produto) {
-            const valorUnitario = pv.valor_customizado !== undefined ? pv.valor_customizado : produto.valor;
+            // PRESERVAR valor customizado se existir, senão usar valor do cadastro
+            const valorUnitario = pv.valor_customizado !== undefined && pv.valor_customizado !== null 
+              ? Number(pv.valor_customizado) 
+              : Number(produto.valor);
+            const quantidade = Number(pv.quantidade) || 1;
+            
             produtosDoChecklist.push({
               produto_id: produto.id,
               codigo_produto: produto.codigo || '',
               nome: produto.nome,
-              quantidade: pv.quantidade,
+              quantidade: quantidade,
               valor_unitario: valorUnitario,
-              valor_total: valorUnitario * pv.quantidade,
+              valor_total: valorUnitario * quantidade,
               vantagens: produto.vantagens || '',
               desvantagens: produto.desvantagens || '',
               status_aprovacao: 'pendente',
@@ -150,34 +155,39 @@ export default function EditarAtendimento() {
       }
     });
 
-    // Consolidar todos os produtos (queixa + checklist)
-    const todosOsItens = [...(atendimento.itens_queixa || []), ...produtosDoChecklist];
+    // CRÍTICO: Consolidar sem duplicar - preservar itens da queixa e adicionar checklist
+    const itensQueixa = (atendimento.itens_queixa || []).map(item => ({
+      ...item,
+      valor_total: (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0)
+    }));
+
+    const todosOsItens = [...itensQueixa, ...produtosDoChecklist];
     const produtosConsolidados = {};
     
     todosOsItens.forEach(item => {
-      if (produtosConsolidados[item.produto_id]) {
-        produtosConsolidados[item.produto_id].quantidade += item.quantidade;
-        produtosConsolidados[item.produto_id].valor_total = 
-          produtosConsolidados[item.produto_id].quantidade * produtosConsolidados[item.produto_id].valor_unitario;
-        if (!produtosConsolidados[item.produto_id].origens) {
-          produtosConsolidados[item.produto_id].origens = [produtosConsolidados[item.produto_id].origem || 'queixa'];
-        }
-        if (item.origem && !produtosConsolidados[item.produto_id].origens.includes(item.origem)) {
-          produtosConsolidados[item.produto_id].origens.push(item.origem);
-        }
+      const key = item.produto_id;
+      if (produtosConsolidados[key]) {
+        // Somar quantidades se for o mesmo produto
+        produtosConsolidados[key].quantidade += Number(item.quantidade) || 0;
+        produtosConsolidados[key].valor_total = 
+          produtosConsolidados[key].quantidade * produtosConsolidados[key].valor_unitario;
       } else {
-        produtosConsolidados[item.produto_id] = { 
+        produtosConsolidados[key] = { 
           ...item,
-          origem: item.origem || 'queixa'
+          quantidade: Number(item.quantidade) || 0,
+          valor_unitario: Number(item.valor_unitario) || 0,
+          valor_total: (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0)
         };
       }
     });
 
     const itensConsolidados = Object.values(produtosConsolidados);
-    const subtotal_queixa = (atendimento.itens_queixa || []).reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const subtotal_checklist = produtosDoChecklist.reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const subtotal = itensConsolidados.reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const valor_final = subtotal - (atendimento.desconto || 0);
+    
+    // CRÍTICO: Recalcular todos os totais
+    const subtotal_queixa = itensQueixa.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+    const subtotal_checklist = produtosDoChecklist.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+    const subtotal = itensConsolidados.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+    const valor_final = subtotal - (Number(atendimento.desconto) || 0);
 
     const historicoItem = {
       data: new Date().toISOString(),
