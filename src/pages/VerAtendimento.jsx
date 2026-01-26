@@ -86,6 +86,7 @@ export default function VerAtendimento() {
   const [user, setUser] = useState(null);
   const [itensQueixaEdit, setItensQueixaEdit] = useState([]);
   const [itensOrcamentoEdit, setItensOrcamentoEdit] = useState([]);
+  const [queixaTextoEdit, setQueixaTextoEdit] = useState('');
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -134,25 +135,63 @@ export default function VerAtendimento() {
   };
 
   const iniciarEdicaoQueixa = () => {
-    setItensQueixaEdit([...atendimento.itens_queixa || []]);
+    // CRÍTICO: Carregar TODOS os dados existentes, preservando valores
+    setItensQueixaEdit((atendimento.itens_queixa || []).map(item => ({
+      ...item,
+      quantidade: Number(item.quantidade) || 1,
+      valor_unitario: Number(item.valor_unitario) || 0,
+      valor_total: Number(item.valor_total) || 0
+    })));
+    setQueixaTextoEdit(atendimento.queixa_inicial || '');
     setModoEdicaoQueixa(true);
   };
 
   const salvarEdicaoQueixa = () => {
-    const subtotal_queixa = itensQueixaEdit.reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const subtotal = subtotal_queixa + (atendimento.subtotal_checklist || 0);
-    const valor_final = subtotal - (atendimento.desconto || 0);
+    // CRÍTICO: Recalcular todos os valores garantindo precisão
+    const itensAtualizados = itensQueixaEdit.map(item => ({
+      ...item,
+      quantidade: Number(item.quantidade) || 0,
+      valor_unitario: Number(item.valor_unitario) || 0,
+      valor_total: (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0)
+    }));
+
+    const subtotal_queixa = itensAtualizados.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const subtotal_checklist = (atendimento.itens_orcamento || [])
+      .filter(item => item.origem === 'checklist')
+      .reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+    
+    // Recalcular orçamento consolidado
+    const todosItens = [
+      ...itensAtualizados,
+      ...(atendimento.itens_orcamento || []).filter(item => item.origem === 'checklist')
+    ];
+    const itensConsolidados = {};
+    todosItens.forEach(item => {
+      const key = item.produto_id;
+      if (itensConsolidados[key]) {
+        itensConsolidados[key].quantidade += Number(item.quantidade) || 0;
+        itensConsolidados[key].valor_total = itensConsolidados[key].quantidade * itensConsolidados[key].valor_unitario;
+      } else {
+        itensConsolidados[key] = { ...item };
+      }
+    });
+
+    const subtotal = Object.values(itensConsolidados).reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+    const valor_final = subtotal - (Number(atendimento.desconto) || 0);
 
     const historicoItem = {
       data: new Date().toISOString(),
       usuario: user?.email || 'Sistema',
       campo_editado: 'queixa',
-      descricao: 'Orçamento da queixa editado'
+      descricao: 'Queixa editada (texto e itens)'
     };
 
     updateMutation.mutate({
-      itens_queixa: itensQueixaEdit,
+      queixa_inicial: queixaTextoEdit,
+      itens_queixa: itensAtualizados,
+      itens_orcamento: Object.values(itensConsolidados),
       subtotal_queixa,
+      subtotal_checklist,
       subtotal,
       valor_final,
       assinatura_cliente_queixa: null,
@@ -190,7 +229,13 @@ export default function VerAtendimento() {
   };
 
   const iniciarEdicaoOrcamento = () => {
-    setItensOrcamentoEdit([...atendimento.itens_orcamento || []]);
+    // CRÍTICO: Carregar valores existentes preservando tudo
+    setItensOrcamentoEdit((atendimento.itens_orcamento || []).map(item => ({
+      ...item,
+      quantidade: Number(item.quantidade) || 1,
+      valor_unitario: Number(item.valor_unitario) || 0,
+      valor_total: Number(item.valor_total) || 0
+    })));
     setModoEdicaoOrcamento(true);
   };
 
@@ -1079,21 +1124,50 @@ export default function VerAtendimento() {
           </TabsContent>
 
           <TabsContent value="queixa" className="space-y-4">
-            {!atendimento.queixa_inicial && (!atendimento.itens_queixa || atendimento.itens_queixa.length === 0) && (
+            {!modoEdicaoQueixa && !atendimento.queixa_inicial && (!atendimento.itens_queixa || atendimento.itens_queixa.length === 0) && (
               <Card className="py-8">
                 <CardContent className="text-center text-slate-500">
-                  Nenhuma queixa registrada neste atendimento
+                  <p className="mb-3">Nenhuma queixa registrada neste atendimento</p>
+                  {isAdmin && (
+                    <Button
+                      onClick={iniciarEdicaoQueixa}
+                      variant="outline"
+                      className="border-orange-500 text-orange-600"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Adicionar Queixa
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             )}
 
-            {atendimento.queixa_inicial && (
+            {(atendimento.queixa_inicial || modoEdicaoQueixa) && (
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Queixa Inicial do Cliente</CardTitle>
+                  {isAdmin && !modoEdicaoQueixa && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={iniciarEdicaoQueixa}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Editar Queixa
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
-                  <p className="text-slate-700 whitespace-pre-wrap">{atendimento.queixa_inicial}</p>
+                  {modoEdicaoQueixa ? (
+                    <Textarea
+                      placeholder="Descreva a queixa inicial do cliente..."
+                      value={queixaTextoEdit}
+                      onChange={(e) => setQueixaTextoEdit(e.target.value)}
+                      className="min-h-[100px]"
+                    />
+                  ) : (
+                    <p className="text-slate-700 whitespace-pre-wrap">{atendimento.queixa_inicial || '-'}</p>
+                  )}
                 </CardContent>
               </Card>
             )}

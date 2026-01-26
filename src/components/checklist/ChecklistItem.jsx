@@ -78,7 +78,10 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
   const handleProdutoQuantidade = (index, quantidade) => {
     const novosProdutos = [...produtosVinculados];
     const qtd = quantidade === '' ? '' : Math.max(1, parseInt(quantidade) || 1);
-    novosProdutos[index] = { ...novosProdutos[index], quantidade: qtd };
+    novosProdutos[index] = { 
+      ...novosProdutos[index], 
+      quantidade: qtd 
+    };
     onChange({
       ...value,
       item: item.item,
@@ -89,7 +92,11 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
 
   const handleProdutoValor = (index, valor) => {
     const novosProdutos = [...produtosVinculados];
-    novosProdutos[index] = { ...novosProdutos[index], valor_customizado: valor };
+    const valorNum = parseFloat(valor) || 0;
+    novosProdutos[index] = { 
+      ...novosProdutos[index], 
+      valor_customizado: valorNum 
+    };
     onChange({
       ...value,
       item: item.item,
