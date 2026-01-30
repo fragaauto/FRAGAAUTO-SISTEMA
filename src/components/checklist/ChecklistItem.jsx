@@ -213,7 +213,13 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
                   {produtosVinculados.map((pv, idx) => {
                     const produto = produtos.find(p => p.id === pv.id);
                     if (!produto) return null;
-                    const valorUnitario = pv.valor_customizado !== undefined ? pv.valor_customizado : produto.valor;
+                    
+                    // CRÍTICO: FONTE ÚNICA DA VERDADE - valor salvo tem prioridade ABSOLUTA
+                    // Se valor_customizado existe (mesmo que seja 0), usar ele
+                    // Se não existe, é um item NOVO sendo adicionado agora, aí sim usar valor do cadastro
+                    const isItemSalvo = pv.valor_customizado !== undefined && pv.valor_customizado !== null;
+                    const valorUnitario = isItemSalvo ? Number(pv.valor_customizado) : Number(produto.valor);
+                    
                     return (
                       <div key={idx} className="p-3 bg-white rounded-lg border space-y-3">
                         <div className="flex items-start gap-2">

@@ -63,29 +63,74 @@ export default function EditarAtendimento() {
   });
 
   useEffect(() => {
-    if (atendimento && checklistItems.length > 0) {
-      // Converter checklist array para objeto, preservando TODOS OS VALORES SALVOS
+    if (atendimento && checklistItems.length > 0 && produtos.length > 0) {
+      // CRÍTICO: Aguardar TODOS os dados carregarem antes de popular o formulário
       const checklistObj = {};
+      
       (atendimento.checklist || []).forEach(item => {
-        // Encontrar o ChecklistItem correspondente pelo nome
         const checklistItemConfig = checklistItems.find(ci => ci.item === item.item);
         if (checklistItemConfig) {
-          // CRÍTICO: Preservar valores customizados e quantidades dos produtos salvos
+          // FONTE ÚNICA DA VERDADE: Se produtos existem no checklist salvo, USAR EXATAMENTE ELES
+          const produtosSalvos = (item.produtos || []).map(p => {
+            const produtoCadastro = produtos.find(prod => prod.id === p.id);
+            
+            if (!produtoCadastro) {
+              console.warn(`Produto ${p.id} não encontrado no cadastro`);
+              return null;
+            }
+
+            // CRÍTICO: Detectar se é item EDITADO (tem valor_customizado) ou item histórico (sem valor_customizado)
+            let valorFinal;
+            if (p.valor_customizado !== undefined && p.valor_customizado !== null) {
+              // Item JÁ foi editado antes - usar valor salvo
+              valorFinal = Number(p.valor_customizado);
+            } else {
+              // Item antigo SEM valor_customizado - recuperar do orçamento consolidado
+              const itemOrcamento = (atendimento.itens_orcamento || []).find(
+                io => io.produto_id === p.id && io.origem === 'checklist'
+              );
+              
+              if (itemOrcamento) {
+                valorFinal = Number(itemOrcamento.valor_unitario);
+              } else {
+                // Fallback: usar valor atual do cadastro
+                valorFinal = Number(produtoCadastro.valor);
+              }
+            }
+
+            return {
+              id: p.id,
+              quantidade: Number(p.quantidade) || 1,
+              valor_customizado: valorFinal, // SEMPRE definir para evitar reset
+              observacao: p.observacao || ''
+            };
+          }).filter(Boolean); // Remove nulls
+
           checklistObj[checklistItemConfig.id] = {
             item: item.item,
             categoria: item.categoria,
-            status: item.status,
-            comentario: item.comentario,
-            incluir_orcamento: item.incluir_orcamento,
-            produtos: (item.produtos || []).map(p => ({
-              id: p.id,
-              quantidade: p.quantidade,
-              valor_customizado: p.valor_customizado, // PRESERVAR valor customizado
-              observacao: p.observacao
-            }))
+            status: item.status || 'nao_verificado',
+            comentario: item.comentario || '',
+            incluir_orcamento: item.incluir_orcamento || false,
+            produtos: produtosSalvos
           };
         }
       });
+      
+      // VALIDAÇÃO CRÍTICA: Verificar se há valores zerados
+      let temErro = false;
+      Object.values(checklistObj).forEach(item => {
+        (item.produtos || []).forEach(p => {
+          if (p.valor_customizado === 0 || p.quantidade === 0) {
+            console.error('ERRO: Valor ou quantidade zerados detectados', p);
+            temErro = true;
+          }
+        });
+      });
+      
+      if (temErro) {
+        toast.error('⚠️ Detectados valores zerados! Verifique o checklist antes de salvar.');
+      }
       
       setFormData({
         checklist: checklistObj,
@@ -93,7 +138,7 @@ export default function EditarAtendimento() {
         itens_orcamento: atendimento.itens_orcamento || []
       });
     }
-  }, [atendimento, checklistItems]);
+  }, [atendimento, checklistItems, produtos]);
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.Atendimento.update(id, data),
@@ -116,24 +161,46 @@ export default function EditarAtendimento() {
   };
 
   const handleSave = () => {
+    // VALIDAÇÃO CRÍTICA PRÉ-SALVAMENTO: Bloquear se houver valores zerados
+    let errosDetectados = [];
+    Object.entries(formData.checklist).forEach(([itemId, data]) => {
+      (data.produtos || []).forEach(pv => {
+        if (!pv.valor_customizado || pv.valor_customizado === 0) {
+          errosDetectados.push(`Item "${data.item}" tem valor zerado`);
+        }
+        if (!pv.quantidade || pv.quantidade === 0) {
+          errosDetectados.push(`Item "${data.item}" tem quantidade zerada`);
+        }
+      });
+    });
+
+    if (errosDetectados.length > 0) {
+      toast.error('❌ Não é possível salvar: há valores zerados no checklist!');
+      console.error('Erros detectados:', errosDetectados);
+      return;
+    }
+
     // Converter checklist de objeto para array
     const checklistArray = Object.entries(formData.checklist).map(([id, data]) => ({
       item_id: id,
       ...data
     }));
 
-    // CRÍTICO: Consolidar produtos do checklist preservando valores customizados
+    // CRÍTICO: Consolidar produtos do checklist - USAR APENAS VALORES SALVOS
     const produtosDoChecklist = [];
     Object.entries(formData.checklist).forEach(([itemId, data]) => {
       if (data.produtos && data.produtos.length > 0) {
         data.produtos.forEach(pv => {
           const produto = produtos.find(p => p.id === pv.id);
           if (produto) {
-            // PRESERVAR valor customizado se existir, senão usar valor do cadastro
-            const valorUnitario = pv.valor_customizado !== undefined && pv.valor_customizado !== null 
-              ? Number(pv.valor_customizado) 
-              : Number(produto.valor);
+            // NUNCA recalcular - valor_customizado É a fonte da verdade
+            const valorUnitario = Number(pv.valor_customizado);
             const quantidade = Number(pv.quantidade) || 1;
+            
+            if (valorUnitario === 0) {
+              console.error('ERRO CRÍTICO: Tentativa de salvar valor zerado', { item: data.item, produto: produto.nome });
+              return; // Não adicionar ao orçamento
+            }
             
             produtosDoChecklist.push({
               produto_id: produto.id,
