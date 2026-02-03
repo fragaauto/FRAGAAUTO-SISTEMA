@@ -29,7 +29,9 @@ import {
   PenTool,
   RotateCcw,
   AlertTriangle,
-  Save
+  Save,
+  Search,
+  Plus
 } from 'lucide-react';
 import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
@@ -88,6 +90,7 @@ export default function VerAtendimento() {
   const [itensQueixaEdit, setItensQueixaEdit] = useState([]);
   const [itensOrcamentoEdit, setItensOrcamentoEdit] = useState([]);
   const [queixaTextoEdit, setQueixaTextoEdit] = useState('');
+  const [searchProdutoQueixa, setSearchProdutoQueixa] = useState('');
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -109,6 +112,12 @@ export default function VerAtendimento() {
     staleTime: 2 * 60 * 1000,
     retry: false,
     refetchOnWindowFocus: false
+  });
+
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list(),
+    staleTime: 10 * 60 * 1000
   });
 
   const updateMutation = useMutation({
@@ -227,6 +236,27 @@ export default function VerAtendimento() {
 
   const removerItemQueixaEdit = (index) => {
     setItensQueixaEdit(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const adicionarProdutoQueixa = (produtoId) => {
+    const produto = produtos.find(p => p.id === produtoId);
+    if (!produto) return;
+    
+    const novoItem = {
+      produto_id: produto.id,
+      codigo_produto: produto.codigo || '',
+      nome: produto.nome,
+      quantidade: 1,
+      valor_unitario: Number(produto.valor) || 0,
+      valor_total: Number(produto.valor) || 0,
+      vantagens: produto.vantagens || '',
+      desvantagens: produto.desvantagens || '',
+      status_aprovacao: 'pendente',
+      observacao_item: ''
+    };
+    
+    setItensQueixaEdit(prev => [...prev, novoItem]);
+    setSearchProdutoQueixa('');
   };
 
   const iniciarEdicaoOrcamento = () => {
@@ -1242,6 +1272,57 @@ export default function VerAtendimento() {
                             </div>
                           </div>
                         ))}
+                        
+                        {/* Adicionar Produtos */}
+                        <div className="pt-4 border-t space-y-3">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Input
+                              placeholder="Buscar produto para adicionar..."
+                              value={searchProdutoQueixa}
+                              onChange={(e) => setSearchProdutoQueixa(e.target.value)}
+                              className="pl-9"
+                            />
+                          </div>
+                          
+                          {searchProdutoQueixa && (
+                            <div className="max-h-48 overflow-y-auto space-y-1 border rounded-lg p-2 bg-white">
+                              {produtos
+                                .filter(p => {
+                                  const search = searchProdutoQueixa.toLowerCase();
+                                  return p.nome?.toLowerCase().includes(search) ||
+                                         p.codigo?.toLowerCase().includes(search);
+                                })
+                                .map(p => (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={() => adicionarProdutoQueixa(p.id)}
+                                    className="w-full text-left p-2 hover:bg-slate-100 rounded text-sm flex items-center justify-between"
+                                  >
+                                    <span>
+                                      {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
+                                      {p.nome}
+                                    </span>
+                                    <span className="text-green-600 font-semibold text-xs">
+                                      R$ {p.valor?.toFixed(2)}
+                                    </span>
+                                  </button>
+                                ))}
+                              {produtos
+                                .filter(p => {
+                                  const search = searchProdutoQueixa.toLowerCase();
+                                  return p.nome?.toLowerCase().includes(search) ||
+                                         p.codigo?.toLowerCase().includes(search);
+                                }).length === 0 && (
+                                <p className="text-center py-2 text-slate-500 text-sm">
+                                  Nenhum produto encontrado
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        
                         <div className="flex gap-2 pt-4 border-t">
                           <Button
                             variant="outline"
