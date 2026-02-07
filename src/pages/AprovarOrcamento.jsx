@@ -83,6 +83,14 @@ export default function AprovarOrcamento() {
     staleTime: 0,
   });
 
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 10 * 60 * 1000
+  });
+
+  const whatsappAtendimento = configs[0]?.whatsapp_atendimento || '';
+
   // Inicializar decisões com status atual
   useEffect(() => {
     if (atendimento) {
@@ -248,10 +256,12 @@ export default function AprovarOrcamento() {
   };
 
   const enviarWhatsApp = () => {
+    if (!whatsappAtendimento) {
+      toast.error('WhatsApp não configurado. Entre em contato com a empresa.');
+      return;
+    }
     const mensagem = gerarMensagemWhatsApp();
-    // Número da empresa - ajustar conforme necessário
-    const numeroEmpresa = '5511999999999'; // Substituir pelo número real
-    window.open(`https://wa.me/${numeroEmpresa}?text=${mensagem}`, '_blank');
+    window.open(`https://wa.me/${whatsappAtendimento}?text=${mensagem}`, '_blank');
   };
 
   if (isLoading) {
@@ -279,7 +289,7 @@ export default function AprovarOrcamento() {
   }
 
   if (isError || !atendimento) {
-    const telefoneEmpresa = '5511999999999'; // Substituir pelo número real
+    const telefoneEmpresa = whatsappAtendimento || '5511999999999';
     
     // Mostrar erro detalhado no console
     console.error('❌ [APROVACAO] Exibindo tela de erro:', {
