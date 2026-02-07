@@ -424,7 +424,7 @@ export default function AprovarOrcamento() {
                     <Button
                       onClick={() => toggleDecisao(key, 'aprovado')}
                       variant={decisao === 'aprovado' ? 'default' : 'outline'}
-                      className={decisao === 'aprovado' ? 'bg-green-600 hover:bg-green-700' : ''}
+                      className={`flex-1 ${decisao === 'aprovado' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                       Aprovar
@@ -432,7 +432,7 @@ export default function AprovarOrcamento() {
                     <Button
                       onClick={() => toggleDecisao(key, 'reprovado')}
                       variant={decisao === 'reprovado' ? 'default' : 'outline'}
-                      className={decisao === 'reprovado' ? 'bg-red-600 hover:bg-red-700' : ''}
+                      className={`flex-1 ${decisao === 'reprovado' ? 'bg-red-600 hover:bg-red-700' : ''}`}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
                       Recusar
