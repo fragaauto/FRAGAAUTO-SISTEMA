@@ -1086,27 +1086,6 @@ export default function VerAtendimento() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {isAdmin && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(createPageUrl(`EditarAtendimento?id=${id}`))}
-                  className="hidden sm:flex"
-                >
-                  <Edit className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Editar Checklist</span>
-                </Button>
-              )}
-              {isAdmin && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => navigate(createPageUrl(`EditarAtendimento?id=${id}`))}
-                  className="sm:hidden"
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-              )}
               <Button
                 variant="outline"
                 size="icon"
@@ -1141,6 +1120,24 @@ export default function VerAtendimento() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Botões de edição sempre visíveis */}
+        <div className="flex gap-2 mb-6">
+          <Button
+            className="bg-orange-500 hover:bg-orange-600"
+            onClick={() => navigate(createPageUrl(`EditarAtendimento?id=${atendimento.id}`))}
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Editar Checklist
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate(createPageUrl(`EditarAtendimento?id=${atendimento.id}`))}
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Editar Queixa
+          </Button>
+        </div>
+
         <Tabs defaultValue="resumo">
           <TabsList className="mb-6">
             <TabsTrigger value="resumo">Resumo</TabsTrigger>
