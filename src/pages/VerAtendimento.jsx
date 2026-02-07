@@ -121,10 +121,19 @@ export default function VerAtendimento() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.Atendimento.update(id, data),
-    onSuccess: () => {
+    mutationFn: (data) => {
+      console.log('📤 [ATUALIZAR] Enviando para API:', Object.keys(data));
+      return base44.entities.Atendimento.update(id, data);
+    },
+    onSuccess: (result) => {
+      console.log('✅ [ATUALIZAR] Sucesso:', result);
       queryClient.invalidateQueries(['atendimento', id]);
+      queryClient.invalidateQueries(['atendimentos']);
       toast.success('Atualizado com sucesso!');
+    },
+    onError: (error) => {
+      console.error('🔴 [ATUALIZAR] Erro:', error);
+      toast.error(`Erro ao atualizar: ${error.message || 'Tente novamente'}`);
     }
   });
 
@@ -157,6 +166,14 @@ export default function VerAtendimento() {
   };
 
   const salvarEdicaoQueixa = () => {
+    console.log('💾 [SALVAR QUEIXA] Iniciando salvamento...');
+    console.log('📦 [SALVAR QUEIXA] Itens a salvar:', itensQueixaEdit.length);
+    
+    if (itensQueixaEdit.length === 0 && !queixaTextoEdit) {
+      toast.warning('Adicione itens ou texto à queixa antes de salvar');
+      return;
+    }
+    
     // CRÍTICO: Recalcular todos os valores garantindo precisão
     const itensAtualizados = itensQueixaEdit.map(item => ({
       ...item,
@@ -193,10 +210,10 @@ export default function VerAtendimento() {
       data: new Date().toISOString(),
       usuario: user?.email || 'Sistema',
       campo_editado: 'queixa',
-      descricao: 'Queixa editada (texto e itens)'
+      descricao: `Queixa editada - ${itensAtualizados.length} itens`
     };
 
-    updateMutation.mutate({
+    const dataToSave = {
       queixa_inicial: queixaTextoEdit,
       itens_queixa: itensAtualizados,
       itens_orcamento: Object.values(itensConsolidados),
@@ -208,8 +225,15 @@ export default function VerAtendimento() {
       data_aprovacao_queixa: null,
       status: 'queixa_pendente',
       historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
+    };
+
+    console.log('📤 [SALVAR QUEIXA] Payload:', {
+      itens_queixa: dataToSave.itens_queixa.length,
+      subtotal_queixa: dataToSave.subtotal_queixa,
+      valor_final: dataToSave.valor_final
     });
-    
+
+    updateMutation.mutate(dataToSave);
     setModoEdicaoQueixa(false);
   };
 
