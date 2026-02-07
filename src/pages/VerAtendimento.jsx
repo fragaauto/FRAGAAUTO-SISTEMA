@@ -2016,6 +2016,17 @@ export default function VerAtendimento() {
               </CardContent>
             </Card>
 
+            {atendimento.itens_queixa?.length > 0 && (
+              <Card className="bg-blue-100 border-blue-300">
+                <CardContent className="pt-6">
+                  <div className="flex justify-between items-center text-lg font-bold text-blue-700">
+                    <span>Subtotal da Queixa:</span>
+                    <span>R$ {atendimento.subtotal_queixa?.toFixed(2) || '0.00'}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Aprovação do Checklist</CardTitle>
@@ -2094,6 +2105,50 @@ export default function VerAtendimento() {
                 )}
               </CardContent>
             </Card>
+
+            {atendimento.itens_orcamento?.length > 0 && (
+              <Card className="bg-orange-100 border-orange-300">
+                <CardContent className="pt-6">
+                  <div className="flex justify-between items-center text-lg font-bold text-orange-700">
+                    <span>Subtotal do Checklist:</span>
+                    <span>R$ {atendimento.subtotal_checklist?.toFixed(2) || '0.00'}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {(atendimento.itens_queixa?.length > 0 || atendimento.itens_orcamento?.length > 0) && (
+              <Card className="bg-slate-800 text-white">
+                <CardContent className="pt-6 space-y-3">
+                  {atendimento.subtotal_queixa > 0 && (
+                    <div className="flex justify-between text-blue-300">
+                      <span>Subtotal da Queixa:</span>
+                      <span>R$ {atendimento.subtotal_queixa?.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {atendimento.subtotal_checklist > 0 && (
+                    <div className="flex justify-between text-orange-300">
+                      <span>Subtotal do Checklist:</span>
+                      <span>R$ {atendimento.subtotal_checklist?.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-white/20 pt-2">
+                    <span>Subtotal Total:</span>
+                    <span>R$ {atendimento.subtotal?.toFixed(2)}</span>
+                  </div>
+                  {atendimento.desconto > 0 && (
+                    <div className="flex justify-between text-green-400">
+                      <span>Desconto:</span>
+                      <span>- R$ {atendimento.desconto?.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-white/20 pt-3 flex justify-between text-xl font-bold">
+                    <span>VALOR TOTAL:</span>
+                    <span className="text-orange-400">R$ {atendimento.valor_final?.toFixed(2)}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
