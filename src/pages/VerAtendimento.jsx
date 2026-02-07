@@ -844,22 +844,29 @@ export default function VerAtendimento() {
               </div>
             ` : ''}
 
-            ${atendimento.itens_orcamento?.length > 0 ? `
-              <div style="margin-bottom: 20px;">
-                <h3 style="color: #1e293b; font-size: 16px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f97316;">
-                  ITENS DO CHECKLIST
-                </h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Item</th>
-                      <th style="text-align: center; width: 80px;">Qtd</th>
-                      <th style="text-align: right; width: 120px;">Valor Unit.</th>
-                      <th style="text-align: right; width: 120px;">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${atendimento.itens_orcamento.map(item => `
+            ${(() => {
+              const produtosNaQueixa = new Set(
+                atendimento.itens_queixa?.map(item => item.produto_id) || []
+              );
+              const itensChecklistFiltrados = atendimento.itens_orcamento?.filter(
+                item => !produtosNaQueixa.has(item.produto_id)
+              ) || [];
+              return itensChecklistFiltrados.length > 0 ? `
+                  <div style="margin-bottom: 20px;">
+                    <h3 style="color: #1e293b; font-size: 16px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f97316;">
+                      ITENS DO CHECKLIST
+                    </h3>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th style="text-align: center; width: 80px;">Qtd</th>
+                          <th style="text-align: right; width: 120px;">Valor Unit.</th>
+                          <th style="text-align: right; width: 120px;">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${itensChecklistFiltrados.map(item => `
                       <tr>
                         <td>
                          ${item.nome}
@@ -906,9 +913,10 @@ export default function VerAtendimento() {
                 </table>
                 <div style="text-align: right; margin-top: 10px; padding: 10px; background: #fed7aa; border-radius: 6px;">
                   <strong style="color: #92400e; font-size: 15px;">Subtotal do Checklist: R$ ${atendimento.subtotal_checklist?.toFixed(2) || '0.00'}</strong>
-                </div>
-              </div>
-            ` : ''}
+                  </div>
+                  </div>
+                  ` : '';
+                  })()}
 
             <div class="totals">
               <div class="total-row">
@@ -1867,7 +1875,14 @@ export default function VerAtendimento() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                       {atendimento.itens_orcamento?.map((item, idx) => (
+                       {(() => {
+                         const produtosNaQueixa = new Set(
+                           atendimento.itens_queixa?.map(item => item.produto_id) || []
+                         );
+                         return atendimento.itens_orcamento?.filter(
+                           item => !produtosNaQueixa.has(item.produto_id)
+                         );
+                       })()?.map((item, idx) => (
                          <div key={idx} className="space-y-2">
                            <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
                              <div>
@@ -1905,7 +1920,15 @@ export default function VerAtendimento() {
                   </CardContent>
                 </Card>
 
-                {atendimento.subtotal_checklist > 0 && (
+                {(() => {
+                  const produtosNaQueixa = new Set(
+                    atendimento.itens_queixa?.map(item => item.produto_id) || []
+                  );
+                  const itensChecklistFiltrados = atendimento.itens_orcamento?.filter(
+                    item => !produtosNaQueixa.has(item.produto_id)
+                  ) || [];
+                  return itensChecklistFiltrados.length > 0;
+                })() && atendimento.subtotal_checklist > 0 && (
                   <Card className="bg-orange-100 border-orange-300">
                     <CardContent className="pt-6">
                       <div className="flex justify-between items-center text-lg font-bold text-orange-700">
