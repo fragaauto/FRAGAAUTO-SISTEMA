@@ -939,6 +939,36 @@ export default function VerAtendimento() {
                 Este é um pré-orçamento e os valores podem sofrer alterações após diagnóstico completo.
               </p>
               
+              ${atendimento.assinatura_cliente_queixa || atendimento.assinatura_cliente_checklist ? `
+                <div style="margin-top: 30px;">
+                  <h3 style="color: #1e293b; font-size: 16px; margin-bottom: 20px;">Assinaturas do Cliente</h3>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    ${atendimento.assinatura_cliente_queixa ? `
+                      <div>
+                        <p style="font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 10px;">Aprovação da Queixa</p>
+                        <img src="${atendimento.assinatura_cliente_queixa}" alt="Assinatura Queixa" style="border: 1px solid #e2e8f0; border-radius: 8px; max-width: 100%; height: auto;" />
+                        ${atendimento.data_aprovacao_queixa ? `
+                          <p style="font-size: 11px; color: #64748b; margin-top: 5px;">
+                            ${format(new Date(atendimento.data_aprovacao_queixa), "dd/MM/yyyy 'às' HH:mm")}
+                          </p>
+                        ` : ''}
+                      </div>
+                    ` : ''}
+                    ${atendimento.assinatura_cliente_checklist ? `
+                      <div>
+                        <p style="font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 10px;">Aprovação do Checklist</p>
+                        <img src="${atendimento.assinatura_cliente_checklist}" alt="Assinatura Checklist" style="border: 1px solid #e2e8f0; border-radius: 8px; max-width: 100%; height: auto;" />
+                        ${atendimento.data_aprovacao_checklist ? `
+                          <p style="font-size: 11px; color: #64748b; margin-top: 5px;">
+                            ${format(new Date(atendimento.data_aprovacao_checklist), "dd/MM/yyyy 'às' HH:mm")}
+                          </p>
+                        ` : ''}
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              ` : ''}
+
               <div class="signatures">
                 <div class="signature">
                   <div class="signature-line">
