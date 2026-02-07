@@ -239,8 +239,20 @@ export default function VerAtendimento() {
   };
 
   const adicionarProdutoQueixa = (produtoId) => {
+    console.log('➕ [ADICIONAR PRODUTO QUEIXA]', produtoId);
+    
     const produto = produtos.find(p => p.id === produtoId);
-    if (!produto) return;
+    if (!produto) {
+      toast.error('Produto não encontrado');
+      return;
+    }
+    
+    // Verificar duplicata
+    const jaTem = itensQueixaEdit.some(i => i.produto_id === produto.id);
+    if (jaTem) {
+      toast.error('Este produto já está na queixa');
+      return;
+    }
     
     const novoItem = {
       produto_id: produto.id,
@@ -252,11 +264,14 @@ export default function VerAtendimento() {
       vantagens: produto.vantagens || '',
       desvantagens: produto.desvantagens || '',
       status_aprovacao: 'pendente',
+      status_servico: 'aguardando_autorizacao',
       observacao_item: ''
     };
     
     setItensQueixaEdit(prev => [...prev, novoItem]);
     setSearchProdutoQueixa('');
+    toast.success(`${produto.nome} adicionado à queixa`);
+    console.log('✅ [ADICIONAR PRODUTO QUEIXA] Produto adicionado:', novoItem);
   };
 
   const iniciarEdicaoOrcamento = () => {

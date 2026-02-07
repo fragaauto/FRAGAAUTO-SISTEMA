@@ -85,14 +85,19 @@ export default function NovoAtendimento() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Atendimento.create(data),
+    mutationFn: (data) => {
+      console.log('📤 [CRIAR ATENDIMENTO] Enviando dados:', data);
+      return base44.entities.Atendimento.create(data);
+    },
     onSuccess: (result) => {
+      console.log('✅ [CRIAR ATENDIMENTO] Sucesso:', result);
       toast.success('Atendimento criado com sucesso!');
       queryClient.invalidateQueries(['atendimentos']);
       navigate(createPageUrl(`VerAtendimento?id=${result.id}`));
     },
-    onError: () => {
-      toast.error('Erro ao criar atendimento');
+    onError: (error) => {
+      console.error('🔴 [CRIAR ATENDIMENTO] Erro:', error);
+      toast.error(`Erro ao criar atendimento: ${error.message || 'Verifique os dados'}`);
     }
   });
 
@@ -272,22 +277,57 @@ export default function NovoAtendimento() {
   };
 
   const handleSave = () => {
+    console.log('💾 [SALVAR] Iniciando salvamento...');
+    
     if (!formData.placa || !formData.modelo) {
-      toast.error('Preencha os dados do veículo');
+      toast.error('❌ Preencha placa e modelo do veículo');
       setActiveTab('dados');
       return;
     }
 
     const checklistArray = Object.entries(formData.checklist).map(([id, data]) => ({
-      id,
+      item_id: id,
       ...data
     }));
 
-    createMutation.mutate({
-      ...formData,
+    const dataToSave = {
+      cliente_nome: formData.cliente_nome || '',
+      cliente_telefone: formData.cliente_telefone || '',
+      placa: formData.placa.toUpperCase(),
+      modelo: formData.modelo,
+      marca: formData.marca || '',
+      ano: formData.ano || '',
+      km_atual: formData.km_atual || '',
+      data_entrada: formData.data_entrada,
+      queixa_inicial: formData.queixa_inicial || '',
+      itens_queixa: formData.itens_queixa || [],
       checklist: checklistArray,
-      placa: formData.placa.toUpperCase()
+      pre_diagnostico: formData.pre_diagnostico || '',
+      itens_orcamento: formData.itens_orcamento || [],
+      subtotal_queixa: formData.subtotal_queixa || 0,
+      subtotal_checklist: formData.subtotal_checklist || 0,
+      subtotal: formData.subtotal || 0,
+      desconto: formData.desconto || 0,
+      valor_final: formData.valor_final || 0,
+      observacoes: formData.observacoes || '',
+      status: formData.status || 'queixa_pendente',
+      historico_edicoes: [{
+        data: new Date().toISOString(),
+        usuario: 'Sistema',
+        campo_editado: 'criacao',
+        descricao: 'Atendimento criado'
+      }]
+    };
+
+    console.log('📦 [SALVAR] Payload preparado:', {
+      placa: dataToSave.placa,
+      itens_queixa: dataToSave.itens_queixa.length,
+      checklist: dataToSave.checklist.length,
+      itens_orcamento: dataToSave.itens_orcamento.length,
+      valor_final: dataToSave.valor_final
     });
+
+    createMutation.mutate(dataToSave);
   };
 
   const toggleSection = (categoria) => {
