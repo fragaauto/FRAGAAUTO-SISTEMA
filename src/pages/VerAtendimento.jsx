@@ -759,6 +759,68 @@ export default function VerAtendimento() {
               </div>
             </div>
 
+            ${atendimento.queixa_inicial ? `
+              <div style="margin-bottom: 20px;">
+                <h3 style="color: #1e293b; font-size: 16px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #3b82f6;">
+                  QUEIXA INICIAL DO CLIENTE
+                </h3>
+                <div style="background: #eff6ff; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                  <p style="color: #1e3a8a; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${atendimento.queixa_inicial}</p>
+                </div>
+              </div>
+            ` : ''}
+
+            ${atendimento.itens_queixa?.length > 0 ? `
+              <div style="margin-bottom: 20px;">
+                <h3 style="color: #1e293b; font-size: 16px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #3b82f6;">
+                  ORÇAMENTO DA QUEIXA INICIAL
+                </h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th style="text-align: center; width: 80px;">Qtd</th>
+                      <th style="text-align: right; width: 120px;">Valor Unit.</th>
+                      <th style="text-align: right; width: 120px;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${atendimento.itens_queixa.map(item => `
+                      <tr>
+                        <td>
+                         ${item.nome}
+                         ${item.observacao_item ? `
+                           <div style="margin-top: 6px; padding: 8px; background: #eff6ff; border-left: 3px solid #3b82f6; border-radius: 4px;">
+                             <strong style="font-size: 11px; color: #1e40af;">📝 Observações:</strong>
+                             <p style="font-size: 11px; color: #1e3a8a; margin: 4px 0 0 0;">${item.observacao_item}</p>
+                           </div>
+                         ` : ''}
+                         ${item.vantagens ? `
+                           <div style="margin-top: 6px; padding: 8px; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px;">
+                             <strong style="font-size: 11px; color: #166534;">✓ Benefícios de realizar:</strong>
+                             <p style="font-size: 11px; color: #15803d; margin: 4px 0 0 0;">${item.vantagens}</p>
+                           </div>
+                         ` : ''}
+                         ${item.desvantagens ? `
+                           <div style="margin-top: 6px; padding: 8px; background: #fef2f2; border-left: 3px solid #f59e0b; border-radius: 4px;">
+                             <strong style="font-size: 11px; color: #92400e;">⚠️ Riscos de não realizar:</strong>
+                             <p style="font-size: 11px; color: #78350f; margin: 4px 0 0 0;">${item.desvantagens}</p>
+                           </div>
+                         ` : ''}
+                        </td>
+                        <td style="text-align: center;">${item.quantidade}</td>
+                        <td style="text-align: right;">R$ ${item.valor_unitario?.toFixed(2)}</td>
+                        <td style="text-align: right; font-weight: 600;">R$ ${item.valor_total?.toFixed(2)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+                <div style="text-align: right; margin-top: 10px; padding: 10px; background: #dbeafe; border-radius: 6px;">
+                  <strong style="color: #1e40af; font-size: 15px;">Subtotal da Queixa: R$ ${atendimento.subtotal_queixa?.toFixed(2) || '0.00'}</strong>
+                </div>
+              </div>
+            ` : ''}
+
             ${defeitosEncontrados.length > 0 ? `
               <div style="margin-bottom: 20px;">
                 <h3 style="color: #1e293b; font-size: 16px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f97316;">
@@ -785,7 +847,7 @@ export default function VerAtendimento() {
             ${atendimento.itens_orcamento?.length > 0 ? `
               <div style="margin-bottom: 20px;">
                 <h3 style="color: #1e293b; font-size: 16px; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f97316;">
-                  SERVIÇOS E PRODUTOS
+                  ITENS DO CHECKLIST
                 </h3>
                 <table>
                   <thead>
@@ -842,6 +904,9 @@ export default function VerAtendimento() {
                     `).join('')}
                   </tbody>
                 </table>
+                <div style="text-align: right; margin-top: 10px; padding: 10px; background: #fed7aa; border-radius: 6px;">
+                  <strong style="color: #92400e; font-size: 15px;">Subtotal do Checklist: R$ ${atendimento.subtotal_checklist?.toFixed(2) || '0.00'}</strong>
+                </div>
               </div>
             ` : ''}
 
@@ -1596,6 +1661,69 @@ export default function VerAtendimento() {
                 </CardContent>
               </Card>
             )}
+
+            {atendimento.queixa_inicial && (
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardHeader>
+                  <CardTitle className="text-blue-700 flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5" />
+                    Queixa Inicial do Cliente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-slate-700 whitespace-pre-wrap">{atendimento.queixa_inicial}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {atendimento.itens_queixa?.length > 0 && (
+              <Card className="border-blue-200">
+                <CardHeader>
+                  <CardTitle className="text-blue-700">Orçamento da Queixa Inicial</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {atendimento.itens_queixa.map((item, idx) => (
+                    <div key={idx} className="space-y-2">
+                      <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div>
+                          <p className="font-medium">{item.nome}</p>
+                          <p className="text-sm text-slate-500">
+                            {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                          </p>
+                        </div>
+                        <p className="font-bold text-blue-600">
+                          R$ {item.valor_total?.toFixed(2)}
+                        </p>
+                      </div>
+                      {item.observacao_item && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
+                          <p className="text-sm text-blue-700">{item.observacao_item}</p>
+                        </div>
+                      )}
+                      {item.vantagens && (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
+                          <p className="text-sm text-green-700">{item.vantagens}</p>
+                        </div>
+                      )}
+                      {item.desvantagens && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                          <p className="text-sm text-amber-700">{item.desvantagens}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div className="p-3 bg-blue-100 border-t-2 border-blue-400 rounded-lg">
+                    <div className="flex justify-between items-center text-lg font-bold text-blue-700">
+                      <span>Subtotal da Queixa:</span>
+                      <span>R$ {atendimento.subtotal_queixa?.toFixed(2) || '0.00'}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             
             {atendimento.itens_orcamento?.length === 0 ? (
               <Card className="py-8">
@@ -1605,9 +1733,9 @@ export default function VerAtendimento() {
               </Card>
             ) : (
               <>
-                <Card>
+                <Card className="border-orange-200">
                   <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Itens do Orçamento</CardTitle>
+                    <CardTitle className="text-orange-700">Itens do Checklist</CardTitle>
                     {isAdmin && !modoEdicaoOrcamento && (
                       <Button
                         variant="outline"
@@ -1738,10 +1866,33 @@ export default function VerAtendimento() {
                   </CardContent>
                 </Card>
 
+                {atendimento.subtotal_checklist > 0 && (
+                  <Card className="bg-orange-100 border-orange-300">
+                    <CardContent className="pt-6">
+                      <div className="flex justify-between items-center text-lg font-bold text-orange-700">
+                        <span>Subtotal do Checklist:</span>
+                        <span>R$ {atendimento.subtotal_checklist?.toFixed(2) || '0.00'}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Card className="bg-slate-800 text-white">
                   <CardContent className="pt-6 space-y-3">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
+                    {atendimento.subtotal_queixa > 0 && (
+                      <div className="flex justify-between text-blue-300">
+                        <span>Subtotal da Queixa:</span>
+                        <span>R$ {atendimento.subtotal_queixa?.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {atendimento.subtotal_checklist > 0 && (
+                      <div className="flex justify-between text-orange-300">
+                        <span>Subtotal do Checklist:</span>
+                        <span>R$ {atendimento.subtotal_checklist?.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-white/20 pt-2">
+                      <span>Subtotal Total:</span>
                       <span>R$ {atendimento.subtotal?.toFixed(2)}</span>
                     </div>
                     {atendimento.desconto > 0 && (
