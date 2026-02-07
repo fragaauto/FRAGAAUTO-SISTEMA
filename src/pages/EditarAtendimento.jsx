@@ -15,6 +15,7 @@ import {
   Loader2
 } from 'lucide-react';
 import ChecklistSection from '../components/checklist/ChecklistSection';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export default function EditarAtendimento() {
   const navigate = useNavigate();
@@ -64,79 +65,104 @@ export default function EditarAtendimento() {
 
   useEffect(() => {
     if (atendimento && checklistItems.length > 0 && produtos.length > 0) {
-      // CRÍTICO: Aguardar TODOS os dados carregarem antes de popular o formulário
-      const checklistObj = {};
-      
-      (atendimento.checklist || []).forEach(item => {
-        const checklistItemConfig = checklistItems.find(ci => ci.item === item.item);
-        if (checklistItemConfig) {
-          // FONTE ÚNICA DA VERDADE: Se produtos existem no checklist salvo, USAR EXATAMENTE ELES
-          const produtosSalvos = (item.produtos || []).map(p => {
-            const produtoCadastro = produtos.find(prod => prod.id === p.id);
-            
-            if (!produtoCadastro) {
-              console.warn(`Produto ${p.id} não encontrado no cadastro`);
-              return null;
-            }
-
-            // CRÍTICO: Detectar se é item EDITADO (tem valor_customizado) ou item histórico (sem valor_customizado)
-            let valorFinal;
-            if (p.valor_customizado !== undefined && p.valor_customizado !== null) {
-              // Item JÁ foi editado antes - usar valor salvo
-              valorFinal = Number(p.valor_customizado);
-            } else {
-              // Item antigo SEM valor_customizado - recuperar do orçamento consolidado
-              const itemOrcamento = (atendimento.itens_orcamento || []).find(
-                io => io.produto_id === p.id && io.origem === 'checklist'
-              );
-              
-              if (itemOrcamento) {
-                valorFinal = Number(itemOrcamento.valor_unitario);
-              } else {
-                // Fallback: usar valor atual do cadastro
-                valorFinal = Number(produtoCadastro.valor);
-              }
-            }
-
-            return {
-              id: p.id,
-              quantidade: Number(p.quantidade) || 1,
-              valor_customizado: valorFinal, // SEMPRE definir para evitar reset
-              observacao: p.observacao || ''
-            };
-          }).filter(Boolean); // Remove nulls
-
-          checklistObj[checklistItemConfig.id] = {
-            item: item.item,
-            categoria: item.categoria,
-            status: item.status || 'nao_verificado',
-            comentario: item.comentario || '',
-            incluir_orcamento: item.incluir_orcamento || false,
-            produtos: produtosSalvos
-          };
-        }
+      console.log('🔵 [EDITAR CHECKLIST] Carregando dados:', {
+        atendimentoId: atendimento.id,
+        checklistLength: atendimento.checklist?.length || 0,
+        produtosLength: produtos.length,
+        checklistItemsLength: checklistItems.length
       });
-      
-      // VALIDAÇÃO CRÍTICA: Verificar se há valores zerados
-      let temErro = false;
-      Object.values(checklistObj).forEach(item => {
-        (item.produtos || []).forEach(p => {
-          if (p.valor_customizado === 0 || p.quantidade === 0) {
-            console.error('ERRO: Valor ou quantidade zerados detectados', p);
-            temErro = true;
+
+      try {
+        // CRÍTICO: Normalizar checklist para array válido
+        const checklistArray = Array.isArray(atendimento.checklist) ? atendimento.checklist : [];
+        
+        const checklistObj = {};
+        
+        checklistArray.forEach(item => {
+          // PROTEÇÃO: Validar estrutura do item
+          if (!item || !item.item) {
+            console.warn('⚠️ Item inválido no checklist:', item);
+            return;
+          }
+
+          const checklistItemConfig = checklistItems.find(ci => ci.item === item.item);
+          if (checklistItemConfig) {
+            // FONTE ÚNICA DA VERDADE: Se produtos existem no checklist salvo, USAR EXATAMENTE ELES
+            const produtosArray = Array.isArray(item.produtos) ? item.produtos : [];
+            
+            const produtosSalvos = produtosArray.map(p => {
+              // PROTEÇÃO: Validar produto
+              if (!p || !p.id) {
+                console.warn('⚠️ Produto inválido no checklist:', p);
+                return null;
+              }
+
+              const produtoCadastro = produtos.find(prod => prod.id === p.id);
+              
+              if (!produtoCadastro) {
+                console.warn(`⚠️ Produto ${p.id} não encontrado no cadastro - será ignorado`);
+                return null;
+              }
+
+              // CRÍTICO: Detectar se é item EDITADO (tem valor_customizado) ou item histórico (sem valor_customizado)
+              let valorFinal = 0;
+              
+              if (p.valor_customizado !== undefined && p.valor_customizado !== null && p.valor_customizado !== 0) {
+                // Item JÁ foi editado antes - usar valor salvo
+                valorFinal = Number(p.valor_customizado);
+              } else {
+                // Item antigo SEM valor_customizado - recuperar do orçamento consolidado
+                const itemOrcamento = (atendimento.itens_orcamento || []).find(
+                  io => io.produto_id === p.id && io.origem === 'checklist'
+                );
+                
+                if (itemOrcamento && itemOrcamento.valor_unitario) {
+                  valorFinal = Number(itemOrcamento.valor_unitario);
+                } else {
+                  // Fallback: usar valor atual do cadastro
+                  valorFinal = Number(produtoCadastro.valor) || 0;
+                }
+              }
+
+              // PROTEÇÃO: Se ainda for zero, usar valor do cadastro
+              if (valorFinal === 0) {
+                valorFinal = Number(produtoCadastro.valor) || 0;
+                console.warn(`⚠️ Produto ${produtoCadastro.nome} estava com valor zero, usando valor do cadastro: ${valorFinal}`);
+              }
+
+              return {
+                id: p.id,
+                quantidade: Number(p.quantidade) || 1,
+                valor_customizado: valorFinal,
+                observacao: p.observacao || ''
+              };
+            }).filter(Boolean); // Remove nulls
+
+            checklistObj[checklistItemConfig.id] = {
+              item: item.item,
+              categoria: item.categoria,
+              status: item.status || 'nao_verificado',
+              comentario: item.comentario || '',
+              incluir_orcamento: item.incluir_orcamento || false,
+              produtos: produtosSalvos
+            };
           }
         });
-      });
-      
-      if (temErro) {
-        toast.error('⚠️ Detectados valores zerados! Verifique o checklist antes de salvar.');
+        
+        console.log('✅ [EDITAR CHECKLIST] Checklist processado:', {
+          totalItens: Object.keys(checklistObj).length,
+          itensComProdutos: Object.values(checklistObj).filter(i => i.produtos?.length > 0).length
+        });
+        
+        setFormData({
+          checklist: checklistObj,
+          pre_diagnostico: atendimento.pre_diagnostico || '',
+          itens_orcamento: atendimento.itens_orcamento || []
+        });
+      } catch (error) {
+        console.error('🔴 [ERRO CRÍTICO] Falha ao carregar checklist:', error);
+        toast.error('Erro ao carregar checklist. Tente recarregar a página.');
       }
-      
-      setFormData({
-        checklist: checklistObj,
-        pre_diagnostico: atendimento.pre_diagnostico || '',
-        itens_orcamento: atendimento.itens_orcamento || []
-      });
     }
   }, [atendimento, checklistItems, produtos]);
 
@@ -288,10 +314,19 @@ export default function EditarAtendimento() {
     return null;
   }
 
-  if (isLoading) {
+  // PROTEÇÃO: Aguardar TODOS os dados estarem carregados
+  const isLoadingData = isLoading || !atendimento || checklistItems.length === 0 || produtos.length === 0;
+
+  if (isLoadingData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-slate-50 to-orange-50/30">
         <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+        <p className="text-sm text-slate-600">Carregando checklist...</p>
+        <p className="text-xs text-slate-400">
+          {!atendimento ? 'Buscando atendimento...' : 
+           checklistItems.length === 0 ? 'Carregando itens do checklist...' :
+           produtos.length === 0 ? 'Carregando produtos...' : 'Processando...'}
+        </p>
       </div>
     );
   }
@@ -307,9 +342,13 @@ export default function EditarAtendimento() {
     );
   }
 
-  const categorias = [...new Set(checklistItems.map(i => i.categoria))];
+  // PROTEÇÃO: Garantir que categorias é sempre um array válido
+  const categorias = checklistItems.length > 0 
+    ? [...new Set(checklistItems.map(i => i.categoria).filter(Boolean))]
+    : [];
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
       <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-4">
@@ -409,5 +448,6 @@ export default function EditarAtendimento() {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   );
 }
