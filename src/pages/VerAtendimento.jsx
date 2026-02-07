@@ -1107,6 +1107,19 @@ export default function VerAtendimento() {
                 <MessageCircle className="w-4 h-4" />
               </Button>
               <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
+                  navigator.clipboard.writeText(linkAprovacao);
+                  toast.success('Link de aprovação copiado!');
+                }}
+                className="hidden sm:flex"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Link Cliente
+              </Button>
+              <Button
                 onClick={generatePDF}
                 disabled={isGeneratingPDF}
                 className="bg-orange-500 hover:bg-orange-600"
