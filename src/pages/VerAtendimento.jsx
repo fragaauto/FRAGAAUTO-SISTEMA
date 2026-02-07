@@ -1923,6 +1923,20 @@ export default function VerAtendimento() {
           </TabsContent>
 
           <TabsContent value="aprovacao" className="space-y-4">
+            {atendimento.queixa_inicial && (
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardHeader>
+                  <CardTitle className="text-blue-700 flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5" />
+                    Queixa Inicial do Cliente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-slate-700 whitespace-pre-wrap">{atendimento.queixa_inicial}</p>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Aprovação da Queixa</CardTitle>
