@@ -167,12 +167,20 @@ export default function EditarAtendimento() {
   }, [atendimento, checklistItems, produtos]);
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.Atendimento.update(id, data),
-    onSuccess: () => {
+    mutationFn: (data) => {
+      console.log('📤 [SALVAR CHECKLIST] Enviando para API:', Object.keys(data));
+      return base44.entities.Atendimento.update(id, data);
+    },
+    onSuccess: (result) => {
+      console.log('✅ [SALVAR CHECKLIST] Sucesso:', result);
       queryClient.invalidateQueries(['atendimento', id]);
       queryClient.invalidateQueries(['atendimentos']);
       toast.success('Checklist atualizado com sucesso!');
       navigate(createPageUrl(`VerAtendimento?id=${id}`));
+    },
+    onError: (error) => {
+      console.error('🔴 [SALVAR CHECKLIST] Erro:', error);
+      toast.error(`Erro ao salvar: ${error.message || 'Tente novamente'}`);
     }
   });
 
@@ -187,6 +195,12 @@ export default function EditarAtendimento() {
   };
 
   const handleSave = () => {
+    console.log('💾 [SALVAR CHECKLIST] Iniciando salvamento...');
+    console.log('📦 [SALVAR CHECKLIST] FormData:', {
+      checklistKeys: Object.keys(formData.checklist).length,
+      preDiagnostico: formData.pre_diagnostico?.substring(0, 50)
+    });
+
     // VALIDAÇÃO CRÍTICA PRÉ-SALVAMENTO: Bloquear se houver valores zerados
     let errosDetectados = [];
     Object.entries(formData.checklist).forEach(([itemId, data]) => {
@@ -202,7 +216,7 @@ export default function EditarAtendimento() {
 
     if (errosDetectados.length > 0) {
       toast.error('❌ Não é possível salvar: há valores zerados no checklist!');
-      console.error('Erros detectados:', errosDetectados);
+      console.error('🔴 [SALVAR CHECKLIST] Erros detectados:', errosDetectados);
       return;
     }
 
@@ -289,7 +303,7 @@ export default function EditarAtendimento() {
       descricao: 'Checklist editado e atualizado'
     };
 
-    updateMutation.mutate({
+    const dataToSave = {
       checklist: checklistArray,
       pre_diagnostico: formData.pre_diagnostico,
       itens_orcamento: itensConsolidados,
@@ -299,7 +313,16 @@ export default function EditarAtendimento() {
       valor_final,
       status: 'em_diagnostico',
       historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
+    };
+
+    console.log('📤 [SALVAR CHECKLIST] Payload:', {
+      checklistArray: dataToSave.checklist.length,
+      itensOrcamento: dataToSave.itens_orcamento.length,
+      subtotalChecklist: dataToSave.subtotal_checklist,
+      valorFinal: dataToSave.valor_final
     });
+
+    updateMutation.mutate(dataToSave);
   };
 
   const toggleSection = (categoria) => {
