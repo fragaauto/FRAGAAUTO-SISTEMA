@@ -420,6 +420,7 @@ export default function EditarAtendimento() {
               </div>
             </div>
             <Button
+              type="button"
               onClick={handleSave}
               disabled={updateMutation.isPending}
               className="bg-orange-500 hover:bg-orange-600"
