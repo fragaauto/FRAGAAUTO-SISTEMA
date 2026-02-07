@@ -41,25 +41,47 @@ export default function AprovarOrcamento() {
   const { data: atendimento, isLoading, isError, error } = useQuery({
     queryKey: ['atendimento-aprovacao', id],
     queryFn: async () => {
-      if (!id) throw new Error('ID não fornecido');
+      console.log('🔍 [APROVACAO] Iniciando busca do orçamento, ID:', id);
       
-      // Timeout de 8 segundos
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      if (!id) {
+        console.error('❌ [APROVACAO] ID não fornecido');
+        throw new Error('ID não fornecido');
+      }
       
       try {
-        const list = await base44.entities.Atendimento.list();
-        clearTimeout(timeoutId);
+        console.log('📡 [APROVACAO] Buscando lista de atendimentos...');
+        const list = await Promise.race([
+          base44.entities.Atendimento.list(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout: servidor não respondeu em 5 segundos')), 5000)
+          )
+        ]);
+        
+        console.log('✅ [APROVACAO] Lista recebida, total de atendimentos:', list?.length);
+        
         const found = list.find(a => a.id === id);
-        if (!found) throw new Error('Orçamento não encontrado');
+        
+        if (!found) {
+          console.error('❌ [APROVACAO] Orçamento não encontrado na lista');
+          throw new Error('Orçamento não encontrado');
+        }
+        
+        console.log('✅ [APROVACAO] Orçamento encontrado:', {
+          placa: found.placa,
+          cliente: found.cliente_nome,
+          itens_queixa: found.itens_queixa?.length || 0,
+          itens_orcamento: found.itens_orcamento?.length || 0
+        });
+        
         return found;
       } catch (err) {
-        clearTimeout(timeoutId);
+        console.error('❌ [APROVACAO] Erro ao buscar:', err);
         throw err;
       }
     },
     enabled: !!id,
-    retry: 2,
+    retry: 1,
+    retryDelay: 1000,
     staleTime: 0,
   });
 
@@ -260,6 +282,15 @@ export default function AprovarOrcamento() {
 
   if (isError || !atendimento) {
     const telefoneEmpresa = '5511999999999'; // Substituir pelo número real
+    
+    // Mostrar erro detalhado no console
+    console.error('❌ [APROVACAO] Exibindo tela de erro:', {
+      isError,
+      atendimento,
+      error: error?.message,
+      id
+    });
+    
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
         <XCircle className="w-20 h-20 text-red-400" />
@@ -268,17 +299,39 @@ export default function AprovarOrcamento() {
           <p className="text-slate-600 max-w-md">
             {error?.message || 'O link pode estar incorreto ou expirado.'}
           </p>
+          {/* Debug info - remover em produção */}
+          <details className="mt-4 text-left bg-red-50 p-3 rounded text-xs max-w-md">
+            <summary className="cursor-pointer text-red-700 font-semibold mb-2">
+              Detalhes técnicos (debug)
+            </summary>
+            <pre className="text-slate-700 overflow-auto">
+              {JSON.stringify({ 
+                id, 
+                error: error?.message,
+                timestamp: new Date().toISOString()
+              }, null, 2)}
+            </pre>
+          </details>
         </div>
-        <Button
-          onClick={() => {
-            const mensagem = 'Olá! Não consegui acessar meu orçamento. Pode me enviar o link novamente?';
-            window.open(`https://wa.me/${telefoneEmpresa}?text=${encodeURIComponent(mensagem)}`, '_blank');
-          }}
-          className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6"
-        >
-          <MessageCircle className="w-5 h-5 mr-2" />
-          Solicitar Novo Link pelo WhatsApp
-        </Button>
+        <div className="flex flex-col gap-3 w-full max-w-md">
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+            className="text-lg px-8 py-6"
+          >
+            🔄 Tentar Novamente
+          </Button>
+          <Button
+            onClick={() => {
+              const mensagem = `Olá! Não consegui acessar meu orçamento.\n\nID do orçamento: ${id}\n\nPode me ajudar?`;
+              window.open(`https://wa.me/${telefoneEmpresa}?text=${encodeURIComponent(mensagem)}`, '_blank');
+            }}
+            className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6"
+          >
+            <MessageCircle className="w-5 h-5 mr-2" />
+            Solicitar Novo Link pelo WhatsApp
+          </Button>
+        </div>
       </div>
     );
   }
