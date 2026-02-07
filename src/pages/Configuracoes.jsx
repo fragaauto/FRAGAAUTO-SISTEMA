@@ -28,7 +28,8 @@ export default function Configuracoes() {
     cnpj: config.cnpj || '',
     site: config.site || '',
     instagram: config.instagram || '',
-    logo_url: config.logo_url || ''
+    logo_url: config.logo_url || '',
+    whatsapp_atendimento: config.whatsapp_atendimento || ''
   });
 
   React.useEffect(() => {
@@ -41,7 +42,8 @@ export default function Configuracoes() {
         cnpj: config.cnpj || '',
         site: config.site || '',
         instagram: config.instagram || '',
-        logo_url: config.logo_url || ''
+        logo_url: config.logo_url || '',
+        whatsapp_atendimento: config.whatsapp_atendimento || ''
       });
     }
   }, [config]);
@@ -209,6 +211,17 @@ export default function Configuracoes() {
                 onChange={(e) => setFormData(prev => ({ ...prev, instagram: e.target.value }))}
                 placeholder="@empresa"
               />
+            </div>
+            <div>
+              <Label>WhatsApp Atendimento</Label>
+              <Input
+                value={formData.whatsapp_atendimento}
+                onChange={(e) => setFormData(prev => ({ ...prev, whatsapp_atendimento: e.target.value }))}
+                placeholder="5511999999999 (apenas números com DDI)"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Digite apenas números com código do país (ex: 5511999999999)
+              </p>
             </div>
           </CardContent>
         </Card>
