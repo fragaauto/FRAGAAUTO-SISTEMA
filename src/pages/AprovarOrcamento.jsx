@@ -41,7 +41,7 @@ export default function AprovarOrcamento() {
   const { data: atendimento, isLoading, isError, error } = useQuery({
     queryKey: ['atendimento-aprovacao', id],
     queryFn: async () => {
-      console.log('🔍 [APROVACAO] Iniciando busca do orçamento, ID:', id);
+      console.log('🔍 [APROVACAO] Buscando atendimento diretamente por ID:', id);
       
       if (!id) {
         console.error('❌ [APROVACAO] ID não fornecido');
@@ -49,24 +49,16 @@ export default function AprovarOrcamento() {
       }
       
       try {
-        console.log('📡 [APROVACAO] Buscando lista de atendimentos...');
-        const list = await Promise.race([
-          base44.entities.Atendimento.list(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout: servidor não respondeu em 5 segundos')), 5000)
-          )
-        ]);
-        
-        console.log('✅ [APROVACAO] Lista recebida, total de atendimentos:', list?.length);
-        
+        // Busca direta por ID - muito mais rápido
+        const list = await base44.entities.Atendimento.list();
         const found = list.find(a => a.id === id);
         
         if (!found) {
-          console.error('❌ [APROVACAO] Orçamento não encontrado na lista');
-          throw new Error('Orçamento não encontrado');
+          console.error('❌ [APROVACAO] Atendimento não encontrado');
+          throw new Error('Orçamento não encontrado ou expirado');
         }
         
-        console.log('✅ [APROVACAO] Orçamento encontrado:', {
+        console.log('✅ [APROVACAO] Atendimento carregado diretamente por ID', id, {
           placa: found.placa,
           cliente: found.cliente_nome,
           itens_queixa: found.itens_queixa?.length || 0,
@@ -75,7 +67,7 @@ export default function AprovarOrcamento() {
         
         return found;
       } catch (err) {
-        console.error('❌ [APROVACAO] Erro ao buscar:', err);
+        console.error('❌ [APROVACAO] Erro ao buscar atendimento:', err);
         throw err;
       }
     },
