@@ -1339,7 +1339,7 @@ export default function VerAtendimento() {
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-3 mb-3">
                               <div>
                                 <Label className="text-xs">Quantidade</Label>
                                 <Input
@@ -1369,7 +1369,16 @@ export default function VerAtendimento() {
                                 />
                               </div>
                             </div>
-                            <div className="mt-2 text-right">
+                            <div className="mb-3">
+                              <Label className="text-xs">Observações do Item</Label>
+                              <Textarea
+                                placeholder="Observações específicas deste item..."
+                                value={item.observacao_item || ''}
+                                onChange={(e) => atualizarItemQueixaEdit(idx, 'observacao_item', e.target.value)}
+                                className="min-h-[60px] text-sm"
+                              />
+                            </div>
+                            <div className="text-right">
                               <span className="text-sm font-bold text-green-600">
                                 Total: R$ {item.valor_total?.toFixed(2)}
                               </span>
@@ -2067,9 +2076,9 @@ export default function VerAtendimento() {
                     </p>
                   </div>
                 )}
-                
-                {atendimento.itens_orcamento?.length > 0 ? (
-                  atendimento.itens_orcamento.map((item, idx) => (
+
+                {atendimento.itens_orcamento?.filter(item => item.origem === 'checklist').length > 0 ? (
+                  atendimento.itens_orcamento.filter(item => item.origem === 'checklist').map((item, idx) => (
                     <div key={idx} className="space-y-2">
                       <ItemAprovacao
                         item={item}
@@ -2094,7 +2103,7 @@ export default function VerAtendimento() {
                   <p className="text-center text-slate-500 py-4">Nenhum item no checklist</p>
                 )}
 
-                {atendimento.itens_orcamento?.length > 0 && !atendimento.assinatura_cliente_checklist && (
+                {atendimento.itens_orcamento?.filter(item => item.origem === 'checklist').length > 0 && !atendimento.assinatura_cliente_checklist && (
                   <Button
                     onClick={() => setShowAssinaturaChecklist(true)}
                     className="w-full bg-green-500 hover:bg-green-600"
@@ -2103,8 +2112,8 @@ export default function VerAtendimento() {
                     Assinar Aprovação do Checklist
                   </Button>
                 )}
-              </CardContent>
-            </Card>
+                </CardContent>
+                </Card>
 
             {atendimento.itens_orcamento?.length > 0 && (
               <Card className="bg-orange-100 border-orange-300">
