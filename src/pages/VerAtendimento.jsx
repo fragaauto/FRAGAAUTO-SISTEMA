@@ -2107,8 +2107,19 @@ export default function VerAtendimento() {
                   </div>
                 )}
 
-                {atendimento.itens_orcamento?.filter(item => item.origem === 'checklist').length > 0 ? (
-                  atendimento.itens_orcamento.filter(item => item.origem === 'checklist').map((item, idx) => (
+                {(() => {
+                  // IDs dos produtos já presentes na queixa
+                  const produtosNaQueixa = new Set(
+                    atendimento.itens_queixa?.map(item => item.produto_id) || []
+                  );
+
+                  // Filtrar itens do checklist que não estão na queixa
+                  const itensChecklistFiltrados = atendimento.itens_orcamento?.filter(
+                    item => !produtosNaQueixa.has(item.produto_id)
+                  ) || [];
+
+                  return itensChecklistFiltrados.length > 0 ? (
+                    itensChecklistFiltrados.map((item, idx) => (
                     <div key={idx} className="space-y-2">
                       <ItemAprovacao
                         item={item}
@@ -2128,12 +2139,21 @@ export default function VerAtendimento() {
                         </div>
                       )}
                     </div>
-                  ))
-                ) : (
-                  <p className="text-center text-slate-500 py-4">Nenhum item no checklist</p>
-                )}
+                    ))
+                    ) : (
+                    <p className="text-center text-slate-500 py-4">Nenhum item no checklist</p>
+                    );
+                    })()}
 
-                {atendimento.itens_orcamento?.filter(item => item.origem === 'checklist').length > 0 && !atendimento.assinatura_cliente_checklist && (
+                    {(() => {
+                    const produtosNaQueixa = new Set(
+                    atendimento.itens_queixa?.map(item => item.produto_id) || []
+                    );
+                    const itensChecklistFiltrados = atendimento.itens_orcamento?.filter(
+                    item => !produtosNaQueixa.has(item.produto_id)
+                    ) || [];
+                    return itensChecklistFiltrados.length > 0 && !atendimento.assinatura_cliente_checklist;
+                    })() && (
                   <Button
                     onClick={() => setShowAssinaturaChecklist(true)}
                     className="w-full bg-green-500 hover:bg-green-600"
