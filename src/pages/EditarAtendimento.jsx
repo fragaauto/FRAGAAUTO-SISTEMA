@@ -41,11 +41,10 @@ export default function EditarAtendimento() {
     queryKey: ['atendimento', id],
     queryFn: async () => {
       if (!id) return null;
-      const list = await base44.entities.Atendimento.list();
-      const found = list.find(a => a.id === id);
-      return found || null;
+      return await base44.entities.Atendimento.get(id);
     },
-    enabled: !!id
+    enabled: !!id,
+    retry: false
   });
 
   const { data: produtos = [] } = useQuery({
@@ -171,15 +170,15 @@ export default function EditarAtendimento() {
       console.log('📤 [SALVAR CHECKLIST] Enviando para API:', Object.keys(data));
       return base44.entities.Atendimento.update(id, data);
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       console.log('✅ [SALVAR CHECKLIST] Sucesso:', result);
-      queryClient.invalidateQueries(['atendimento', id]);
-      queryClient.invalidateQueries(['atendimentos']);
+      await queryClient.invalidateQueries({ queryKey: ['atendimento', id] });
+      await queryClient.invalidateQueries({ queryKey: ['atendimentos'] });
       toast.success('Checklist atualizado com sucesso!');
       navigate(createPageUrl(`VerAtendimento?id=${id}`));
     },
     onError: (error) => {
-      console.error('🔴 [SALVAR CHECKLIST] Erro:', error);
+      console.error('🔴 [SALVAR CHECKLIST] Erro detalhado:', JSON.stringify(error, null, 2));
       toast.error(`Erro ao salvar: ${error.message || 'Tente novamente'}`);
     }
   });
@@ -266,8 +265,12 @@ export default function EditarAtendimento() {
       }
     });
 
+    // PROTEÇÃO: Garantir arrays válidos
+    const itensQueixaBase = Array.isArray(atendimento.itens_queixa) ? atendimento.itens_queixa : [];
+    const historicoBase = Array.isArray(atendimento.historico_edicoes) ? atendimento.historico_edicoes : [];
+
     // CRÍTICO: Consolidar sem duplicar - preservar itens da queixa e adicionar checklist
-    const itensQueixa = (atendimento.itens_queixa || []).map(item => ({
+    const itensQueixa = itensQueixaBase.map(item => ({
       ...item,
       valor_total: (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0)
     }));
@@ -316,7 +319,7 @@ export default function EditarAtendimento() {
       subtotal,
       valor_final,
       status: 'em_diagnostico',
-      historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
+      historico_edicoes: [...historicoBase, historicoItem]
     };
 
     console.log('📤 [SALVAR CHECKLIST] Payload:', {
@@ -325,6 +328,13 @@ export default function EditarAtendimento() {
       subtotalChecklist: dataToSave.subtotal_checklist,
       valorFinal: dataToSave.valor_final
     });
+
+    // VALIDAÇÃO: Garantir objeto válido
+    if (!Array.isArray(dataToSave.checklist)) {
+      toast.error('Erro: Checklist inválido');
+      console.error('🔴 Checklist não é array:', dataToSave.checklist);
+      return;
+    }
 
     updateMutation.mutate(dataToSave);
   };
