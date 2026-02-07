@@ -195,23 +195,23 @@ export default function EditarAtendimento() {
   };
 
   const handleSave = () => {
-    console.log('💾 [SALVAR CHECKLIST] Iniciando salvamento...');
-    console.log('📦 [SALVAR CHECKLIST] FormData:', {
-      checklistKeys: Object.keys(formData.checklist).length,
-      preDiagnostico: formData.pre_diagnostico?.substring(0, 50)
-    });
+    console.log('💾 [SALVAR CHECKLIST] Botão clicado - iniciando...');
+    console.log('📦 [SALVAR CHECKLIST] FormData completo:', formData);
 
-    // VALIDAÇÃO CRÍTICA PRÉ-SALVAMENTO: Bloquear se houver valores zerados
+    // VALIDAÇÃO: Apenas verificar itens que serão incluídos no orçamento
     let errosDetectados = [];
     Object.entries(formData.checklist).forEach(([itemId, data]) => {
-      (data.produtos || []).forEach(pv => {
-        if (!pv.valor_customizado || pv.valor_customizado === 0) {
-          errosDetectados.push(`Item "${data.item}" tem valor zerado`);
-        }
-        if (!pv.quantidade || pv.quantidade === 0) {
-          errosDetectados.push(`Item "${data.item}" tem quantidade zerada`);
-        }
-      });
+      if (data.incluir_orcamento && data.produtos && data.produtos.length > 0) {
+        data.produtos.forEach(pv => {
+          console.log(`🔍 Validando produto: ${pv.id} - valor: ${pv.valor_customizado}, qtd: ${pv.quantidade}`);
+          if (!pv.valor_customizado || pv.valor_customizado === 0) {
+            errosDetectados.push(`Item "${data.item}" tem valor zerado`);
+          }
+          if (!pv.quantidade || pv.quantidade === 0) {
+            errosDetectados.push(`Item "${data.item}" tem quantidade zerada`);
+          }
+        });
+      }
     });
 
     if (errosDetectados.length > 0) {
@@ -219,6 +219,8 @@ export default function EditarAtendimento() {
       console.error('🔴 [SALVAR CHECKLIST] Erros detectados:', errosDetectados);
       return;
     }
+
+    console.log('✅ [SALVAR CHECKLIST] Validação passou, continuando...');
 
     // Converter checklist de objeto para array
     const checklistArray = Object.entries(formData.checklist).map(([id, data]) => ({
@@ -229,7 +231,9 @@ export default function EditarAtendimento() {
     // CRÍTICO: Consolidar produtos do checklist - USAR APENAS VALORES SALVOS
     const produtosDoChecklist = [];
     Object.entries(formData.checklist).forEach(([itemId, data]) => {
-      if (data.produtos && data.produtos.length > 0) {
+      // CRÍTICO: Só incluir se marcado para incluir no orçamento
+      if (data.incluir_orcamento && data.produtos && data.produtos.length > 0) {
+        console.log(`📋 Processando item: ${data.item} - ${data.produtos.length} produtos`);
         data.produtos.forEach(pv => {
           const produto = produtos.find(p => p.id === pv.id);
           if (produto) {
