@@ -25,6 +25,14 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function AprovarOrcamento() {
+  // ROTA PÚBLICA - Marcar como tal para evitar verificações de autenticação
+  React.useEffect(() => {
+    window.__IS_PUBLIC_ROUTE__ = true;
+    return () => {
+      window.__IS_PUBLIC_ROUTE__ = false;
+    };
+  }, []);
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
