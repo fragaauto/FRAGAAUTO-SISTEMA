@@ -1242,7 +1242,7 @@ export default function VerAtendimento() {
               </Card>
             )}
 
-            {atendimento.itens_queixa?.length > 0 && (
+            {(atendimento.itens_queixa?.length > 0 || modoEdicaoQueixa) && (
               <>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
