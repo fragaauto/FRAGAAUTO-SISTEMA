@@ -1111,8 +1111,8 @@ export default function VerAtendimento() {
                 size="sm"
                 onClick={() => {
                   const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
-                  navigator.clipboard.writeText(linkAprovacao);
-                  toast.success('Link de aprovação copiado!');
+                  const mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n📋 Seu orçamento está pronto para aprovação.\n\n*Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n*Valor:* R$ ${atendimento.valor_final?.toFixed(2)}\n\nClique no link abaixo para revisar e aprovar:\n${linkAprovacao}`;
+                  window.open(`https://wa.me/${atendimento.cliente_telefone?.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`, '_blank');
                 }}
                 className="hidden sm:flex"
               >
