@@ -32,7 +32,8 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
       ...value,
       item: item.item,
       categoria: item.categoria,
-      status: newStatus
+      status: newStatus,
+      incluir_orcamento: newStatus === 'com_defeito' ? true : (value?.incluir_orcamento || false)
     });
   };
 
