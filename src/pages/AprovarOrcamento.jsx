@@ -38,14 +38,29 @@ export default function AprovarOrcamento() {
   const [assinaturaData, setAssinaturaData] = useState(null);
   const [aprovacaoEnviada, setAprovacaoEnviada] = useState(false);
 
-  const { data: atendimento, isLoading } = useQuery({
+  const { data: atendimento, isLoading, isError, error } = useQuery({
     queryKey: ['atendimento-aprovacao', id],
     queryFn: async () => {
-      if (!id) return null;
-      const list = await base44.entities.Atendimento.list();
-      return list.find(a => a.id === id) || null;
+      if (!id) throw new Error('ID não fornecido');
+      
+      // Timeout de 8 segundos
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      try {
+        const list = await base44.entities.Atendimento.list();
+        clearTimeout(timeoutId);
+        const found = list.find(a => a.id === id);
+        if (!found) throw new Error('Orçamento não encontrado');
+        return found;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
+      }
     },
     enabled: !!id,
+    retry: 2,
+    staleTime: 0,
   });
 
   // Inicializar decisões com status atual
@@ -85,6 +100,15 @@ export default function AprovarOrcamento() {
       ...prev,
       [key]: { ...prev[key], decisao: novaDecisao }
     }));
+  };
+
+  const aprovarTodos = () => {
+    const novasDecisoes = {};
+    Object.entries(decisoes).forEach(([key, value]) => {
+      novasDecisoes[key] = { ...value, decisao: 'aprovado' };
+    });
+    setDecisoes(novasDecisoes);
+    toast.success('Todos os itens foram aprovados!');
   };
 
   const calcularTotais = () => {
@@ -212,18 +236,49 @@ export default function AprovarOrcamento() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-orange-50/30">
-        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
+        <div className="max-w-4xl mx-auto pt-8 space-y-4">
+          {/* Skeleton loading */}
+          <div className="bg-white rounded-lg p-6 animate-pulse">
+            <div className="h-8 bg-slate-200 rounded w-1/2 mb-4"></div>
+            <div className="h-4 bg-slate-200 rounded w-1/3"></div>
+          </div>
+          <div className="bg-white rounded-lg p-6 animate-pulse">
+            <div className="h-6 bg-slate-200 rounded w-1/4 mb-4"></div>
+            <div className="space-y-2">
+              <div className="h-4 bg-slate-200 rounded"></div>
+              <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+            </div>
+          </div>
+          <div className="text-center text-slate-500 text-sm mt-6">
+            Carregando orçamento...
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (!atendimento) {
+  if (isError || !atendimento) {
+    const telefoneEmpresa = '5511999999999'; // Substituir pelo número real
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
-        <XCircle className="w-16 h-16 text-red-400" />
-        <h2 className="text-xl font-bold text-slate-800">Orçamento não encontrado</h2>
-        <p className="text-slate-500">Verifique o link e tente novamente</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
+        <XCircle className="w-20 h-20 text-red-400" />
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-slate-800">Não foi possível carregar o orçamento</h2>
+          <p className="text-slate-600 max-w-md">
+            {error?.message || 'O link pode estar incorreto ou expirado.'}
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            const mensagem = 'Olá! Não consegui acessar meu orçamento. Pode me enviar o link novamente?';
+            window.open(`https://wa.me/${telefoneEmpresa}?text=${encodeURIComponent(mensagem)}`, '_blank');
+          }}
+          className="bg-green-600 hover:bg-green-700 text-lg px-8 py-6"
+        >
+          <MessageCircle className="w-5 h-5 mr-2" />
+          Solicitar Novo Link pelo WhatsApp
+        </Button>
       </div>
     );
   }
@@ -255,9 +310,24 @@ export default function AprovarOrcamento() {
                 Enviar Decisão pelo WhatsApp
               </Button>
               
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 mb-4">
                 Clique no botão acima para enviar sua decisão para a Fraga Auto
               </p>
+              
+              <div className="pt-4 border-t space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Itens aprovados:</span>
+                  <span className="font-semibold text-green-600">
+                    {Object.values(decisoes).filter(d => d.decisao === 'aprovado').length}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Itens recusados:</span>
+                  <span className="font-semibold text-red-600">
+                    {Object.values(decisoes).filter(d => d.decisao === 'reprovado').length}
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -310,6 +380,24 @@ export default function AprovarOrcamento() {
             </CardHeader>
             <CardContent>
               <p className="text-slate-700 whitespace-pre-wrap">{atendimento.queixa_inicial}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Botão Aprovar Todos */}
+        {(itensQueixa.length > 0 || itensChecklist.length > 0) && (
+          <Card className="bg-green-50 border-green-300">
+            <CardContent className="pt-6">
+              <Button
+                onClick={aprovarTodos}
+                className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
+              >
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                ✓ Aprovar Todos os Itens
+              </Button>
+              <p className="text-center text-sm text-slate-600 mt-3">
+                Clique para aprovar todos os serviços de uma vez
+              </p>
             </CardContent>
           </Card>
         )}
@@ -378,7 +466,7 @@ export default function AprovarOrcamento() {
                     <Button
                       onClick={() => toggleDecisao(key, 'aprovado')}
                       variant={decisao === 'aprovado' ? 'default' : 'outline'}
-                      className={decisao === 'aprovado' ? 'bg-green-600 hover:bg-green-700' : ''}
+                      className={`flex-1 ${decisao === 'aprovado' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                       Aprovar
@@ -386,7 +474,7 @@ export default function AprovarOrcamento() {
                     <Button
                       onClick={() => toggleDecisao(key, 'reprovado')}
                       variant={decisao === 'reprovado' ? 'default' : 'outline'}
-                      className={decisao === 'reprovado' ? 'bg-red-600 hover:bg-red-700' : ''}
+                      className={`flex-1 ${decisao === 'reprovado' ? 'bg-red-600 hover:bg-red-700' : ''}`}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
                       Recusar
@@ -398,23 +486,25 @@ export default function AprovarOrcamento() {
           </Card>
         )}
 
-        {/* Totais */}
-        <Card className="bg-slate-800 text-white">
-          <CardContent className="pt-6 space-y-3">
-            <div className="flex justify-between text-lg">
-              <span>Itens Aprovados:</span>
-              <span className="text-green-400 font-bold">R$ {totalAprovado.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-lg">
-              <span>Itens Recusados:</span>
-              <span className="text-red-400 font-bold">R$ {totalReprovado.toFixed(2)}</span>
-            </div>
-            <div className="border-t border-white/20 pt-3 flex justify-between text-2xl font-bold">
-              <span>TOTAL APROVADO:</span>
-              <span className="text-orange-400">R$ {totalAprovado.toFixed(2)}</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Totais - Fixo no topo quando scrollar */}
+        <div className="sticky top-0 z-30">
+          <Card className="bg-slate-800 text-white shadow-lg">
+            <CardContent className="pt-6 space-y-3">
+              <div className="flex justify-between text-lg">
+                <span>Itens Aprovados:</span>
+                <span className="text-green-400 font-bold">R$ {totalAprovado.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-lg">
+                <span>Itens Recusados:</span>
+                <span className="text-red-400 font-bold">R$ {totalReprovado.toFixed(2)}</span>
+              </div>
+              <div className="border-t border-white/20 pt-3 flex justify-between text-2xl font-bold">
+                <span>TOTAL APROVADO:</span>
+                <span className="text-orange-400">R$ {totalAprovado.toFixed(2)}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Tipo de Assinatura */}
         <Card>
