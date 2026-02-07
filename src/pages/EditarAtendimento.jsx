@@ -194,10 +194,20 @@ export default function EditarAtendimento() {
   };
 
   const handleSave = () => {
-    console.log('💾 [SALVAR CHECKLIST] Botão clicado - iniciando...');
-    console.log('📦 [SALVAR CHECKLIST] FormData completo:', formData);
+    try {
+      console.log("BOTÃO SALVAR CLICADO");
 
-    // VALIDAÇÃO: Apenas verificar itens que serão incluídos no orçamento
+      if (!formData || !formData.checklist) {
+        toast.error("Checklist vazio");
+        return;
+      }
+
+      console.log("Checklist:", formData.checklist);
+
+      console.log('💾 [SALVAR CHECKLIST] Botão clicado - iniciando...');
+      console.log('📦 [SALVAR CHECKLIST] FormData completo:', formData);
+
+      // VALIDAÇÃO: Apenas verificar itens que serão incluídos no orçamento
     let errosDetectados = [];
     Object.entries(formData.checklist).forEach(([itemId, data]) => {
       if (data.incluir_orcamento && data.produtos && data.produtos.length > 0) {
@@ -336,7 +346,13 @@ export default function EditarAtendimento() {
       return;
     }
 
+    console.log("ENVIANDO PARA UPDATE");
     updateMutation.mutate(dataToSave);
+
+    } catch (error) {
+      console.error("ERRO NO HANDLE SAVE:", error);
+      toast.error("Erro interno ao montar orçamento");
+    }
   };
 
   const toggleSection = (categoria) => {
@@ -470,6 +486,7 @@ export default function EditarAtendimento() {
               Cancelar
             </Button>
             <Button
+              type="button"
               onClick={handleSave}
               disabled={updateMutation.isPending}
               className="bg-orange-500 hover:bg-orange-600"
