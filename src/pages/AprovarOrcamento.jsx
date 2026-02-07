@@ -44,36 +44,34 @@ export default function AprovarOrcamento() {
       console.log('🔍 [APROVACAO] Buscando atendimento diretamente por ID:', id);
       
       if (!id) {
-        console.error('❌ [APROVACAO] ID não fornecido');
-        throw new Error('ID não fornecido');
+        console.error('❌ [APROVACAO] ID inválido');
+        throw new Error('ID inválido');
       }
       
       try {
-        // Busca direta por ID - muito mais rápido
-        const list = await base44.entities.Atendimento.list();
-        const found = list.find(a => a.id === id);
+        // Busca direta por ID usando get() - extremamente mais rápido
+        const atendimento = await base44.entities.Atendimento.get(id);
         
-        if (!found) {
+        if (!atendimento) {
           console.error('❌ [APROVACAO] Atendimento não encontrado');
           throw new Error('Orçamento não encontrado ou expirado');
         }
         
         console.log('✅ [APROVACAO] Atendimento carregado diretamente por ID', id, {
-          placa: found.placa,
-          cliente: found.cliente_nome,
-          itens_queixa: found.itens_queixa?.length || 0,
-          itens_orcamento: found.itens_orcamento?.length || 0
+          placa: atendimento.placa,
+          cliente: atendimento.cliente_nome,
+          itens_queixa: atendimento.itens_queixa?.length || 0,
+          itens_orcamento: atendimento.itens_orcamento?.length || 0
         });
         
-        return found;
+        return atendimento;
       } catch (err) {
         console.error('❌ [APROVACAO] Erro ao buscar atendimento:', err);
         throw err;
       }
     },
     enabled: !!id,
-    retry: 1,
-    retryDelay: 1000,
+    retry: false,
     staleTime: 0,
   });
 
