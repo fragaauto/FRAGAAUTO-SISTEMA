@@ -1828,19 +1828,19 @@ export default function VerAtendimento() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {atendimento.itens_orcamento?.map((item, idx) => (
-                          <div key={idx} className="space-y-2">
-                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                              <div>
-                                <p className="font-medium">{item.nome}</p>
-                                <p className="text-sm text-slate-500">
-                                  {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
-                                </p>
-                              </div>
-                              <p className="font-bold text-green-600">
-                                R$ {item.valor_total?.toFixed(2)}
-                              </p>
-                            </div>
+                       {atendimento.itens_orcamento?.map((item, idx) => (
+                         <div key={idx} className="space-y-2">
+                           <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                             <div>
+                               <p className="font-medium">{item.nome}</p>
+                               <p className="text-sm text-slate-500">
+                                 {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                               </p>
+                             </div>
+                             <p className="font-bold text-orange-600">
+                               R$ {item.valor_total?.toFixed(2)}
+                             </p>
+                           </div>
                             {item.observacao_item && (
                               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                 <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
