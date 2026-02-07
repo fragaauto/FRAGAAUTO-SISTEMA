@@ -49,6 +49,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -91,6 +98,7 @@ export default function VerAtendimento() {
   const [itensOrcamentoEdit, setItensOrcamentoEdit] = useState([]);
   const [queixaTextoEdit, setQueixaTextoEdit] = useState('');
   const [searchProdutoQueixa, setSearchProdutoQueixa] = useState('');
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -1109,11 +1117,7 @@ export default function VerAtendimento() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
-                  const mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n📋 Seu orçamento está pronto para aprovação.\n\n*Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n*Valor:* R$ ${atendimento.valor_final?.toFixed(2)}\n\nClique no link abaixo para revisar e aprovar:\n${linkAprovacao}`;
-                  window.open(`https://wa.me/${atendimento.cliente_telefone?.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`, '_blank');
-                }}
+                onClick={() => setShowLinkDialog(true)}
                 className="hidden sm:flex"
               >
                 <Share2 className="w-4 h-4 mr-2" />
@@ -2262,6 +2266,55 @@ export default function VerAtendimento() {
           onSave={(dataUrl) => handleSaveAssinatura('checklist', dataUrl)}
           onClose={() => setShowAssinaturaChecklist(false)}
         />
+      )}
+
+      {showLinkDialog && (
+        <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Compartilhar Orçamento</DialogTitle>
+              <DialogDescription>
+                Envie o link de aprovação para o cliente
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="p-3 bg-slate-100 rounded-lg">
+                <p className="text-xs text-slate-500 mb-1">Link de aprovação:</p>
+                <p className="text-sm text-slate-700 break-all">
+                  {`${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`}
+                </p>
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={() => {
+                    const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
+                    const mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n📋 Seu orçamento está pronto para aprovação.\n\n*Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n*Valor:* R$ ${atendimento.valor_final?.toFixed(2)}\n\nClique no link abaixo para revisar e aprovar:\n${linkAprovacao}`;
+                    window.open(`https://wa.me/${atendimento.cliente_telefone?.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`, '_blank');
+                    setShowLinkDialog(false);
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Abrir WhatsApp
+                </Button>
+                
+                <Button
+                  onClick={() => {
+                    const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
+                    navigator.clipboard.writeText(linkAprovacao);
+                    toast.success('Link copiado para a área de transferência!');
+                    setShowLinkDialog(false);
+                  }}
+                  variant="outline"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Copiar Link
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
