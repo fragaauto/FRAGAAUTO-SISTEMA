@@ -59,28 +59,11 @@ export default function Home() {
   const [periodo, setPeriodo] = useState('30');
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
 
-  // Verificar e processar redirect pós-login
-  React.useEffect(() => {
-    const redirectUrl = localStorage.getItem('redirect_after_login');
-    if (redirectUrl) {
-      localStorage.removeItem('redirect_after_login');
-      window.location.href = redirectUrl;
-    }
-  }, []);
-
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list('-created_date'),
     staleTime: 2 * 60 * 1000
   });
-
-  const { data: configs = [] } = useQuery({
-    queryKey: ['configuracoes'],
-    queryFn: () => base44.entities.Configuracao.list(),
-    staleTime: 10 * 60 * 1000
-  });
-
-  const config = configs[0] || {};
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -187,13 +170,13 @@ export default function Home() {
           >
             <div className="flex-1 text-center md:text-left">
               <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
-                {config.logo_url ? (
-                  <img src={config.logo_url} alt={config.nome_empresa || "Logo"} className="w-16 h-16 rounded-xl object-contain bg-white p-1" />
-                ) : (
-                  <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center">
-                    <Wrench className="w-8 h-8 text-white" />
-                  </div>
-                )}
+                <img src="/logo.png" alt="Fraga Auto" className="w-12 h-12 rounded-xl object-cover" onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextElementSibling.style.display = 'flex';
+                }} />
+                <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center" style={{display: 'none'}}>
+                  <Wrench className="w-6 h-6 text-white" />
+                </div>
                 <span className="text-orange-400 font-semibold tracking-wider text-sm">SISTEMA DE GESTÃO</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
