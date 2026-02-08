@@ -107,10 +107,13 @@ export default function AprovarOrcamento() {
   }, [atendimento]);
 
   const toggleDecisao = (key, novaDecisao) => {
-    setDecisoes(prev => ({
-      ...prev,
-      [key]: { ...prev[key], decisao: novaDecisao }
-    }));
+    setDecisoes(prev => {
+      const novasDecisoes = {
+        ...prev,
+        [key]: { ...prev[key], decisao: novaDecisao }
+      };
+      return novasDecisoes;
+    });
   };
 
   const aprovarTodos = () => {
