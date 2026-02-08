@@ -27,6 +27,7 @@ import { ptBR } from 'date-fns/locale';
 export default function AprovarOrcamento() {
   // ROTA PÚBLICA - Marcar como tal para evitar verificações de autenticação
   React.useEffect(() => {
+    console.log('🔐 [APROVACAO] Marcando rota como pública');
     window.__IS_PUBLIC_ROUTE__ = true;
     return () => {
       window.__IS_PUBLIC_ROUTE__ = false;
@@ -37,6 +38,12 @@ export default function AprovarOrcamento() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
+  
+  console.log('🚀 [APROVACAO] Componente montado:', {
+    id,
+    url: window.location.href,
+    hasId: !!id
+  });
 
   const [decisoes, setDecisoes] = useState({});
   const [showAssinatura, setShowAssinatura] = useState(false);
@@ -49,49 +56,60 @@ export default function AprovarOrcamento() {
   const { data: atendimento, isLoading, isError, error } = useQuery({
     queryKey: ['atendimento-aprovacao', id],
     queryFn: async () => {
-      console.log('🔍 [APROVACAO PUBLICA] Buscando atendimento por ID:', id);
-      console.log('🔍 [APROVACAO PUBLICA] Window location:', window.location.href);
+      console.log('🔍 [APROVACAO] Iniciando busca. ID:', id);
+      console.log('🔍 [APROVACAO] URL completa:', window.location.href);
+      console.log('🔍 [APROVACAO] Tipo do SDK:', typeof base44);
+      console.log('🔍 [APROVACAO] Método get existe?', typeof base44?.entities?.Atendimento?.get);
       
       if (!id) {
-        console.error('❌ [APROVACAO PUBLICA] ID inválido');
-        throw new Error('ID inválido');
+        console.error('❌ [APROVACAO] ID inválido ou ausente');
+        throw new Error('ID do orçamento não fornecido');
       }
       
       try {
-        console.log('📡 [APROVACAO PUBLICA] Fazendo chamada para base44.entities.Atendimento.get()...');
+        console.log('📡 [APROVACAO] Chamando base44.entities.Atendimento.get(' + id + ')...');
         
-        // Busca direta por ID usando get() - DEVE FUNCIONAR SEM LOGIN
-        const atendimento = await base44.entities.Atendimento.get(id);
+        const result = await base44.entities.Atendimento.get(id);
         
-        console.log('📦 [APROVACAO PUBLICA] Resposta recebida:', atendimento ? 'Dados OK' : 'null');
+        console.log('📦 [APROVACAO] Raw result:', result);
+        console.log('📦 [APROVACAO] Result type:', typeof result);
+        console.log('📦 [APROVACAO] Result keys:', result ? Object.keys(result) : 'null');
         
-        if (!atendimento) {
-          console.error('❌ [APROVACAO PUBLICA] Atendimento retornou null');
-          throw new Error('Orçamento não encontrado ou expirado');
+        if (!result) {
+          console.error('❌ [APROVACAO] Query retornou null/undefined');
+          throw new Error('Orçamento não encontrado. Verifique o link ou entre em contato.');
         }
         
-        console.log('✅ [APROVACAO PUBLICA] Atendimento carregado com sucesso:', {
-          id: atendimento.id,
-          placa: atendimento.placa,
-          cliente: atendimento.cliente_nome,
-          itens_queixa: atendimento.itens_queixa?.length || 0,
-          itens_orcamento: atendimento.itens_orcamento?.length || 0
+        console.log('✅ [APROVACAO] Dados carregados:', {
+          id: result.id,
+          placa: result.placa,
+          cliente: result.cliente_nome,
+          status: result.status,
+          itens_queixa: result.itens_queixa?.length || 0,
+          itens_orcamento: result.itens_orcamento?.length || 0
         });
         
-        return atendimento;
+        return result;
       } catch (err) {
-        console.error('❌ [APROVACAO PUBLICA] Erro capturado:', {
+        console.error('❌ [APROVACAO] ERRO DETALHADO:', {
+          errorType: err?.constructor?.name,
           message: err?.message,
           name: err?.name,
-          stack: err?.stack,
-          fullError: err
+          code: err?.code,
+          status: err?.status,
+          response: err?.response,
+          stack: err?.stack?.split('\n').slice(0, 3)
         });
-        throw err;
+        
+        // Re-throw com mensagem mais clara
+        const errorMsg = err?.message || 'Erro ao carregar orçamento';
+        throw new Error(errorMsg);
       }
     },
     enabled: !!id,
-    retry: 1,
+    retry: false,
     staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: configs = [] } = useQuery({
@@ -307,16 +325,37 @@ export default function AprovarOrcamento() {
     window.open(`https://wa.me/${whatsappAtendimento}?text=${mensagem}`, '_blank');
   };
 
-  console.log('🎨 [APROVACAO PUBLICA] Estado do componente:', { 
+  console.log('🎨 [APROVACAO] Renderizando. Estado:', { 
     isLoading, 
-    isError, 
+    isError,
+    errorMessage: error?.message,
     hasAtendimento: !!atendimento,
+    atendimentoId: atendimento?.id,
     aprovacaoEnviada,
-    id 
+    urlId: id,
+    decisoesCount: Object.keys(decisoes).length
   });
 
+  // Validação extra: se não tem ID, mostrar erro imediatamente
+  if (!id) {
+    console.error('❌ [APROVACAO] Renderização abortada: sem ID na URL');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center space-y-4">
+            <XCircle className="w-16 h-16 text-red-500 mx-auto" />
+            <h2 className="text-xl font-bold text-slate-800">Link Inválido</h2>
+            <p className="text-slate-600">
+              O link de aprovação está incompleto. Entre em contato com a Fraga Auto para receber um novo link.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (isLoading) {
-    console.log('⏳ [APROVACAO PUBLICA] Exibindo tela de loading...');
+    console.log('⏳ [APROVACAO] Mostrando loading...');
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
         <div className="max-w-4xl mx-auto pt-8 space-y-4">
