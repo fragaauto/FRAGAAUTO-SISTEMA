@@ -49,23 +49,29 @@ export default function AprovarOrcamento() {
   const { data: atendimento, isLoading, isError, error } = useQuery({
     queryKey: ['atendimento-aprovacao', id],
     queryFn: async () => {
-      console.log('🔍 [APROVACAO] Buscando atendimento diretamente por ID:', id);
+      console.log('🔍 [APROVACAO PUBLICA] Buscando atendimento por ID:', id);
+      console.log('🔍 [APROVACAO PUBLICA] Window location:', window.location.href);
       
       if (!id) {
-        console.error('❌ [APROVACAO] ID inválido');
+        console.error('❌ [APROVACAO PUBLICA] ID inválido');
         throw new Error('ID inválido');
       }
       
       try {
-        // Busca direta por ID usando get() - extremamente mais rápido
+        console.log('📡 [APROVACAO PUBLICA] Fazendo chamada para base44.entities.Atendimento.get()...');
+        
+        // Busca direta por ID usando get() - DEVE FUNCIONAR SEM LOGIN
         const atendimento = await base44.entities.Atendimento.get(id);
         
+        console.log('📦 [APROVACAO PUBLICA] Resposta recebida:', atendimento ? 'Dados OK' : 'null');
+        
         if (!atendimento) {
-          console.error('❌ [APROVACAO] Atendimento não encontrado');
+          console.error('❌ [APROVACAO PUBLICA] Atendimento retornou null');
           throw new Error('Orçamento não encontrado ou expirado');
         }
         
-        console.log('✅ [APROVACAO] Atendimento carregado diretamente por ID', id, {
+        console.log('✅ [APROVACAO PUBLICA] Atendimento carregado com sucesso:', {
+          id: atendimento.id,
           placa: atendimento.placa,
           cliente: atendimento.cliente_nome,
           itens_queixa: atendimento.itens_queixa?.length || 0,
@@ -74,12 +80,17 @@ export default function AprovarOrcamento() {
         
         return atendimento;
       } catch (err) {
-        console.error('❌ [APROVACAO] Erro ao buscar atendimento:', err);
+        console.error('❌ [APROVACAO PUBLICA] Erro capturado:', {
+          message: err?.message,
+          name: err?.name,
+          stack: err?.stack,
+          fullError: err
+        });
         throw err;
       }
     },
     enabled: !!id,
-    retry: false,
+    retry: 1,
     staleTime: 0,
   });
 
@@ -296,7 +307,16 @@ export default function AprovarOrcamento() {
     window.open(`https://wa.me/${whatsappAtendimento}?text=${mensagem}`, '_blank');
   };
 
+  console.log('🎨 [APROVACAO PUBLICA] Estado do componente:', { 
+    isLoading, 
+    isError, 
+    hasAtendimento: !!atendimento,
+    aprovacaoEnviada,
+    id 
+  });
+
   if (isLoading) {
+    console.log('⏳ [APROVACAO PUBLICA] Exibindo tela de loading...');
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
         <div className="max-w-4xl mx-auto pt-8 space-y-4">
@@ -324,11 +344,13 @@ export default function AprovarOrcamento() {
     const telefoneEmpresa = whatsappAtendimento || '5511999999999';
     
     // Mostrar erro detalhado no console
-    console.error('❌ [APROVACAO] Exibindo tela de erro:', {
+    console.error('❌ [APROVACAO PUBLICA] Exibindo tela de erro:', {
       isError,
-      atendimento,
-      error: error?.message,
-      id
+      hasAtendimento: !!atendimento,
+      errorMessage: error?.message,
+      errorDetails: error,
+      id,
+      currentUrl: window.location.href
     });
     
     return (
@@ -380,7 +402,16 @@ export default function AprovarOrcamento() {
   const itensQueixa = Object.entries(decisoes).filter(([k]) => k.startsWith('queixa_'));
   const itensChecklist = Object.entries(decisoes).filter(([k]) => k.startsWith('checklist_'));
 
+  console.log('✅ [APROVACAO PUBLICA] Renderizando página principal:', {
+    totalItens: Object.keys(decisoes).length,
+    itensQueixa: itensQueixa.length,
+    itensChecklist: itensChecklist.length,
+    aprovacaoEnviada
+  });
+
   if (aprovacaoEnviada) {
+    console.log('✅ [APROVACAO PUBLICA] Exibindo tela de aprovação enviada');
+    return (
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
         <div className="max-w-2xl mx-auto pt-8">
@@ -428,6 +459,8 @@ export default function AprovarOrcamento() {
     );
   }
 
+  console.log('🎨 [APROVACAO PUBLICA] Renderizando formulário de aprovação');
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
       {/* Header */}
