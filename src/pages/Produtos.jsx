@@ -1218,8 +1218,12 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
               <Label>Nome *</Label>
               <Input
                 value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                onBlur={atualizarModelosDetectados}
+                onChange={(e) => {
+                  setFormData({ ...formData, nome: e.target.value });
+                  // Detectar modelos automaticamente após pequeno delay
+                  clearTimeout(window.detectModelosTimeout);
+                  window.detectModelosTimeout = setTimeout(atualizarModelosDetectados, 800);
+                }}
                 placeholder="Nome do produto ou serviço"
                 className="h-12"
               />
@@ -1256,8 +1260,12 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
               <Label>Descrição</Label>
               <Textarea
                 value={formData.descricao}
-                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                onBlur={atualizarModelosDetectados}
+                onChange={(e) => {
+                  setFormData({ ...formData, descricao: e.target.value });
+                  // Detectar modelos automaticamente após pequeno delay
+                  clearTimeout(window.detectModelosTimeout);
+                  window.detectModelosTimeout = setTimeout(atualizarModelosDetectados, 800);
+                }}
                 placeholder="Observações sobre o produto..."
                 className="min-h-[60px]"
               />
@@ -1336,25 +1344,9 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
                     placeholder="Ex: Gol, Palio, Uno, Celta"
                     className="h-10"
                   />
-                  <div className="flex items-start gap-2 mt-2">
-                    <div className="flex-1">
-                      <p className="text-xs text-slate-500">
-                        🤖 Modelos detectados automaticamente no nome/descrição aparecem aqui
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        ✏️ Você pode adicionar ou remover modelos manualmente separando por vírgula
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={atualizarModelosDetectados}
-                      className="text-xs"
-                    >
-                      🔍 Detectar
-                    </Button>
-                  </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    🤖 Modelos são detectados automaticamente ao digitar no nome/descrição. Você pode adicionar ou remover modelos manualmente separando por vírgula.
+                  </p>
                 </div>
               )}
             </div>
