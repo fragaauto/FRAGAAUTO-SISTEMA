@@ -12,10 +12,17 @@ export default function OrcamentoRemarketingModal({
   onOpenChange, 
   atendimento, 
   mensagemPersonalizada,
-  nomeEmpresa 
+  nomeEmpresa,
+  descontoVistaInicial = '',
+  descontoParceladoInicial = ''
 }) {
-  const [descontoVista, setDescontoVista] = useState('');
-  const [descontoParcelado, setDescontoParcelado] = useState('');
+  const [descontoVista, setDescontoVista] = useState(descontoVistaInicial);
+  const [descontoParcelado, setDescontoParcelado] = useState(descontoParceladoInicial);
+
+  React.useEffect(() => {
+    setDescontoVista(descontoVistaInicial);
+    setDescontoParcelado(descontoParceladoInicial);
+  }, [descontoVistaInicial, descontoParceladoInicial, open]);
 
   const calcularValorComDesconto = (valorOriginal, desconto) => {
     if (!desconto || isNaN(desconto)) return valorOriginal;

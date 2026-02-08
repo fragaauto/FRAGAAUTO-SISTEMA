@@ -22,8 +22,12 @@ import {
   DollarSign,
   Loader2,
   FileText,
-  MessageCircle
+  MessageCircle,
+  Percent
 } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import OrcamentoRemarketingModal from '../components/remarketing/OrcamentoRemarketingModal';
@@ -33,6 +37,9 @@ export default function ServicosReprovados() {
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
   const [modalAberto, setModalAberto] = useState(false);
   const [atendimentoSelecionado, setAtendimentoSelecionado] = useState(null);
+  const [descontoGlobalAtivo, setDescontoGlobalAtivo] = useState(false);
+  const [descontoGlobalVista, setDescontoGlobalVista] = useState('');
+  const [descontoGlobalParcelado, setDescontoGlobalParcelado] = useState('');
 
   const { data: atendimentos = [], isLoading } = useQuery({
     queryKey: ['atendimentos-reprovados'],
@@ -51,6 +58,11 @@ export default function ServicosReprovados() {
   const abrirModalRemarketing = (atendimento) => {
     setAtendimentoSelecionado(atendimento);
     setModalAberto(true);
+  };
+
+  const calcularValorComDesconto = (valor, desconto) => {
+    if (!desconto || isNaN(desconto)) return valor;
+    return valor - (valor * (parseFloat(desconto) / 100));
   };
 
   const servicosReprovados = useMemo(() => {
@@ -186,8 +198,63 @@ export default function ServicosReprovados() {
         </div>
       </div>
 
-      {/* Estatísticas */}
+      {/* Descontos Globais */}
       <div className="max-w-7xl mx-auto px-4 py-6">
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-6">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="desconto-global" 
+                  checked={descontoGlobalAtivo}
+                  onCheckedChange={setDescontoGlobalAtivo}
+                />
+                <Label htmlFor="desconto-global" className="font-semibold">
+                  Aplicar desconto em todos os atendimentos
+                </Label>
+              </div>
+              
+              {descontoGlobalAtivo && (
+                <div className="flex gap-4 flex-1">
+                  <div className="flex-1">
+                    <Label htmlFor="desc-vista-global" className="text-sm">
+                      <Percent className="w-3 h-3 inline mr-1" />
+                      Desconto À Vista (%)
+                    </Label>
+                    <Input
+                      id="desc-vista-global"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={descontoGlobalVista}
+                      onChange={(e) => setDescontoGlobalVista(e.target.value)}
+                      placeholder="Ex: 10"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label htmlFor="desc-parcelado-global" className="text-sm">
+                      <Percent className="w-3 h-3 inline mr-1" />
+                      Desconto Parcelado (%)
+                    </Label>
+                    <Input
+                      id="desc-parcelado-global"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={descontoGlobalParcelado}
+                      onChange={(e) => setDescontoGlobalParcelado(e.target.value)}
+                      placeholder="Ex: 5"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="pt-6">
@@ -271,9 +338,27 @@ export default function ServicosReprovados() {
                       <Badge variant="destructive" className="bg-red-500">
                         {atendimento.quantidade_reprovada} {atendimento.quantidade_reprovada === 1 ? 'serviço' : 'serviços'}
                       </Badge>
-                      <span className="text-lg font-bold text-red-600">
-                        R$ {atendimento.valor_total_reprovado.toFixed(2)}
-                      </span>
+                      {descontoGlobalAtivo && (descontoGlobalVista || descontoGlobalParcelado) ? (
+                        <div className="text-right">
+                          <p className="text-sm text-slate-500 line-through">
+                            R$ {atendimento.valor_total_reprovado.toFixed(2)}
+                          </p>
+                          {descontoGlobalVista && (
+                            <p className="text-sm font-semibold text-green-600">
+                              À vista: R$ {calcularValorComDesconto(atendimento.valor_total_reprovado, descontoGlobalVista).toFixed(2)}
+                            </p>
+                          )}
+                          {descontoGlobalParcelado && (
+                            <p className="text-sm font-semibold text-blue-600">
+                              Parcelado: R$ {calcularValorComDesconto(atendimento.valor_total_reprovado, descontoGlobalParcelado).toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-lg font-bold text-red-600">
+                          R$ {atendimento.valor_total_reprovado.toFixed(2)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -351,6 +436,8 @@ export default function ServicosReprovados() {
           atendimento={atendimentoSelecionado}
           mensagemPersonalizada={config.mensagem_remarketing}
           nomeEmpresa={config.nome_empresa}
+          descontoVistaInicial={descontoGlobalAtivo ? descontoGlobalVista : ''}
+          descontoParceladoInicial={descontoGlobalAtivo ? descontoGlobalParcelado : ''}
         />
       )}
     </div>
