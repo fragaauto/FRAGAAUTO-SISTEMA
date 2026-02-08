@@ -2657,7 +2657,7 @@ IMPORTANTE:
                   onClick={() => {
                     const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
                     const mensagemPersonalizada = configs[0]?.mensagem_link_cliente || '';
-                    let mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n📋 Seu orçamento está pronto para aprovação.\n\n*Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n*Valor:* R$ ${atendimento.valor_final?.toFixed(2)}\n\n`;
+                    let mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n📋 Seu orçamento está pronto para aprovação.\n\n*Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n\n`;
                     
                     if (mensagemPersonalizada) {
                       mensagem += `${mensagemPersonalizada}\n\n`;
