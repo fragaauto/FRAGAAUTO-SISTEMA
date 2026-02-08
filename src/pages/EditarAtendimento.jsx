@@ -166,18 +166,21 @@ export default function EditarAtendimento() {
   }, [atendimento, checklistItems, produtos]);
 
   const updateMutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: async (data) => {
+      console.log("ENVIANDO UPDATE", data);
       console.log('📤 [SALVAR CHECKLIST] Enviando para API:', Object.keys(data));
-      return base44.entities.Atendimento.update(id, data);
+      return await base44.entities.Atendimento.update(id, data);
     },
     onSuccess: async (result) => {
+      console.log("SALVO COM SUCESSO");
       console.log('✅ [SALVAR CHECKLIST] Sucesso:', result);
       await queryClient.invalidateQueries({ queryKey: ['atendimento', id] });
       await queryClient.invalidateQueries({ queryKey: ['atendimentos'] });
-      toast.success('Checklist atualizado com sucesso!');
+      toast.success('Checklist salvo com sucesso!');
       navigate(createPageUrl(`VerAtendimento?id=${id}`));
     },
     onError: (error) => {
+      console.error("ERRO AO SALVAR", error);
       console.error('🔴 [SALVAR CHECKLIST] Erro detalhado:', JSON.stringify(error, null, 2));
       toast.error(`Erro ao salvar: ${error.message || 'Tente novamente'}`);
     }
@@ -224,7 +227,8 @@ export default function EditarAtendimento() {
     });
 
     if (errosDetectados.length > 0) {
-      toast.error('❌ Não é possível salvar: há valores zerados no checklist!');
+      const mensagemErro = `❌ Erros encontrados:\n${errosDetectados.slice(0, 3).join('\n')}`;
+      toast.error(mensagemErro);
       console.error('🔴 [SALVAR CHECKLIST] Erros detectados:', errosDetectados);
       return;
     }
@@ -332,6 +336,7 @@ export default function EditarAtendimento() {
       historico_edicoes: [...historicoBase, historicoItem]
     };
 
+    console.log("PAYLOAD FINAL", dataToSave);
     console.log('📤 [SALVAR CHECKLIST] Payload:', {
       checklistArray: dataToSave.checklist.length,
       itensOrcamento: dataToSave.itens_orcamento.length,
@@ -346,8 +351,9 @@ export default function EditarAtendimento() {
       return;
     }
 
-    console.log("ENVIANDO PARA UPDATE");
+    console.log("ENVIANDO PARA UPDATE - MUTATION SERÁ CHAMADA AGORA");
     updateMutation.mutate(dataToSave);
+    console.log("MUTATION.MUTATE FOI CHAMADO");
 
     } catch (error) {
       console.error("ERRO NO HANDLE SAVE:", error);
