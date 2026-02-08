@@ -427,7 +427,10 @@ export default function EditarAtendimento() {
             </div>
             <Button
               type="button"
-              onClick={handleSave}
+              onClick={() => {
+                console.log("BOTÃO SALVAR CLICADO (HEADER)");
+                handleSave();
+              }}
               disabled={updateMutation.isPending}
               className="bg-orange-500 hover:bg-orange-600"
             >
@@ -494,7 +497,10 @@ export default function EditarAtendimento() {
             </Button>
             <Button
               type="button"
-              onClick={handleSave}
+              onClick={() => {
+                console.log("BOTÃO SALVAR CLICADO (FOOTER)");
+                handleSave();
+              }}
               disabled={updateMutation.isPending}
               className="bg-orange-500 hover:bg-orange-600"
             >
