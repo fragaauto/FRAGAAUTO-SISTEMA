@@ -283,6 +283,42 @@ export default function Produtos() {
     });
   };
 
+  // Detectar modelos automaticamente no texto
+  const detectarModelos = (texto) => {
+    if (!texto) return [];
+    const textoLower = texto.toLowerCase();
+    const modelosComuns = [
+      'gol', 'palio', 'uno', 'celta', 'corsa', 'onix', 'prisma', 'voyage', 
+      'fox', 'up', 'polo', 'saveiro', 'strada', 'montana', 'ka', 'fiesta',
+      'ecosport', 'fusion', 'focus', 'civic', 'city', 'fit', 'hr-v', 'crv',
+      'corolla', 'etios', 'hilux', 'sw4', 'kicks', 'march', 'versa', 'sentra',
+      'sandero', 'logan', 'duster', 'kwid', 'clio', 'megane', 'fluence',
+      'hb20', 'creta', 'ix35', 'tucson', 'azera', 'i30', 'tracker', 'cruze',
+      'cobalt', 'spin', 's10', 'trailblazer', 'astra', 'vectra', 'meriva',
+      'doblo', 'toro', 'argo', 'mobi', 'fiorino', 'ducato', 'l200', 'outlander',
+      'asx', 'pajero', '208', '308', '408', '2008', '3008', 'hoggar'
+    ];
+    
+    return modelosComuns.filter(modelo => {
+      const regex = new RegExp(`\\b${modelo}\\b`, 'i');
+      return regex.test(textoLower);
+    });
+  };
+
+  const atualizarModelosDetectados = () => {
+    const textoCompleto = `${formData.nome} ${formData.descricao}`.toLowerCase();
+    const modelosDetectados = detectarModelos(textoCompleto);
+    
+    if (modelosDetectados.length > 0 && !formData.aplicacao_universal) {
+      // Mesclar com modelos já adicionados manualmente
+      const modelosAtuais = Array.isArray(formData.modelos_compativeis) 
+        ? formData.modelos_compativeis 
+        : [];
+      const todosModelos = [...new Set([...modelosAtuais, ...modelosDetectados])];
+      setFormData(prev => ({ ...prev, modelos_compativeis: todosModelos }));
+    }
+  };
+
   const handleSave = () => {
     if (!formData.codigo || !formData.nome || !formData.categoria || !formData.valor) {
       toast.error('Preencha todos os campos obrigatórios (código, nome, categoria, valor)');
@@ -1183,6 +1219,7 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
               <Input
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                onBlur={atualizarModelosDetectados}
                 placeholder="Nome do produto ou serviço"
                 className="h-12"
               />
@@ -1220,6 +1257,7 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
               <Textarea
                 value={formData.descricao}
                 onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                onBlur={atualizarModelosDetectados}
                 placeholder="Observações sobre o produto..."
                 className="min-h-[60px]"
               />
@@ -1285,7 +1323,7 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
 
               {!formData.aplicacao_universal && (
                 <div>
-                  <Label>Modelos Compatíveis (separados por vírgula)</Label>
+                  <Label>Modelos Compatíveis</Label>
                   <Input
                     value={Array.isArray(formData.modelos_compativeis) 
                       ? formData.modelos_compativeis.join(', ')
@@ -1298,9 +1336,25 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
                     placeholder="Ex: Gol, Palio, Uno, Celta"
                     className="h-10"
                   />
-                  <p className="text-xs text-slate-500 mt-1">
-                    Digite os modelos compatíveis separados por vírgula
-                  </p>
+                  <div className="flex items-start gap-2 mt-2">
+                    <div className="flex-1">
+                      <p className="text-xs text-slate-500">
+                        🤖 Modelos detectados automaticamente no nome/descrição aparecem aqui
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        ✏️ Você pode adicionar ou remover modelos manualmente separando por vírgula
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={atualizarModelosDetectados}
+                      className="text-xs"
+                    >
+                      🔍 Detectar
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
