@@ -10,16 +10,16 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from
+"@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { 
-  ClipboardCheck, 
-  FileText, 
-  Package, 
-  Users, 
+import {
+  ClipboardCheck,
+  FileText,
+  Package,
+  Users,
   Car,
   ArrowRight,
   Wrench,
@@ -28,16 +28,16 @@ import {
   XCircle,
   DollarSign,
   TrendingUp,
-  Calendar
-} from 'lucide-react';
+  Calendar } from
+'lucide-react';
 import { motion } from 'framer-motion';
 
-const FeatureCard = ({ icon: Icon, title, description, href, color, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.4 }}
-  >
+const FeatureCard = ({ icon: Icon, title, description, href, color, delay }) =>
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay, duration: 0.4 }}>
+
     <Link to={href}>
       <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-200 h-full cursor-pointer">
         <CardContent className="p-6">
@@ -52,8 +52,8 @@ const FeatureCard = ({ icon: Icon, title, description, href, color, delay }) => 
         </CardContent>
       </Card>
     </Link>
-  </motion.div>
-);
+  </motion.div>;
+
 
 export default function Home() {
   const [periodo, setPeriodo] = useState('30');
@@ -67,17 +67,17 @@ export default function Home() {
 
   const stats = useMemo(() => {
     const now = new Date();
-    
-    const atendimentosFiltrados = atendimentos.filter(a => {
+
+    const atendimentosFiltrados = atendimentos.filter((a) => {
       const dataAtendimento = new Date(a.created_date);
       dataAtendimento.setHours(0, 0, 0, 0);
-      
+
       if (periodo === 'hoje') {
         return dataAtendimento.toDateString() === now.toDateString();
       } else if (periodo === 'especifica' && dataEspecifica.from) {
         const from = new Date(dataEspecifica.from);
         from.setHours(0, 0, 0, 0);
-        
+
         if (dataEspecifica.to) {
           const to = new Date(dataEspecifica.to);
           to.setHours(23, 59, 59, 999);
@@ -95,14 +95,14 @@ export default function Home() {
     });
 
     const totalOrcamentos = atendimentosFiltrados.length;
-    
+
     let servicosAprovados = 0;
     let servicosReprovados = 0;
     let valorTotalAprovado = 0;
-    
-    atendimentosFiltrados.forEach(atendimento => {
+
+    atendimentosFiltrados.forEach((atendimento) => {
       const todosItens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
-      todosItens.forEach(item => {
+      todosItens.forEach((item) => {
         if (item.status_aprovacao === 'aprovado') {
           servicosAprovados++;
           valorTotalAprovado += item.valor_total || 0;
@@ -112,9 +112,9 @@ export default function Home() {
       });
     });
 
-    const concluidos = atendimentosFiltrados.filter(a => a.status === 'concluido').length;
-    const emAndamento = atendimentosFiltrados.filter(a => 
-      ['queixa_pendente', 'em_diagnostico', 'aguardando_aprovacao_checklist', 'em_execucao'].includes(a.status)
+    const concluidos = atendimentosFiltrados.filter((a) => a.status === 'concluido').length;
+    const emAndamento = atendimentosFiltrados.filter((a) =>
+    ['queixa_pendente', 'em_diagnostico', 'aguardando_aprovacao_checklist', 'em_execucao'].includes(a.status)
     ).length;
 
     return {
@@ -128,35 +128,35 @@ export default function Home() {
   }, [atendimentos, periodo, dataEspecifica]);
 
   const features = [
-    {
-      icon: ClipboardCheck,
-      title: 'Novo Atendimento',
-      description: 'Iniciar checklist técnico completo do veículo e gerar orçamento.',
-      href: createPageUrl('NovoAtendimento'),
-      color: 'bg-orange-500'
-    },
-    {
-      icon: FileText,
-      title: 'Atendimentos',
-      description: 'Visualizar histórico de atendimentos e orçamentos gerados.',
-      href: createPageUrl('Atendimentos'),
-      color: 'bg-blue-500'
-    },
-    {
-      icon: Package,
-      title: 'Produtos e Serviços',
-      description: 'Gerenciar catálogo de produtos e serviços disponíveis.',
-      href: createPageUrl('Produtos'),
-      color: 'bg-green-500'
-    },
-    {
-      icon: Users,
-      title: 'Clientes',
-      description: 'Cadastro e histórico de clientes atendidos.',
-      href: createPageUrl('Clientes'),
-      color: 'bg-purple-500'
-    }
-  ];
+  {
+    icon: ClipboardCheck,
+    title: 'Novo Atendimento',
+    description: 'Iniciar checklist técnico completo do veículo e gerar orçamento.',
+    href: createPageUrl('NovoAtendimento'),
+    color: 'bg-orange-500'
+  },
+  {
+    icon: FileText,
+    title: 'Atendimentos',
+    description: 'Visualizar histórico de atendimentos e orçamentos gerados.',
+    href: createPageUrl('Atendimentos'),
+    color: 'bg-blue-500'
+  },
+  {
+    icon: Package,
+    title: 'Produtos e Serviços',
+    description: 'Gerenciar catálogo de produtos e serviços disponíveis.',
+    href: createPageUrl('Produtos'),
+    color: 'bg-green-500'
+  },
+  {
+    icon: Users,
+    title: 'Clientes',
+    description: 'Cadastro e histórico de clientes atendidos.',
+    href: createPageUrl('Clientes'),
+    color: 'bg-purple-500'
+  }];
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50">
@@ -166,15 +166,15 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row items-center gap-8"
-          >
+            className="flex flex-col md:flex-row items-center gap-8">
+
             <div className="flex-1 text-center md:text-left">
               <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
                 <img src="/logo.png" alt="Fraga Auto" className="w-12 h-12 rounded-xl object-cover" onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextElementSibling.style.display = 'flex';
                 }} />
-                <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center" style={{display: 'none'}}>
+                <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center" style={{ display: 'none' }}>
                   <Wrench className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-orange-400 font-semibold tracking-wider text-sm">SISTEMA DE GESTÃO</span>
@@ -193,7 +193,7 @@ export default function Home() {
                   </Button>
                 </Link>
                 <Link to={createPageUrl('Atendimentos')}>
-                  <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 h-12 px-6 text-base">
+                  <Button size="lg" variant="outline" className="bg-slate-50 text-slate-950 px-6 text-base font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border shadow-sm hover:text-accent-foreground border-white/30 hover:bg-white/10 h-12">
                     Ver Atendimentos
                   </Button>
                 </Link>
@@ -204,8 +204,8 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="hidden md:flex items-center justify-center"
-            >
+              className="hidden md:flex items-center justify-center">
+
               <div className="relative">
                 <div className="w-64 h-64 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-full absolute blur-3xl" />
                 <div className="relative bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
@@ -222,8 +222,8 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center mb-10"
-        >
+          className="text-center mb-10">
+
           <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3">
             Acesso Rápido
           </h2>
@@ -233,13 +233,13 @@ export default function Home() {
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature, index) => (
-            <FeatureCard
-              key={feature.title}
-              {...feature}
-              delay={0.1 * index}
-            />
-          ))}
+          {features.map((feature, index) =>
+          <FeatureCard
+            key={feature.title}
+            {...feature}
+            delay={0.1 * index} />
+
+          )}
         </div>
       </div>
 
@@ -267,33 +267,33 @@ export default function Home() {
                 </SelectContent>
               </Select>
               
-              {periodo === 'especifica' && (
-                <Popover>
+              {periodo === 'especifica' &&
+              <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-64">
                       <Calendar className="w-4 h-4 mr-2" />
-                      {dataEspecifica.from ? (
-                        dataEspecifica.to ? (
-                          `${format(dataEspecifica.from, 'dd/MM/yyyy')} - ${format(dataEspecifica.to, 'dd/MM/yyyy')}`
-                        ) : (
-                          format(dataEspecifica.from, 'dd/MM/yyyy')
-                        )
-                      ) : (
-                        'Selecionar período'
-                      )}
+                      {dataEspecifica.from ?
+                    dataEspecifica.to ?
+                    `${format(dataEspecifica.from, 'dd/MM/yyyy')} - ${format(dataEspecifica.to, 'dd/MM/yyyy')}` :
+
+                    format(dataEspecifica.from, 'dd/MM/yyyy') :
+
+
+                    'Selecionar período'
+                    }
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <CalendarComponent
-                      mode="range"
-                      selected={dataEspecifica}
-                      onSelect={(range) => setDataEspecifica(range || { from: null, to: null })}
-                      initialFocus
-                      numberOfMonths={2}
-                    />
+                    mode="range"
+                    selected={dataEspecifica}
+                    onSelect={(range) => setDataEspecifica(range || { from: null, to: null })}
+                    initialFocus
+                    numberOfMonths={2} />
+
                   </PopoverContent>
                 </Popover>
-              )}
+              }
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -383,6 +383,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
