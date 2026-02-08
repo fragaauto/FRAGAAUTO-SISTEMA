@@ -489,20 +489,24 @@ export default function AprovarOrcamento() {
               {itensQueixa.map(([key, { item, decisao }]) => (
                 <div key={key} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-slate-800">{item.nome}</p>
                       <p className="text-sm text-slate-600">
                         {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
                       </p>
+                      
+                      {item.observacao_item && (
+                        <div className="mt-3 p-3 bg-blue-100 border-l-4 border-blue-500 rounded">
+                          <p className="text-xs font-bold text-blue-900 mb-1 uppercase">
+                            💬 Observação do Técnico:
+                          </p>
+                          <p className="text-sm text-blue-800 font-medium leading-relaxed">
+                            {item.observacao_item}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
-
-                  {item.observacao_item && (
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
-                      <p className="text-sm text-blue-700">{item.observacao_item}</p>
-                    </div>
-                  )}
 
                   {item.vantagens && (
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -552,20 +556,24 @@ export default function AprovarOrcamento() {
               {itensChecklist.map(([key, { item, decisao }]) => (
                 <div key={key} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-slate-800">{item.nome}</p>
                       <p className="text-sm text-slate-600">
                         {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
                       </p>
+                      
+                      {item.observacao_item && (
+                        <div className="mt-3 p-3 bg-blue-100 border-l-4 border-blue-500 rounded">
+                          <p className="text-xs font-bold text-blue-900 mb-1 uppercase">
+                            💬 Observação do Técnico:
+                          </p>
+                          <p className="text-sm text-blue-800 font-medium leading-relaxed">
+                            {item.observacao_item}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
-
-                  {item.observacao_item && (
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
-                      <p className="text-sm text-blue-700">{item.observacao_item}</p>
-                    </div>
-                  )}
 
                   {item.vantagens && (
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
