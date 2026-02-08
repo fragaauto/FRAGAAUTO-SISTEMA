@@ -31,7 +31,8 @@ import {
   AlertTriangle,
   Save,
   Search,
-  Plus
+  Plus,
+  Sparkles
 } from 'lucide-react';
 import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
@@ -99,6 +100,9 @@ export default function VerAtendimento() {
   const [queixaTextoEdit, setQueixaTextoEdit] = useState('');
   const [searchProdutoQueixa, setSearchProdutoQueixa] = useState('');
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showAssistenteIA, setShowAssistenteIA] = useState(false);
+  const [textoTecnico, setTextoTecnico] = useState('');
+  const [processandoIA, setProcessandoIA] = useState(false);
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -1032,6 +1036,198 @@ export default function VerAtendimento() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
+  const processarTextoIA = async () => {
+    if (!textoTecnico.trim()) {
+      toast.error('Digite as informações do técnico');
+      return;
+    }
+
+    setProcessandoIA(true);
+    try {
+      // Preparar lista de produtos disponíveis
+      const listaProdutos = produtos.map(p => ({
+        id: p.id,
+        codigo: p.codigo,
+        nome: p.nome,
+        valor: p.valor,
+        categoria: p.categoria,
+        vantagens: p.vantagens,
+        desvantagens: p.desvantagens
+      }));
+
+      // Preparar lista de itens do checklist
+      const { data: checklistItems = [] } = await useQuery({
+        queryKey: ['checklistItems'],
+        queryFn: () => base44.entities.ChecklistItem.list()
+      });
+
+      const prompt = `Você é um assistente especializado em oficinas automotivas. Analise o texto do técnico e organize as informações em uma estrutura adequada.
+
+TEXTO DO TÉCNICO:
+${textoTecnico}
+
+PRODUTOS DISPONÍVEIS NO CATÁLOGO:
+${JSON.stringify(listaProdutos, null, 2)}
+
+ITENS DO CHECKLIST:
+${JSON.stringify(checklistItems.map(i => ({ id: i.id, item: i.item, categoria: i.categoria })), null, 2)}
+
+INSTRUÇÕES:
+1. Identifique a queixa inicial do cliente mencionada pelo técnico
+2. Para cada problema/defeito mencionado, encontre o item correspondente no checklist
+3. Para serviços como "Reparo", "Mão de obra", "Reforma", use SEMPRE o produto "Mão de obra" do catálogo e adicione os detalhes nas observações
+4. Para peças específicas mencionadas, procure produtos correspondentes no catálogo
+5. Se um produto não existe no catálogo, indique no campo "produtos_nao_encontrados"
+6. Organize tudo de forma clara e estruturada
+
+IMPORTANTE:
+- Serviços gerais = produto "Mão de obra" + detalhes nas observações
+- Peças específicas = produto correspondente do catálogo
+- Adicione vantagens e desvantagens quando relevante`;
+
+      const schema = {
+        type: "object",
+        properties: {
+          queixa_inicial: {
+            type: "string",
+            description: "Texto da queixa inicial do cliente"
+          },
+          checklist: {
+            type: "array",
+            description: "Itens do checklist preenchidos",
+            items: {
+              type: "object",
+              properties: {
+                item_id: { type: "string" },
+                item: { type: "string" },
+                categoria: { type: "string" },
+                status: { 
+                  type: "string",
+                  enum: ["ok", "com_defeito", "nao_possui", "nao_verificado"]
+                },
+                comentario: { type: "string" },
+                incluir_orcamento: { type: "boolean" },
+                produtos: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      produto_id: { type: "string" },
+                      quantidade: { type: "number" },
+                      observacao: { type: "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          itens_queixa: {
+            type: "array",
+            description: "Produtos para o orçamento da queixa inicial",
+            items: {
+              type: "object",
+              properties: {
+                produto_id: { type: "string" },
+                quantidade: { type: "number" },
+                observacao_item: { type: "string" }
+              }
+            }
+          },
+          produtos_nao_encontrados: {
+            type: "array",
+            description: "Produtos/serviços mencionados que não foram encontrados no catálogo",
+            items: { type: "string" }
+          }
+        }
+      };
+
+      const resultado = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: schema
+      });
+
+      console.log('Resultado da IA:', resultado);
+
+      // Processar checklist
+      const checklistAtualizado = resultado.checklist.map(item => {
+        const produtos_processados = item.produtos?.map(p => {
+          const produto = produtos.find(prod => prod.id === p.produto_id);
+          return {
+            id: p.produto_id,
+            quantidade: p.quantidade || 1,
+            valor_customizado: produto?.valor || 0,
+            observacao: p.observacao || ''
+          };
+        }) || [];
+
+        return {
+          ...item,
+          produtos: produtos_processados
+        };
+      });
+
+      // Processar itens da queixa
+      const itensQueixaProcessados = resultado.itens_queixa.map(item => {
+        const produto = produtos.find(p => p.id === item.produto_id);
+        if (!produto) return null;
+
+        return {
+          produto_id: produto.id,
+          codigo_produto: produto.codigo || '',
+          nome: produto.nome,
+          quantidade: item.quantidade || 1,
+          valor_unitario: produto.valor || 0,
+          valor_total: (item.quantidade || 1) * (produto.valor || 0),
+          vantagens: produto.vantagens || '',
+          desvantagens: produto.desvantagens || '',
+          status_aprovacao: 'pendente',
+          status_servico: 'aguardando_autorizacao',
+          observacao_item: item.observacao_item || ''
+        };
+      }).filter(Boolean);
+
+      // Calcular totais
+      const subtotal_queixa = itensQueixaProcessados.reduce((acc, item) => acc + item.valor_total, 0);
+
+      // Atualizar atendimento
+      const dataToUpdate = {
+        queixa_inicial: resultado.queixa_inicial,
+        itens_queixa: itensQueixaProcessados,
+        subtotal_queixa,
+        checklist: checklistAtualizado,
+        status: 'em_diagnostico',
+        historico_edicoes: [
+          ...(atendimento.historico_edicoes || []),
+          {
+            data: new Date().toISOString(),
+            usuario: user?.email || 'Sistema',
+            campo_editado: 'assistente_ia',
+            descricao: 'Atendimento processado pelo Assistente de IA'
+          }
+        ]
+      };
+
+      updateMutation.mutate(dataToUpdate);
+
+      // Alertar sobre produtos não encontrados
+      if (resultado.produtos_nao_encontrados?.length > 0) {
+        toast.warning(
+          `Alguns itens não foram encontrados no catálogo: ${resultado.produtos_nao_encontrados.join(', ')}`,
+          { duration: 5000 }
+        );
+      }
+
+      setShowAssistenteIA(false);
+      setTextoTecnico('');
+      toast.success('Atendimento processado com sucesso! Confira os dados.');
+    } catch (error) {
+      console.error('Erro ao processar texto:', error);
+      toast.error('Erro ao processar informações. Tente novamente.');
+    } finally {
+      setProcessandoIA(false);
+    }
+  };
+
   if (!id) {
     navigate(createPageUrl('Atendimentos'));
     return null;
@@ -1126,39 +1322,46 @@ export default function VerAtendimento() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Botões de edição sempre visíveis */}
-        <div className="flex gap-2 mb-6">
-          <Button
-            className="bg-orange-500 hover:bg-orange-600"
-            onClick={async () => {
-              try {
-                await base44.auth.me();
-                navigate(createPageUrl(`EditarAtendimento?id=${atendimento.id}`));
-              } catch (error) {
-                localStorage.setItem('redirect_after_login', createPageUrl(`EditarAtendimento?id=${atendimento.id}`));
-                base44.auth.redirectToLogin();
-              }
-            }}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Editar Checklist
-          </Button>
-          <Button
-            variant="outline"
-            onClick={async () => {
-              try {
-                await base44.auth.me();
-                navigate(createPageUrl(`EditarQueixa?id=${atendimento.id}`));
-              } catch (error) {
-                localStorage.setItem('redirect_after_login', createPageUrl(`EditarQueixa?id=${atendimento.id}`));
-                base44.auth.redirectToLogin();
-              }
-            }}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Editar Queixa
-          </Button>
-        </div>
+      {/* Botões de edição sempre visíveis */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Button
+          className="bg-purple-600 hover:bg-purple-700"
+          onClick={() => setShowAssistenteIA(true)}
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          Assistente IA
+        </Button>
+        <Button
+          className="bg-orange-500 hover:bg-orange-600"
+          onClick={async () => {
+            try {
+              await base44.auth.me();
+              navigate(createPageUrl(`EditarAtendimento?id=${atendimento.id}`));
+            } catch (error) {
+              localStorage.setItem('redirect_after_login', createPageUrl(`EditarAtendimento?id=${atendimento.id}`));
+              base44.auth.redirectToLogin();
+            }
+          }}
+        >
+          <Edit className="w-4 h-4 mr-2" />
+          Editar Checklist
+        </Button>
+        <Button
+          variant="outline"
+          onClick={async () => {
+            try {
+              await base44.auth.me();
+              navigate(createPageUrl(`EditarQueixa?id=${atendimento.id}`));
+            } catch (error) {
+              localStorage.setItem('redirect_after_login', createPageUrl(`EditarQueixa?id=${atendimento.id}`));
+              base44.auth.redirectToLogin();
+            }
+          }}
+        >
+          <Edit className="w-4 h-4 mr-2" />
+          Editar Queixa
+        </Button>
+      </div>
 
         <Tabs defaultValue="resumo">
           <TabsList className="mb-6">
@@ -2297,6 +2500,77 @@ export default function VerAtendimento() {
           onSave={(dataUrl) => handleSaveAssinatura('checklist', dataUrl)}
           onClose={() => setShowAssinaturaChecklist(false)}
         />
+      )}
+
+      {showAssistenteIA && (
+        <Dialog open={showAssistenteIA} onOpenChange={setShowAssistenteIA}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-500" />
+                Assistente de IA - Processar Informações do Técnico
+              </DialogTitle>
+              <DialogDescription>
+                Cole o texto do técnico com as informações sobre defeitos, peças e serviços. A IA irá organizar automaticamente o checklist e a queixa.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Informações do Técnico</Label>
+                <Textarea
+                  placeholder="Exemplo: Cliente relata barulho na porta traseira direita. Verificado vidro elétrico com defeito, precisa trocar motor do vidro. Porta também precisa de lubrificação e ajuste na fechadura. Fazer reparo na maçaneta que está solta."
+                  value={textoTecnico}
+                  onChange={(e) => setTextoTecnico(e.target.value)}
+                  className="min-h-[200px]"
+                  disabled={processandoIA}
+                />
+                <p className="text-xs text-slate-500 mt-2">
+                  💡 Dica: Mencione defeitos, peças necessárias e serviços. A IA irá identificar produtos no catálogo e organizar tudo automaticamente.
+                </p>
+              </div>
+
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs font-semibold text-blue-800 mb-1">ℹ️ Como funciona:</p>
+                <ul className="text-xs text-blue-700 space-y-1">
+                  <li>• A IA identifica defeitos e preenche o checklist</li>
+                  <li>• Produtos do catálogo são lançados automaticamente</li>
+                  <li>• Serviços como "reparo" e "mão de obra" são adicionados corretamente</li>
+                  <li>• A queixa inicial é organizada</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowAssistenteIA(false);
+                    setTextoTecnico('');
+                  }}
+                  disabled={processandoIA}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={processarTextoIA}
+                  disabled={processandoIA || !textoTecnico.trim()}
+                  className="bg-purple-600 hover:bg-purple-700 flex-1"
+                >
+                  {processandoIA ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Processar com IA
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {showLinkDialog && (
