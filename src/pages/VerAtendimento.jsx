@@ -2348,14 +2348,23 @@ export default function VerAtendimento() {
                 <Button
                   onClick={() => {
                     const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
-                    navigator.clipboard.writeText(linkAprovacao);
-                    toast.success('Link copiado para a área de transferência!');
+                    const mensagemPersonalizada = configs[0]?.mensagem_link_cliente || '';
+                    
+                    let textoCompleto = '';
+                    if (mensagemPersonalizada) {
+                      textoCompleto = `${mensagemPersonalizada}\n\n${linkAprovacao}`;
+                    } else {
+                      textoCompleto = linkAprovacao;
+                    }
+                    
+                    navigator.clipboard.writeText(textoCompleto);
+                    toast.success('Mensagem e link copiados!');
                     setShowLinkDialog(false);
                   }}
                   variant="outline"
                 >
                   <Share2 className="w-4 h-4 mr-2" />
-                  Copiar Link
+                  Copiar Mensagem e Link
                 </Button>
               </div>
             </div>
