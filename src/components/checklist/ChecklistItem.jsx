@@ -38,11 +38,20 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
   };
 
   const handleCommentChange = (e) => {
+    const novoComentario = e.target.value;
+    
+    // Atualizar o comentário E propagar para as observações de todos os produtos
+    const produtosAtualizados = (value?.produtos || []).map(pv => ({
+      ...pv,
+      observacao: novoComentario
+    }));
+    
     onChange({
       ...value,
       item: item.item,
       categoria: item.categoria,
-      comentario: e.target.value
+      comentario: novoComentario,
+      produtos: produtosAtualizados
     });
   };
 
