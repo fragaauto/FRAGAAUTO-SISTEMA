@@ -56,7 +56,14 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
   };
 
   const handleAddProduto = (produtoId) => {
-    const novoProduto = { id: produtoId, quantidade: 1 };
+    const produto = produtos.find(p => p.id === produtoId);
+    const valorInicial = produto ? Number(produto.valor) || 0 : 0;
+    const novoProduto = { 
+      id: produtoId, 
+      quantidade: 1,
+      valor_customizado: valorInicial,
+      observacao: ''
+    };
     const novosProdutos = [...produtosVinculados, novoProduto];
     onChange({
       ...value,
