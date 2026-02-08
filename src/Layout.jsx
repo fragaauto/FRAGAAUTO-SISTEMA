@@ -31,6 +31,10 @@ const NAV_ITEMS = [
 export default function Layout({ children, currentPageName }) {
   const [open, setOpen] = React.useState(false);
 
+  // Páginas públicas que não devem mostrar navegação
+  const paginasPublicas = ['AprovarOrcamento'];
+  const isPaginaPublica = paginasPublicas.includes(currentPageName);
+
   const NavLinks = ({ onNavigate }) => (
     <div className="space-y-1">
       {NAV_ITEMS.map((item) => {
@@ -56,9 +60,9 @@ export default function Layout({ children, currentPageName }) {
   );
 
   // Don't show nav on certain pages
-  const hideNav = ['Home'].includes(currentPageName);
+  const hideNav = ['Home', 'AprovarOrcamento'].includes(currentPageName);
 
-  if (hideNav) {
+  if (hideNav || isPaginaPublica) {
     return <>{children}</>;
   }
 
