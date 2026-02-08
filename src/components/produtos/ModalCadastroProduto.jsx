@@ -29,7 +29,7 @@ export default function ModalCadastroProduto({ open, onClose, onSave, isLoading 
     descricao: '',
     vantagens: '',
     desvantagens: '',
-    aplicacao_universal: true,
+    aplicacao_universal: false,
     modelos_compativeis: ''
   });
 
@@ -47,7 +47,7 @@ export default function ModalCadastroProduto({ open, onClose, onSave, isLoading 
       descricao: '',
       vantagens: '',
       desvantagens: '',
-      aplicacao_universal: true,
+      aplicacao_universal: false,
       modelos_compativeis: ''
     });
   };

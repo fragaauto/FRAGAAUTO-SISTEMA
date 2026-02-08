@@ -102,7 +102,7 @@ export default function Produtos() {
     descricao: '',
     vantagens: '',
     desvantagens: '',
-    aplicacao_universal: true,
+    aplicacao_universal: false,
     modelos_compativeis: [],
     ativo: true
   });
@@ -258,7 +258,7 @@ export default function Produtos() {
         descricao: '',
         vantagens: '',
         desvantagens: '',
-        aplicacao_universal: true,
+        aplicacao_universal: false,
         modelos_compativeis: [],
         ativo: true
       });
@@ -277,7 +277,7 @@ export default function Produtos() {
       descricao: '',
       vantagens: '',
       desvantagens: '',
-      aplicacao_universal: true,
+      aplicacao_universal: false,
       modelos_compativeis: [],
       ativo: true
     });
