@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Plus, Save } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ModalCadastroProduto({ open, onClose, onSave, isLoading }) {
   const [formData, setFormData] = useState({
@@ -27,7 +28,9 @@ export default function ModalCadastroProduto({ open, onClose, onSave, isLoading 
     valor: '',
     descricao: '',
     vantagens: '',
-    desvantagens: ''
+    desvantagens: '',
+    aplicacao_universal: true,
+    modelos_compativeis: ''
   });
 
   const handleSave = () => {
@@ -43,7 +46,9 @@ export default function ModalCadastroProduto({ open, onClose, onSave, isLoading 
       valor: '',
       descricao: '',
       vantagens: '',
-      desvantagens: ''
+      desvantagens: '',
+      aplicacao_universal: true,
+      modelos_compativeis: ''
     });
   };
 
@@ -147,6 +152,34 @@ export default function ModalCadastroProduto({ open, onClose, onSave, isLoading 
               placeholder="O que pode acontecer se não fizer?"
               className="min-h-[80px]"
             />
+          </div>
+
+          <div className="space-y-3 p-4 bg-slate-50 rounded-lg border">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="aplicacao-universal"
+                checked={formData.aplicacao_universal}
+                onCheckedChange={(checked) => setFormData({ ...formData, aplicacao_universal: checked })}
+              />
+              <label htmlFor="aplicacao-universal" className="font-medium cursor-pointer">
+                Aplicação Universal (serve para todos os veículos)
+              </label>
+            </div>
+
+            {!formData.aplicacao_universal && (
+              <div>
+                <Label>Modelos Compatíveis (separados por vírgula)</Label>
+                <Input
+                  value={formData.modelos_compativeis}
+                  onChange={(e) => setFormData({ ...formData, modelos_compativeis: e.target.value })}
+                  placeholder="Ex: Gol, Palio, Uno, Celta"
+                  className="h-10"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Digite os modelos compatíveis separados por vírgula
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

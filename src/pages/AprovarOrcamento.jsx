@@ -120,12 +120,51 @@ export default function AprovarOrcamento() {
 
   const toggleDecisao = (key, novaDecisao) => {
     setDecisoes(prev => {
+      const decisaoAtual = prev[key]?.decisao;
+      // Se clicar na mesma decisão, voltar para pendente
+      const decisaoFinal = decisaoAtual === novaDecisao ? 'pendente' : novaDecisao;
+      
       const novasDecisoes = {
         ...prev,
-        [key]: { ...prev[key], decisao: novaDecisao }
+        [key]: { ...prev[key], decisao: decisaoFinal }
       };
       return novasDecisoes;
     });
+  };
+
+  const handleAdicionarProdutoSugerido = (produto) => {
+    // Verificar se o produto já existe nas decisões
+    const keyQueixa = `queixa_${produto.id}`;
+    const keyChecklist = `checklist_${produto.id}`;
+    
+    if (decisoes[keyQueixa] || decisoes[keyChecklist]) {
+      toast.error('Este produto já está no seu orçamento!');
+      return;
+    }
+
+    // Adicionar como novo item no checklist
+    const novoItem = {
+      produto_id: produto.id,
+      codigo_produto: produto.codigo || '',
+      nome: produto.nome,
+      quantidade: 1,
+      valor_unitario: produto.valor,
+      valor_total: produto.valor,
+      vantagens: produto.vantagens || '',
+      desvantagens: produto.desvantagens || '',
+      status_aprovacao: 'pendente'
+    };
+
+    setDecisoes(prev => ({
+      ...prev,
+      [keyChecklist]: {
+        tipo: 'checklist',
+        item: novoItem,
+        decisao: 'pendente'
+      }
+    }));
+
+    toast.success(`✅ ${produto.nome} foi adicionado ao seu orçamento! Não esqueça de aprovar ou recusar este item antes de finalizar.`);
   };
 
   const aprovarTodos = () => {
@@ -255,17 +294,21 @@ export default function AprovarOrcamento() {
 
   const handleIniciarFinalizacao = () => {
     // Validar se há itens pendentes
-    const todosDecididos = Object.values(decisoes).every(
-      d => d.decisao === 'aprovado' || d.decisao === 'reprovado'
-    );
+    const itensPendentes = Object.values(decisoes).filter(d => d.decisao === 'pendente');
+    const todosDecididos = itensPendentes.length === 0;
     
     if (!todosDecididos) {
-      toast.error('Por favor, aprove ou recuse todos os itens antes de finalizar');
+      toast.error(
+        `⚠️ Você precisa decidir sobre ${itensPendentes.length} ${itensPendentes.length === 1 ? 'item' : 'itens'} antes de finalizar.\n\n` +
+        `Para cada serviço/produto, clique em "Aprovado" ✅ (se deseja realizar) ou "Recusado" ❌ (se não deseja realizar).\n\n` +
+        `Role a página e revise todos os itens.`,
+        { duration: 6000 }
+      );
       return;
     }
 
     if (formasPagamento.length > 0 && !formaPagamentoSelecionada) {
-      toast.error('Por favor, selecione uma forma de pagamento');
+      toast.error('Por favor, selecione uma forma de pagamento antes de finalizar');
       return;
     }
 
@@ -649,6 +692,8 @@ export default function AprovarOrcamento() {
           valorTotal={totalAprovado} 
           condicoesEspeciais={condicoesEspeciais}
           produtos={produtos}
+          modeloVeiculo={atendimento?.modelo || ''}
+          onAdicionarProduto={handleAdicionarProdutoSugerido}
         />
 
         {/* Formas de Pagamento */}

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Gift, Percent, CreditCard, CheckCircle, ShoppingCart, Plus } from 'lucide-react';
 
-export default function CondicoesEspeciais({ valorTotal, condicoesEspeciais, produtos = [] }) {
+export default function CondicoesEspeciais({ valorTotal, condicoesEspeciais, produtos = [], modeloVeiculo = '', onAdicionarProduto }) {
   const [produtosSugeridosExpandidos, setProdutosSugeridosExpandidos] = useState({});
   if (!condicoesEspeciais || condicoesEspeciais.length === 0) return null;
 
@@ -94,8 +94,27 @@ export default function CondicoesEspeciais({ valorTotal, condicoesEspeciais, pro
             <div className="space-y-4">
               {proximasCondicoes.map((condicao, idx) => {
                 const faltam = condicao.valor_minimo - valorTotal;
-                const produtosSugeridos = produtos
-                  .filter(p => p.ativo && p.valor > 0 && p.valor <= faltam * 1.2 && p.valor >= faltam * 0.5)
+                
+                // Filtrar produtos: universais OU compatíveis com o modelo do veículo
+                const produtosFiltrados = produtos.filter(p => {
+                  if (!p.ativo || !p.valor || p.valor <= 0) return false;
+                  if (p.valor > faltam * 1.2 || p.valor < faltam * 0.5) return false;
+                  
+                  // Se é universal, incluir
+                  if (p.aplicacao_universal) return true;
+                  
+                  // Se não é universal, verificar se o modelo é compatível
+                  if (modeloVeiculo && p.modelos_compativeis && p.modelos_compativeis.length > 0) {
+                    return p.modelos_compativeis.some(modelo => 
+                      modeloVeiculo.toLowerCase().includes(modelo.toLowerCase()) ||
+                      modelo.toLowerCase().includes(modeloVeiculo.toLowerCase())
+                    );
+                  }
+                  
+                  return false;
+                });
+                
+                const produtosSugeridos = produtosFiltrados
                   .sort((a, b) => Math.abs(a.valor - faltam) - Math.abs(b.valor - faltam))
                   .slice(0, 3);
 
@@ -150,24 +169,42 @@ export default function CondicoesEspeciais({ valorTotal, condicoesEspeciais, pro
                                 key={pIdx}
                                 className="p-3 bg-white rounded-lg border border-amber-200 hover:border-amber-400 transition-colors"
                               >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex-1">
-                                    <p className="font-semibold text-slate-800">{produto.nome}</p>
-                                    {produto.descricao && (
-                                      <p className="text-xs text-slate-600 mt-1">{produto.descricao}</p>
-                                    )}
-                                    {produto.vantagens && (
-                                      <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
-                                        <p className="text-xs font-medium text-green-800">✓ Vantagens:</p>
-                                        <p className="text-xs text-green-700 mt-1">{produto.vantagens}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="text-right">
-                                    <Badge className="bg-orange-600">
-                                      R$ {produto.valor.toFixed(2)}
-                                    </Badge>
-                                  </div>
+                                <div className="space-y-3">
+                                 <div className="flex items-start justify-between gap-3">
+                                   <div className="flex-1">
+                                     <p className="font-semibold text-slate-800">{produto.nome}</p>
+                                     {produto.descricao && (
+                                       <p className="text-xs text-slate-600 mt-1">{produto.descricao}</p>
+                                     )}
+                                     {!produto.aplicacao_universal && (
+                                       <Badge variant="outline" className="mt-1 text-xs">
+                                         Específico para: {produto.modelos_compativeis?.join(', ')}
+                                       </Badge>
+                                     )}
+                                     {produto.vantagens && (
+                                       <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
+                                         <p className="text-xs font-medium text-green-800">✓ Vantagens:</p>
+                                         <p className="text-xs text-green-700 mt-1">{produto.vantagens}</p>
+                                       </div>
+                                     )}
+                                   </div>
+                                   <div className="text-right">
+                                     <Badge className="bg-orange-600">
+                                       R$ {produto.valor.toFixed(2)}
+                                     </Badge>
+                                   </div>
+                                 </div>
+
+                                 {onAdicionarProduto && (
+                                   <Button
+                                     onClick={() => onAdicionarProduto(produto)}
+                                     size="sm"
+                                     className="w-full bg-green-600 hover:bg-green-700"
+                                   >
+                                     <Plus className="w-4 h-4 mr-2" />
+                                     Adicionar ao Meu Orçamento
+                                   </Button>
+                                 )}
                                 </div>
                               </div>
                             ))}
