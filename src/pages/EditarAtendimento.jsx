@@ -147,7 +147,7 @@ export default function EditarAtendimento() {
                 id: p.id,
                 quantidade: Number(p.quantidade) || 1,
                 valor_customizado: valorFinal,
-                observacao: p.observacao || ''
+                observacao: p.observacao || p.observacao_item || ''
               };
             }).filter(Boolean); // Remove nulls
 
