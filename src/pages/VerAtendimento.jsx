@@ -2078,6 +2078,12 @@ export default function VerAtendimento() {
                         onUpdate={(updated) => handleUpdateItemQueixa(idx, updated)}
                         readOnly={queixaAssinada && !isAdmin}
                       />
+                      {item.observacao_item && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
+                          <p className="text-sm text-blue-700">{item.observacao_item}</p>
+                        </div>
+                      )}
                       {item.vantagens && (
                         <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                           <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
@@ -2179,6 +2185,12 @@ export default function VerAtendimento() {
                         onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
                         readOnly={checklistAssinado && !isAdmin}
                       />
+                      {item.observacao_item && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
+                          <p className="text-sm text-blue-700">{item.observacao_item}</p>
+                        </div>
+                      )}
                       {item.vantagens && (
                         <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                           <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
