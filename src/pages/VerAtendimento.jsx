@@ -1124,14 +1124,30 @@ export default function VerAtendimento() {
         <div className="flex gap-2 mb-6">
           <Button
             className="bg-orange-500 hover:bg-orange-600"
-            onClick={() => navigate(createPageUrl(`EditarAtendimento?id=${atendimento.id}`))}
+            onClick={async () => {
+              try {
+                await base44.auth.me();
+                navigate(createPageUrl(`EditarAtendimento?id=${atendimento.id}`));
+              } catch (error) {
+                localStorage.setItem('redirect_after_login', createPageUrl(`EditarAtendimento?id=${atendimento.id}`));
+                base44.auth.redirectToLogin();
+              }
+            }}
           >
             <Edit className="w-4 h-4 mr-2" />
             Editar Checklist
           </Button>
           <Button
             variant="outline"
-            onClick={() => navigate(createPageUrl(`EditarAtendimento?id=${atendimento.id}`))}
+            onClick={async () => {
+              try {
+                await base44.auth.me();
+                navigate(createPageUrl(`EditarAtendimento?id=${atendimento.id}`));
+              } catch (error) {
+                localStorage.setItem('redirect_after_login', createPageUrl(`EditarAtendimento?id=${atendimento.id}`));
+                base44.auth.redirectToLogin();
+              }
+            }}
           >
             <Edit className="w-4 h-4 mr-2" />
             Editar Queixa

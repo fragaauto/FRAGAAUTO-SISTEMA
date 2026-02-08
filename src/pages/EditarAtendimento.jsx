@@ -32,9 +32,23 @@ export default function EditarAtendimento() {
   });
 
   const [openSections, setOpenSections] = useState({});
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => setUser(null));
+    const checkAuth = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        setCheckingAuth(false);
+      } catch (error) {
+        console.log('Usuário não autenticado, redirecionando para login...');
+        // Salvar URL atual para redirecionar após login
+        localStorage.setItem('redirect_after_login', window.location.pathname + window.location.search);
+        // Redirecionar para login
+        base44.auth.redirectToLogin();
+      }
+    };
+    checkAuth();
   }, []);
 
   const { data: atendimento, isLoading } = useQuery({
@@ -373,16 +387,19 @@ export default function EditarAtendimento() {
     return null;
   }
 
-  // PROTEÇÃO: Aguardar TODOS os dados estarem carregados
-  const isLoadingData = isLoading || !atendimento || checklistItems.length === 0 || produtos.length === 0;
+  // PROTEÇÃO: Aguardar autenticação E dados estarem carregados
+  const isLoadingData = checkingAuth || isLoading || !atendimento || checklistItems.length === 0 || produtos.length === 0;
 
   if (isLoadingData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-slate-50 to-orange-50/30">
         <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-        <p className="text-sm text-slate-600">Carregando checklist...</p>
+        <p className="text-sm text-slate-600">
+          {checkingAuth ? 'Verificando autenticação...' : 'Carregando checklist...'}
+        </p>
         <p className="text-xs text-slate-400">
-          {!atendimento ? 'Buscando atendimento...' : 
+          {checkingAuth ? 'Aguarde...' :
+           !atendimento ? 'Buscando atendimento...' : 
            checklistItems.length === 0 ? 'Carregando itens do checklist...' :
            produtos.length === 0 ? 'Carregando produtos...' : 'Processando...'}
         </p>
