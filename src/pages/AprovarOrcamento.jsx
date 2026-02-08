@@ -412,7 +412,6 @@ export default function AprovarOrcamento() {
   if (aprovacaoEnviada) {
     console.log('✅ [APROVACAO PUBLICA] Exibindo tela de aprovação enviada');
     return (
-    return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
         <div className="max-w-2xl mx-auto pt-8">
           <Card className="border-green-200 bg-green-50">
