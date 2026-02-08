@@ -471,8 +471,8 @@ export default function AprovarOrcamento() {
             </CardHeader>
             <CardContent className="space-y-3">
               {itensQueixa.map(([key, { item, decisao }]) => (
-                <div key={key} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="flex items-start justify-between mb-3">
+                <div key={key} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                  <div className="flex items-start justify-between">
                     <div>
                       <p className="font-semibold text-slate-800">{item.nome}</p>
                       <p className="text-sm text-slate-600">
@@ -480,6 +480,27 @@ export default function AprovarOrcamento() {
                       </p>
                     </div>
                   </div>
+
+                  {item.observacao_item && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
+                      <p className="text-sm text-blue-700">{item.observacao_item}</p>
+                    </div>
+                  )}
+
+                  {item.vantagens && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
+                      <p className="text-sm text-green-700">{item.vantagens}</p>
+                    </div>
+                  )}
+
+                  {item.desvantagens && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                      <p className="text-sm text-amber-700">{item.desvantagens}</p>
+                    </div>
+                  )}
                   
                   <div className="flex gap-2">
                     <Button
@@ -513,8 +534,8 @@ export default function AprovarOrcamento() {
             </CardHeader>
             <CardContent className="space-y-3">
               {itensChecklist.map(([key, { item, decisao }]) => (
-                <div key={key} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="flex items-start justify-between mb-3">
+                <div key={key} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                  <div className="flex items-start justify-between">
                     <div>
                       <p className="font-semibold text-slate-800">{item.nome}</p>
                       <p className="text-sm text-slate-600">
@@ -522,6 +543,27 @@ export default function AprovarOrcamento() {
                       </p>
                     </div>
                   </div>
+
+                  {item.observacao_item && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
+                      <p className="text-sm text-blue-700">{item.observacao_item}</p>
+                    </div>
+                  )}
+
+                  {item.vantagens && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
+                      <p className="text-sm text-green-700">{item.vantagens}</p>
+                    </div>
+                  )}
+
+                  {item.desvantagens && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                      <p className="text-sm text-amber-700">{item.desvantagens}</p>
+                    </div>
+                  )}
                   
                   <div className="flex gap-2">
                     <Button
