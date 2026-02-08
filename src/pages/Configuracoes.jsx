@@ -7,7 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Settings, Upload, Loader2, Save } from 'lucide-react';
+import { Settings, Upload, Loader2, Save, Plus, Trash2, Gift } from 'lucide-react';
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Configuracoes() {
   const queryClient = useQueryClient();
@@ -32,7 +40,14 @@ export default function Configuracoes() {
     logo_url: config.logo_url || '',
     whatsapp_atendimento: config.whatsapp_atendimento || '',
     mensagem_link_cliente: config.mensagem_link_cliente || '',
-    mensagem_remarketing: config.mensagem_remarketing || ''
+    mensagem_remarketing: config.mensagem_remarketing || '',
+    formas_pagamento: config.formas_pagamento || [
+      { nome: 'Dinheiro', ativa: true },
+      { nome: 'PIX', ativa: true },
+      { nome: 'Cartão de Débito', ativa: true },
+      { nome: 'Cartão de Crédito', ativa: true }
+    ],
+    condicoes_especiais: config.condicoes_especiais || []
   });
 
   React.useEffect(() => {
@@ -48,7 +63,14 @@ export default function Configuracoes() {
         logo_url: config.logo_url || '',
         whatsapp_atendimento: config.whatsapp_atendimento || '',
         mensagem_link_cliente: config.mensagem_link_cliente || '',
-        mensagem_remarketing: config.mensagem_remarketing || ''
+        mensagem_remarketing: config.mensagem_remarketing || '',
+        formas_pagamento: config.formas_pagamento || [
+          { nome: 'Dinheiro', ativa: true },
+          { nome: 'PIX', ativa: true },
+          { nome: 'Cartão de Débito', ativa: true },
+          { nome: 'Cartão de Crédito', ativa: true }
+        ],
+        condicoes_especiais: config.condicoes_especiais || []
       });
     }
   }, [config]);
@@ -261,6 +283,188 @@ export default function Configuracoes() {
                 Mensagem inicial para ofertas de remarketing (aparecerá antes da lista de serviços)
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Formas de Pagamento</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-slate-500">Selecione as formas de pagamento disponíveis que aparecerão no orçamento do cliente</p>
+            {formData.formas_pagamento?.map((forma, idx) => (
+              <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <Label htmlFor={`forma-${idx}`}>{forma.nome}</Label>
+                <Switch
+                  id={`forma-${idx}`}
+                  checked={forma.ativa}
+                  onCheckedChange={(checked) => {
+                    const novasFormas = [...formData.formas_pagamento];
+                    novasFormas[idx].ativa = checked;
+                    setFormData(prev => ({ ...prev, formas_pagamento: novasFormas }));
+                  }}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Gift className="w-5 h-5 text-orange-500" />
+                Condições Especiais
+              </CardTitle>
+              <Button
+                onClick={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    condicoes_especiais: [
+                      ...prev.condicoes_especiais,
+                      {
+                        valor_minimo: 0,
+                        tipo: 'desconto',
+                        descricao: '',
+                        valor_desconto_percentual: 0,
+                        parcelas_sem_juros: 0,
+                        ativa: true
+                      }
+                    ]
+                  }));
+                }}
+                size="sm"
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Condição
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-slate-500">
+              Configure brindes, descontos e parcelamentos especiais baseados no valor do orçamento
+            </p>
+
+            {formData.condicoes_especiais?.length === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                <Gift className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                <p>Nenhuma condição especial configurada</p>
+                <p className="text-sm">Clique em "Adicionar Condição" para criar uma</p>
+              </div>
+            ) : (
+              formData.condicoes_especiais?.map((condicao, idx) => (
+                <Card key={idx} className="border-2">
+                  <CardContent className="pt-6 space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={condicao.ativa}
+                          onCheckedChange={(checked) => {
+                            const novasCondicoes = [...formData.condicoes_especiais];
+                            novasCondicoes[idx].ativa = checked;
+                            setFormData(prev => ({ ...prev, condicoes_especiais: novasCondicoes }));
+                          }}
+                        />
+                        <Label>Ativa</Label>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          const novasCondicoes = formData.condicoes_especiais.filter((_, i) => i !== idx);
+                          setFormData(prev => ({ ...prev, condicoes_especiais: novasCondicoes }));
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Valor Mínimo (R$)</Label>
+                        <Input
+                          type="number"
+                          value={condicao.valor_minimo}
+                          onChange={(e) => {
+                            const novasCondicoes = [...formData.condicoes_especiais];
+                            novasCondicoes[idx].valor_minimo = parseFloat(e.target.value) || 0;
+                            setFormData(prev => ({ ...prev, condicoes_especiais: novasCondicoes }));
+                          }}
+                          placeholder="Ex: 300"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Tipo de Condição</Label>
+                        <Select
+                          value={condicao.tipo}
+                          onValueChange={(value) => {
+                            const novasCondicoes = [...formData.condicoes_especiais];
+                            novasCondicoes[idx].tipo = value;
+                            setFormData(prev => ({ ...prev, condicoes_especiais: novasCondicoes }));
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="desconto">Desconto</SelectItem>
+                            <SelectItem value="parcelamento">Parcelamento</SelectItem>
+                            <SelectItem value="brinde">Brinde</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Descrição</Label>
+                      <Input
+                        value={condicao.descricao}
+                        onChange={(e) => {
+                          const novasCondicoes = [...formData.condicoes_especiais];
+                          novasCondicoes[idx].descricao = e.target.value;
+                          setFormData(prev => ({ ...prev, condicoes_especiais: novasCondicoes }));
+                        }}
+                        placeholder="Ex: Ganhe uma lavagem de cortesia"
+                      />
+                    </div>
+
+                    {condicao.tipo === 'desconto' && (
+                      <div>
+                        <Label>Desconto (%)</Label>
+                        <Input
+                          type="number"
+                          value={condicao.valor_desconto_percentual || ''}
+                          onChange={(e) => {
+                            const novasCondicoes = [...formData.condicoes_especiais];
+                            novasCondicoes[idx].valor_desconto_percentual = parseFloat(e.target.value) || 0;
+                            setFormData(prev => ({ ...prev, condicoes_especiais: novasCondicoes }));
+                          }}
+                          placeholder="Ex: 10"
+                        />
+                      </div>
+                    )}
+
+                    {condicao.tipo === 'parcelamento' && (
+                      <div>
+                        <Label>Parcelas sem juros</Label>
+                        <Input
+                          type="number"
+                          value={condicao.parcelas_sem_juros || ''}
+                          onChange={(e) => {
+                            const novasCondicoes = [...formData.condicoes_especiais];
+                            novasCondicoes[idx].parcelas_sem_juros = parseInt(e.target.value) || 0;
+                            setFormData(prev => ({ ...prev, condicoes_especiais: novasCondicoes }));
+                          }}
+                          placeholder="Ex: 6"
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

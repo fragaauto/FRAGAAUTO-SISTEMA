@@ -18,9 +18,11 @@ import {
   MessageCircle,
   PenTool,
   Send,
-  Download
+  Download,
+  CreditCard
 } from 'lucide-react';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
+import CondicoesEspeciais from '../components/orcamento/CondicoesEspeciais';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -72,7 +74,10 @@ export default function AprovarOrcamento() {
     staleTime: 10 * 60 * 1000
   });
 
-  const whatsappAtendimento = configs[0]?.whatsapp_atendimento || '';
+  const config = configs[0] || {};
+  const whatsappAtendimento = config.whatsapp_atendimento || '';
+  const formasPagamento = config.formas_pagamento?.filter(f => f.ativa) || [];
+  const condicoesEspeciais = config.condicoes_especiais || [];
 
   // Inicializar decisões com status atual
   useEffect(() => {
@@ -606,6 +611,34 @@ export default function AprovarOrcamento() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Condições Especiais */}
+        <CondicoesEspeciais 
+          valorTotal={totalAprovado} 
+          condicoesEspeciais={condicoesEspeciais}
+        />
+
+        {/* Formas de Pagamento */}
+        {formasPagamento.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-orange-500" />
+                Formas de Pagamento Disponíveis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                {formasPagamento.map((forma, idx) => (
+                  <div key={idx} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="font-medium text-slate-700">{forma.nome}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tipo de Assinatura */}
         <Card>
