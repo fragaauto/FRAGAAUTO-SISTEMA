@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { 
   ArrowLeft,
@@ -103,6 +104,7 @@ export default function VerAtendimento() {
   const [showAssistenteIA, setShowAssistenteIA] = useState(false);
   const [textoTecnico, setTextoTecnico] = useState('');
   const [processandoIA, setProcessandoIA] = useState(false);
+  const [progressoIA, setProgressoIA] = useState(0);
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -135,6 +137,12 @@ export default function VerAtendimento() {
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list(),
+    staleTime: 10 * 60 * 1000
+  });
+
+  const { data: checklistItems = [] } = useQuery({
+    queryKey: ['checklistItems'],
+    queryFn: () => base44.entities.ChecklistItem.list(),
     staleTime: 10 * 60 * 1000
   });
 
@@ -1043,7 +1051,11 @@ export default function VerAtendimento() {
     }
 
     setProcessandoIA(true);
+    setProgressoIA(0);
+    
     try {
+      setProgressoIA(10);
+      
       // Preparar lista de produtos disponíveis
       const listaProdutos = produtos.map(p => ({
         id: p.id,
@@ -1055,11 +1067,7 @@ export default function VerAtendimento() {
         desvantagens: p.desvantagens
       }));
 
-      // Preparar lista de itens do checklist
-      const { data: checklistItems = [] } = await useQuery({
-        queryKey: ['checklistItems'],
-        queryFn: () => base44.entities.ChecklistItem.list()
-      });
+      setProgressoIA(20);
 
       const prompt = `Você é um assistente especializado em oficinas automotivas. Analise o texto do técnico e organize as informações em uma estrutura adequada.
 
@@ -1141,11 +1149,14 @@ IMPORTANTE:
         }
       };
 
+      setProgressoIA(30);
+      
       const resultado = await base44.integrations.Core.InvokeLLM({
         prompt,
         response_json_schema: schema
       });
 
+      setProgressoIA(60);
       console.log('Resultado da IA:', resultado);
 
       // Processar checklist
@@ -1186,9 +1197,13 @@ IMPORTANTE:
         };
       }).filter(Boolean);
 
+      setProgressoIA(80);
+      
       // Calcular totais
       const subtotal_queixa = itensQueixaProcessados.reduce((acc, item) => acc + item.valor_total, 0);
 
+      setProgressoIA(90);
+      
       // Atualizar atendimento
       const dataToUpdate = {
         queixa_inicial: resultado.queixa_inicial,
@@ -1209,6 +1224,8 @@ IMPORTANTE:
 
       updateMutation.mutate(dataToUpdate);
 
+      setProgressoIA(100);
+      
       // Alertar sobre produtos não encontrados
       if (resultado.produtos_nao_encontrados?.length > 0) {
         toast.warning(
@@ -1217,12 +1234,16 @@ IMPORTANTE:
         );
       }
 
-      setShowAssistenteIA(false);
-      setTextoTecnico('');
-      toast.success('Atendimento processado com sucesso! Confira os dados.');
+      setTimeout(() => {
+        setShowAssistenteIA(false);
+        setTextoTecnico('');
+        setProgressoIA(0);
+        toast.success('Atendimento processado com sucesso! Confira os dados.');
+      }, 500);
     } catch (error) {
       console.error('Erro ao processar texto:', error);
       toast.error('Erro ao processar informações. Tente novamente.');
+      setProgressoIA(0);
     } finally {
       setProcessandoIA(false);
     }
@@ -2538,6 +2559,22 @@ IMPORTANTE:
                   <li>• A queixa inicial é organizada</li>
                 </ul>
               </div>
+
+              {processandoIA && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-purple-700 font-medium">Processando...</span>
+                    <span className="text-slate-600">{progressoIA}%</span>
+                  </div>
+                  <Progress value={progressoIA} className="h-2" />
+                  <p className="text-xs text-slate-500">
+                    {progressoIA < 30 && "Preparando dados..."}
+                    {progressoIA >= 30 && progressoIA < 60 && "Analisando com IA..."}
+                    {progressoIA >= 60 && progressoIA < 90 && "Organizando informações..."}
+                    {progressoIA >= 90 && "Finalizando..."}
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-2">
                 <Button
