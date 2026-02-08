@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Settings, Upload, Loader2, Save } from 'lucide-react';
@@ -29,7 +30,8 @@ export default function Configuracoes() {
     site: config.site || '',
     instagram: config.instagram || '',
     logo_url: config.logo_url || '',
-    whatsapp_atendimento: config.whatsapp_atendimento || ''
+    whatsapp_atendimento: config.whatsapp_atendimento || '',
+    mensagem_link_cliente: config.mensagem_link_cliente || ''
   });
 
   React.useEffect(() => {
@@ -43,7 +45,8 @@ export default function Configuracoes() {
         site: config.site || '',
         instagram: config.instagram || '',
         logo_url: config.logo_url || '',
-        whatsapp_atendimento: config.whatsapp_atendimento || ''
+        whatsapp_atendimento: config.whatsapp_atendimento || '',
+        mensagem_link_cliente: config.mensagem_link_cliente || ''
       });
     }
   }, [config]);
@@ -221,6 +224,26 @@ export default function Configuracoes() {
               />
               <p className="text-xs text-slate-500 mt-1">
                 Digite apenas números com código do país (ex: 5511999999999)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Mensagem para Link do Cliente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <Label>Mensagem Personalizada</Label>
+              <Textarea
+                value={formData.mensagem_link_cliente}
+                onChange={(e) => setFormData(prev => ({ ...prev, mensagem_link_cliente: e.target.value }))}
+                placeholder="O link abaixo é seu orçamento, clique para acessar. Caso não seja clicável para você, é só adicionar nosso contato que dá certo!"
+                className="min-h-[100px]"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Esta mensagem aparecerá junto com o link de aprovação do orçamento
               </p>
             </div>
           </CardContent>

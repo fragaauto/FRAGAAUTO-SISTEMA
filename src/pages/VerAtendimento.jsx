@@ -122,6 +122,12 @@ export default function VerAtendimento() {
     refetchOnWindowFocus: false
   });
 
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 10 * 60 * 1000
+  });
+
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list(),
@@ -2303,6 +2309,14 @@ export default function VerAtendimento() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              {configs[0]?.mensagem_link_cliente && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800 whitespace-pre-wrap">
+                    {configs[0].mensagem_link_cliente}
+                  </p>
+                </div>
+              )}
+              
               <div className="p-3 bg-slate-100 rounded-lg">
                 <p className="text-xs text-slate-500 mb-1">Link de aprovação:</p>
                 <p className="text-sm text-slate-700 break-all">
@@ -2314,7 +2328,14 @@ export default function VerAtendimento() {
                 <Button
                   onClick={() => {
                     const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
-                    const mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n📋 Seu orçamento está pronto para aprovação.\n\n*Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n*Valor:* R$ ${atendimento.valor_final?.toFixed(2)}\n\nClique no link abaixo para revisar e aprovar:\n${linkAprovacao}`;
+                    const mensagemPersonalizada = configs[0]?.mensagem_link_cliente || '';
+                    let mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n📋 Seu orçamento está pronto para aprovação.\n\n*Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n*Valor:* R$ ${atendimento.valor_final?.toFixed(2)}\n\n`;
+                    
+                    if (mensagemPersonalizada) {
+                      mensagem += `${mensagemPersonalizada}\n\n`;
+                    }
+                    
+                    mensagem += `${linkAprovacao}`;
                     window.open(`https://wa.me/${atendimento.cliente_telefone?.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`, '_blank');
                     setShowLinkDialog(false);
                   }}
