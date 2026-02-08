@@ -504,7 +504,7 @@ export default function AprovarOrcamento() {
                       <p className="text-sm text-amber-700">{item.desvantagens}</p>
                     </div>
                   )}
-                  
+
                   <div className="flex gap-2">
                     <Button
                       onClick={() => toggleDecisao(key, 'aprovado')}
@@ -512,7 +512,7 @@ export default function AprovarOrcamento() {
                       className={`flex-1 ${decisao === 'aprovado' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Aprovar
+                      Aprovado
                     </Button>
                     <Button
                       onClick={() => toggleDecisao(key, 'reprovado')}
@@ -520,16 +520,16 @@ export default function AprovarOrcamento() {
                       className={`flex-1 ${decisao === 'reprovado' ? 'bg-red-600 hover:bg-red-700' : ''}`}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
-                      Recusar
+                      Recusado
                     </Button>
                   </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+                  </div>
+                  ))}
+                  </CardContent>
+                  </Card>
+                  )}
 
-        {/* Itens do Checklist */}
+                  {/* Itens do Checklist */}
         {itensChecklist.length > 0 && (
           <Card>
             <CardHeader>
@@ -567,7 +567,7 @@ export default function AprovarOrcamento() {
                       <p className="text-sm text-amber-700">{item.desvantagens}</p>
                     </div>
                   )}
-                  
+
                   <div className="flex gap-2">
                     <Button
                       onClick={() => toggleDecisao(key, 'aprovado')}
@@ -575,7 +575,7 @@ export default function AprovarOrcamento() {
                       className={`flex-1 ${decisao === 'aprovado' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Aprovar
+                      Aprovado
                     </Button>
                     <Button
                       onClick={() => toggleDecisao(key, 'reprovado')}
@@ -583,16 +583,16 @@ export default function AprovarOrcamento() {
                       className={`flex-1 ${decisao === 'reprovado' ? 'bg-red-600 hover:bg-red-700' : ''}`}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
-                      Recusar
+                      Recusado
                     </Button>
                   </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+                  </div>
+                  ))}
+                  </CardContent>
+                  </Card>
+                  )}
 
-        {/* Totais - Fixo no topo quando scrollar */}
+                  {/* Totais - Fixo no topo quando scrollar */}
         <div className="sticky top-0 z-30">
           <Card className="bg-slate-800 text-white shadow-lg">
             <CardContent className="pt-6 space-y-3">
