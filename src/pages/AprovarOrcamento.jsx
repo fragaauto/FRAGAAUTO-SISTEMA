@@ -498,7 +498,7 @@ export default function AprovarOrcamento() {
                       {item.observacao_item && (
                         <div className="mt-3 p-3 bg-blue-100 border-l-4 border-blue-500 rounded">
                           <p className="text-xs font-bold text-blue-900 mb-1 uppercase">
-                            💬 Observação do Técnico:
+                            📝 Observação do Técnico:
                           </p>
                           <p className="text-sm text-blue-800 font-medium leading-relaxed">
                             {item.observacao_item}
@@ -562,10 +562,21 @@ export default function AprovarOrcamento() {
                         {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
                       </p>
                       
+                      {item.comentario_tecnico && (
+                        <div className="mt-3 p-3 bg-amber-100 border-l-4 border-amber-500 rounded">
+                          <p className="text-xs font-bold text-amber-900 mb-1 uppercase">
+                            🔧 Comentário do Técnico:
+                          </p>
+                          <p className="text-sm text-amber-800 font-medium leading-relaxed">
+                            {item.comentario_tecnico}
+                          </p>
+                        </div>
+                      )}
+                      
                       {item.observacao_item && (
                         <div className="mt-3 p-3 bg-blue-100 border-l-4 border-blue-500 rounded">
                           <p className="text-xs font-bold text-blue-900 mb-1 uppercase">
-                            💬 Observação do Técnico:
+                            📝 Observação do Item:
                           </p>
                           <p className="text-sm text-blue-800 font-medium leading-relaxed">
                             {item.observacao_item}
