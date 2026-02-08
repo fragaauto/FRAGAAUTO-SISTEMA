@@ -123,6 +123,7 @@ export default function NovoAtendimento() {
               status_aprovacao: 'pendente',
               status_servico: 'aguardando_autorizacao',
               observacao_item: pv.observacao || '',
+              comentario_tecnico: data.comentario || '',
               origem: 'checklist',
               item_checklist: data.item
             });
