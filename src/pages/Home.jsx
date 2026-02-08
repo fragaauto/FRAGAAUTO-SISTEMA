@@ -59,6 +59,15 @@ export default function Home() {
   const [periodo, setPeriodo] = useState('30');
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
 
+  // Verificar e processar redirect pós-login
+  React.useEffect(() => {
+    const redirectUrl = localStorage.getItem('redirect_after_login');
+    if (redirectUrl) {
+      localStorage.removeItem('redirect_after_login');
+      window.location.href = redirectUrl;
+    }
+  }, []);
+
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list('-created_date'),
