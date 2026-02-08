@@ -196,7 +196,6 @@ export default function EditarAtendimento() {
     onError: (error) => {
       toast.error("Erro ao salvar checklist");
       console.error(error);
-      console.error('🔴 [SALVAR CHECKLIST] Erro detalhado:', JSON.stringify(error, null, 2));
     }
   });
 
@@ -212,28 +211,45 @@ export default function EditarAtendimento() {
 
   const handleSave = () => {
     try {
-      console.log("SALVAR CHECKLIST CLICADO", formData);
+      console.log("BOTÃO SALVAR CHECKLIST CLICADO");
+      console.log("FORMDATA:", formData);
 
       if (!formData || !formData.checklist) {
         toast.error("Checklist vazio");
         return;
       }
 
-      // VALIDAÇÃO: Verificar valores e quantidades válidas
+      // NORMALIZAR produtos antes de validar
+      const checklistNormalizado = Object.fromEntries(
+        Object.entries(formData.checklist).map(([itemId, data]) => {
+          const produtosNormalizados = (data.produtos || []).map(p => ({
+            ...p,
+            quantidade: Number(p.quantidade) || 1,
+            valor_customizado: Number(p.valor_customizado) || 0
+          }));
+
+          return [
+            itemId,
+            {
+              ...data,
+              produtos: produtosNormalizados
+            }
+          ];
+        })
+      );
+
+      // VALIDAÇÃO robusta
       let errosDetectados = [];
 
-      Object.entries(formData.checklist).forEach(([itemId, data]) => {
-        if (data.incluir_orcamento && Array.isArray(data.produtos)) {
-          data.produtos.forEach(pv => {
-            const valor = Number(pv.valor_customizado);
-            const qtd = Number(pv.quantidade);
-
-            if (isNaN(valor) || valor <= 0) {
-              errosDetectados.push(`Item "${data.item}" está sem valor válido`);
+      Object.entries(checklistNormalizado).forEach(([itemId, data]) => {
+        if (data.incluir_orcamento && data.produtos.length > 0) {
+          data.produtos.forEach(p => {
+            if (p.valor_customizado <= 0) {
+              errosDetectados.push(`Produto sem valor válido no item ${data.item}`);
             }
 
-            if (isNaN(qtd) || qtd <= 0) {
-              errosDetectados.push(`Item "${data.item}" está com quantidade inválida`);
+            if (p.quantidade <= 0) {
+              errosDetectados.push(`Produto com quantidade inválida no item ${data.item}`);
             }
           });
         }
@@ -241,21 +257,21 @@ export default function EditarAtendimento() {
 
       if (errosDetectados.length > 0) {
         toast.error(errosDetectados.join("\n"));
-        console.error("Erros:", errosDetectados);
+        console.error(errosDetectados);
         return;
       }
 
       console.log('✅ [SALVAR CHECKLIST] Validação passou, continuando...');
 
-    // Converter checklist de objeto para array
-    const checklistArray = Object.entries(formData.checklist).map(([id, data]) => ({
+    // Converter checklist de objeto para array usando checklistNormalizado
+    const checklistArray = Object.entries(checklistNormalizado).map(([id, data]) => ({
       item_id: id,
       ...data
     }));
 
     // CRÍTICO: Consolidar produtos do checklist - USAR APENAS VALORES SALVOS
     const produtosDoChecklist = [];
-    Object.entries(formData.checklist).forEach(([itemId, data]) => {
+    Object.entries(checklistNormalizado).forEach(([itemId, data]) => {
       // CRÍTICO: Só incluir se marcado para incluir no orçamento
       if (data.incluir_orcamento && data.produtos && data.produtos.length > 0) {
         console.log(`📋 Processando item: ${data.item} - ${data.produtos.length} produtos`);
