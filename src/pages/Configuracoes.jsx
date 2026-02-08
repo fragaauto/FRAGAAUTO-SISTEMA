@@ -31,7 +31,8 @@ export default function Configuracoes() {
     instagram: config.instagram || '',
     logo_url: config.logo_url || '',
     whatsapp_atendimento: config.whatsapp_atendimento || '',
-    mensagem_link_cliente: config.mensagem_link_cliente || ''
+    mensagem_link_cliente: config.mensagem_link_cliente || '',
+    mensagem_remarketing: config.mensagem_remarketing || ''
   });
 
   React.useEffect(() => {
@@ -46,7 +47,8 @@ export default function Configuracoes() {
         instagram: config.instagram || '',
         logo_url: config.logo_url || '',
         whatsapp_atendimento: config.whatsapp_atendimento || '',
-        mensagem_link_cliente: config.mensagem_link_cliente || ''
+        mensagem_link_cliente: config.mensagem_link_cliente || '',
+        mensagem_remarketing: config.mensagem_remarketing || ''
       });
     }
   }, [config]);
@@ -231,11 +233,11 @@ export default function Configuracoes() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Mensagem para Link do Cliente</CardTitle>
+            <CardTitle>Mensagens Personalizadas</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div>
-              <Label>Mensagem Personalizada</Label>
+              <Label>Mensagem para Link do Cliente</Label>
               <Textarea
                 value={formData.mensagem_link_cliente}
                 onChange={(e) => setFormData(prev => ({ ...prev, mensagem_link_cliente: e.target.value }))}
@@ -244,6 +246,19 @@ export default function Configuracoes() {
               />
               <p className="text-xs text-slate-500 mt-1">
                 Esta mensagem aparecerá junto com o link de aprovação do orçamento
+              </p>
+            </div>
+
+            <div>
+              <Label>Mensagem de Remarketing (Serviços Reprovados)</Label>
+              <Textarea
+                value={formData.mensagem_remarketing}
+                onChange={(e) => setFormData(prev => ({ ...prev, mensagem_remarketing: e.target.value }))}
+                placeholder="Olá! Tudo bem? Aqui é da {nome_empresa}! 😊&#10;&#10;Vimos que você consultou alguns serviços para seu {modelo} e preparamos uma oferta especial!&#10;&#10;"
+                className="min-h-[120px]"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Mensagem inicial para ofertas de remarketing (aparecerá antes da lista de serviços)
               </p>
             </div>
           </CardContent>

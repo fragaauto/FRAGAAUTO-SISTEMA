@@ -22,20 +22,36 @@ import {
   DollarSign,
   Loader2,
   FileText,
-  Mail
+  MessageCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import OrcamentoRemarketingModal from '../components/remarketing/OrcamentoRemarketingModal';
 
 export default function ServicosReprovados() {
   const [periodo, setPeriodo] = useState('90');
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
+  const [modalAberto, setModalAberto] = useState(false);
+  const [atendimentoSelecionado, setAtendimentoSelecionado] = useState(null);
 
   const { data: atendimentos = [], isLoading } = useQuery({
     queryKey: ['atendimentos-reprovados'],
     queryFn: () => base44.entities.Atendimento.list('-created_date'),
     staleTime: 2 * 60 * 1000
   });
+
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 10 * 60 * 1000
+  });
+
+  const config = configs[0] || {};
+
+  const abrirModalRemarketing = (atendimento) => {
+    setAtendimentoSelecionado(atendimento);
+    setModalAberto(true);
+  };
 
   const servicosReprovados = useMemo(() => {
     const now = new Date();
@@ -294,23 +310,29 @@ export default function ServicosReprovados() {
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-3 mt-4 pt-4 border-t">
-                    <Link to={createPageUrl('VerAtendimento') + '?id=' + atendimento.id} className="flex-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t">
+                    <Link to={createPageUrl('VerAtendimento') + '?id=' + atendimento.id}>
                       <Button variant="outline" className="w-full">
                         <FileText className="w-4 h-4 mr-2" />
-                        Ver Atendimento Completo
+                        Ver Completo
                       </Button>
                     </Link>
+                    <Button
+                      onClick={() => abrirModalRemarketing(atendimento)}
+                      className="w-full bg-orange-500 hover:bg-orange-600"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Enviar Oferta
+                    </Button>
                     {atendimento.cliente_telefone && (
                       <a 
-                        href={`https://wa.me/55${atendimento.cliente_telefone.replace(/\D/g, '')}?text=Olá! Temos uma oferta especial para os serviços que você consultou anteriormente em seu ${atendimento.modelo}.`}
+                        href={`https://wa.me/55${atendimento.cliente_telefone.replace(/\D/g, '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1"
                       >
                         <Button className="w-full bg-green-600 hover:bg-green-700">
                           <Phone className="w-4 h-4 mr-2" />
-                          Contatar via WhatsApp
+                          WhatsApp
                         </Button>
                       </a>
                     )}
@@ -321,6 +343,16 @@ export default function ServicosReprovados() {
           )}
         </div>
       </div>
+
+      {atendimentoSelecionado && (
+        <OrcamentoRemarketingModal
+          open={modalAberto}
+          onOpenChange={setModalAberto}
+          atendimento={atendimentoSelecionado}
+          mensagemPersonalizada={config.mensagem_remarketing}
+          nomeEmpresa={config.nome_empresa}
+        />
+      )}
     </div>
   );
 }
