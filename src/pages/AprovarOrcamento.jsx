@@ -48,6 +48,23 @@ export default function AprovarOrcamento() {
   const [assinaturaData, setAssinaturaData] = useState(null);
   const [aprovacaoEnviada, setAprovacaoEnviada] = useState(false);
   const [formaPagamentoSelecionada, setFormaPagamentoSelecionada] = useState('');
+  const [totaisAtualizados, setTotaisAtualizados] = useState({ totalAprovado: 0, totalReprovado: 0 });
+
+  // Atualizar totais automaticamente quando decisões mudarem
+  useEffect(() => {
+    let totalAprovado = 0;
+    let totalReprovado = 0;
+    
+    Object.values(decisoes).forEach(({ item, decisao }) => {
+      if (decisao === 'aprovado') {
+        totalAprovado += item.valor_total || 0;
+      } else if (decisao === 'reprovado') {
+        totalReprovado += item.valor_total || 0;
+      }
+    });
+    
+    setTotaisAtualizados({ totalAprovado, totalReprovado });
+  }, [decisoes]);
 
   const { data: atendimento, isLoading, isError, error } = useQuery({
     queryKey: ['atendimento-aprovacao', id],
@@ -403,7 +420,7 @@ export default function AprovarOrcamento() {
     );
   }
 
-  const { totalAprovado, totalReprovado } = calcularTotais();
+  const { totalAprovado, totalReprovado } = totaisAtualizados;
   const itensQueixa = Object.entries(decisoes).filter(([k]) => k.startsWith('queixa_'));
   const itensChecklist = Object.entries(decisoes).filter(([k]) => k.startsWith('checklist_'));
 
