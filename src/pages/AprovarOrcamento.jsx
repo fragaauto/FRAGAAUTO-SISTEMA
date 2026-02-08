@@ -47,6 +47,7 @@ export default function AprovarOrcamento() {
   const [cpfAssinatura, setCpfAssinatura] = useState('');
   const [assinaturaData, setAssinaturaData] = useState(null);
   const [aprovacaoEnviada, setAprovacaoEnviada] = useState(false);
+  const [formaPagamentoSelecionada, setFormaPagamentoSelecionada] = useState('');
 
   const { data: atendimento, isLoading, isError, error } = useQuery({
     queryKey: ['atendimento-aprovacao', id],
@@ -78,6 +79,12 @@ export default function AprovarOrcamento() {
   const whatsappAtendimento = config.whatsapp_atendimento || '';
   const formasPagamento = config.formas_pagamento?.filter(f => f.ativa) || [];
   const condicoesEspeciais = config.condicoes_especiais || [];
+
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list(),
+    staleTime: 5 * 60 * 1000
+  });
 
   // Inicializar decisões com status atual
   useEffect(() => {
@@ -208,6 +215,7 @@ export default function AprovarOrcamento() {
         itens_orcamento: itensOrcamentoAtualizados,
         assinatura_cliente_checklist: dadosAprovacao.assinatura,
         data_aprovacao_checklist: new Date().toISOString(),
+        forma_pagamento_selecionada: formaPagamentoSelecionada,
         dados_assinatura: {
           tipo: tipoAssinatura,
           nome: nomeAssinatura || null,
@@ -253,6 +261,11 @@ export default function AprovarOrcamento() {
     
     if (!todosDecididos) {
       toast.error('Por favor, aprove ou recuse todos os itens antes de finalizar');
+      return;
+    }
+
+    if (formasPagamento.length > 0 && !formaPagamentoSelecionada) {
+      toast.error('Por favor, selecione uma forma de pagamento');
       return;
     }
 
@@ -616,6 +629,7 @@ export default function AprovarOrcamento() {
         <CondicoesEspeciais 
           valorTotal={totalAprovado} 
           condicoesEspeciais={condicoesEspeciais}
+          produtos={produtos}
         />
 
         {/* Formas de Pagamento */}
@@ -624,16 +638,38 @@ export default function AprovarOrcamento() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-orange-500" />
-                Formas de Pagamento Disponíveis
+                Selecione a Forma de Pagamento
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {formasPagamento.map((forma, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="font-medium text-slate-700">{forma.nome}</span>
-                  </div>
+                  <button
+                    key={idx}
+                    onClick={() => setFormaPagamentoSelecionada(forma.nome)}
+                    className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
+                      formaPagamentoSelecionada === forma.nome
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-slate-200 bg-white hover:border-orange-300'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      formaPagamentoSelecionada === forma.nome
+                        ? 'border-orange-500 bg-orange-500'
+                        : 'border-slate-300'
+                    }`}>
+                      {formaPagamentoSelecionada === forma.nome && (
+                        <CheckCircle2 className="w-3 h-3 text-white" />
+                      )}
+                    </div>
+                    <span className={`font-medium ${
+                      formaPagamentoSelecionada === forma.nome
+                        ? 'text-orange-700'
+                        : 'text-slate-700'
+                    }`}>
+                      {forma.nome}
+                    </span>
+                  </button>
                 ))}
               </div>
             </CardContent>
