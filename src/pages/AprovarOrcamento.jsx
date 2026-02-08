@@ -196,6 +196,8 @@ export default function AprovarOrcamento() {
 
   const salvarMutation = useMutation({
     mutationFn: async (dadosAprovacao) => {
+      console.log('🚀 Iniciando salvamento da aprovação...');
+      
       // Atualizar itens da queixa
       const itensQueixaAtualizados = atendimento.itens_queixa?.map(item => {
         const key = `queixa_${item.produto_id}`;
@@ -214,8 +216,14 @@ export default function AprovarOrcamento() {
         };
       });
       
+      console.log('📦 Dados a salvar:', {
+        itens_queixa: itensQueixaAtualizados?.length,
+        itens_orcamento: itensOrcamentoAtualizados?.length,
+        assinatura: dadosAprovacao.assinatura
+      });
+      
       // Salvar dados da aprovação
-      return base44.entities.Atendimento.update(id, {
+      const resultado = await base44.entities.Atendimento.update(id, {
         itens_queixa: itensQueixaAtualizados,
         itens_orcamento: itensOrcamentoAtualizados,
         assinatura_cliente_checklist: dadosAprovacao.assinatura,
@@ -228,14 +236,19 @@ export default function AprovarOrcamento() {
         },
         status: 'checklist_aprovado'
       });
+      
+      console.log('✅ Aprovação salva com sucesso!', resultado);
+      return resultado;
     },
     onSuccess: () => {
+      console.log('✅ onSuccess executado');
       queryClient.invalidateQueries(['atendimento-aprovacao', id]);
       setAprovacaoEnviada(true);
       toast.success('Aprovação registrada com sucesso!');
     },
-    onError: () => {
-      toast.error('Erro ao salvar aprovação');
+    onError: (error) => {
+      console.error('❌ Erro ao salvar aprovação:', error);
+      toast.error(`Erro ao salvar aprovação: ${error.message || 'Tente novamente'}`);
     }
   });
 
@@ -252,7 +265,26 @@ export default function AprovarOrcamento() {
     }
     
     const assinaturaTexto = `Assinado por: ${nomeAssinatura} - CPF: ${cpfAssinatura}`;
+    console.log('💾 Salvando aprovação manual...');
     salvarMutation.mutate({ assinatura: assinaturaTexto });
+  };
+
+  const handleIniciarFinalizacao = () => {
+    // Validar se há itens pendentes
+    const todosDecididos = Object.values(decisoes).every(
+      d => d.decisao === 'aprovado' || d.decisao === 'reprovado'
+    );
+    
+    if (!todosDecididos) {
+      toast.error('Por favor, aprove ou recuse todos os itens antes de finalizar');
+      return;
+    }
+
+    if (tipoAssinatura === 'digital') {
+      setShowAssinatura(true);
+    } else {
+      handleFinalizarManual();
+    }
   };
 
   const enviarWhatsApp = () => {
@@ -660,13 +692,7 @@ export default function AprovarOrcamento() {
 
         {/* Botão Finalizar */}
         <Button
-          onClick={() => {
-            if (tipoAssinatura === 'digital') {
-              setShowAssinatura(true);
-            } else {
-              handleFinalizarManual();
-            }
-          }}
+          onClick={handleIniciarFinalizacao}
           disabled={salvarMutation.isPending}
           className="w-full bg-orange-600 hover:bg-orange-700 text-lg py-6"
         >
@@ -677,6 +703,14 @@ export default function AprovarOrcamento() {
           )}
           Finalizar e Enviar Minha Decisão
         </Button>
+        
+        {salvarMutation.isError && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-800">
+              ❌ Erro ao salvar: {salvarMutation.error?.message || 'Tente novamente'}
+            </p>
+          </div>
+        )}
       </div>
 
       {showAssinatura && (
