@@ -74,6 +74,14 @@ export default function Home() {
     staleTime: 2 * 60 * 1000
   });
 
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 10 * 60 * 1000
+  });
+
+  const config = configs[0] || {};
+
   const stats = useMemo(() => {
     const now = new Date();
     
@@ -179,7 +187,13 @@ export default function Home() {
           >
             <div className="flex-1 text-center md:text-left">
               <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
-                <img src="https://fragaautoportas.com.br/wp-content/uploads/2024/11/cropped-Fraga-Auto-Portas-Sumare-Campinas-e-regiao.webp" alt="Fraga Auto" className="w-16 h-16 rounded-xl object-contain bg-white p-1" />
+                {config.logo_url ? (
+                  <img src={config.logo_url} alt={config.nome_empresa || "Logo"} className="w-16 h-16 rounded-xl object-contain bg-white p-1" />
+                ) : (
+                  <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center">
+                    <Wrench className="w-8 h-8 text-white" />
+                  </div>
+                )}
                 <span className="text-orange-400 font-semibold tracking-wider text-sm">SISTEMA DE GESTÃO</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
