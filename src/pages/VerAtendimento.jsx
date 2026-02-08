@@ -1142,9 +1142,9 @@ export default function VerAtendimento() {
             onClick={async () => {
               try {
                 await base44.auth.me();
-                navigate(createPageUrl(`EditarAtendimento?id=${atendimento.id}`));
+                navigate(createPageUrl(`EditarQueixa?id=${atendimento.id}`));
               } catch (error) {
-                localStorage.setItem('redirect_after_login', createPageUrl(`EditarAtendimento?id=${atendimento.id}`));
+                localStorage.setItem('redirect_after_login', createPageUrl(`EditarQueixa?id=${atendimento.id}`));
                 base44.auth.redirectToLogin();
               }
             }}
