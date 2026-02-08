@@ -63,7 +63,7 @@ export default function Layout({ children, currentPageName }) {
   const hideNav = ['Home', 'AprovarOrcamento'].includes(currentPageName);
 
   if (hideNav || isPaginaPublica) {
-    return <>{children}</>;
+    return <div className="min-h-screen">{children}</div>;
   }
 
   return (

@@ -27,7 +27,6 @@ import { ptBR } from 'date-fns/locale';
 export default function AprovarOrcamento() {
   // ROTA PÚBLICA - Marcar como tal para evitar verificações de autenticação
   React.useEffect(() => {
-    console.log('🔐 [APROVACAO] Marcando rota como pública');
     window.__IS_PUBLIC_ROUTE__ = true;
     return () => {
       window.__IS_PUBLIC_ROUTE__ = false;
@@ -38,12 +37,6 @@ export default function AprovarOrcamento() {
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
-  
-  console.log('🚀 [APROVACAO] Componente montado:', {
-    id,
-    url: window.location.href,
-    hasId: !!id
-  });
 
   const [decisoes, setDecisoes] = useState({});
   const [showAssinatura, setShowAssinatura] = useState(false);
@@ -56,60 +49,21 @@ export default function AprovarOrcamento() {
   const { data: atendimento, isLoading, isError, error } = useQuery({
     queryKey: ['atendimento-aprovacao', id],
     queryFn: async () => {
-      console.log('🔍 [APROVACAO] Iniciando busca. ID:', id);
-      console.log('🔍 [APROVACAO] URL completa:', window.location.href);
-      console.log('🔍 [APROVACAO] Tipo do SDK:', typeof base44);
-      console.log('🔍 [APROVACAO] Método get existe?', typeof base44?.entities?.Atendimento?.get);
-      
       if (!id) {
-        console.error('❌ [APROVACAO] ID inválido ou ausente');
         throw new Error('ID do orçamento não fornecido');
       }
       
-      try {
-        console.log('📡 [APROVACAO] Chamando base44.entities.Atendimento.get(' + id + ')...');
-        
-        const result = await base44.entities.Atendimento.get(id);
-        
-        console.log('📦 [APROVACAO] Raw result:', result);
-        console.log('📦 [APROVACAO] Result type:', typeof result);
-        console.log('📦 [APROVACAO] Result keys:', result ? Object.keys(result) : 'null');
-        
-        if (!result) {
-          console.error('❌ [APROVACAO] Query retornou null/undefined');
-          throw new Error('Orçamento não encontrado. Verifique o link ou entre em contato.');
-        }
-        
-        console.log('✅ [APROVACAO] Dados carregados:', {
-          id: result.id,
-          placa: result.placa,
-          cliente: result.cliente_nome,
-          status: result.status,
-          itens_queixa: result.itens_queixa?.length || 0,
-          itens_orcamento: result.itens_orcamento?.length || 0
-        });
-        
-        return result;
-      } catch (err) {
-        console.error('❌ [APROVACAO] ERRO DETALHADO:', {
-          errorType: err?.constructor?.name,
-          message: err?.message,
-          name: err?.name,
-          code: err?.code,
-          status: err?.status,
-          response: err?.response,
-          stack: err?.stack?.split('\n').slice(0, 3)
-        });
-        
-        // Re-throw com mensagem mais clara
-        const errorMsg = err?.message || 'Erro ao carregar orçamento';
-        throw new Error(errorMsg);
+      const result = await base44.entities.Atendimento.get(id);
+      
+      if (!result) {
+        throw new Error('Orçamento não encontrado. Verifique o link ou entre em contato.');
       }
+      
+      return result;
     },
     enabled: !!id,
-    retry: false,
+    retry: 1,
     staleTime: 0,
-    gcTime: 0,
   });
 
   const { data: configs = [] } = useQuery({
@@ -225,9 +179,6 @@ export default function AprovarOrcamento() {
 
   const salvarMutation = useMutation({
     mutationFn: async (dadosAprovacao) => {
-      console.log('🚀 Iniciando salvamento da aprovação...');
-      
-      // Atualizar itens da queixa
       const itensQueixaAtualizados = atendimento.itens_queixa?.map(item => {
         const key = `queixa_${item.produto_id}`;
         return {
@@ -236,7 +187,6 @@ export default function AprovarOrcamento() {
         };
       });
       
-      // Atualizar itens do orçamento
       const itensOrcamentoAtualizados = atendimento.itens_orcamento?.map(item => {
         const key = `checklist_${item.produto_id}`;
         return {
@@ -245,13 +195,6 @@ export default function AprovarOrcamento() {
         };
       });
       
-      console.log('📦 Dados a salvar:', {
-        itens_queixa: itensQueixaAtualizados?.length,
-        itens_orcamento: itensOrcamentoAtualizados?.length,
-        assinatura: dadosAprovacao.assinatura
-      });
-      
-      // Salvar dados da aprovação
       const resultado = await base44.entities.Atendimento.update(id, {
         itens_queixa: itensQueixaAtualizados,
         itens_orcamento: itensOrcamentoAtualizados,
@@ -266,17 +209,14 @@ export default function AprovarOrcamento() {
         status: 'checklist_aprovado'
       });
       
-      console.log('✅ Aprovação salva com sucesso!', resultado);
       return resultado;
     },
     onSuccess: () => {
-      console.log('✅ onSuccess executado');
       queryClient.invalidateQueries(['atendimento-aprovacao', id]);
       setAprovacaoEnviada(true);
       toast.success('Aprovação registrada com sucesso!');
     },
     onError: (error) => {
-      console.error('❌ Erro ao salvar aprovação:', error);
       toast.error(`Erro ao salvar aprovação: ${error.message || 'Tente novamente'}`);
     }
   });
@@ -294,7 +234,6 @@ export default function AprovarOrcamento() {
     }
     
     const assinaturaTexto = `Assinado por: ${nomeAssinatura} - CPF: ${cpfAssinatura}`;
-    console.log('💾 Salvando aprovação manual...');
     salvarMutation.mutate({ assinatura: assinaturaTexto });
   };
 
@@ -325,20 +264,7 @@ export default function AprovarOrcamento() {
     window.open(`https://wa.me/${whatsappAtendimento}?text=${mensagem}`, '_blank');
   };
 
-  console.log('🎨 [APROVACAO] Renderizando. Estado:', { 
-    isLoading, 
-    isError,
-    errorMessage: error?.message,
-    hasAtendimento: !!atendimento,
-    atendimentoId: atendimento?.id,
-    aprovacaoEnviada,
-    urlId: id,
-    decisoesCount: Object.keys(decisoes).length
-  });
-
-  // Validação extra: se não tem ID, mostrar erro imediatamente
   if (!id) {
-    console.error('❌ [APROVACAO] Renderização abortada: sem ID na URL');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
         <Card className="max-w-md">
@@ -355,7 +281,6 @@ export default function AprovarOrcamento() {
   }
 
   if (isLoading) {
-    console.log('⏳ [APROVACAO] Mostrando loading...');
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
         <div className="max-w-4xl mx-auto pt-8 space-y-4">
@@ -382,16 +307,6 @@ export default function AprovarOrcamento() {
   if (isError || !atendimento) {
     const telefoneEmpresa = whatsappAtendimento || '5511999999999';
     
-    // Mostrar erro detalhado no console
-    console.error('❌ [APROVACAO PUBLICA] Exibindo tela de erro:', {
-      isError,
-      hasAtendimento: !!atendimento,
-      errorMessage: error?.message,
-      errorDetails: error,
-      id,
-      currentUrl: window.location.href
-    });
-    
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
         <XCircle className="w-20 h-20 text-red-400" />
@@ -400,19 +315,6 @@ export default function AprovarOrcamento() {
           <p className="text-slate-600 max-w-md">
             {error?.message || 'O link pode estar incorreto ou expirado.'}
           </p>
-          {/* Debug info - remover em produção */}
-          <details className="mt-4 text-left bg-red-50 p-3 rounded text-xs max-w-md">
-            <summary className="cursor-pointer text-red-700 font-semibold mb-2">
-              Detalhes técnicos (debug)
-            </summary>
-            <pre className="text-slate-700 overflow-auto">
-              {JSON.stringify({ 
-                id, 
-                error: error?.message,
-                timestamp: new Date().toISOString()
-              }, null, 2)}
-            </pre>
-          </details>
         </div>
         <div className="flex flex-col gap-3 w-full max-w-md">
           <Button
@@ -441,15 +343,7 @@ export default function AprovarOrcamento() {
   const itensQueixa = Object.entries(decisoes).filter(([k]) => k.startsWith('queixa_'));
   const itensChecklist = Object.entries(decisoes).filter(([k]) => k.startsWith('checklist_'));
 
-  console.log('✅ [APROVACAO PUBLICA] Renderizando página principal:', {
-    totalItens: Object.keys(decisoes).length,
-    itensQueixa: itensQueixa.length,
-    itensChecklist: itensChecklist.length,
-    aprovacaoEnviada
-  });
-
   if (aprovacaoEnviada) {
-    console.log('✅ [APROVACAO PUBLICA] Exibindo tela de aprovação enviada');
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
         <div className="max-w-2xl mx-auto pt-8">
@@ -497,8 +391,6 @@ export default function AprovarOrcamento() {
     );
   }
 
-  console.log('🎨 [APROVACAO PUBLICA] Renderizando formulário de aprovação');
-  
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
       {/* Header */}
