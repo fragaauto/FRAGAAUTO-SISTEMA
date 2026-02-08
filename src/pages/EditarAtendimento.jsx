@@ -194,9 +194,9 @@ export default function EditarAtendimento() {
       navigate(createPageUrl(`VerAtendimento?id=${id}`));
     },
     onError: (error) => {
-      console.error("ERRO AO SALVAR", error);
+      toast.error("Erro ao salvar checklist");
+      console.error(error);
       console.error('🔴 [SALVAR CHECKLIST] Erro detalhado:', JSON.stringify(error, null, 2));
-      toast.error(`Erro ao salvar: ${error.message || 'Tente novamente'}`);
     }
   });
 
@@ -212,42 +212,40 @@ export default function EditarAtendimento() {
 
   const handleSave = () => {
     try {
-      console.log("BOTÃO SALVAR CLICADO");
+      console.log("SALVAR CHECKLIST CLICADO", formData);
 
       if (!formData || !formData.checklist) {
         toast.error("Checklist vazio");
         return;
       }
 
-      console.log("Checklist:", formData.checklist);
+      // VALIDAÇÃO: Verificar valores e quantidades válidas
+      let errosDetectados = [];
 
-      console.log('💾 [SALVAR CHECKLIST] Botão clicado - iniciando...');
-      console.log('📦 [SALVAR CHECKLIST] FormData completo:', formData);
+      Object.entries(formData.checklist).forEach(([itemId, data]) => {
+        if (data.incluir_orcamento && Array.isArray(data.produtos)) {
+          data.produtos.forEach(pv => {
+            const valor = Number(pv.valor_customizado);
+            const qtd = Number(pv.quantidade);
 
-      // VALIDAÇÃO: Apenas verificar itens que serão incluídos no orçamento
-    let errosDetectados = [];
-    Object.entries(formData.checklist).forEach(([itemId, data]) => {
-      if (data.incluir_orcamento && data.produtos && data.produtos.length > 0) {
-        data.produtos.forEach(pv => {
-          console.log(`🔍 Validando produto: ${pv.id} - valor: ${pv.valor_customizado}, qtd: ${pv.quantidade}`);
-          if (!pv.valor_customizado || pv.valor_customizado === 0) {
-            errosDetectados.push(`Item "${data.item}" tem valor zerado`);
-          }
-          if (!pv.quantidade || pv.quantidade === 0) {
-            errosDetectados.push(`Item "${data.item}" tem quantidade zerada`);
-          }
-        });
+            if (isNaN(valor) || valor <= 0) {
+              errosDetectados.push(`Item "${data.item}" está sem valor válido`);
+            }
+
+            if (isNaN(qtd) || qtd <= 0) {
+              errosDetectados.push(`Item "${data.item}" está com quantidade inválida`);
+            }
+          });
+        }
+      });
+
+      if (errosDetectados.length > 0) {
+        toast.error(errosDetectados.join("\n"));
+        console.error("Erros:", errosDetectados);
+        return;
       }
-    });
 
-    if (errosDetectados.length > 0) {
-      const mensagemErro = `❌ Erros encontrados:\n${errosDetectados.slice(0, 3).join('\n')}`;
-      toast.error(mensagemErro);
-      console.error('🔴 [SALVAR CHECKLIST] Erros detectados:', errosDetectados);
-      return;
-    }
-
-    console.log('✅ [SALVAR CHECKLIST] Validação passou, continuando...');
+      console.log('✅ [SALVAR CHECKLIST] Validação passou, continuando...');
 
     // Converter checklist de objeto para array
     const checklistArray = Object.entries(formData.checklist).map(([id, data]) => ({
@@ -339,15 +337,15 @@ export default function EditarAtendimento() {
     };
 
     const dataToSave = {
-      checklist: checklistArray,
-      pre_diagnostico: formData.pre_diagnostico,
-      itens_orcamento: itensConsolidados,
-      subtotal_queixa,
-      subtotal_checklist,
-      subtotal,
-      valor_final,
-      status: 'em_diagnostico',
-      historico_edicoes: [...historicoBase, historicoItem]
+      checklist: checklistArray || [],
+      pre_diagnostico: formData.pre_diagnostico || "",
+      itens_orcamento: itensConsolidados || [],
+      subtotal_queixa: Number(subtotal_queixa) || 0,
+      subtotal_checklist: Number(subtotal_checklist) || 0,
+      subtotal: Number(subtotal) || 0,
+      valor_final: Number(valor_final) || 0,
+      status: "em_diagnostico",
+      historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
     };
 
     console.log("PAYLOAD FINAL", dataToSave);
