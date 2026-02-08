@@ -32,6 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { 
   Plus, 
@@ -101,6 +102,8 @@ export default function Produtos() {
     descricao: '',
     vantagens: '',
     desvantagens: '',
+    aplicacao_universal: true,
+    modelos_compativeis: [],
     ativo: true
   });
 
@@ -241,6 +244,8 @@ export default function Produtos() {
         descricao: produto.descricao || '',
         vantagens: produto.vantagens || '',
         desvantagens: produto.desvantagens || '',
+        aplicacao_universal: produto.aplicacao_universal !== false,
+        modelos_compativeis: produto.modelos_compativeis || [],
         ativo: produto.ativo !== false
       });
     } else {
@@ -253,6 +258,8 @@ export default function Produtos() {
         descricao: '',
         vantagens: '',
         desvantagens: '',
+        aplicacao_universal: true,
+        modelos_compativeis: [],
         ativo: true
       });
     }
@@ -270,6 +277,8 @@ export default function Produtos() {
       descricao: '',
       vantagens: '',
       desvantagens: '',
+      aplicacao_universal: true,
+      modelos_compativeis: [],
       ativo: true
     });
   };
@@ -1256,6 +1265,44 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
               <p className="text-xs text-slate-500 mt-1">
                 Máximo 500 caracteres
               </p>
+            </div>
+
+            <div className="space-y-3 p-4 bg-slate-100 rounded-lg border">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="aplicacao-universal"
+                  checked={formData.aplicacao_universal}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    aplicacao_universal: checked,
+                    modelos_compativeis: checked ? [] : formData.modelos_compativeis
+                  })}
+                />
+                <label htmlFor="aplicacao-universal" className="font-medium cursor-pointer text-sm">
+                  ✓ Aplicação Universal (serve para todos os veículos)
+                </label>
+              </div>
+
+              {!formData.aplicacao_universal && (
+                <div>
+                  <Label>Modelos Compatíveis (separados por vírgula)</Label>
+                  <Input
+                    value={Array.isArray(formData.modelos_compativeis) 
+                      ? formData.modelos_compativeis.join(', ')
+                      : formData.modelos_compativeis || ''
+                    }
+                    onChange={(e) => {
+                      const modelos = e.target.value.split(',').map(m => m.trim()).filter(Boolean);
+                      setFormData({ ...formData, modelos_compativeis: modelos });
+                    }}
+                    placeholder="Ex: Gol, Palio, Uno, Celta"
+                    className="h-10"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Digite os modelos compatíveis separados por vírgula
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
