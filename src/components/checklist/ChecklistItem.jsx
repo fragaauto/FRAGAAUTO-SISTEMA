@@ -71,7 +71,7 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
       id: produtoId, 
       quantidade: 1,
       valor_customizado: valorInicial,
-      observacao: ''
+      observacao: value?.comentario || ''
     };
     const novosProdutos = [...produtosVinculados, novoProduto];
     onChange({
