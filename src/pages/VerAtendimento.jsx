@@ -1343,17 +1343,19 @@ IMPORTANTE:
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-      {/* Botões de edição sempre visíveis */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* Botões de ação rápida - sempre visíveis */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
         <Button
-          className="bg-purple-600 hover:bg-purple-700"
+          className="bg-purple-600 hover:bg-purple-700 h-auto py-3"
           onClick={() => setShowAssistenteIA(true)}
         >
-          <Sparkles className="w-4 h-4 mr-2" />
-          Assistente IA
+          <div className="flex flex-col items-center gap-1">
+            <Sparkles className="w-5 h-5" />
+            <span className="text-xs">Assistente IA</span>
+          </div>
         </Button>
         <Button
-          className="bg-orange-500 hover:bg-orange-600"
+          className="bg-orange-500 hover:bg-orange-600 h-auto py-3"
           onClick={async () => {
             try {
               await base44.auth.me();
@@ -1364,11 +1366,14 @@ IMPORTANTE:
             }
           }}
         >
-          <Edit className="w-4 h-4 mr-2" />
-          Editar Checklist
+          <div className="flex flex-col items-center gap-1">
+            <Edit className="w-5 h-5" />
+            <span className="text-xs">Editar Checklist</span>
+          </div>
         </Button>
         <Button
           variant="outline"
+          className="h-auto py-3"
           onClick={async () => {
             try {
               await base44.auth.me();
@@ -1379,8 +1384,20 @@ IMPORTANTE:
             }
           }}
         >
-          <Edit className="w-4 h-4 mr-2" />
-          Editar Queixa
+          <div className="flex flex-col items-center gap-1">
+            <Edit className="w-5 h-5" />
+            <span className="text-xs">Editar Queixa</span>
+          </div>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto py-3"
+          onClick={() => setShowLinkDialog(true)}
+        >
+          <div className="flex flex-col items-center gap-1">
+            <Share2 className="w-5 h-5" />
+            <span className="text-xs">Link Cliente</span>
+          </div>
         </Button>
       </div>
 
