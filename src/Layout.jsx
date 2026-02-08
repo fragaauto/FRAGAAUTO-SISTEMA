@@ -9,7 +9,8 @@ import {
   Users,
   Menu,
   X,
-  Wrench
+  Wrench,
+  XCircle
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { name: 'Dashboard', icon: Home, path: 'Dashboard' },
   { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento' },
   { name: 'Atendimentos', icon: FileText, path: 'Atendimentos' },
+  { name: 'Serviços Reprovados', icon: XCircle, path: 'ServicosReprovados' },
   { name: 'Relatórios', icon: FileText, path: 'Relatorios' },
   { name: 'Produtos', icon: Package, path: 'Produtos' },
   { name: 'Clientes', icon: Users, path: 'Clientes' },
