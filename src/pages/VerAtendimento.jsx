@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
+import OrdemServicoTecnica from '../components/OrdemServicoTecnica';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -105,6 +106,7 @@ export default function VerAtendimento() {
   const [textoTecnico, setTextoTecnico] = useState('');
   const [processandoIA, setProcessandoIA] = useState(false);
   const [progressoIA, setProgressoIA] = useState(0);
+  const [showOrdemServico, setShowOrdemServico] = useState(false);
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -1344,7 +1346,7 @@ IMPORTANTE:
 
       <div className="max-w-4xl mx-auto px-4 py-6">
       {/* Botões de ação rápida - sempre visíveis */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-6">
         <Button
           className="bg-purple-600 hover:bg-purple-700 h-auto py-3"
           onClick={() => setShowAssistenteIA(true)}
@@ -1397,6 +1399,15 @@ IMPORTANTE:
           <div className="flex flex-col items-center gap-1">
             <Share2 className="w-5 h-5" />
             <span className="text-xs">Link Cliente</span>
+          </div>
+        </Button>
+        <Button
+          className="bg-slate-700 hover:bg-slate-800 h-auto py-3"
+          onClick={() => setShowOrdemServico(true)}
+        >
+          <div className="flex flex-col items-center gap-1">
+            <ClipboardCheck className="w-5 h-5" />
+            <span className="text-xs">OS Técnica</span>
           </div>
         </Button>
       </div>
@@ -2625,6 +2636,13 @@ IMPORTANTE:
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {showOrdemServico && (
+        <OrdemServicoTecnica
+          atendimento={atendimento}
+          onClose={() => setShowOrdemServico(false)}
+        />
       )}
 
       {showLinkDialog && (
