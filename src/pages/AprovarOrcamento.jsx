@@ -49,6 +49,7 @@ export default function AprovarOrcamento() {
   const [aprovacaoEnviada, setAprovacaoEnviada] = useState(false);
   const [formaPagamentoSelecionada, setFormaPagamentoSelecionada] = useState('');
   const [totaisAtualizados, setTotaisAtualizados] = useState({ totalAprovado: 0, totalReprovado: 0 });
+  const [tudoPreenchido, setTudoPreenchido] = useState(false);
 
   // Atualizar totais automaticamente quando decisões mudarem
   useEffect(() => {
@@ -65,6 +66,20 @@ export default function AprovarOrcamento() {
     
     setTotaisAtualizados({ totalAprovado, totalReprovado });
   }, [decisoes]);
+
+  // Verificar se tudo está preenchido
+  useEffect(() => {
+    if (!atendimento) return;
+
+    const itensPendentes = Object.values(decisoes).filter(d => d.decisao === 'pendente');
+    const todosDecididos = itensPendentes.length === 0 && Object.keys(decisoes).length > 0;
+    
+    const formaPagamentoOk = formasPagamento.length === 0 || formaPagamentoSelecionada;
+    
+    const assinaturaOk = tipoAssinatura === 'digital' || (nomeAssinatura && cpfAssinatura);
+    
+    setTudoPreenchido(todosDecididos && formaPagamentoOk && assinaturaOk);
+  }, [decisoes, formaPagamentoSelecionada, tipoAssinatura, nomeAssinatura, cpfAssinatura, formasPagamento, atendimento]);
 
   const { data: atendimento, isLoading, isError, error } = useQuery({
     queryKey: ['atendimento-aprovacao', id],
@@ -310,25 +325,45 @@ export default function AprovarOrcamento() {
   };
 
   const handleIniciarFinalizacao = () => {
+    // Array para acumular problemas
+    const problemas = [];
+    
     // Validar se há itens pendentes
     const itensPendentes = Object.values(decisoes).filter(d => d.decisao === 'pendente');
-    const todosDecididos = itensPendentes.length === 0;
+    if (itensPendentes.length > 0) {
+      problemas.push(`❌ Faltam ${itensPendentes.length} ${itensPendentes.length === 1 ? 'item' : 'itens'} para decidir (Aprovar ou Recusar)`);
+    }
     
-    if (!todosDecididos) {
+    if (Object.keys(decisoes).length === 0) {
+      problemas.push('❌ Não há itens no orçamento');
+    }
+
+    // Validar forma de pagamento
+    if (formasPagamento.length > 0 && !formaPagamentoSelecionada) {
+      problemas.push('❌ Forma de pagamento não selecionada');
+    }
+
+    // Validar assinatura manual
+    if (tipoAssinatura === 'manual') {
+      if (!nomeAssinatura) {
+        problemas.push('❌ Nome completo não preenchido');
+      }
+      if (!cpfAssinatura) {
+        problemas.push('❌ CPF não preenchido');
+      }
+    }
+
+    // Se houver problemas, mostrar todos de uma vez
+    if (problemas.length > 0) {
       toast.error(
-        `⚠️ Você precisa decidir sobre ${itensPendentes.length} ${itensPendentes.length === 1 ? 'item' : 'itens'} antes de finalizar.\n\n` +
-        `Para cada serviço/produto, clique em "Aprovado" ✅ (se deseja realizar) ou "Recusado" ❌ (se não deseja realizar).\n\n` +
-        `Role a página e revise todos os itens.`,
-        { duration: 6000 }
+        `⚠️ ATENÇÃO - Preencha os campos obrigatórios:\n\n${problemas.join('\n')}\n\n` +
+        `📝 Complete as informações acima para finalizar seu orçamento.`,
+        { duration: 8000 }
       );
       return;
     }
 
-    if (formasPagamento.length > 0 && !formaPagamentoSelecionada) {
-      toast.error('Por favor, selecione uma forma de pagamento antes de finalizar');
-      return;
-    }
-
+    // Tudo OK, prosseguir
     if (tipoAssinatura === 'digital') {
       setShowAssinatura(true);
     } else {
@@ -807,18 +842,29 @@ export default function AprovarOrcamento() {
         </Card>
 
         {/* Botão Finalizar */}
-        <Button
-          onClick={handleIniciarFinalizacao}
-          disabled={salvarMutation.isPending}
-          className="w-full bg-orange-600 hover:bg-orange-700 text-lg py-6"
-        >
-          {salvarMutation.isPending ? (
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-          ) : (
-            <Send className="w-5 h-5 mr-2" />
+        <div className={`transition-all duration-500 ${tudoPreenchido ? 'animate-pulse' : ''}`}>
+          <Button
+            onClick={handleIniciarFinalizacao}
+            disabled={salvarMutation.isPending}
+            className={`w-full text-lg py-6 transition-all duration-500 ${
+              tudoPreenchido 
+                ? 'bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/50 scale-105' 
+                : 'bg-orange-600 hover:bg-orange-700'
+            }`}
+          >
+            {salvarMutation.isPending ? (
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5 mr-2" />
+            )}
+            {tudoPreenchido ? '✅ Finalizar e Enviar Minha Decisão' : 'Finalizar e Enviar Minha Decisão'}
+          </Button>
+          {tudoPreenchido && (
+            <p className="text-center text-green-600 font-semibold text-sm mt-2 animate-pulse">
+              🎉 Tudo pronto! Clique para finalizar
+            </p>
           )}
-          Finalizar e Enviar Minha Decisão
-        </Button>
+        </div>
         
         {salvarMutation.isError && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
