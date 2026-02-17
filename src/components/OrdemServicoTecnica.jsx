@@ -9,9 +9,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Printer, X } from 'lucide-react';
+import { Textarea } from "@/components/ui/textarea";
+import { Copy, MessageCircle, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 export default function OrdemServicoTecnica({ atendimento, onClose }) {
   if (!atendimento) return null;
@@ -21,6 +23,74 @@ export default function OrdemServicoTecnica({ atendimento, onClose }) {
     ...(atendimento.itens_queixa?.filter(item => item.status_aprovacao === 'aprovado') || []),
     ...(atendimento.itens_orcamento?.filter(item => item.status_aprovacao === 'aprovado') || [])
   ];
+
+  const gerarTextoOS = () => {
+    const hoje = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
+    
+    let texto = `*📋 ORDEM DE SERVIÇO - ÁREA TÉCNICA*\n\n`;
+    texto += `*OS Nº:* ${atendimento.id?.slice(-8).toUpperCase()}\n`;
+    texto += `*Data:* ${hoje}\n\n`;
+    
+    texto += `*🚗 VEÍCULO*\n`;
+    texto += `Placa: ${atendimento.placa}\n`;
+    texto += `Modelo: ${atendimento.modelo}\n`;
+    if (atendimento.marca) texto += `Marca: ${atendimento.marca}\n`;
+    if (atendimento.ano) texto += `Ano: ${atendimento.ano}\n`;
+    texto += `\n`;
+    
+    texto += `*👤 CLIENTE*\n`;
+    texto += `Nome: ${atendimento.cliente_nome || '-'}\n`;
+    texto += `Telefone: ${atendimento.cliente_telefone || '-'}\n`;
+    texto += `\n`;
+    
+    texto += `*✅ SERVIÇOS APROVADOS (${itensAprovados.length})*\n`;
+    texto += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+    
+    if (itensAprovados.length === 0) {
+      texto += `Nenhum serviço aprovado pelo cliente ainda.\n\n`;
+    } else {
+      itensAprovados.forEach((item, idx) => {
+        texto += `*${idx + 1}. ${item.nome}*\n`;
+        texto += `   • Quantidade: ${item.quantidade} ${item.quantidade > 1 ? 'unidades' : 'unidade'}\n`;
+        if (item.codigo_produto) {
+          texto += `   • Código: ${item.codigo_produto}\n`;
+        }
+        if (item.observacao_item) {
+          texto += `   • Obs: ${item.observacao_item}\n`;
+        }
+        texto += `   • Porta/Local: _______________\n`;
+        texto += `   • Status: [ ] Pendente  [ ] Em Andamento  [ ] Concluído\n`;
+        texto += `\n`;
+      });
+    }
+    
+    texto += `*🔧 CHECKLIST FINAL*\n`;
+    texto += `[ ] Teste de funcionamento\n`;
+    texto += `[ ] Limpeza da área\n`;
+    texto += `[ ] Ferramentas recolhidas\n`;
+    texto += `[ ] Veículo conferido\n`;
+    texto += `[ ] Sem danos aparentes\n`;
+    texto += `[ ] Cliente notificado\n\n`;
+    
+    texto += `━━━━━━━━━━━━━━━━━━━━\n`;
+    texto += `Técnico: ${atendimento.tecnico || '_________________'}\n`;
+    texto += `Data conclusão: ___/___/______\n\n`;
+    texto += `_Fraga Auto Portas - ${hoje}_`;
+    
+    return texto;
+  };
+
+  const textoOS = gerarTextoOS();
+
+  const handleCopiar = () => {
+    navigator.clipboard.writeText(textoOS);
+    toast.success('Texto da OS copiado para área de transferência!');
+  };
+
+  const handleWhatsApp = () => {
+    const mensagem = encodeURIComponent(textoOS);
+    window.open(`https://wa.me/?text=${mensagem}`, '_blank');
+  };
 
   const handleImprimir = () => {
     const printWindow = window.open('', '_blank');
@@ -429,73 +499,37 @@ export default function OrdemServicoTecnica({ atendimento, onClose }) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Info do Veículo */}
-          <Card className="p-4 bg-slate-50">
-            <h3 className="font-semibold text-sm mb-3">Dados do Veículo</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-slate-500">Placa:</span>
-                <span className="ml-2 font-medium">{atendimento.placa}</span>
-              </div>
-              <div>
-                <span className="text-slate-500">Modelo:</span>
-                <span className="ml-2 font-medium">{atendimento.modelo}</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Serviços Aprovados */}
+          {/* Preview do Texto */}
           <div>
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <span>Serviços Aprovados ({itensAprovados.length})</span>
-              <Badge className="bg-green-600">Área Técnica</Badge>
+            <h3 className="font-semibold mb-2 text-sm flex items-center gap-2">
+              <span>Ordem de Serviço - Texto</span>
+              <Badge className="bg-slate-700">Área Técnica</Badge>
             </h3>
-
-            {itensAprovados.length === 0 ? (
-              <Card className="p-8 text-center text-slate-500">
-                Nenhum serviço aprovado ainda
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                {itensAprovados.map((item, idx) => (
-                  <Card key={idx} className="p-4 border-l-4 border-l-green-500">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-semibold">{item.nome}</p>
-                        <p className="text-sm text-slate-500">
-                          Quantidade: {item.quantidade} {item.quantidade > 1 ? 'unidades' : 'unidade'}
-                        </p>
-                      </div>
-                      <Badge className="bg-green-600">Aprovado</Badge>
-                    </div>
-                    
-                    {item.observacao_item && (
-                      <div className="mt-3 p-3 bg-amber-50 border-l-4 border-amber-500 rounded">
-                        <p className="text-xs font-semibold text-amber-800 mb-1">
-                          📋 Observações Técnicas:
-                        </p>
-                        <p className="text-sm text-amber-700">{item.observacao_item}</p>
-                      </div>
-                    )}
-
-                    <div className="mt-3 pt-3 border-t text-xs text-slate-500 space-y-1">
-                      <p>✓ Localização/Porta: _______________</p>
-                      <p>✓ Status: Pendente / Em Andamento / Concluído</p>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
+            <Textarea
+              value={textoOS}
+              readOnly
+              className="font-mono text-xs min-h-[400px] bg-slate-50"
+            />
           </div>
 
-          {/* Botão Imprimir */}
-          <Button
-            onClick={handleImprimir}
-            className="w-full bg-orange-600 hover:bg-orange-700"
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Imprimir Ordem de Serviço Técnica
-          </Button>
+          {/* Botões de Ação */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              onClick={handleCopiar}
+              variant="outline"
+              className="w-full"
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Copiar Texto
+            </Button>
+            <Button
+              onClick={handleWhatsApp}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Enviar WhatsApp
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
