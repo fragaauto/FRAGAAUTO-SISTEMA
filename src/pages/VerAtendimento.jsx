@@ -1426,11 +1426,15 @@ IMPORTANTE:
           <TabsContent value="resumo" className="space-y-6">
             {/* Vehicle Info */}
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Car className="w-5 h-5 text-orange-500" />
                   Veículo
                 </CardTitle>
+                <Button variant="outline" size="sm" onClick={() => setShowEditarDados(true)}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
