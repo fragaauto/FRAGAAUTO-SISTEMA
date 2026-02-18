@@ -212,21 +212,18 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
           </div>
 
           {/* Botões de Ação */}
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              onClick={handleCopiar}
-              variant="outline"
-              className="w-full"
-            >
+          <div className="grid grid-cols-3 gap-2">
+            <Button onClick={handleCopiar} variant="outline" className="w-full">
               <Copy className="w-4 h-4 mr-2" />
-              Copiar Texto
+              Copiar
             </Button>
-            <Button
-              onClick={handleWhatsApp}
-              className="w-full bg-green-600 hover:bg-green-700"
-            >
+            <Button onClick={handleWhatsApp} className="w-full bg-green-600 hover:bg-green-700">
               <MessageCircle className="w-4 h-4 mr-2" />
-              Enviar WhatsApp
+              WhatsApp
+            </Button>
+            <Button onClick={handleImprimir} className="w-full bg-orange-600 hover:bg-orange-700">
+              <Printer className="w-4 h-4 mr-2" />
+              Imprimir
             </Button>
           </div>
         </div>
