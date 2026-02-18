@@ -38,6 +38,7 @@ import {
 import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
 import OrdemServicoTecnica from '../components/OrdemServicoTecnica';
+import ModalEditarClienteVeiculo from '../components/atendimento/ModalEditarClienteVeiculo';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
