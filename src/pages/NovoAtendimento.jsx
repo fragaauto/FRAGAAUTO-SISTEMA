@@ -567,11 +567,15 @@ export default function NovoAtendimento() {
 
               {/* Client */}
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <User className="w-5 h-5 text-blue-500" />
                     Dados do Cliente
                   </CardTitle>
+                  <Button variant="outline" size="sm" onClick={() => setShowBuscarCliente(true)}>
+                    <Search className="w-4 h-4 mr-2" />
+                    Buscar Cliente
+                  </Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
