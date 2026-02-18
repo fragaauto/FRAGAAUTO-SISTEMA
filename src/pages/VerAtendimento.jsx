@@ -2656,6 +2656,19 @@ IMPORTANTE:
         />
       )}
 
+      {showEditarDados && (
+        <ModalEditarClienteVeiculo
+          atendimento={atendimento}
+          isLoading={updateMutation.isPending}
+          onClose={() => setShowEditarDados(false)}
+          onSave={(dados) => {
+            updateMutation.mutate(dados, {
+              onSuccess: () => setShowEditarDados(false)
+            });
+          }}
+        />
+      )}
+
       {showLinkDialog && (
         <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
           <DialogContent className="sm:max-w-md">
