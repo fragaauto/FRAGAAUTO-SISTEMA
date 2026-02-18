@@ -974,6 +974,16 @@ export default function NovoAtendimento() {
         onSave={handleCadastrarProduto}
         isLoading={cadastrandoProduto}
       />
+
+      {showBuscarCliente && (
+        <BuscarClienteModal
+          clientes={clientes}
+          onSelect={handleSelecionarCliente}
+          onCreate={handleCriarCliente}
+          onClose={() => setShowBuscarCliente(false)}
+          isCreating={criandoCliente}
+        />
+      )}
     </div>
   );
 }
