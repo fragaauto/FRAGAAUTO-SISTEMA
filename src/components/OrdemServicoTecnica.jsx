@@ -28,47 +28,51 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
     ...(atendimento.itens_orcamento?.filter(item => item.status_aprovacao === 'aprovado' && !idsQueixa.has(item.produto_id)) || [])
   ];
 
-  const sep = '--------------------------------';
+  const sep = '================================';
+  const sepFino = '--------------------------------';
 
   const gerarTextoOS = () => {
     const hoje = format(new Date(), 'dd/MM/yyyy');
     let t = '';
     t += `${sep}\n`;
-    t += `       ORDEM DE SERVICO\n`;
+    t += `🔧 *ORDEM DE SERVIÇO TÉCNICA* 🔧\n`;
     t += `${sep}\n`;
-    t += `OS: ${atendimento.id?.slice(-8).toUpperCase()}\n`;
-    t += `Data: ${hoje}\n\n`;
-    t += `VEICULO\n`;
-    t += `Placa: ${atendimento.placa}\n`;
-    t += `Modelo: ${atendimento.modelo}\n`;
+    t += `📋 *OS:* ${atendimento.id?.slice(-8).toUpperCase()}\n`;
+    t += `📅 *Data:* ${hoje}\n`;
+    t += `${sepFino}\n`;
+    t += `🚗 *VEÍCULO*\n`;
+    t += `Placa: *${atendimento.placa}*\n`;
+    t += `Modelo: *${atendimento.modelo}*\n`;
     if (atendimento.ano) t += `Ano: ${atendimento.ano}\n`;
-    t += `\n`;
-    t += `CLIENTE\n`;
-    t += `Nome: ${(atendimento.cliente_nome || '-').toUpperCase()}\n`;
+    t += `${sepFino}\n`;
+    t += `👤 *CLIENTE*\n`;
+    t += `Nome: *${(atendimento.cliente_nome || '-').toUpperCase()}*\n`;
     t += `Tel: ${atendimento.cliente_telefone || '-'}\n`;
-    t += `\n`;
-    t += `SERVICOS APROVADOS: ${itensAprovados.length}\n`;
+    t += `${sep}\n`;
+    t += `✅ *SERVIÇOS APROVADOS: ${itensAprovados.length}*\n`;
+    t += `${sep}\n`;
     if (itensAprovados.length === 0) {
-      t += `Nenhum servico aprovado ainda.\n`;
+      t += `⚠️ Nenhum serviço aprovado ainda.\n`;
     } else {
       itensAprovados.forEach((item, idx) => {
-        t += `${idx + 1}. ${item.nome}`;
-        if (item.quantidade > 1) t += ` (x${item.quantidade})`;
+        t += `\n*${idx + 1}. ${item.nome}*`;
+        if (item.quantidade > 1) t += ` _(x${item.quantidade})_`;
         t += `\n`;
-        if (item.observacao_item) t += `   Obs: ${item.observacao_item}\n`;
-        t += `   Local: _________________\n`;
+        if (item.observacao_item) t += `   📝 _${item.observacao_item}_\n`;
+        t += `   📍 Local/Porta: _________________\n`;
+        t += `   ◻ Pendente  ◻ Em Andamento  ◻ Concluído\n`;
       });
     }
-    t += `\n${sep}\n`;
-    t += `CHECKLIST FINAL\n`;
-    t += `[ ] Teste funcionamento\n`;
-    t += `[ ] Limpeza realizada\n`;
-    t += `[ ] Ferramentas recolhidas\n`;
+    t += `\n${sepFino}\n`;
+    t += `☑ *CHECKLIST FINAL*\n`;
+    t += `◻ Teste de funcionamento\n`;
+    t += `◻ Limpeza realizada\n`;
+    t += `◻ Ferramentas recolhidas\n`;
     t += `${sep}\n`;
-    t += `Tecnico: ______________________\n`;
-    t += `Conclusao: ____/____/____\n`;
+    t += `✍ Técnico: ______________________\n`;
+    t += `📅 Conclusão: ____/____/____\n`;
     t += `${sep}\n`;
-    t += `${nomeEmpresa}`;
+    t += `_${nomeEmpresa}_`;
     return t;
   };
 
