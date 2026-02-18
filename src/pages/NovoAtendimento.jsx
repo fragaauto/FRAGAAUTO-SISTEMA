@@ -40,6 +40,8 @@ export default function NovoAtendimento() {
   const [showProdutoModal, setShowProdutoModal] = useState(false);
   const [showCadastroProduto, setShowCadastroProduto] = useState(false);
   const [cadastrandoProduto, setCadastrandoProduto] = useState(false);
+  const [showBuscarCliente, setShowBuscarCliente] = useState(false);
+  const [criandoCliente, setCriandoCliente] = useState(false);
   
   const [formData, setFormData] = useState({
     cliente_nome: '',
