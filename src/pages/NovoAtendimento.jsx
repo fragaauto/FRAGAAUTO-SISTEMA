@@ -22,7 +22,8 @@ import {
   Plus,
   Percent,
   Calculator,
-  Package
+  Package,
+  Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChecklistSection from '../components/checklist/ChecklistSection';
