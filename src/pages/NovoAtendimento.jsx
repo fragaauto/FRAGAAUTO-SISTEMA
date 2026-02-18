@@ -380,6 +380,40 @@ export default function NovoAtendimento() {
     }
   });
 
+  const createClienteMutation = useMutation({
+    mutationFn: (data) => base44.entities.Cliente.create(data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries(['clientes']);
+      setFormData(prev => ({
+        ...prev,
+        cliente_nome: result.nome,
+        cliente_telefone: result.telefone
+      }));
+      setCriandoCliente(false);
+      setShowBuscarCliente(false);
+      toast.success('Cliente cadastrado!');
+    },
+    onError: () => {
+      toast.error('Erro ao cadastrar cliente');
+      setCriandoCliente(false);
+    }
+  });
+
+  const handleSelecionarCliente = (cliente) => {
+    setFormData(prev => ({
+      ...prev,
+      cliente_nome: cliente.nome,
+      cliente_telefone: cliente.telefone
+    }));
+    setShowBuscarCliente(false);
+    toast.success(`Cliente ${cliente.nome} selecionado`);
+  };
+
+  const handleCriarCliente = (data) => {
+    setCriandoCliente(true);
+    createClienteMutation.mutate(data);
+  };
+
   const handleCadastrarProduto = (data) => {
     setCadastrandoProduto(true);
     createProdutoMutation.mutate({
