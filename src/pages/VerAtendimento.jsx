@@ -2641,6 +2641,7 @@ IMPORTANTE:
       {showOrdemServico && (
         <OrdemServicoTecnica
           atendimento={atendimento}
+          config={configs[0]}
           onClose={() => setShowOrdemServico(false)}
         />
       )}
