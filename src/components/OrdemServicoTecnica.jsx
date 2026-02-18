@@ -104,7 +104,7 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
               font-family: 'Courier New', monospace;
-              font-size: 12px;
+              font-size: 13px;
               width: 80mm;
               margin: 0 auto;
               padding: 4mm;
@@ -113,14 +113,23 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
             }
             .logo { text-align: center; margin-bottom: 6px; }
             .logo img { max-width: 40mm; max-height: 20mm; object-fit: contain; }
-            .empresa { text-align: center; font-weight: bold; font-size: 13px; margin-bottom: 4px; }
+            .empresa { text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 4px; letter-spacing: 1px; }
+            .sep-duplo { border: none; border-top: 3px double #000; margin: 7px 0; }
             .sep { border: none; border-top: 1px dashed #000; margin: 6px 0; }
-            .title { text-align: center; font-weight: bold; font-size: 13px; letter-spacing: 1px; }
-            .section-title { font-weight: bold; margin: 6px 0 2px; }
-            .item { margin: 4px 0; }
-            .item-obs { margin-left: 8px; font-size: 11px; }
-            .checklist { margin: 2px 0; }
-            .footer { text-align: center; font-size: 11px; margin-top: 6px; }
+            .title { text-align: center; font-weight: bold; font-size: 15px; letter-spacing: 2px; text-decoration: underline; margin: 4px 0; }
+            .subtitle { text-align: center; font-size: 11px; margin-bottom: 2px; }
+            .section-title { font-weight: bold; font-size: 13px; margin: 6px 0 3px; text-decoration: underline; display: flex; align-items: center; gap: 4px; }
+            .info-row { margin: 3px 0; }
+            .info-label { font-weight: bold; }
+            .item-box { border: 1px solid #000; margin: 6px 0; padding: 4px 6px; }
+            .item-nome { font-weight: bold; font-size: 13px; }
+            .item-qtd { font-size: 11px; font-style: italic; }
+            .item-obs { font-size: 11px; margin: 2px 0 2px 4px; font-style: italic; }
+            .item-campo { margin: 3px 0; font-size: 12px; }
+            .item-status { display: flex; gap: 8px; font-size: 11px; margin-top: 3px; }
+            .checklist-item { margin: 4px 0; font-size: 13px; }
+            .footer { text-align: center; font-size: 11px; margin-top: 8px; font-style: italic; border-top: 1px solid #000; padding-top: 4px; }
+            .os-num { font-weight: bold; font-size: 14px; }
             @media print {
               body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
               .no-print { display: none; }
@@ -138,45 +147,51 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
           <button class="print-button no-print" onclick="window.print()">🖨️ Imprimir</button>
 
           ${logoUrl ? `<div class="logo"><img src="${logoUrl}" alt="Logo" /></div>` : ''}
-          <div class="empresa">${nomeEmpresa}</div>
+          <div class="empresa">🔧 ${nomeEmpresa}</div>
+
+          <hr class="sep-duplo"/>
+          <div class="title">ORDEM DE SERVIÇO</div>
+          <div class="subtitle">— ÁREA TÉCNICA —</div>
+          <hr class="sep-duplo"/>
+
+          <div class="info-row">📋 <span class="info-label">OS:</span> <span class="os-num">${atendimento.id?.slice(-8).toUpperCase()}</span></div>
+          <div class="info-row">📅 <span class="info-label">Data:</span> ${hoje}</div>
 
           <hr class="sep"/>
-          <div class="title">ORDEM DE SERVICO</div>
-          <hr class="sep"/>
-
-          <div>OS: ${atendimento.id?.slice(-8).toUpperCase()}</div>
-          <div>Data: ${hoje}</div>
-
-          <hr class="sep"/>
-          <div class="section-title">VEICULO</div>
-          <div>Placa: ${atendimento.placa}</div>
-          <div>Modelo: ${atendimento.modelo}</div>
-          ${atendimento.ano ? `<div>Ano: ${atendimento.ano}</div>` : ''}
+          <div class="section-title">🚗 VEÍCULO</div>
+          <div class="info-row"><span class="info-label">Placa:</span> <strong>${atendimento.placa}</strong></div>
+          <div class="info-row"><span class="info-label">Modelo:</span> <strong>${atendimento.modelo}</strong></div>
+          ${atendimento.ano ? `<div class="info-row"><span class="info-label">Ano:</span> ${atendimento.ano}</div>` : ''}
 
           <hr class="sep"/>
-          <div class="section-title">CLIENTE</div>
-          <div>Nome: ${(atendimento.cliente_nome || '-').toUpperCase()}</div>
-          <div>Tel: ${atendimento.cliente_telefone || '-'}</div>
+          <div class="section-title">👤 CLIENTE</div>
+          <div class="info-row"><span class="info-label">Nome:</span> <strong>${(atendimento.cliente_nome || '-').toUpperCase()}</strong></div>
+          <div class="info-row"><span class="info-label">Tel:</span> ${atendimento.cliente_telefone || '-'}</div>
 
+          <hr class="sep-duplo"/>
+          <div class="section-title">✅ SERVIÇOS APROVADOS: ${itensAprovados.length}</div>
           <hr class="sep"/>
-          <div class="section-title">SERVICOS APROVADOS: ${itensAprovados.length}</div>
+
           ${itensAprovados.length === 0
-            ? '<div>Nenhum servico aprovado ainda.</div>'
+            ? '<div>⚠️ Nenhum serviço aprovado ainda.</div>'
             : itensAprovados.map((item, idx) => `
-              <div class="item">${idx + 1}. ${item.nome}${item.quantidade > 1 ? ` (x${item.quantidade})` : ''}</div>
-              ${item.observacao_item ? `<div class="item-obs">Obs: ${item.observacao_item}</div>` : ''}
-              <div class="item-obs">Local: _________________</div>
+              <div class="item-box">
+                <div class="item-nome">${idx + 1}. ${item.nome} ${item.quantidade > 1 ? `<span class="item-qtd">(x${item.quantidade})</span>` : ''}</div>
+                ${item.observacao_item ? `<div class="item-obs">📝 <em>${item.observacao_item}</em></div>` : ''}
+                <div class="item-campo">📍 Local/Porta: _________________</div>
+                <div class="item-status">◻ Pendente &nbsp; ◻ Em Andamento &nbsp; ◻ Concluído</div>
+              </div>
             `).join('')}
 
           <hr class="sep"/>
-          <div class="section-title">CHECKLIST FINAL</div>
-          <div class="checklist">[ ] Teste funcionamento</div>
-          <div class="checklist">[ ] Limpeza realizada</div>
-          <div class="checklist">[ ] Ferramentas recolhidas</div>
+          <div class="section-title">☑ CHECKLIST FINAL</div>
+          <div class="checklist-item">◻ Teste de funcionamento</div>
+          <div class="checklist-item">◻ Limpeza realizada</div>
+          <div class="checklist-item">◻ Ferramentas recolhidas</div>
 
-          <hr class="sep"/>
-          <div>Tecnico: ______________________</div>
-          <div>Conclusao: ____/____/____</div>
+          <hr class="sep-duplo"/>
+          <div class="info-row">✍ <span class="info-label">Técnico:</span> ______________________</div>
+          <div class="info-row">📅 <span class="info-label">Conclusão:</span> ____/____/____</div>
           <hr class="sep"/>
           <div class="footer">${nomeEmpresa}</div>
         </body>
