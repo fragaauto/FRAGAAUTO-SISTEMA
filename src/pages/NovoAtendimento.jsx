@@ -34,6 +34,7 @@ import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import SeletorProdutos from '../components/orcamento/SeletorProdutos';
 import ModalCadastroProduto from '../components/produtos/ModalCadastroProduto';
 import BuscarClienteModal from '../components/atendimento/BuscarClienteModal';
+import ModalCadastrarCliente from '../components/atendimento/ModalCadastrarCliente';
 
 export default function NovoAtendimento() {
   const navigate = useNavigate();
