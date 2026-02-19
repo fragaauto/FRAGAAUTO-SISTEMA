@@ -841,6 +841,42 @@ export default function AprovarOrcamento() {
           </CardContent>
         </Card>
 
+        {/* Checklist de pendências */}
+        {(() => {
+          const pendencias = [];
+          const itensPendentes = Object.values(decisoes).filter(d => d.decisao === 'pendente');
+          if (itensPendentes.length > 0) {
+            pendencias.push(`Aprovar ou Recusar todos os itens do orçamento (${itensPendentes.length} item${itensPendentes.length > 1 ? 'ns' : ''} pendente${itensPendentes.length > 1 ? 's' : ''})`);
+          }
+          if (formasPagamento.length > 0 && !formaPagamentoSelecionada) {
+            pendencias.push('Selecionar a forma de pagamento');
+          }
+          if (tipoAssinatura === 'manual' && !nomeAssinatura) {
+            pendencias.push('Preencher o Nome Completo');
+          }
+          if (tipoAssinatura === 'manual' && !cpfAssinatura) {
+            pendencias.push('Preencher o CPF');
+          }
+
+          if (pendencias.length === 0) return null;
+
+          return (
+            <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-4 space-y-2">
+              <p className="font-bold text-amber-800 text-base flex items-center gap-2">
+                ⚠️ Para finalizar, você ainda precisa:
+              </p>
+              <ul className="space-y-1">
+                {pendencias.map((p, i) => (
+                  <li key={i} className="flex items-start gap-2 text-amber-700 text-sm font-medium">
+                    <span className="mt-0.5 text-amber-500">→</span>
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()}
+
         {/* Botão Finalizar */}
         <div className={`transition-all duration-500 ${tudoPreenchido ? 'animate-pulse' : ''}`}>
           <Button
