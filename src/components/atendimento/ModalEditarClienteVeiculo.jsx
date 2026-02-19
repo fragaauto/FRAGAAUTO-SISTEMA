@@ -10,6 +10,7 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
   const [dados, setDados] = useState({
     cliente_nome: atendimento.cliente_nome || '',
     cliente_telefone: atendimento.cliente_telefone || '',
+    cliente_cpf: atendimento.cliente_cpf || '',
     placa: atendimento.placa || '',
     modelo: atendimento.modelo || '',
     marca: atendimento.marca || '',

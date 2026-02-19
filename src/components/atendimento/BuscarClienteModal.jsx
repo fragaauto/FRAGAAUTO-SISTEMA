@@ -8,11 +8,11 @@ import { Search, User, Plus, Phone, Loader2 } from 'lucide-react';
 
 export default function BuscarClienteModal({ clientes, onSelect, onCreate, onClose, isCreating }) {
   const [busca, setBusca] = useState('');
-  const [novoCliente, setNovoCliente] = useState({ nome: '', telefone: '', email: '' });
+  const [novoCliente, setNovoCliente] = useState({ nome: '', telefone: '', cpf_cnpj: '', email: '' });
 
   const clientesFiltrados = clientes.filter(c => {
     const q = busca.toLowerCase();
-    return c.nome?.toLowerCase().includes(q) || c.telefone?.includes(q);
+    return c.nome?.toLowerCase().includes(q) || c.telefone?.includes(q) || c.cpf_cnpj?.replace(/\D/g, '').includes(busca.replace(/\D/g, ''));
   });
 
   const handleCriar = () => {
