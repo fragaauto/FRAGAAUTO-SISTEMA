@@ -61,6 +61,15 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
                 className="h-11"
               />
             </div>
+            <div>
+              <Label>CPF / CNPJ</Label>
+              <Input
+                value={dados.cliente_cpf}
+                onChange={(e) => setDados(p => ({ ...p, cliente_cpf: e.target.value }))}
+                placeholder="000.000.000-00"
+                className="h-11"
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="veiculo" className="space-y-4 pt-4">
