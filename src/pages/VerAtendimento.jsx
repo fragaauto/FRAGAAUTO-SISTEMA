@@ -2173,14 +2173,7 @@ IMPORTANTE:
                       </div>
                     ) : (
                       <div className="space-y-3">
-                       {(() => {
-                         const produtosNaQueixa = new Set(
-                           atendimento.itens_queixa?.map(item => item.produto_id) || []
-                         );
-                         return atendimento.itens_orcamento?.filter(
-                           item => !produtosNaQueixa.has(item.produto_id)
-                         );
-                       })()?.map((item, idx) => (
+                       {atendimento.itens_orcamento?.map((item, idx) => (
                          <div key={idx} className="space-y-2">
                            <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
                              <div>
