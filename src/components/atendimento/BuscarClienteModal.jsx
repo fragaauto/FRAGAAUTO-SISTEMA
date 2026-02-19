@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, User, Plus, Phone, Loader2 } from 'lucide-react';
+import { Search, User, Plus, Phone, CreditCard, Loader2 } from 'lucide-react';
 
 export default function BuscarClienteModal({ clientes, onSelect, onCreate, onClose, isCreating }) {
   const [busca, setBusca] = useState('');
