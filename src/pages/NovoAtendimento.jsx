@@ -433,13 +433,16 @@ export default function NovoAtendimento() {
     mutationFn: (data) => base44.entities.Cliente.create(data),
     onSuccess: (result) => {
       queryClient.invalidateQueries(['clientes']);
+      setClienteSelecionado(result);
       setFormData(prev => ({
         ...prev,
         cliente_nome: result.nome,
-        cliente_telefone: result.telefone
+        cliente_telefone: result.telefone || '',
+        cliente_cpf: result.cpf_cnpj || ''
       }));
       setCriandoCliente(false);
       setShowBuscarCliente(false);
+      setShowCadastrarCliente(false);
       toast.success('Cliente cadastrado!');
     },
     onError: () => {
@@ -447,6 +450,17 @@ export default function NovoAtendimento() {
       setCriandoCliente(false);
     }
   });
+
+  const handleSalvarNovoCliente = (dadosCliente) => {
+    setCriandoCliente(true);
+    createClienteMutation.mutate({
+      nome: dadosCliente.nome,
+      telefone: dadosCliente.telefone || '',
+      cpf_cnpj: dadosCliente.cpf_cnpj || '',
+      data_nascimento: dadosCliente.data_nascimento || '',
+      endereco: dadosCliente.endereco || ''
+    });
+  };
 
   const handleSelecionarCliente = (cliente) => {
     setClienteSelecionado(cliente);
