@@ -71,6 +71,11 @@ export default function BuscarClienteModal({ clientes, onSelect, onCreate, onClo
                         <p className="text-sm text-slate-500 flex items-center gap-1">
                           <Phone className="w-3 h-3" /> {c.telefone}
                         </p>
+                        {c.cpf_cnpj && (
+                          <p className="text-xs text-slate-400 flex items-center gap-1">
+                            <CreditCard className="w-3 h-3" /> {c.cpf_cnpj}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </button>
