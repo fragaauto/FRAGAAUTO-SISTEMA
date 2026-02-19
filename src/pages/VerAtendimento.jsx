@@ -217,23 +217,14 @@ export default function VerAtendimento() {
       .filter(item => item.origem === 'checklist')
       .reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
     
-    // Recalcular orçamento consolidado
-    const todosItens = [
-      ...itensAtualizados,
-      ...(atendimento.itens_orcamento || []).filter(item => item.origem === 'checklist')
+    // Recalcular orçamento: queixa atualizada + itens do checklist (sem consolidar)
+    const itensChecklistExistentes = (atendimento.itens_orcamento || []).filter(item => item.origem === 'checklist');
+    const itensConsolidados = [
+      ...itensAtualizados.map(item => ({ ...item, origem: item.origem || 'queixa' })),
+      ...itensChecklistExistentes
     ];
-    const itensConsolidados = {};
-    todosItens.forEach(item => {
-      const key = item.produto_id;
-      if (itensConsolidados[key]) {
-        itensConsolidados[key].quantidade += Number(item.quantidade) || 0;
-        itensConsolidados[key].valor_total = itensConsolidados[key].quantidade * itensConsolidados[key].valor_unitario;
-      } else {
-        itensConsolidados[key] = { ...item };
-      }
-    });
 
-    const subtotal = Object.values(itensConsolidados).reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+    const subtotal = itensConsolidados.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
     const valor_final = subtotal - (Number(atendimento.desconto) || 0);
 
     const historicoItem = {
