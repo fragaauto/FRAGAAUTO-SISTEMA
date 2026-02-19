@@ -123,23 +123,18 @@ export default function AprovarOrcamento() {
     if (atendimento) {
       const todasDecisoes = {};
       
-      // Itens da queixa
-      atendimento.itens_queixa?.forEach(item => {
-        todasDecisoes[`queixa_${item.produto_id}`] = {
+      // Itens da queixa - usar índice para permitir repetição
+      atendimento.itens_queixa?.forEach((item, idx) => {
+        todasDecisoes[`queixa_${idx}_${item.produto_id}`] = {
           tipo: 'queixa',
           item: item,
           decisao: item.status_aprovacao || 'pendente'
         };
       });
       
-      // Itens do checklist (excluindo duplicados da queixa)
-      const produtosNaQueixa = new Set(
-        atendimento.itens_queixa?.map(item => item.produto_id) || []
-      );
-      atendimento.itens_orcamento?.filter(
-        item => !produtosNaQueixa.has(item.produto_id)
-      ).forEach(item => {
-        todasDecisoes[`checklist_${item.produto_id}`] = {
+      // Itens do checklist - usar índice para permitir repetição (inclui mão de obra duplicada)
+      atendimento.itens_orcamento?.forEach((item, idx) => {
+        todasDecisoes[`checklist_${idx}_${item.produto_id}`] = {
           tipo: 'checklist',
           item: item,
           decisao: item.status_aprovacao || 'pendente'
