@@ -99,6 +99,15 @@ export default function BuscarClienteModal({ clientes, onSelect, onCreate, onClo
               />
             </div>
             <div>
+              <Label>CPF / CNPJ</Label>
+              <Input
+                value={novoCliente.cpf_cnpj}
+                onChange={(e) => setNovoCliente(p => ({ ...p, cpf_cnpj: e.target.value }))}
+                placeholder="000.000.000-00"
+                className="h-11"
+              />
+            </div>
+            <div>
               <Label>Email</Label>
               <Input
                 value={novoCliente.email}
