@@ -67,20 +67,6 @@ export default function AprovarOrcamento() {
     setTotaisAtualizados({ totalAprovado, totalReprovado });
   }, [decisoes]);
 
-  // Verificar se tudo está preenchido
-  useEffect(() => {
-    if (!atendimento) return;
-
-    const itensPendentes = Object.values(decisoes).filter(d => d.decisao === 'pendente');
-    const todosDecididos = itensPendentes.length === 0 && Object.keys(decisoes).length > 0;
-    
-    const formaPagamentoOk = formasPagamento.length === 0 || formaPagamentoSelecionada;
-    
-    const assinaturaOk = tipoAssinatura === 'digital' || (nomeAssinatura && cpfAssinatura);
-    
-    setTudoPreenchido(todosDecididos && formaPagamentoOk && assinaturaOk);
-  }, [decisoes, formaPagamentoSelecionada, tipoAssinatura, nomeAssinatura, cpfAssinatura, formasPagamento, atendimento]);
-
   const { data: atendimento, isLoading, isError, error } = useQuery({
     queryKey: ['atendimento-aprovacao', id],
     queryFn: async () => {
