@@ -439,12 +439,15 @@ export default function NovoAtendimento() {
   });
 
   const handleSelecionarCliente = (cliente) => {
+    setClienteSelecionado(cliente);
     setFormData(prev => ({
       ...prev,
       cliente_nome: cliente.nome,
-      cliente_telefone: cliente.telefone
+      cliente_telefone: cliente.telefone,
+      cliente_cpf: cliente.cpf_cnpj || ''
     }));
     setShowBuscarCliente(false);
+    setShowSugestoes(false);
     toast.success(`Cliente ${cliente.nome} selecionado`);
   };
 
