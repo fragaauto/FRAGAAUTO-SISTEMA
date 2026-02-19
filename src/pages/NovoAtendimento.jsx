@@ -153,32 +153,11 @@ export default function NovoAtendimento() {
       }
     });
 
-    // Consolidar TODOS os produtos (queixa + checklist), eliminando duplicatas e somando quantidades
-    const todosOsItens = [...formData.itens_queixa, ...produtosDoChecklist];
-    const produtosConsolidados = {};
-    
-    todosOsItens.forEach(item => {
-      if (produtosConsolidados[item.produto_id]) {
-        // Produto já existe - somar quantidade
-        produtosConsolidados[item.produto_id].quantidade += item.quantidade;
-        produtosConsolidados[item.produto_id].valor_total = 
-          produtosConsolidados[item.produto_id].quantidade * produtosConsolidados[item.produto_id].valor_unitario;
-        // Manter múltiplas origens
-        if (!produtosConsolidados[item.produto_id].origens) {
-          produtosConsolidados[item.produto_id].origens = [produtosConsolidados[item.produto_id].origem || 'queixa'];
-        }
-        if (item.origem && !produtosConsolidados[item.produto_id].origens.includes(item.origem)) {
-          produtosConsolidados[item.produto_id].origens.push(item.origem);
-        }
-      } else {
-        produtosConsolidados[item.produto_id] = { 
-          ...item,
-          origem: item.origem || 'queixa'
-        };
-      }
-    });
-
-    const itensConsolidados = Object.values(produtosConsolidados);
+    // Listar TODOS os produtos (queixa + checklist) sem eliminar duplicatas
+    const itensConsolidados = [
+      ...formData.itens_queixa.map(item => ({ ...item, origem: item.origem || 'queixa' })),
+      ...produtosDoChecklist
+    ];
 
     // Calcular subtotais separadamente para exibição
     const subtotal_queixa = formData.itens_queixa.reduce((acc, item) => acc + (item.valor_total || 0), 0);
