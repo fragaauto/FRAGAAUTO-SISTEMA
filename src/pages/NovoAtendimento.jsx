@@ -1118,6 +1118,15 @@ export default function NovoAtendimento() {
           isCreating={criandoCliente}
         />
       )}
+
+      <ModalCadastrarCliente
+        open={showCadastrarCliente}
+        onClose={() => setShowCadastrarCliente(false)}
+        onSave={handleSalvarNovoCliente}
+        loading={criandoCliente}
+        nomeInicial={nomeParaCadastro}
+        configCampos={config}
+      />
     </div>
   );
 }
