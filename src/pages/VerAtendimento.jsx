@@ -237,7 +237,7 @@ export default function VerAtendimento() {
     const dataToSave = {
       queixa_inicial: queixaTextoEdit,
       itens_queixa: itensAtualizados,
-      itens_orcamento: Object.values(itensConsolidados),
+      itens_orcamento: itensConsolidados,
       subtotal_queixa,
       subtotal_checklist,
       subtotal,
