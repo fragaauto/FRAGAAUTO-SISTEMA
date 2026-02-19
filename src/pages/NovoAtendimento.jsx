@@ -693,8 +693,8 @@ export default function NovoAtendimento() {
                           <button
                             onMouseDown={() => {
                               setShowSugestoes(false);
-                              setCriandoCliente(false);
-                              createClienteMutation.mutate({ nome: formData.cliente_nome, telefone: formData.cliente_telefone || '' });
+                              setNomeParaCadastro(formData.cliente_nome);
+                              setShowCadastrarCliente(true);
                             }}
                             className="w-full text-left px-3 py-3 hover:bg-orange-50 transition-colors flex items-center gap-3"
                           >
