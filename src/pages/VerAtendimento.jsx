@@ -2211,15 +2211,7 @@ IMPORTANTE:
                   </CardContent>
                 </Card>
 
-                {(() => {
-                  const produtosNaQueixa = new Set(
-                    atendimento.itens_queixa?.map(item => item.produto_id) || []
-                  );
-                  const itensChecklistFiltrados = atendimento.itens_orcamento?.filter(
-                    item => !produtosNaQueixa.has(item.produto_id)
-                  ) || [];
-                  return itensChecklistFiltrados.length > 0;
-                })() && atendimento.subtotal_checklist > 0 && (
+                {(atendimento.itens_orcamento?.length > 0) && atendimento.subtotal_checklist > 0 && (
                   <Card className="bg-orange-100 border-orange-300">
                     <CardContent className="pt-6">
                       <div className="flex justify-between items-center text-lg font-bold text-orange-700">
