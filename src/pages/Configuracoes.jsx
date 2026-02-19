@@ -47,7 +47,16 @@ export default function Configuracoes() {
       { nome: 'Cartão de Débito', ativa: true },
       { nome: 'Cartão de Crédito', ativa: true }
     ],
-    condicoes_especiais: config.condicoes_especiais || []
+    condicoes_especiais: config.condicoes_especiais || [],
+    cliente_nome_obrigatorio: config.cliente_nome_obrigatorio ?? true,
+    cliente_telefone_obrigatorio: config.cliente_telefone_obrigatorio ?? true,
+    cliente_cpf_obrigatorio: config.cliente_cpf_obrigatorio ?? false,
+    cliente_nascimento_obrigatorio: config.cliente_nascimento_obrigatorio ?? false,
+    cliente_endereco_obrigatorio: config.cliente_endereco_obrigatorio ?? false,
+    os_placa_obrigatorio: config.os_placa_obrigatorio ?? true,
+    os_modelo_obrigatorio: config.os_modelo_obrigatorio ?? true,
+    os_km_obrigatorio: config.os_km_obrigatorio ?? false,
+    os_queixa_obrigatorio: config.os_queixa_obrigatorio ?? false,
   });
 
   React.useEffect(() => {
@@ -70,7 +79,16 @@ export default function Configuracoes() {
           { nome: 'Cartão de Débito', ativa: true },
           { nome: 'Cartão de Crédito', ativa: true }
         ],
-        condicoes_especiais: config.condicoes_especiais || []
+        condicoes_especiais: config.condicoes_especiais || [],
+        cliente_nome_obrigatorio: config.cliente_nome_obrigatorio ?? true,
+        cliente_telefone_obrigatorio: config.cliente_telefone_obrigatorio ?? true,
+        cliente_cpf_obrigatorio: config.cliente_cpf_obrigatorio ?? false,
+        cliente_nascimento_obrigatorio: config.cliente_nascimento_obrigatorio ?? false,
+        cliente_endereco_obrigatorio: config.cliente_endereco_obrigatorio ?? false,
+        os_placa_obrigatorio: config.os_placa_obrigatorio ?? true,
+        os_modelo_obrigatorio: config.os_modelo_obrigatorio ?? true,
+        os_km_obrigatorio: config.os_km_obrigatorio ?? false,
+        os_queixa_obrigatorio: config.os_queixa_obrigatorio ?? false,
       });
     }
   }, [config]);
