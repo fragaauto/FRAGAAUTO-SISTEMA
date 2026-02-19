@@ -485,6 +485,60 @@ export default function Configuracoes() {
             )}
           </CardContent>
         </Card>
+        {/* Campos Obrigatórios */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-blue-500" />
+              Campos Obrigatórios — Cadastro de Cliente
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-slate-500">Defina quais campos são obrigatórios ao cadastrar um novo cliente.</p>
+            {[
+              { key: 'cliente_nome_obrigatorio', label: 'Nome' },
+              { key: 'cliente_telefone_obrigatorio', label: 'Telefone' },
+              { key: 'cliente_cpf_obrigatorio', label: 'CPF / CNPJ' },
+              { key: 'cliente_nascimento_obrigatorio', label: 'Data de Nascimento' },
+              { key: 'cliente_endereco_obrigatorio', label: 'Endereço' },
+            ].map(({ key, label }) => (
+              <div key={key} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <Label>{label}</Label>
+                <Switch
+                  checked={!!formData[key]}
+                  onCheckedChange={(v) => setFormData(prev => ({ ...prev, [key]: v }))}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Car className="w-5 h-5 text-orange-500" />
+              Campos Obrigatórios — Abertura de OS
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-slate-500">Defina quais campos são obrigatórios ao criar um novo atendimento.</p>
+            {[
+              { key: 'os_placa_obrigatorio', label: 'Placa do Veículo' },
+              { key: 'os_modelo_obrigatorio', label: 'Modelo do Veículo' },
+              { key: 'os_km_obrigatorio', label: 'KM Atual' },
+              { key: 'os_queixa_obrigatorio', label: 'Queixa Inicial' },
+            ].map(({ key, label }) => (
+              <div key={key} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <Label>{label}</Label>
+                <Switch
+                  checked={!!formData[key]}
+                  onCheckedChange={(v) => setFormData(prev => ({ ...prev, [key]: v }))}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
       </div>
     </div>
   );
