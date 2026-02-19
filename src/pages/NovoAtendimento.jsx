@@ -47,6 +47,8 @@ export default function NovoAtendimento() {
   const [cadastrandoProduto, setCadastrandoProduto] = useState(false);
   const [showBuscarCliente, setShowBuscarCliente] = useState(false);
   const [criandoCliente, setCriandoCliente] = useState(false);
+  const [showCadastrarCliente, setShowCadastrarCliente] = useState(false);
+  const [nomeParaCadastro, setNomeParaCadastro] = useState('');
   const [clienteSugestoes, setClienteSugestoes] = useState([]);
   const [showSugestoes, setShowSugestoes] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
