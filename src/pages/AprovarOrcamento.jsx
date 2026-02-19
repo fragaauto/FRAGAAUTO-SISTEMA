@@ -260,16 +260,16 @@ export default function AprovarOrcamento() {
 
   const salvarMutation = useMutation({
     mutationFn: async (dadosAprovacao) => {
-      const itensQueixaAtualizados = atendimento.itens_queixa?.map(item => {
-        const key = `queixa_${item.produto_id}`;
+      const itensQueixaAtualizados = atendimento.itens_queixa?.map((item, idx) => {
+        const key = `queixa_${idx}_${item.produto_id}`;
         return {
           ...item,
           status_aprovacao: decisoes[key]?.decisao || item.status_aprovacao
         };
       });
       
-      const itensOrcamentoAtualizados = atendimento.itens_orcamento?.map(item => {
-        const key = `checklist_${item.produto_id}`;
+      const itensOrcamentoAtualizados = atendimento.itens_orcamento?.map((item, idx) => {
+        const key = `checklist_${idx}_${item.produto_id}`;
         return {
           ...item,
           status_aprovacao: decisoes[key]?.decisao || item.status_aprovacao
