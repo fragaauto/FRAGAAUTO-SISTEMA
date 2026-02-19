@@ -192,6 +192,37 @@ export default function NovoAtendimento() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleNomeClienteChange = (value) => {
+    handleInputChange('cliente_nome', value);
+    setClienteSelecionado(null);
+    if (value.length >= 2) {
+      const q = value.toLowerCase();
+      const encontrados = clientes.filter(c =>
+        c.nome?.toLowerCase().includes(q) ||
+        c.telefone?.includes(q) ||
+        c.cpf_cnpj?.replace(/\D/g, '').includes(value.replace(/\D/g, ''))
+      ).slice(0, 6);
+      setClienteSugestoes(encontrados);
+      setShowSugestoes(true);
+    } else {
+      setClienteSugestoes([]);
+      setShowSugestoes(false);
+    }
+  };
+
+  const handleSelecionarClienteSugestao = (cliente) => {
+    setClienteSelecionado(cliente);
+    setFormData(prev => ({
+      ...prev,
+      cliente_nome: cliente.nome,
+      cliente_telefone: cliente.telefone,
+      cliente_cpf: cliente.cpf_cnpj || ''
+    }));
+    setShowSugestoes(false);
+    setClienteSugestoes([]);
+    toast.success(`Cliente ${cliente.nome} selecionado`);
+  };
+
   const handleChecklistChange = (itemId, value) => {
     setFormData(prev => ({
       ...prev,
