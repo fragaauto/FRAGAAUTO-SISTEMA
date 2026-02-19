@@ -89,6 +89,13 @@ export default function NovoAtendimento() {
     staleTime: 5 * 60 * 1000
   });
 
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 10 * 60 * 1000
+  });
+  const config = configs[0] || {};
+
   const { data: checklistItems = [] } = useQuery({
     queryKey: ['checklist-items'],
     queryFn: async () => {
