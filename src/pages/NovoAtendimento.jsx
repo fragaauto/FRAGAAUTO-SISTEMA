@@ -642,53 +642,52 @@ export default function NovoAtendimento() {
                     </div>
 
                     {/* Dropdown de sugestões */}
-                    {showSugestoes && (
+                    {showSugestoes && clienteSugestoes.length > 0 && (
                       <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
-                        {clienteSugestoes.length > 0 ? (
-                          <>
-                            <div className="px-3 py-1.5 bg-slate-50 text-xs text-slate-500 font-medium border-b">
-                              Clientes encontrados
-                            </div>
-                            {clienteSugestoes.map(c => (
-                              <button
-                                key={c.id}
-                                onMouseDown={() => handleSelecionarClienteSugestao(c)}
-                                className="w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors border-b last:border-0 flex items-center gap-3"
-                              >
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                  <User className="w-4 h-4 text-blue-600" />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-slate-800 text-sm">{c.nome}</p>
-                                  <div className="flex items-center gap-3 text-xs text-slate-500">
-                                    <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{c.telefone}</span>
-                                    {c.cpf_cnpj && <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" />{c.cpf_cnpj}</span>}
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                          </>
-                        ) : (
+                        <div className="px-3 py-1.5 bg-slate-50 text-xs text-slate-500 font-medium border-b">
+                          Clientes encontrados
+                        </div>
+                        {clienteSugestoes.map(c => (
                           <button
-                            onMouseDown={() => {
-                              setShowSugestoes(false);
-                              setNomeParaCadastro(formData.cliente_nome);
-                              setShowCadastrarCliente(true);
-                            }}
-                            className="w-full text-left px-3 py-3 hover:bg-orange-50 transition-colors flex items-center gap-3"
+                            key={c.id}
+                            onMouseDown={() => handleSelecionarClienteSugestao(c)}
+                            className="w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors border-b last:border-0 flex items-center gap-3"
                           >
-                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <UserPlus className="w-4 h-4 text-orange-600" />
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <User className="w-4 h-4 text-blue-600" />
                             </div>
                             <div>
-                              <p className="font-medium text-orange-700 text-sm">Cadastrar "{formData.cliente_nome}"</p>
-                              <p className="text-xs text-slate-500">Nenhum cliente encontrado — clique para cadastrar</p>
+                              <p className="font-medium text-slate-800 text-sm">{c.nome}</p>
+                              <div className="flex items-center gap-3 text-xs text-slate-500">
+                                <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{c.telefone}</span>
+                                {c.cpf_cnpj && <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" />{c.cpf_cnpj}</span>}
+                              </div>
                             </div>
                           </button>
-                        )}
+                        ))}
                       </div>
                     )}
                   </div>
+
+                  {/* Botão de cadastrar novo cliente quando nome digitado mas não selecionado */}
+                  {formData.cliente_nome && formData.cliente_nome.length >= 2 && !clienteSelecionado && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNomeParaCadastro(formData.cliente_nome);
+                        setShowCadastrarCliente(true);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-3 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+                    >
+                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <UserPlus className="w-4 h-4 text-orange-600" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium text-orange-700 text-sm">Cadastrar "{formData.cliente_nome}" como novo cliente</p>
+                        <p className="text-xs text-slate-500">Clique para salvar os dados deste cliente no sistema</p>
+                      </div>
+                    </button>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
