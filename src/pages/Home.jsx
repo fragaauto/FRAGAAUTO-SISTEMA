@@ -155,6 +155,13 @@ export default function Home() {
     description: 'Cadastro e histórico de clientes atendidos.',
     href: createPageUrl('Clientes'),
     color: 'bg-purple-500'
+  },
+  {
+    icon: FileText,
+    title: 'Manual de Treinamento',
+    description: 'Guia passo a passo do fluxo de atendimento para colaboradores.',
+    href: createPageUrl('ManualTreinamento'),
+    color: 'bg-slate-700'
   }];
 
 
