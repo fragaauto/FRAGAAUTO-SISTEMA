@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Plus, 
   Search, 
@@ -15,7 +16,10 @@ import {
   ArrowRight,
   FileText,
   Loader2,
-  Filter
+  Filter,
+  CheckSquare,
+  ChevronDown,
+  Tag
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -27,30 +31,94 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
-const STATUS_CONFIG = {
-  rascunho: { label: 'Rascunho', color: 'bg-gray-100 text-gray-800' },
-  queixa_pendente: { label: 'Queixa Pendente', color: 'bg-yellow-100 text-yellow-800' },
-  queixa_aprovada: { label: 'Queixa Aprovada', color: 'bg-blue-100 text-blue-800' },
-  queixa_reprovada: { label: 'Queixa Reprovada', color: 'bg-red-100 text-red-800' },
-  em_diagnostico: { label: 'Em Diagnóstico', color: 'bg-orange-100 text-orange-800' },
-  aguardando_aprovacao_checklist: { label: 'Aguardando Aprovação', color: 'bg-yellow-100 text-yellow-800' },
-  checklist_aprovado: { label: 'Checklist Aprovado', color: 'bg-green-100 text-green-800' },
-  checklist_reprovado: { label: 'Checklist Reprovado', color: 'bg-red-100 text-red-800' },
-  em_execucao: { label: 'Em Execução', color: 'bg-purple-100 text-purple-800' },
-  concluido: { label: 'Concluído', color: 'bg-green-100 text-green-800' },
-  cancelado: { label: 'Cancelado', color: 'bg-slate-100 text-slate-800' }
+const STATUS_FIXOS = {
+  rascunho: { label: 'Rascunho', cor: '#94a3b8' },
+  queixa_pendente: { label: 'Queixa Pendente', cor: '#f59e0b' },
+  queixa_aprovada: { label: 'Queixa Aprovada', cor: '#3b82f6' },
+  queixa_reprovada: { label: 'Queixa Reprovada', cor: '#ef4444' },
+  em_diagnostico: { label: 'Em Diagnóstico', cor: '#f97316' },
+  aguardando_aprovacao_checklist: { label: 'Aguardando Aprovação', cor: '#f59e0b' },
+  checklist_aprovado: { label: 'Checklist Aprovado', cor: '#10b981' },
+  checklist_reprovado: { label: 'Checklist Reprovado', cor: '#ef4444' },
+  em_execucao: { label: 'Em Execução', cor: '#8b5cf6' },
+  concluido: { label: 'Concluído', cor: '#10b981' },
+  cancelado: { label: 'Cancelado', cor: '#64748b' }
 };
+
+function getStatusInfo(statusValue, statusPersonalizados = []) {
+  if (STATUS_FIXOS[statusValue]) return STATUS_FIXOS[statusValue];
+  const custom = statusPersonalizados.find(s => s.valor === statusValue);
+  if (custom) return { label: custom.label, cor: custom.cor };
+  return { label: statusValue, cor: '#64748b' };
+}
+
+function StatusBadge({ statusValue, statusPersonalizados }) {
+  const info = getStatusInfo(statusValue, statusPersonalizados);
+  return (
+    <span
+      className="px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap"
+      style={{ background: info.cor }}
+    >
+      {info.label}
+    </span>
+  );
+}
+
+function StatusSelect({ value, onChange, statusPersonalizados, onClick }) {
+  const todosStatus = [
+    ...Object.entries(STATUS_FIXOS).map(([valor, s]) => ({ valor, label: s.label, cor: s.cor })),
+    ...(statusPersonalizados || [])
+  ];
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        className="h-7 text-xs border-slate-200 bg-white w-40"
+        onClick={(e) => { e.stopPropagation(); onClick && onClick(e); }}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent onClick={(e) => e.stopPropagation()}>
+        {todosStatus.map(s => (
+          <SelectItem key={s.valor} value={s.valor}>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.cor }} />
+              {s.label}
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
 export default function Atendimentos() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selecionados, setSelecionados] = useState([]);
+  const [statusEmMassa, setStatusEmMassa] = useState('');
 
   const { data: atendimentos = [], isLoading } = useQuery({
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list('-created_date'),
     staleTime: 2 * 60 * 1000
+  });
+
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 10 * 60 * 1000
+  });
+
+  const config = configs[0] || {};
+  const statusPersonalizados = config.status_atendimento_personalizados || [];
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }) => base44.entities.Atendimento.update(id, { status }),
+    onSuccess: () => queryClient.invalidateQueries(['atendimentos'])
   });
 
   const filteredAtendimentos = atendimentos.filter(a => {
@@ -61,6 +129,41 @@ export default function Atendimentos() {
     const matchStatus = statusFilter === 'all' || a.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const todosStatusOpcoes = [
+    ...Object.entries(STATUS_FIXOS).map(([valor, s]) => ({ valor, label: s.label, cor: s.cor })),
+    ...statusPersonalizados
+  ];
+
+  // Checkboxes
+  const todosSelecionados = filteredAtendimentos.length > 0 && filteredAtendimentos.every(a => selecionados.includes(a.id));
+  const algunsSelecionados = selecionados.length > 0 && !todosSelecionados;
+
+  const toggleSelecionado = (id, e) => {
+    e.stopPropagation();
+    setSelecionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const toggleTodos = () => {
+    if (todosSelecionados) {
+      setSelecionados([]);
+    } else {
+      setSelecionados(filteredAtendimentos.map(a => a.id));
+    }
+  };
+
+  const handleAlterarStatusEmMassa = async () => {
+    if (!statusEmMassa || selecionados.length === 0) return;
+    await Promise.all(selecionados.map(id => updateStatusMutation.mutateAsync({ id, status: statusEmMassa })));
+    toast.success(`Status de ${selecionados.length} atendimento(s) atualizado!`);
+    setSelecionados([]);
+    setStatusEmMassa('');
+  };
+
+  const handleAlterarStatusIndividual = async (id, status) => {
+    await updateStatusMutation.mutateAsync({ id, status });
+    toast.success('Status atualizado!');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
@@ -95,21 +198,74 @@ export default function Atendimentos() {
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-48 h-12">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Status" />
+            <SelectTrigger className="w-full sm:w-56 h-12">
+              <Filter className="w-4 h-4 mr-2 flex-shrink-0" />
+              <SelectValue placeholder="Todos os status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="queixa_pendente">Queixa Pendente</SelectItem>
-              <SelectItem value="em_diagnostico">Em Diagnóstico</SelectItem>
-              <SelectItem value="aguardando_aprovacao_checklist">Aguardando Aprovação</SelectItem>
-              <SelectItem value="checklist_aprovado">Checklist Aprovado</SelectItem>
-              <SelectItem value="em_execucao">Em Execução</SelectItem>
-              <SelectItem value="concluido">Concluído</SelectItem>
+              {todosStatusOpcoes.map(s => (
+                <SelectItem key={s.valor} value={s.valor}>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full" style={{ background: s.cor }} />
+                    {s.label}
+                  </div>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
+
+        {/* Barra de ação em massa */}
+        {filteredAtendimentos.length > 0 && (
+          <div className="flex items-center gap-3 mt-3 py-2 px-3 bg-white rounded-lg border border-slate-200">
+            <Checkbox
+              checked={todosSelecionados}
+              onCheckedChange={toggleTodos}
+              className={algunsSelecionados ? 'data-[state=unchecked]:bg-slate-200' : ''}
+            />
+            <span className="text-sm text-slate-600">
+              {selecionados.length > 0 ? `${selecionados.length} selecionado(s)` : 'Selecionar todos'}
+            </span>
+
+            {selecionados.length > 0 && (
+              <div className="flex items-center gap-2 ml-auto">
+                <Tag className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <Select value={statusEmMassa} onValueChange={setStatusEmMassa}>
+                  <SelectTrigger className="h-8 text-sm w-48">
+                    <SelectValue placeholder="Alterar status para..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {todosStatusOpcoes.map(s => (
+                      <SelectItem key={s.valor} value={s.valor}>
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full" style={{ background: s.cor }} />
+                          {s.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  onClick={handleAlterarStatusEmMassa}
+                  disabled={!statusEmMassa || updateStatusMutation.isPending}
+                  className="bg-orange-500 hover:bg-orange-600 h-8"
+                >
+                  {updateStatusMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Aplicar'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 text-slate-500"
+                  onClick={() => setSelecionados([])}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* List */}
@@ -133,58 +289,82 @@ export default function Atendimentos() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {filteredAtendimentos.map((atendimento, index) => (
-              <motion.div
-                key={atendimento.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card 
-                  className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-orange-200"
-                  onClick={() => navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
+            {filteredAtendimentos.map((atendimento, index) => {
+              const isSelecionado = selecionados.includes(atendimento.id);
+              return (
+                <motion.div
+                  key={atendimento.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
-                          <Car className="w-6 h-6 text-slate-600" />
+                  <Card
+                    className={`transition-all border-2 ${isSelecionado ? 'border-orange-300 bg-orange-50' : 'hover:shadow-lg hover:border-orange-200 cursor-pointer'}`}
+                    onClick={() => !isSelecionado && navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        {/* Checkbox */}
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={isSelecionado}
+                            onCheckedChange={(checked) => {
+                              setSelecionados(prev => checked ? [...prev, atendimento.id] : prev.filter(x => x !== atendimento.id));
+                            }}
+                          />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
+
+                        {/* Ícone carro */}
+                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Car className="w-5 h-5 text-slate-600" />
+                        </div>
+
+                        {/* Dados */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-0.5">
                             <h3 className="font-bold text-slate-800">{atendimento.placa}</h3>
-                            <Badge className={STATUS_CONFIG[atendimento.status]?.color || 'bg-gray-100'}>
-                              {STATUS_CONFIG[atendimento.status]?.label || atendimento.status}
-                            </Badge>
+                            <StatusBadge statusValue={atendimento.status} statusPersonalizados={statusPersonalizados} />
                           </div>
-                          <p className="text-sm text-slate-600">
+                          <p className="text-sm text-slate-600 truncate">
                             {atendimento.marca} {atendimento.modelo} {atendimento.ano && `• ${atendimento.ano}`}
                           </p>
                           {atendimento.cliente_nome && (
-                            <p className="text-sm text-slate-500">{atendimento.cliente_nome}</p>
+                            <p className="text-xs text-slate-500">{atendimento.cliente_nome}</p>
                           )}
+
+                          {/* Select de status individual */}
+                          <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                            <StatusSelect
+                              value={atendimento.status}
+                              onChange={(novoStatus) => handleAlterarStatusIndividual(atendimento.id, novoStatus)}
+                              statusPersonalizados={statusPersonalizados}
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right hidden sm:block">
-                          <p className="font-bold text-green-600">
+
+                        {/* Valor e data */}
+                        <div className="text-right flex-shrink-0 hidden sm:block">
+                          <p className="font-bold text-green-600 text-sm">
                             R$ {atendimento.valor_final?.toFixed(2) || '0.00'}
                           </p>
-                          <p className="text-xs text-slate-500 flex items-center gap-1">
+                          <p className="text-xs text-slate-500 flex items-center gap-1 justify-end">
                             <Calendar className="w-3 h-3" />
-                            {atendimento.data_entrada 
+                            {atendimento.data_entrada
                               ? format(new Date(atendimento.data_entrada), "dd/MM/yyyy", { locale: ptBR })
                               : format(new Date(atendimento.created_date), "dd/MM/yyyy", { locale: ptBR })
                             }
                           </p>
                         </div>
-                        <ArrowRight className="w-5 h-5 text-slate-400" />
+                        <ArrowRight
+                          className="w-5 h-5 text-slate-400 flex-shrink-0 hidden sm:block"
+                          onClick={() => navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
+                        />
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>
