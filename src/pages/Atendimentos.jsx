@@ -337,7 +337,7 @@ export default function Atendimentos() {
                           <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                             <StatusSelect
                               value={atendimento.status}
-                              onChange={(novoStatus) => handleAlterarStatusIndividual(atendimento.id, novoStatus)}
+                              onChange={(novoStatus) => handleAlterarStatusIndividual(atendimento.id, novoStatus, atendimento.status)}
                               statusPersonalizados={statusPersonalizados}
                             />
                           </div>
