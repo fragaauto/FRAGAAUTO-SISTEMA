@@ -56,13 +56,13 @@ import EditarAtendimento from './pages/EditarAtendimento';
 import EditarQueixa from './pages/EditarQueixa';
 import GerenciarChecklist from './pages/GerenciarChecklist';
 import Home from './pages/Home';
+import ManualTreinamento from './pages/ManualTreinamento';
 import NovoAtendimento from './pages/NovoAtendimento';
 import Produtos from './pages/Produtos';
 import Relatorios from './pages/Relatorios';
 import ServicosReprovados from './pages/ServicosReprovados';
 import Usuarios from './pages/Usuarios';
 import VerAtendimento from './pages/VerAtendimento';
-import ManualTreinamento from './pages/ManualTreinamento';
 import __Layout from './Layout.jsx';
 
 
@@ -76,13 +76,13 @@ export const PAGES = {
     "EditarQueixa": EditarQueixa,
     "GerenciarChecklist": GerenciarChecklist,
     "Home": Home,
+    "ManualTreinamento": ManualTreinamento,
     "NovoAtendimento": NovoAtendimento,
     "Produtos": Produtos,
     "Relatorios": Relatorios,
     "ServicosReprovados": ServicosReprovados,
     "Usuarios": Usuarios,
     "VerAtendimento": VerAtendimento,
-    "ManualTreinamento": ManualTreinamento,
 }
 
 export const pagesConfig = {
