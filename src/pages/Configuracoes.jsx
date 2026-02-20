@@ -82,6 +82,7 @@ export default function Configuracoes() {
           { nome: 'Cartão de Crédito', ativa: true }
         ],
         condicoes_especiais: config.condicoes_especiais || [],
+        status_atendimento_personalizados: config.status_atendimento_personalizados || [],
         cliente_nome_obrigatorio: config.cliente_nome_obrigatorio ?? true,
         cliente_telefone_obrigatorio: config.cliente_telefone_obrigatorio ?? true,
         cliente_cpf_obrigatorio: config.cliente_cpf_obrigatorio ?? false,
