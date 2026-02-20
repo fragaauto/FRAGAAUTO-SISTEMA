@@ -28,6 +28,7 @@ const NAV_ITEMS = [
   { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist' },
   { name: 'Configurações', icon: Wrench, path: 'Configuracoes' },
   { name: 'Usuários', icon: Users, path: 'Usuarios' },
+  { name: 'Manual de Treinamento', icon: FileText, path: 'ManualTreinamento' },
 ];
 
 export default function Layout({ children, currentPageName }) {
