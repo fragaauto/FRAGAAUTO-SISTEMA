@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import GerenciarStatus from '@/components/configuracoes/GerenciarStatus';
 
 export default function Configuracoes() {
   const queryClient = useQueryClient();
