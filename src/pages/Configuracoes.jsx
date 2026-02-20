@@ -516,6 +516,11 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
+        <GerenciarStatus
+          statusPersonalizados={formData.status_atendimento_personalizados}
+          onChange={(val) => setFormData(prev => ({ ...prev, status_atendimento_personalizados: val }))}
+        />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
