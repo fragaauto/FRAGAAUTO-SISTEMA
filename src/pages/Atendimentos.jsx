@@ -160,8 +160,9 @@ export default function Atendimentos() {
     setStatusEmMassa('');
   };
 
-  const handleAlterarStatusIndividual = async (id, status) => {
-    await updateStatusMutation.mutateAsync({ id, status });
+  const handleAlterarStatusIndividual = async (id, novoStatus, statusAtual) => {
+    if (novoStatus === statusAtual) return;
+    await updateStatusMutation.mutateAsync({ id, status: novoStatus });
     toast.success('Status atualizado!');
   };
 
