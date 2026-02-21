@@ -35,6 +35,7 @@ import SeletorProdutos from '../components/orcamento/SeletorProdutos';
 import ModalCadastroProduto from '../components/produtos/ModalCadastroProduto';
 import BuscarClienteModal from '../components/atendimento/BuscarClienteModal';
 import ModalCadastrarCliente from '../components/atendimento/ModalCadastrarCliente';
+import ChecklistAssistente from '../components/checklist/ChecklistAssistente';
 
 export default function NovoAtendimento() {
   const navigate = useNavigate();
