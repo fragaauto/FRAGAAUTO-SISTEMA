@@ -153,10 +153,13 @@ export default function NovoAtendimento() {
       }
     });
 
-    // Listar TODOS os produtos (queixa + checklist) sem eliminar duplicatas
+    // Eliminar duplicatas: itens do checklist que já existem na queixa são removidos
+    const idsNaQueixa = new Set(formData.itens_queixa.map(i => i.produto_id));
+    const checklistSemDuplicatas = produtosDoChecklist.filter(i => !idsNaQueixa.has(i.produto_id));
+
     const itensConsolidados = [
       ...formData.itens_queixa.map(item => ({ ...item, origem: item.origem || 'queixa' })),
-      ...produtosDoChecklist
+      ...checklistSemDuplicatas
     ];
 
     // Calcular subtotais separadamente para exibição
