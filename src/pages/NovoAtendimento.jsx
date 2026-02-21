@@ -1109,6 +1109,13 @@ export default function NovoAtendimento() {
         nomeInicial={nomeParaCadastro}
         configCampos={config}
       />
+
+      {activeTab === 'checklist' && (
+        <ChecklistAssistente
+          checklistItems={checklistItems}
+          values={formData.checklist}
+        />
+      )}
     </div>
   );
 }
