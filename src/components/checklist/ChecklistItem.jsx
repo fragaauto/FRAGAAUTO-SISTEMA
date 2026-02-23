@@ -363,8 +363,7 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
                               </span>
                             </button>
                           ))}
-                        {produtos
-                          .filter(p => !produtosVinculados.some(pv => pv.id === p.id))
+                        {produtosDisponiveis
                           .filter(p => {
                             const search = searchProduto.toLowerCase();
                             return p.nome?.toLowerCase().includes(search) ||
