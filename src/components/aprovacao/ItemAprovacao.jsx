@@ -15,8 +15,17 @@ import {
 export default function ItemAprovacao({ item, onUpdate }) {
   const [observacao, setObservacao] = React.useState(item.observacao_cliente || '');
   const [statusServico, setStatusServico] = React.useState(item.status_servico || 'aguardando_autorizacao');
+  // Optimistic local state for instant UI feedback
+  const [localStatus, setLocalStatus] = React.useState(item.status_aprovacao || 'pendente');
+
+  // Sync when item changes externally
+  React.useEffect(() => {
+    setLocalStatus(item.status_aprovacao || 'pendente');
+    setStatusServico(item.status_servico || 'aguardando_autorizacao');
+  }, [item.status_aprovacao, item.status_servico]);
 
   const handleAprovacao = (status) => {
+    setLocalStatus(status); // instant feedback
     onUpdate({
       ...item,
       status_aprovacao: status,
