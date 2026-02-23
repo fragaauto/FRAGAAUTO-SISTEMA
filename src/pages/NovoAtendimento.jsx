@@ -873,6 +873,7 @@ export default function NovoAtendimento() {
                       onToggle={() => toggleSection(categoria)}
                       produtos={produtos}
                       onOpenCadastro={() => setShowCadastroProduto(true)}
+                      produtosNaQueixa={formData.itens_queixa.map(i => i.produto_id)}
                     />
                   ));
                 })()
