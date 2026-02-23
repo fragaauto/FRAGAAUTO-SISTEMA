@@ -163,24 +163,10 @@ export default function EditarQueixa() {
 
       const subtotal_queixa = itensComTotal.reduce((acc, item) => acc + item.valor_total, 0);
 
-      // Consolidar com itens do checklist
-      const itensChecklist = (atendimento.itens_orcamento || []).filter(item => item.origem === 'checklist');
-      const todosOsItens = [...itensComTotal, ...itensChecklist];
-
-      const produtosConsolidados = {};
-      todosOsItens.forEach(item => {
-        const key = item.produto_id;
-        if (produtosConsolidados[key]) {
-          produtosConsolidados[key].quantidade += Number(item.quantidade) || 0;
-          produtosConsolidados[key].valor_total = 
-            produtosConsolidados[key].quantidade * produtosConsolidados[key].valor_unitario;
-        } else {
-          produtosConsolidados[key] = { ...item };
-        }
-      });
-
-      const itensConsolidados = Object.values(produtosConsolidados);
-      const subtotal = itensConsolidados.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+      // Manter itens_orcamento (checklist) INTACTOS - não sobrescrever ao editar a queixa
+      const itensOrcamentoExistentes = atendimento.itens_orcamento || [];
+      const subtotal_checklist = itensOrcamentoExistentes.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+      const subtotal = subtotal_queixa + subtotal_checklist;
       const valor_final = subtotal - (Number(atendimento.desconto) || 0);
 
       const historicoItem = {
@@ -193,8 +179,9 @@ export default function EditarQueixa() {
       const dataToSave = {
         queixa_inicial: queixaInicial,
         itens_queixa: itensComTotal,
-        itens_orcamento: itensConsolidados,
+        // itens_orcamento NÃO é alterado ao editar a queixa
         subtotal_queixa: Number(subtotal_queixa) || 0,
+        subtotal_checklist: Number(subtotal_checklist) || 0,
         subtotal: Number(subtotal) || 0,
         valor_final: Number(valor_final) || 0,
         historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
