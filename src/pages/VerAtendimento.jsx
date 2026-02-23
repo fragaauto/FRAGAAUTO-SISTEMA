@@ -457,17 +457,13 @@ export default function VerAtendimento() {
 
   const generatePDF = () => {
     setIsGeneratingPDF(true);
-    
-    try {
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        toast.error('Permita pop-ups para gerar o PDF');
-        setIsGeneratingPDF(false);
-        return;
-      }
+    // PDF logic extracted to components/atendimento/GerarPDF.js
+    const { gerarPDF: _gerarPDF } = require('../components/atendimento/GerarPDF');
+    _gerarPDF(atendimento, configs, setIsGeneratingPDF, toast);
+    return;
 
-      const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
-      const defeitosEncontrados = atendimento.checklist?.filter(item => item.status === 'com_defeito') || [];
+    const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const defeitosEncontrados = atendimento.checklist?.filter(item => item.status === 'com_defeito') || [];
 
       printWindow.document.write(`
         <!DOCTYPE html>
