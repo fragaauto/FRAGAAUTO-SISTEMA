@@ -80,13 +80,13 @@ export default function ItemAprovacao({ item, onUpdate }) {
   };
 
   return (
-    <Card className={item.status_aprovacao === 'reprovado' ? 'border-red-200 bg-red-50/30' : ''}>
+    <Card className={localStatus === 'reprovado' ? 'border-red-200 bg-red-50/30' : ''}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <p className="font-semibold text-slate-800">{item.nome}</p>
-              {getStatusBadge(item.status_aprovacao)}
+              {getStatusBadge(localStatus)}
               {getStatusServicoBadge(statusServico)}
             </div>
             <p className="text-sm text-slate-500">
