@@ -216,18 +216,10 @@ export default function VerAtendimento() {
     }));
 
     const subtotal_queixa = itensAtualizados.reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const subtotal_checklist = (atendimento.itens_orcamento || [])
-      .filter(item => item.origem === 'checklist')
-      .reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
-    
-    // Recalcular orçamento: queixa atualizada + itens do checklist (sem consolidar)
-    const itensChecklistExistentes = (atendimento.itens_orcamento || []).filter(item => item.origem === 'checklist');
-    const itensConsolidados = [
-      ...itensAtualizados.map(item => ({ ...item, origem: item.origem || 'queixa' })),
-      ...itensChecklistExistentes
-    ];
-
-    const subtotal = itensConsolidados.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+    // Manter itens_orcamento (checklist) INTACTOS - não tocar neles ao editar a queixa
+    const itensOrcamentoExistentes = atendimento.itens_orcamento || [];
+    const subtotal_checklist = itensOrcamentoExistentes.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+    const subtotal = subtotal_queixa + subtotal_checklist;
     const valor_final = subtotal - (Number(atendimento.desconto) || 0);
 
     const historicoItem = {
@@ -240,7 +232,7 @@ export default function VerAtendimento() {
     const dataToSave = {
       queixa_inicial: queixaTextoEdit,
       itens_queixa: itensAtualizados,
-      itens_orcamento: itensConsolidados,
+      // itens_orcamento NÃO é alterado ao editar a queixa
       subtotal_queixa,
       subtotal_checklist,
       subtotal,
