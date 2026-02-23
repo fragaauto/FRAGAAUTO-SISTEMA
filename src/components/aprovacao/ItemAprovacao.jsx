@@ -175,7 +175,7 @@ export default function ItemAprovacao({ item, onUpdate }) {
           </>
         )}
 
-        {item.observacao_cliente && item.status_aprovacao !== 'pendente' && (
+        {item.observacao_cliente && localStatus !== 'pendente' && (
           <div className="bg-slate-100 rounded-lg p-3">
             <p className="text-xs text-slate-500 mb-1">Observação do cliente:</p>
             <p className="text-sm text-slate-700">{item.observacao_cliente}</p>
