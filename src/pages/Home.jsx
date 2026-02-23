@@ -101,7 +101,11 @@ export default function Home() {
     let valorTotalAprovado = 0;
 
     atendimentosFiltrados.forEach((atendimento) => {
-      const todosItens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
+      // Evitar duplicatas: itens_orcamento já contém itens do checklist (sem a queixa)
+      // A queixa está em itens_queixa separadamente
+      const idsNaQueixa = new Set((atendimento.itens_queixa || []).map(i => i.produto_id).filter(Boolean));
+      const itensChecklist = (atendimento.itens_orcamento || []).filter(i => !idsNaQueixa.has(i.produto_id));
+      const todosItens = [...(atendimento.itens_queixa || []), ...itensChecklist];
       todosItens.forEach((item) => {
         if (item.status_aprovacao === 'aprovado') {
           servicosAprovados++;
