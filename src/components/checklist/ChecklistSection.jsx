@@ -49,6 +49,7 @@ export default function ChecklistSection({ categoria, items, values, onChange, i
               onChange={(newValue) => onChange(item.id, newValue)}
               produtos={produtos}
               onOpenCadastro={onOpenCadastro}
+              produtosNaQueixa={produtosNaQueixa}
             />
           ))}
         </div>
