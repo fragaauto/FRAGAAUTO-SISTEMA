@@ -147,7 +147,7 @@ export default function ItemAprovacao({ item, onUpdate }) {
           </div>
         )}
 
-        {item.status_aprovacao === 'pendente' && (
+        {localStatus === 'pendente' && (
           <>
             <Textarea
               placeholder="Observação do cliente (opcional)..."
