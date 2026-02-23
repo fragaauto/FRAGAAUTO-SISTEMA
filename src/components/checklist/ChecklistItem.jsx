@@ -20,7 +20,7 @@ const STATUS_CONFIG = {
   nao_verificado: { icon: HelpCircle, color: 'bg-yellow-500 hover:bg-yellow-600', textColor: 'text-yellow-600' }
 };
 
-export default function ChecklistItem({ item, value, onChange, produtos = [], onOpenCadastro }) {
+export default function ChecklistItem({ item, value, onChange, produtos = [], onOpenCadastro, produtosNaQueixa = [] }) {
   const [showProdutos, setShowProdutos] = useState(false);
   const [searchProduto, setSearchProduto] = useState('');
   const currentStatus = value?.status || 'nao_verificado';
