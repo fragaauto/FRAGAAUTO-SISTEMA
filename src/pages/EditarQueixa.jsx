@@ -199,7 +199,7 @@ export default function EditarQueixa() {
     return null;
   }
 
-  if (checkingAuth || isLoading || !atendimento || produtos.length === 0) {
+  if (checkingAuth || isLoading || !atendimento) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-slate-50 to-orange-50/30">
         <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
