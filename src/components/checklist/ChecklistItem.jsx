@@ -64,6 +64,11 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
     });
   };
 
+  // Produtos disponíveis para adicionar ao checklist = todos menos os já vinculados a este item e os que já estão na queixa
+  const produtosDisponiveis = produtos
+    .filter(p => !produtosVinculados.some(pv => pv.id === p.id))
+    .filter(p => !produtosNaQueixa.includes(p.id));
+
   const handleAddProduto = (produtoId) => {
     const produto = produtos.find(p => p.id === produtoId);
     const valorInicial = produto ? Number(produto.valor) || 0 : 0;
