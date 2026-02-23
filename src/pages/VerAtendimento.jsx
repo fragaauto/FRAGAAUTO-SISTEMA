@@ -340,10 +340,11 @@ export default function VerAtendimento() {
       valor_total: (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0)
     }));
 
-    const subtotal_checklist = itensAtualizados.reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const subtotal_queixa = (atendimento.itens_queixa || []).reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const subtotal = subtotal_queixa + subtotal_checklist;
-    const valor_final = subtotal - (atendimento.desconto || 0);
+    const { subtotal_queixa, subtotal_checklist, subtotal, valor_final } = calcularSubtotais(
+      atendimento.itens_queixa || [],
+      itensAtualizados,
+      atendimento.desconto || 0
+    );
 
     const historicoItem = {
       data: new Date().toISOString(),
