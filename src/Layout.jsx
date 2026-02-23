@@ -21,7 +21,7 @@ const NAV_ITEMS = [
   { name: 'Dashboard', icon: Home, path: 'Dashboard' },
   { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento' },
   { name: 'Atendimentos', icon: FileText, path: 'Atendimentos' },
-  { name: 'Serviços Reprovados', icon: XCircle, path: 'ServicosReprovados' },
+  { name: 'REMARKETING', icon: TrendingUp, path: 'Remarketing' },
   { name: 'Relatórios', icon: FileText, path: 'Relatorios' },
   { name: 'Produtos', icon: Package, path: 'Produtos' },
   { name: 'Clientes', icon: Users, path: 'Clientes' },
