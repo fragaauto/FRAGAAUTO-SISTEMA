@@ -36,6 +36,9 @@ import {
   Sparkles
 } from 'lucide-react';
 import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
+import AssistenteIAModal from '../components/atendimento/AssistenteIAModal';
+import { gerarPDF } from '../components/atendimento/GerarPDF';
+import { calcularSubtotais } from '../components/atendimento/calcularTotais';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
 import OrdemServicoTecnica from '../components/OrdemServicoTecnica';
 import ModalEditarClienteVeiculo from '../components/atendimento/ModalEditarClienteVeiculo';
