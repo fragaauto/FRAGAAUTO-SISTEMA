@@ -60,10 +60,10 @@ import ManualTreinamento from './pages/ManualTreinamento';
 import NovoAtendimento from './pages/NovoAtendimento';
 import Produtos from './pages/Produtos';
 import Relatorios from './pages/Relatorios';
+import Remarketing from './pages/Remarketing';
 import ServicosReprovados from './pages/ServicosReprovados';
 import Usuarios from './pages/Usuarios';
 import VerAtendimento from './pages/VerAtendimento';
-import Remarketing from './pages/Remarketing';
 import __Layout from './Layout.jsx';
 
 
@@ -81,10 +81,10 @@ export const PAGES = {
     "NovoAtendimento": NovoAtendimento,
     "Produtos": Produtos,
     "Relatorios": Relatorios,
+    "Remarketing": Remarketing,
     "ServicosReprovados": ServicosReprovados,
     "Usuarios": Usuarios,
     "VerAtendimento": VerAtendimento,
-    "Remarketing": Remarketing,
 }
 
 export const pagesConfig = {
