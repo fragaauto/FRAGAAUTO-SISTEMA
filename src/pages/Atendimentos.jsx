@@ -155,7 +155,12 @@ export default function Atendimentos() {
       a.modelo?.toLowerCase().includes(search.toLowerCase()) ||
       a.cliente_nome?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || a.status === statusFilter;
-    return matchSearch && matchStatus;
+
+    const dataAtendimento = a.data_entrada ? new Date(a.data_entrada) : new Date(a.created_date);
+    const matchDataInicio = !dataInicio || dataAtendimento >= new Date(dataInicio + 'T00:00:00');
+    const matchDataFim = !dataFim || dataAtendimento <= new Date(dataFim + 'T23:59:59');
+
+    return matchSearch && matchStatus && matchDataInicio && matchDataFim;
   });
 
   const todosStatusOpcoes = [
