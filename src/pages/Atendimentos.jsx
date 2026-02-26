@@ -250,6 +250,34 @@ export default function Atendimentos() {
           </Select>
         </div>
 
+        {/* Filtro por data */}
+        <div className="flex gap-3 mt-3">
+          <div className="flex items-center gap-2 flex-1">
+            <Calendar className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <Input
+              type="date"
+              value={dataInicio}
+              onChange={(e) => setDataInicio(e.target.value)}
+              className="h-10 text-sm"
+              placeholder="Data inicial"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-1">
+            <span className="text-slate-400 text-sm flex-shrink-0">até</span>
+            <Input
+              type="date"
+              value={dataFim}
+              onChange={(e) => setDataFim(e.target.value)}
+              className="h-10 text-sm"
+            />
+          </div>
+          {(dataInicio || dataFim) && (
+            <Button variant="ghost" size="sm" className="h-10 text-slate-500 px-2" onClick={() => { setDataInicio(''); setDataFim(''); }}>
+              Limpar
+            </Button>
+          )}
+        </div>
+
         {/* Barra de ação em massa */}
         {filteredAtendimentos.length > 0 && (
           <div className="flex items-center gap-3 mt-3 py-2 px-3 bg-white rounded-lg border border-slate-200">
