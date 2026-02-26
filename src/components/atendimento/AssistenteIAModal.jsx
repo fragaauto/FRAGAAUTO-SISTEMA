@@ -18,6 +18,7 @@ export default function AssistenteIAModal({ open, onClose, atendimento, produtos
   const [textoTecnico, setTextoTecnico] = useState('');
   const [processandoIA, setProcessandoIA] = useState(false);
   const [progressoIA, setProgressoIA] = useState(0);
+  const [lembreteAberto, setLembreteAberto] = useState(false);
 
   const processarTextoIA = async () => {
     if (!textoTecnico.trim()) {
