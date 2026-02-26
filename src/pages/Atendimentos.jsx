@@ -133,6 +133,20 @@ export default function Atendimentos() {
     onSuccess: () => queryClient.invalidateQueries(['atendimentos'])
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Atendimento.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['atendimentos']);
+      toast.success('Atendimento excluído!');
+    }
+  });
+
+  const handleExcluirEmMassa = async () => {
+    await Promise.all(selecionados.map(id => deleteMutation.mutateAsync(id)));
+    toast.success(`${selecionados.length} atendimento(s) excluído(s)!`);
+    setSelecionados([]);
+  };
+
   const filteredAtendimentos = atendimentos.filter(a => {
     const matchSearch = 
       a.placa?.toLowerCase().includes(search.toLowerCase()) ||
