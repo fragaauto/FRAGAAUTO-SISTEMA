@@ -281,6 +281,31 @@ export default function Atendimentos() {
                 >
                   {updateStatusMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Aplicar'}
                 </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" variant="destructive" className="h-8">
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Excluir
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir atendimentos?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Você está prestes a excluir {selecionados.length} atendimento(s). Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleExcluirEmMassa}
+                        className="bg-red-500 hover:bg-red-600"
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <Button
                   size="sm"
                   variant="ghost"
