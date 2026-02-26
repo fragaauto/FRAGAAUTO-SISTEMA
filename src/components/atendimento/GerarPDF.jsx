@@ -118,9 +118,17 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
             <div style="margin-bottom:20px">
               <h3 style="color:#1e293b;font-size:16px;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #3b82f6">ORÇAMENTO DA QUEIXA INICIAL</h3>
               <table>
-                <thead><tr><th>Item</th><th style="text-align:center;width:80px">Qtd</th><th style="text-align:right;width:120px">Valor Unit.</th><th style="text-align:right;width:120px">Total</th></tr></thead>
+                <thead><tr><th>Item</th><th style="text-align:center;width:80px">Qtd</th><th style="text-align:right;width:120px">Valor Unit.</th><th style="text-align:right;width:120px">Total</th><th style="text-align:center;width:110px">Status</th></tr></thead>
                 <tbody>
-                  ${atendimento.itens_queixa.map(item => `
+                  ${atendimento.itens_queixa.map(item => {
+                    const aprovacao = item.status_aprovacao;
+                    const statusStyle = aprovacao === 'aprovado'
+                      ? 'background:#dcfce7;color:#166534;border:1px solid #86efac'
+                      : aprovacao === 'reprovado'
+                        ? 'background:#fef2f2;color:#991b1b;border:1px solid #fca5a5'
+                        : 'background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1';
+                    const statusLabel = aprovacao === 'aprovado' ? '✓ APROVADO' : aprovacao === 'reprovado' ? '✗ REPROVADO' : '— PENDENTE';
+                    return `
                     <tr>
                       <td>${item.nome}
                         ${item.observacao_item ? `<div style="margin-top:6px;padding:8px;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:4px"><strong style="font-size:11px;color:#1e40af">📝 Observações:</strong><p style="font-size:11px;color:#1e3a8a;margin:4px 0 0">${item.observacao_item}</p></div>` : ''}
@@ -130,8 +138,9 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
                       <td style="text-align:center">${item.quantidade}</td>
                       <td style="text-align:right">R$ ${Number(item.valor_unitario || 0).toFixed(2)}</td>
                       <td style="text-align:right;font-weight:600">R$ ${Number(item.valor_total || 0).toFixed(2)}</td>
-                    </tr>
-                  `).join('')}
+                      <td style="text-align:center"><span style="padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;${statusStyle}">${statusLabel}</span></td>
+                    </tr>`;
+                  }).join('')}
                 </tbody>
               </table>
               <div style="text-align:right;margin-top:10px;padding:10px;background:#dbeafe;border-radius:6px">
