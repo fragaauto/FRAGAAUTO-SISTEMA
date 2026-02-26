@@ -55,23 +55,52 @@ export default function OrcamentoPDF({ atendimento }) {
         </div>
       </div>
 
-      {/* Defects Found */}
-      {defeitosEncontrados.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-bold text-slate-800 mb-3 border-b-2 border-orange-500 pb-2">ITENS COM DEFEITO IDENTIFICADOS</h3>
-          <div className="space-y-2">
-            {defeitosEncontrados.map((item, idx) => (
-              <div key={idx} className="flex items-start gap-2 text-sm bg-red-50 p-2 rounded">
-                <span className="text-red-500 font-bold">✗</span>
-                <div>
-                  <span className="font-medium">{item.item}</span>
-                  {item.comentario && <span className="text-slate-600 ml-2">- {item.comentario}</span>}
+      {/* Checklist Completo */}
+      {atendimento.checklist?.length > 0 && (() => {
+        const checklistPorCategoria = atendimento.checklist.reduce((acc, item) => {
+          const cat = item.categoria || 'Outros';
+          if (!acc[cat]) acc[cat] = [];
+          acc[cat].push(item);
+          return acc;
+        }, {});
+
+        const statusLabel = {
+          ok: { label: 'OK', cor: '#16a34a', icone: '✓', bg: '#f0fdf4' },
+          com_defeito: { label: 'COM DEFEITO', cor: '#dc2626', icone: '✗', bg: '#fef2f2' },
+          nao_possui: { label: 'NÃO POSSUI', cor: '#6b7280', icone: '—', bg: '#f9fafb' },
+          nao_verificado: { label: 'NÃO VERIFICADO', cor: '#d97706', icone: '?', bg: '#fffbeb' },
+        };
+
+        return (
+          <div className="mb-6">
+            <h3 className="font-bold text-slate-800 mb-3 border-b-2 border-orange-500 pb-2">CHECKLIST DE INSPEÇÃO</h3>
+            {Object.entries(checklistPorCategoria).map(([categoria, itens]) => (
+              <div key={categoria} className="mb-4">
+                <div className="bg-slate-200 px-3 py-1 rounded mb-1">
+                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">{categoria}</span>
                 </div>
+                <table className="w-full text-xs border-collapse">
+                  <tbody>
+                    {itens.map((item, idx) => {
+                      const s = statusLabel[item.status] || statusLabel['nao_verificado'];
+                      return (
+                        <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                          <td className="border border-slate-200 px-2 py-1.5 w-6 text-center font-bold" style={{ color: s.cor }}>{s.icone}</td>
+                          <td className="border border-slate-200 px-2 py-1.5 font-medium text-slate-800">{item.item}</td>
+                          <td className="border border-slate-200 px-2 py-1.5 w-28 text-center">
+                            <span className="px-1.5 py-0.5 rounded text-xs font-semibold" style={{ color: s.cor, backgroundColor: s.bg }}>{s.label}</span>
+                          </td>
+                          <td className="border border-slate-200 px-2 py-1.5 text-slate-500 italic">{item.comentario || ''}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Pre-diagnosis */}
       {atendimento.pre_diagnostico && (
