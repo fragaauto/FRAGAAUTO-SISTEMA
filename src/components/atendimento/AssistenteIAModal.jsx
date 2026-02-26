@@ -217,6 +217,45 @@ IMPORTANTE:
             />
           </div>
 
+          {/* Lembrete do Checklist */}
+          {checklistItems?.length > 0 && (
+            <div className="border border-amber-200 rounded-lg overflow-hidden">
+              <button
+                type="button"
+                className="w-full flex items-center justify-between p-3 bg-amber-50 hover:bg-amber-100 transition-colors"
+                onClick={() => setLembreteAberto(prev => !prev)}
+              >
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-amber-600" />
+                  <span className="text-xs font-semibold text-amber-800">📋 Lembrete: Itens do Checklist ({checklistItems.length})</span>
+                </div>
+                {lembreteAberto ? <ChevronUp className="w-4 h-4 text-amber-600" /> : <ChevronDown className="w-4 h-4 text-amber-600" />}
+              </button>
+              {lembreteAberto && (
+                <div className="p-3 bg-amber-50 border-t border-amber-200 max-h-48 overflow-y-auto">
+                  <p className="text-xs text-amber-700 mb-2">Certifique-se de mencionar o estado de cada item abaixo ao passar as informações para a IA:</p>
+                  {Object.entries(
+                    checklistItems.reduce((acc, item) => {
+                      const cat = item.categoria || 'Outros';
+                      if (!acc[cat]) acc[cat] = [];
+                      acc[cat].push(item.item);
+                      return acc;
+                    }, {})
+                  ).map(([categoria, itens]) => (
+                    <div key={categoria} className="mb-2">
+                      <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">{categoria}</p>
+                      <ul className="ml-2 space-y-0.5">
+                        {itens.map((item, i) => (
+                          <li key={i} className="text-xs text-amber-700">• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs font-semibold text-blue-800 mb-1">ℹ️ Como funciona:</p>
             <ul className="text-xs text-blue-700 space-y-1">
