@@ -110,6 +110,8 @@ export default function Atendimentos() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
   const [selecionados, setSelecionados] = useState([]);
   const [statusEmMassa, setStatusEmMassa] = useState('');
 
