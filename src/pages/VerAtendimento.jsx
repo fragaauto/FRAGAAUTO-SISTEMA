@@ -613,6 +613,15 @@ export default function VerAtendimento() {
           </div>
         </Button>
         <Button
+          className="bg-blue-600 hover:bg-blue-700 h-auto py-3"
+          onClick={() => setShowImpressaoQueixa(true)}
+        >
+          <div className="flex flex-col items-center gap-1">
+            <FileText className="w-5 h-5" />
+            <span className="text-xs">Impr. Queixa</span>
+          </div>
+        </Button>
+        <Button
           className="bg-slate-700 hover:bg-slate-800 h-auto py-3"
           onClick={() => setShowOrdemServico(true)}
         >
