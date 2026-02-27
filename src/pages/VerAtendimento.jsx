@@ -1754,6 +1754,14 @@ export default function VerAtendimento() {
         onUpdate={(data) => updateMutation.mutate(data)}
       />
 
+      {showImpressaoQueixa && (
+        <ImpressaoQueixa
+          atendimento={atendimento}
+          config={configs[0]}
+          onClose={() => setShowImpressaoQueixa(false)}
+        />
+      )}
+
       {showOrdemServico && (
         <OrdemServicoTecnica
           atendimento={atendimento}
