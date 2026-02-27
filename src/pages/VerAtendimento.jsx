@@ -497,6 +497,19 @@ export default function VerAtendimento() {
   const queixaAssinada = !!atendimento.assinatura_cliente_queixa;
   const checklistAssinado = !!atendimento.assinatura_cliente_checklist;
 
+  // Totais aprovados/reprovados pelo cliente
+  const todosItens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
+  const totalAprovadoCliente = todosItens
+    .filter(i => i.status_aprovacao === 'aprovado')
+    .reduce((acc, i) => acc + (Number(i.valor_total) || 0), 0);
+  const totalReprovadoCliente = todosItens
+    .filter(i => i.status_aprovacao === 'reprovado')
+    .reduce((acc, i) => acc + (Number(i.valor_total) || 0), 0);
+  const totalPendenteCliente = todosItens
+    .filter(i => !i.status_aprovacao || i.status_aprovacao === 'pendente')
+    .reduce((acc, i) => acc + (Number(i.valor_total) || 0), 0);
+  const temDecisoes = todosItens.some(i => i.status_aprovacao === 'aprovado' || i.status_aprovacao === 'reprovado');
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
       {/* Header */}
