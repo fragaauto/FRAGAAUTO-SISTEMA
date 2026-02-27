@@ -112,6 +112,7 @@ export default function VerAtendimento() {
   const [processandoIA, setProcessandoIA] = useState(false);
   const [progressoIA, setProgressoIA] = useState(0);
   const [showOrdemServico, setShowOrdemServico] = useState(false);
+  const [showImpressaoQueixa, setShowImpressaoQueixa] = useState(false);
   const [showEditarDados, setShowEditarDados] = useState(false);
 
   const urlParams = new URLSearchParams(window.location.search);
