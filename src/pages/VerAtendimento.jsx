@@ -41,6 +41,7 @@ import { gerarPDF } from '../components/atendimento/GerarPDF';
 import { calcularSubtotais } from '../components/atendimento/calcularTotais';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
 import OrdemServicoTecnica from '../components/OrdemServicoTecnica';
+import ImpressaoQueixa from '../components/atendimento/ImpressaoQueixa';
 import ModalEditarClienteVeiculo from '../components/atendimento/ModalEditarClienteVeiculo';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
