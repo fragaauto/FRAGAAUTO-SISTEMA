@@ -303,9 +303,22 @@ export default function AprovarOrcamento() {
     }
   });
 
+  const abrirWhatsAppAprovacao = () => {
+    if (!whatsappAtendimento) return;
+    const mensagem = gerarMensagemWhatsApp();
+    window.open(`https://wa.me/${whatsappAtendimento}?text=${mensagem}`, '_blank');
+  };
+
   const handleFinalizarAssinatura = (assinaturaDataUrl) => {
     setAssinaturaData(assinaturaDataUrl);
-    salvarMutation.mutate({ assinatura: assinaturaDataUrl });
+    salvarMutation.mutate({ assinatura: assinaturaDataUrl }, {
+      onSuccess: () => {
+        setShowAssinatura(false);
+        if (whatsappAtendimento) {
+          setTimeout(() => abrirWhatsAppAprovacao(), 500);
+        }
+      }
+    });
     setShowAssinatura(false);
   };
 
@@ -316,7 +329,13 @@ export default function AprovarOrcamento() {
     }
     
     const assinaturaTexto = `Assinado por: ${nomeAssinatura} - CPF: ${cpfAssinatura}`;
-    salvarMutation.mutate({ assinatura: assinaturaTexto });
+    salvarMutation.mutate({ assinatura: assinaturaTexto }, {
+      onSuccess: () => {
+        if (whatsappAtendimento) {
+          setTimeout(() => abrirWhatsAppAprovacao(), 500);
+        }
+      }
+    });
   };
 
   const handleIniciarFinalizacao = () => {
