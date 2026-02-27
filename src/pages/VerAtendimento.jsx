@@ -1706,36 +1706,76 @@ export default function VerAtendimento() {
             )}
 
             {(atendimento.itens_queixa?.length > 0 || atendimento.itens_orcamento?.length > 0) && (
-              <Card className="bg-slate-800 text-white">
-                <CardContent className="pt-6 space-y-3">
-                  {atendimento.subtotal_queixa > 0 && (
-                    <div className="flex justify-between text-blue-300">
-                      <span>Subtotal da Queixa:</span>
-                      <span>R$ {atendimento.subtotal_queixa?.toFixed(2)}</span>
+              <>
+                {/* Resumo de decisões do cliente */}
+                {temDecisoes && (
+                  <Card className="border-2 border-slate-300">
+                    <CardContent className="pt-5 space-y-2">
+                      <p className="text-sm font-semibold text-slate-600 mb-3">Resumo das Decisões do Cliente</p>
+                      <div className="flex justify-between items-center py-2 px-3 bg-green-50 rounded-lg">
+                        <span className="flex items-center gap-2 text-green-700 font-medium">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Aprovados
+                        </span>
+                        <span className="font-bold text-green-700">R$ {totalAprovadoCliente.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 px-3 bg-red-50 rounded-lg">
+                        <span className="flex items-center gap-2 text-red-700 font-medium">
+                          <XCircle className="w-4 h-4" />
+                          Reprovados
+                        </span>
+                        <span className="font-bold text-red-700">R$ {totalReprovadoCliente.toFixed(2)}</span>
+                      </div>
+                      {totalPendenteCliente > 0 && (
+                        <div className="flex justify-between items-center py-2 px-3 bg-slate-50 rounded-lg">
+                          <span className="flex items-center gap-2 text-slate-600 font-medium">
+                            <MinusCircle className="w-4 h-4" />
+                            Pendentes
+                          </span>
+                          <span className="font-bold text-slate-600">R$ {totalPendenteCliente.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Card className="bg-slate-800 text-white">
+                  <CardContent className="pt-6 space-y-3">
+                    {atendimento.subtotal_queixa > 0 && (
+                      <div className="flex justify-between text-blue-300">
+                        <span>Subtotal da Queixa:</span>
+                        <span>R$ {atendimento.subtotal_queixa?.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {atendimento.subtotal_checklist > 0 && (
+                      <div className="flex justify-between text-orange-300">
+                        <span>Subtotal do Checklist:</span>
+                        <span>R$ {atendimento.subtotal_checklist?.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-white/20 pt-2">
+                      <span>Subtotal Total:</span>
+                      <span>R$ {atendimento.subtotal?.toFixed(2)}</span>
                     </div>
-                  )}
-                  {atendimento.subtotal_checklist > 0 && (
-                    <div className="flex justify-between text-orange-300">
-                      <span>Subtotal do Checklist:</span>
-                      <span>R$ {atendimento.subtotal_checklist?.toFixed(2)}</span>
+                    {atendimento.desconto > 0 && (
+                      <div className="flex justify-between text-green-400">
+                        <span>Desconto:</span>
+                        <span>- R$ {atendimento.desconto?.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-white/20 pt-3 flex justify-between text-xl font-bold">
+                      <span>VALOR TOTAL:</span>
+                      <span className="text-orange-400">R$ {atendimento.valor_final?.toFixed(2)}</span>
                     </div>
-                  )}
-                  <div className="flex justify-between border-t border-white/20 pt-2">
-                    <span>Subtotal Total:</span>
-                    <span>R$ {atendimento.subtotal?.toFixed(2)}</span>
-                  </div>
-                  {atendimento.desconto > 0 && (
-                    <div className="flex justify-between text-green-400">
-                      <span>Desconto:</span>
-                      <span>- R$ {atendimento.desconto?.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="border-t border-white/20 pt-3 flex justify-between text-xl font-bold">
-                    <span>VALOR TOTAL:</span>
-                    <span className="text-orange-400">R$ {atendimento.valor_final?.toFixed(2)}</span>
-                  </div>
-                </CardContent>
-              </Card>
+                    {temDecisoes && (
+                      <div className="border-t border-white/20 pt-3 flex justify-between text-lg font-bold">
+                        <span className="text-green-300">✓ APROVADO PELO CLIENTE:</span>
+                        <span className="text-green-300">R$ {totalAprovadoCliente.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
             )}
           </TabsContent>
         </Tabs>
