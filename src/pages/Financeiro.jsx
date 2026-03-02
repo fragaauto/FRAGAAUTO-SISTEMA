@@ -16,8 +16,8 @@ import {
   CreditCard, Banknote, Wallet
 } from 'lucide-react';
 import FluxoCaixaChart from '@/components/financeiro/FluxoCaixaChart';
-import ContasReceberTab from '@/components/financeiro/ContasReceberTab';
-import ContasPagarTab from '@/components/financeiro/ContasPagarTab';
+import ContasReceberTab from '@/components/financeiro/ContasReceberTab.jsx';
+import ContasPagarTab from '@/components/financeiro/ContasPagarTab.jsx';
 import FluxoCaixaTab from '@/components/financeiro/FluxoCaixaTab.jsx';
 
 const TABS = [
