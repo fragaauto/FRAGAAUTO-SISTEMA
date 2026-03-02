@@ -596,6 +596,61 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
+        {/* LEMBRETE CHECKLIST */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-purple-500" />
+              Lembrete Automático de Checklist
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-slate-500">
+              O sistema verificará periodicamente atendimentos ativos sem checklist e alertará sua equipe.
+            </p>
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+              <Label>Ativar lembrete automático</Label>
+              <Switch
+                checked={!!formData.lembrete_checklist_ativo}
+                onCheckedChange={(v) => setFormData(prev => ({ ...prev, lembrete_checklist_ativo: v }))}
+              />
+            </div>
+            {formData.lembrete_checklist_ativo && (
+              <>
+                <div>
+                  <Label>Intervalo entre lembretes (minutos)</Label>
+                  <Select
+                    value={String(formData.lembrete_checklist_intervalo || 30)}
+                    onValueChange={(v) => setFormData(prev => ({ ...prev, lembrete_checklist_intervalo: parseInt(v) }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 minutos</SelectItem>
+                      <SelectItem value="10">10 minutos</SelectItem>
+                      <SelectItem value="15">15 minutos</SelectItem>
+                      <SelectItem value="30">30 minutos</SelectItem>
+                      <SelectItem value="60">1 hora</SelectItem>
+                      <SelectItem value="120">2 horas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500 mt-1">A verificação ocorre nesse intervalo enquanto houver atendimentos ativos sem checklist.</p>
+                </div>
+                <div>
+                  <Label>WhatsApp para receber lembretes</Label>
+                  <Input
+                    value={formData.lembrete_checklist_whatsapp || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, lembrete_checklist_whatsapp: e.target.value }))}
+                    placeholder="5511999999999 (com DDI, apenas números)"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Se vazio, usará o WhatsApp de atendimento. O lembrete será enviado para este número.</p>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
