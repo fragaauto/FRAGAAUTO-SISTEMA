@@ -43,6 +43,7 @@ import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
 import OrdemServicoTecnica from '../components/OrdemServicoTecnica';
 import ImpressaoQueixa from '../components/atendimento/ImpressaoQueixa';
 import ModalEditarClienteVeiculo from '../components/atendimento/ModalEditarClienteVeiculo';
+import AbaFinalizacaoPagamento from '../components/financeiro/AbaFinalizacaoPagamento';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
