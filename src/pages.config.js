@@ -65,6 +65,7 @@ import Remarketing from './pages/Remarketing';
 import ServicosReprovados from './pages/ServicosReprovados';
 import Usuarios from './pages/Usuarios';
 import VerAtendimento from './pages/VerAtendimento';
+import Financeiro from './pages/Financeiro';
 import __Layout from './Layout.jsx';
 
 
@@ -87,6 +88,7 @@ export const PAGES = {
     "ServicosReprovados": ServicosReprovados,
     "Usuarios": Usuarios,
     "VerAtendimento": VerAtendimento,
+    "Financeiro": Financeiro,
 }
 
 export const pagesConfig = {
