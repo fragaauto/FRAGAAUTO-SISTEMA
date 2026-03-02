@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Settings, Loader2, Save, Plus, Trash2, Gift, UserCheck, Car, TrendingUp } from 'lucide-react';
+import { Settings, Loader2, Save, Plus, Trash2, Gift, UserCheck, Car, TrendingUp, Bell } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
