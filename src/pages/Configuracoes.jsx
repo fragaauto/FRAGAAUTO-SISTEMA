@@ -63,6 +63,9 @@ export default function Configuracoes() {
     dias_validade_oferta: config.dias_validade_oferta || 7,
     oferta_padrao_remarketing: config.oferta_padrao_remarketing || '',
     condicao_pagamento_remarketing: config.condicao_pagamento_remarketing || '',
+    lembrete_checklist_ativo: config.lembrete_checklist_ativo ?? false,
+    lembrete_checklist_intervalo: config.lembrete_checklist_intervalo || 30,
+    lembrete_checklist_whatsapp: config.lembrete_checklist_whatsapp || '',
   });
 
   React.useEffect(() => {
