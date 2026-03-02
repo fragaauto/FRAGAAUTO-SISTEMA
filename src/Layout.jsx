@@ -27,6 +27,8 @@ const NAV_ITEMS = [
   { name: 'Produtos', icon: Package, path: 'Produtos' },
   { name: 'Clientes', icon: Users, path: 'Clientes' },
   { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist' },
+  { name: 'Financeiro', icon: TrendingUp, path: 'Financeiro' },
+  { name: 'Compras', icon: Package, path: 'Compras' },
   { name: 'Configurações', icon: Wrench, path: 'Configuracoes' },
   { name: 'Usuários', icon: Users, path: 'Usuarios' },
   { name: 'Manual de Treinamento', icon: FileText, path: 'ManualTreinamento' },
