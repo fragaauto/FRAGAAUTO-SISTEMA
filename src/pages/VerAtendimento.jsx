@@ -1780,6 +1780,13 @@ export default function VerAtendimento() {
               </>
             )}
           </TabsContent>
+
+          <TabsContent value="pagamento">
+            <AbaFinalizacaoPagamento
+              atendimento={atendimento}
+              onUpdate={() => queryClient.invalidateQueries(['atendimento', id])}
+            />
+          </TabsContent>
         </Tabs>
       </div>
 
