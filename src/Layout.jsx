@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { name: 'Manual de Treinamento', icon: FileText, path: 'ManualTreinamento' },
 ];
 
-import { Sparkles } from 'lucide-react';
+
 
 export default function Layout({ children, currentPageName }) {
   const [open, setOpen] = React.useState(false);
