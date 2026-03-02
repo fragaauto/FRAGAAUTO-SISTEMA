@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Loader2, Bot, Plus, Trash2, Sparkles } from 'lucide-react';
-import MessageBubble from '../components/assistente/MessageBubble';
+import MessageBubble from '../components/assistente/MessageBubble.jsx';
 
 export default function AssistenteIA() {
   const [conversations, setConversations] = useState([]);
