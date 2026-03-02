@@ -647,12 +647,13 @@ export default function VerAtendimento() {
       </div>
 
         <Tabs defaultValue="resumo">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap h-auto gap-1">
             <TabsTrigger value="resumo">Resumo</TabsTrigger>
             <TabsTrigger value="queixa">Queixa</TabsTrigger>
             <TabsTrigger value="checklist">Checklist</TabsTrigger>
             <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
             <TabsTrigger value="aprovacao">Aprovação</TabsTrigger>
+            <TabsTrigger value="pagamento" className="text-green-700 font-semibold">💰 Pagamento</TabsTrigger>
           </TabsList>
 
           <TabsContent value="resumo" className="space-y-6">
