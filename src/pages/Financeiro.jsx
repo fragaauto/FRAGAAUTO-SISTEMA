@@ -18,7 +18,7 @@ import {
 import FluxoCaixaChart from '@/components/financeiro/FluxoCaixaChart';
 import ContasReceberTab from '@/components/financeiro/ContasReceberTab';
 import ContasPagarTab from '@/components/financeiro/ContasPagarTab';
-import FluxoCaixaTab from '@/components/financeiro/FluxoCaixaTab';
+import FluxoCaixaTab from '@/components/financeiro/FluxoCaixaTab.jsx';
 
 const TABS = [
   { id: 'dashboard', label: '📊 Dashboard' },
