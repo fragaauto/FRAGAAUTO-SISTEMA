@@ -1169,16 +1169,23 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
                            </span>
                            <h3 className="font-semibold text-slate-800">{produto.nome}</h3>
                          </div>
-                         <div className="flex items-center gap-2">
-                           <Badge className={getCategoriaColor(produto.categoria)}>
-                             {produto.categoria}
-                           </Badge>
-                            {produto.descricao && (
-                              <span className="text-xs text-slate-500 truncate max-w-[200px]">
-                                {produto.descricao}
-                              </span>
-                            )}
-                          </div>
+                         <div className="flex items-center gap-2 flex-wrap">
+                          <Badge className={getCategoriaColor(produto.categoria)}>
+                            {produto.categoria}
+                          </Badge>
+                          {produto.unidade && produto.unidade !== 'unidade' && (
+                            <Badge variant="outline" className="text-xs">{produto.unidade}</Badge>
+                          )}
+                          {produto.controla_estoque && (
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                              (produto.estoque_atual || 0) <= 0 ? 'bg-red-100 text-red-700' :
+                              (produto.estoque_atual || 0) <= (produto.estoque_minimo || 0) ? 'bg-orange-100 text-orange-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              Estoque: {produto.estoque_atual || 0}
+                            </span>
+                          )}
+                         </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
