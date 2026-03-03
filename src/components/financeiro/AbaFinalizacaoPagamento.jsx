@@ -10,8 +10,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   DollarSign, Plus, Trash2, CheckCircle2, AlertTriangle, Loader2,
-  CreditCard, Banknote, Smartphone, Building2, FileText, Receipt
+  CreditCard, Banknote, Smartphone, Building2, FileText, Receipt, RotateCcw, Lock
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const FORMAS = [
   { value: 'dinheiro', label: 'Dinheiro', icon: Banknote },
