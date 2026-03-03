@@ -229,6 +229,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         obs_externa: obsExterna,
         data_pagamento: new Date().toISOString(),
         usuario_pagamento: user?.email,
+        tecnicos_responsaveis: tecnicosSelecionados,
         status: 'concluido',
       });
     },
