@@ -23,7 +23,7 @@ import FluxoCaixaTab from '@/components/financeiro/FluxoCaixaTab.jsx';
 const TABS = [
   { id: 'dashboard', label: '📊 Dashboard' },
   { id: 'receber', label: '$ Entradas' },
-  { id: 'pagar', label: '🔴 A Pagar' },
+  { id: 'pagar', label: '$ Saídas' },
   { id: 'caixa', label: '💰 Fluxo de Caixa' },
 ];
 
