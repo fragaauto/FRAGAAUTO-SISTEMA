@@ -204,6 +204,52 @@ export default function Atendimentos() {
     toast.success('Status atualizado!');
   };
 
+  const estornarPagamento = async (atendimento, e) => {
+    e.stopPropagation();
+    const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ atendimento_id: atendimento.id });
+    for (const lanc of lancamentos) {
+      if (!lanc.estornado) {
+        await base44.entities.LancamentoFinanceiro.update(lanc.id, { estornado: true });
+        await base44.entities.LancamentoFinanceiro.create({
+          tipo: 'saida',
+          descricao: `ESTORNO - ${lanc.descricao}`,
+          valor: lanc.valor,
+          forma_pagamento: lanc.forma_pagamento,
+          atendimento_id: atendimento.id,
+          data_lancamento: new Date().toISOString(),
+          categoria: 'estorno',
+          estornado: false,
+        });
+      }
+    }
+    // Reverter movimentos de estoque
+    const movimentos = await base44.entities.MovimentoEstoque.filter({ atendimento_id: atendimento.id });
+    for (const mov of movimentos) {
+      if (mov.tipo === 'saida') {
+        const prod = await base44.entities.Produto.get(mov.produto_id).catch(() => null);
+        if (prod?.controla_estoque) {
+          await base44.entities.Produto.update(mov.produto_id, { estoque_atual: (prod.estoque_atual || 0) + (mov.quantidade || 0) });
+        }
+      }
+    }
+    await base44.entities.Atendimento.update(atendimento.id, { status_pagamento: null, data_pagamento: null, usuario_pagamento: null });
+    queryClient.invalidateQueries(['atendimentos']);
+    toast.success('Estorno realizado! Atendimento reaberto.');
+  };
+
+  const imprimirAtendimento = (atendimento, e) => {
+    e.stopPropagation();
+    navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`));
+  };
+
+  const enviarWhatsApp = (atendimento, e) => {
+    e.stopPropagation();
+    const telefone = atendimento.cliente_telefone?.replace(/\D/g, '');
+    if (!telefone) { toast.error('Cliente sem telefone cadastrado'); return; }
+    const msg = `*Olá ${atendimento.cliente_nome || ''}!*\n\nSeu atendimento foi *finalizado* com sucesso! ✅\n\n🚗 *Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n💰 *Valor:* R$ ${atendimento.valor_final_pago?.toFixed(2) || atendimento.valor_final?.toFixed(2) || '0.00'}\n\nObrigado pela preferência! 🙏`;
+    window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
       {/* Header */}
