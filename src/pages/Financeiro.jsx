@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import {
   DollarSign, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2,
   Clock, Plus, Filter, Search, Loader2, ArrowUpCircle, ArrowDownCircle,
-  CreditCard, Banknote, Wallet
+  CreditCard, Banknote, Wallet, Calendar
 } from 'lucide-react';
 import FluxoCaixaChart from '@/components/financeiro/FluxoCaixaChart';
 import ContasReceberTab from '@/components/financeiro/ContasReceberTab.jsx';
