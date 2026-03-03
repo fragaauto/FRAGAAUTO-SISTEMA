@@ -495,6 +495,7 @@ export default function VerAtendimento() {
 
   const defeitosCount = atendimento.checklist?.filter(i => i.status === 'com_defeito').length || 0;
   const isAdmin = user?.role === 'admin';
+  const pagamentoLancado = !!atendimento.status_pagamento && atendimento.status_pagamento !== null;
   const queixaAssinada = !!atendimento.assinatura_cliente_queixa;
   const checklistAssinado = !!atendimento.assinatura_cliente_checklist;
 
