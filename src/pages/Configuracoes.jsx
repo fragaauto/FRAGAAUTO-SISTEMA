@@ -683,6 +683,112 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
+        {/* AGENDA / INTEGRAÇÕES GOOGLE */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarDays className="w-5 h-5 text-blue-500" />
+              Agenda — Integração Google
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <p className="text-sm text-slate-500">
+              Configure a integração com Google Sheets e/ou Google Calendar para exibir agendamentos no Dashboard e na Home.
+              Use uma <strong>Chave de API pública</strong> do Google Cloud Console (APIs &amp; Services → Credentials).
+            </p>
+
+            {/* Chave de API */}
+            <div>
+              <Label>🔑 Chave de API do Google (API Key)</Label>
+              <Input
+                value={formData.agenda_google_api_key}
+                onChange={(e) => setFormData(prev => ({ ...prev, agenda_google_api_key: e.target.value }))}
+                placeholder="AIzaSy..."
+                type="password"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Crie em <a href="https://console.cloud.google.com/apis/credentials" target="_blank" className="text-blue-500 underline">console.cloud.google.com</a> → Credenciais → Criar Credencial → Chave de API. Ative as APIs: Google Sheets API e Google Calendar API.
+              </p>
+            </div>
+
+            <hr />
+
+            {/* Google Sheets */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-slate-700 flex items-center gap-2">
+                <span className="text-green-600">📊</span> Google Sheets
+              </h3>
+              <div>
+                <Label>ID da Planilha</Label>
+                <Input
+                  value={formData.agenda_google_sheets_id}
+                  onChange={(e) => setFormData(prev => ({ ...prev, agenda_google_sheets_id: e.target.value }))}
+                  placeholder="Ex: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Encontre na URL da planilha: docs.google.com/spreadsheets/d/<strong>[ID AQUI]</strong>/edit
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Nome da Aba</Label>
+                  <Input
+                    value={formData.agenda_google_sheets_aba}
+                    onChange={(e) => setFormData(prev => ({ ...prev, agenda_google_sheets_aba: e.target.value }))}
+                    placeholder="Agendamentos"
+                  />
+                </div>
+              </div>
+              <p className="text-xs font-medium text-slate-600">Mapeamento de colunas (letra da coluna):</p>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { key: 'agenda_sheets_col_data', label: 'Data' },
+                  { key: 'agenda_sheets_col_hora', label: 'Hora' },
+                  { key: 'agenda_sheets_col_cliente', label: 'Cliente' },
+                  { key: 'agenda_sheets_col_servico', label: 'Serviço' },
+                  { key: 'agenda_sheets_col_placa', label: 'Placa' },
+                  { key: 'agenda_sheets_col_obs', label: 'Observações' },
+                ].map(({ key, label }) => (
+                  <div key={key}>
+                    <Label className="text-xs">{label}</Label>
+                    <Input
+                      value={formData[key]}
+                      onChange={(e) => setFormData(prev => ({ ...prev, [key]: e.target.value.toUpperCase() }))}
+                      placeholder="A"
+                      maxLength={2}
+                      className="uppercase"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500">
+                ⚠️ A planilha precisa estar compartilhada como "Qualquer pessoa com o link pode visualizar".
+              </p>
+            </div>
+
+            <hr />
+
+            {/* Google Calendar */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-slate-700 flex items-center gap-2">
+                <span className="text-blue-600">📅</span> Google Calendar
+              </h3>
+              <div>
+                <Label>ID do Calendário</Label>
+                <Input
+                  value={formData.agenda_google_calendar_id}
+                  onChange={(e) => setFormData(prev => ({ ...prev, agenda_google_calendar_id: e.target.value }))}
+                  placeholder="primary  ou  email@group.calendar.google.com"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Encontre em Google Agenda → ⋮ ao lado do calendário → Configurações → ID do calendário.
+                  O calendário precisa estar configurado como <strong>público</strong>.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

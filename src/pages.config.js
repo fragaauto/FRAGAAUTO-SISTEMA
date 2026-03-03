@@ -67,7 +67,6 @@ import ServicosReprovados from './pages/ServicosReprovados';
 import Usuarios from './pages/Usuarios';
 import VerAtendimento from './pages/VerAtendimento';
 import Financeiro from './pages/Financeiro';
-import Agenda from './pages/Agenda';
 import __Layout from './Layout.jsx';
 
 
@@ -92,7 +91,6 @@ export const PAGES = {
     "Usuarios": Usuarios,
     "VerAtendimento": VerAtendimento,
     "Financeiro": Financeiro,
-    "Agenda": Agenda,
 }
 
 export const pagesConfig = {
