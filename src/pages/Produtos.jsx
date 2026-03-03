@@ -627,11 +627,31 @@ export default function Produtos() {
             avisos.push('Sem descrição');
           }
           
+          const unidadeRaw = (unidadeIdx !== -1 ? values[unidadeIdx] : '').trim().toLowerCase();
+          const unidadesValidas = ['unidade', 'par', 'jogo', 'kit'];
+          const unidadeFinal = unidadesValidas.includes(unidadeRaw) ? unidadeRaw : 'unidade';
+          if (unidadeRaw && !unidadesValidas.includes(unidadeRaw)) {
+            avisos.push(`Unidade "${unidadeRaw}" inválida, usada "unidade"`);
+          }
+
+          const custoRaw = (custoIdx !== -1 ? values[custoIdx] : '').trim();
+          const custo = custoRaw ? parseFloat(custoRaw.replace(',', '.')) || 0 : 0;
+
+          const controlaEstoqueRaw = (controlaEstoqueIdx !== -1 ? values[controlaEstoqueIdx] : '').trim().toLowerCase();
+          const controlaEstoque = ['sim', 'yes', 'true', '1'].includes(controlaEstoqueRaw);
+          const estoqueAtual = estoqueAtualIdx !== -1 ? parseFloat(values[estoqueAtualIdx]) || 0 : 0;
+          const estoqueMinimo = estoqueMinimoIdx !== -1 ? parseFloat(values[estoqueMinimoIdx]) || 0 : 0;
+
           const produto = {
             codigo,
             nome: nome.substring(0, 150),
             categoria: categoriaFinal,
+            unidade: unidadeFinal,
             valor,
+            custo,
+            controla_estoque: controlaEstoque,
+            estoque_atual: estoqueAtual,
+            estoque_minimo: estoqueMinimo,
             descricao: (values[descricaoIdx] || '').trim(),
             vantagens: vantagens.substring(0, 500),
             desvantagens: desvantagens.substring(0, 500),
