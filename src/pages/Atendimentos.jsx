@@ -20,7 +20,12 @@ import {
   CheckSquare,
   ChevronDown,
   Tag,
-  Trash2
+  Trash2,
+  Lock,
+  RotateCcw,
+  Printer,
+  MessageCircle,
+  CheckCircle2
 } from 'lucide-react';
 import {
   AlertDialog,
