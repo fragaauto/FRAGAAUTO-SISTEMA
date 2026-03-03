@@ -26,10 +26,30 @@ const FORMAS = [
 export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const queryClient = useQueryClient();
   const [user, setUser] = React.useState(null);
+  const [parcelasSelecionadas, setParcelasSelecionadas] = useState({});
 
   React.useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const config = configs[0] || {};
+  const taxasPagamento = config.taxas_pagamento || [];
+  const parcelasConfig = config.parcelas_credito || [];
+
+  const getTaxaForma = (forma) => {
+    const t = taxasPagamento.find(t => t.forma === forma);
+    return t?.taxa_percentual || 0;
+  };
+
+  const getTaxaParcela = (parcelas) => {
+    const p = parcelasConfig.find(p => p.parcelas === parcelas);
+    return p?.taxa_percentual || 0;
+  };
 
   const valorBase = atendimento.valor_final || atendimento.subtotal || 0;
   const jaLancado = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial';
