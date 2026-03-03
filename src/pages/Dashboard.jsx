@@ -12,6 +12,7 @@ import {
   Calendar,
   Users
 } from 'lucide-react';
+import AgendaHoje from '../components/agenda/AgendaHoje';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";

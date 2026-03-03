@@ -31,6 +31,7 @@ import {
   Calendar } from
 'lucide-react';
 import { motion } from 'framer-motion';
+import AgendaHoje from '../components/agenda/AgendaHoje';
 
 const FeatureCard = ({ icon: Icon, title, description, href, color, delay }) =>
 <motion.div
