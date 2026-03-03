@@ -125,13 +125,25 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         await base44.entities.MovimentoEstoque.bulkCreate(movimentos);
       }
 
-      // Lançamentos no caixa
-      for (const pag of pagamentos) {
+      // Lançamentos no caixa com valor líquido (descontando taxa da maquininha)
+      for (let i = 0; i < pagamentos.length; i++) {
+        const pag = pagamentos[i];
+        const valorBruto = parseFloat(pag.valor) || 0;
+        let taxa = getTaxaForma(pag.forma);
+        if (pag.forma === 'cartao_credito' && parcelasSelecionadas[i] > 1) {
+          taxa = getTaxaParcela(parcelasSelecionadas[i]);
+        }
+        const valorLiquido = valorBruto * (1 - taxa / 100);
+        const parcelas = pag.forma === 'cartao_credito' ? (parcelasSelecionadas[i] || 1) : null;
+
         await base44.entities.LancamentoFinanceiro.create({
           tipo: 'entrada',
-          descricao: `Atendimento ${atendimento.placa} - ${atendimento.cliente_nome || ''}`,
-          valor: pag.valor,
+          descricao: `Atendimento ${atendimento.placa} - ${atendimento.cliente_nome || ''}${parcelas > 1 ? ` (${parcelas}x)` : ''}`,
+          valor: valorLiquido,
+          valor_bruto: valorBruto,
+          taxa_percentual: taxa,
           forma_pagamento: pag.forma,
+          parcelas: parcelas,
           atendimento_id: atendimento.id,
           usuario: user?.email,
           data_lancamento: new Date().toISOString(),
