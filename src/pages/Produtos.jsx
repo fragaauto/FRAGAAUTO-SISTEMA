@@ -1001,6 +1001,14 @@ export default function Produtos() {
               <p className="text-slate-500">
                 {produtos.length} cadastrados
                 {selectedIds.length > 0 && ` • ${selectedIds.length} selecionado(s)`}
+                {(() => {
+                  const comEstoque = produtos.filter(p => p.controla_estoque);
+                  const estoqueBaixo = comEstoque.filter(p => (p.estoque_atual || 0) <= (p.estoque_minimo || 0) && (p.estoque_minimo || 0) > 0);
+                  const semEstoque = comEstoque.filter(p => (p.estoque_atual || 0) <= 0);
+                  if (semEstoque.length > 0) return <span className="ml-2 text-xs text-red-600 font-semibold">⚠ {semEstoque.length} sem estoque</span>;
+                  if (estoqueBaixo.length > 0) return <span className="ml-2 text-xs text-orange-600 font-semibold">⚠ {estoqueBaixo.length} estoque baixo</span>;
+                  return null;
+                })()}
               </p>
             </div>
             <div className="flex gap-2">{selectedIds.length > 0 && (
