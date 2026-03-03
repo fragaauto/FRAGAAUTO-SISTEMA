@@ -123,8 +123,19 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     onSuccess: () => { toast.success('Observações salvas!'); onUpdate?.(); }
   });
 
+  const addTecnico = (tecnico) => {
+    if (!tecnicosSelecionados.find(t => t.id === tecnico.id)) {
+      setTecnicosSelecionados([...tecnicosSelecionados, { id: tecnico.id, nome: tecnico.full_name || tecnico.email }]);
+    }
+  };
+
+  const removeTecnico = (id) => {
+    setTecnicosSelecionados(tecnicosSelecionados.filter(t => t.id !== id));
+  };
+
   const lancarCaixaMutation = useMutation({
     mutationFn: async () => {
+      if (tecnicosSelecionados.length === 0) throw new Error('Obrigatório informar ao menos um técnico responsável');
       if (Math.abs(diferenca) > 0.01) throw new Error(`Diferença de R$ ${Math.abs(diferenca).toFixed(2)} entre pagamentos e total`);
 
       const isFaturado = pagamentos.some(p => p.forma === 'faturado');
