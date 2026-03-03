@@ -239,10 +239,12 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         }
       }
 
-      // Estornar movimentos de estoque
+      // Estornar movimentos de estoque e devolver ao saldo do produto
       const movimentos = await base44.entities.MovimentoEstoque.filter({ atendimento_id: atendimento.id });
+      const quantEstornarPorProduto = {};
       for (const mov of movimentos) {
         if (mov.tipo === 'saida') {
+          quantEstornarPorProduto[mov.produto_id] = (quantEstornarPorProduto[mov.produto_id] || 0) + (mov.quantidade || 0);
           await base44.entities.MovimentoEstoque.create({
             produto_id: mov.produto_id,
             produto_nome: mov.produto_nome,
@@ -253,6 +255,13 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
             data_movimento: new Date().toISOString(),
             observacoes: `Estorno do atendimento ${atendimento.placa}`,
           });
+        }
+      }
+      // Devolver estoque ao produto
+      for (const [produtoId, qtd] of Object.entries(quantEstornarPorProduto)) {
+        const produtoAtual = await base44.entities.Produto.get(produtoId).catch(() => null);
+        if (produtoAtual?.controla_estoque) {
+          await base44.entities.Produto.update(produtoId, { estoque_atual: (produtoAtual.estoque_atual || 0) + qtd });
         }
       }
 
