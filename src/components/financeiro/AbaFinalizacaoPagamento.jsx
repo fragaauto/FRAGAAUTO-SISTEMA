@@ -195,11 +195,66 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       });
     },
     onSuccess: () => {
-      toast.success('Lançado no caixa com sucesso!');
+      toast.success('✅ Lançado no caixa com sucesso! Atendimento bloqueado para edição.');
       queryClient.invalidateQueries(['atendimento']);
       onUpdate?.();
     },
     onError: (e) => toast.error(e.message || 'Erro ao lançar no caixa'),
+  });
+
+  const estornarMutation = useMutation({
+    mutationFn: async () => {
+      // Estornar lançamentos financeiros do atendimento
+      const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ atendimento_id: atendimento.id });
+      for (const lanc of lancamentos) {
+        if (!lanc.estornado) {
+          await base44.entities.LancamentoFinanceiro.update(lanc.id, { estornado: true });
+          // Criar lançamento de estorno
+          await base44.entities.LancamentoFinanceiro.create({
+            tipo: 'saida',
+            descricao: `ESTORNO - ${lanc.descricao}`,
+            valor: lanc.valor,
+            forma_pagamento: lanc.forma_pagamento,
+            atendimento_id: atendimento.id,
+            usuario: user?.email,
+            data_lancamento: new Date().toISOString(),
+            categoria: 'estorno',
+            estornado: false,
+          });
+        }
+      }
+
+      // Estornar movimentos de estoque
+      const movimentos = await base44.entities.MovimentoEstoque.filter({ atendimento_id: atendimento.id });
+      for (const mov of movimentos) {
+        if (mov.tipo === 'saida') {
+          await base44.entities.MovimentoEstoque.create({
+            produto_id: mov.produto_id,
+            produto_nome: mov.produto_nome,
+            tipo: 'estorno',
+            quantidade: mov.quantidade,
+            atendimento_id: atendimento.id,
+            usuario: user?.email,
+            data_movimento: new Date().toISOString(),
+            observacoes: `Estorno do atendimento ${atendimento.placa}`,
+          });
+        }
+      }
+
+      // Reabrir atendimento
+      await base44.entities.Atendimento.update(atendimento.id, {
+        status_pagamento: null,
+        status: 'concluido',
+        data_pagamento: null,
+        usuario_pagamento: null,
+      });
+    },
+    onSuccess: () => {
+      toast.success('Estorno realizado! Atendimento reaberto para edição.');
+      queryClient.invalidateQueries(['atendimento']);
+      onUpdate?.();
+    },
+    onError: (e) => toast.error(e.message || 'Erro ao estornar'),
   });
 
   return (
