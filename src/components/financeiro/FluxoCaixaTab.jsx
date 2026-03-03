@@ -28,6 +28,12 @@ export default function FluxoCaixaTab() {
   const [filtroForma, setFiltroForma] = useState('todos');
   const [showNovo, setShowNovo] = useState(false);
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.LancamentoFinanceiro.delete(id),
+    onSuccess: () => { toast.success('Movimentação excluída'); qc.invalidateQueries(['lancamentos-todos']); },
+    onError: () => toast.error('Erro ao excluir'),
+  });
+
   const { data: lancamentos = [], isLoading } = useQuery({
     queryKey: ['lancamentos-todos'],
     queryFn: () => base44.entities.LancamentoFinanceiro.filter({ estornado: false }),
