@@ -572,10 +572,18 @@ export default function VerAtendimento() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
       {/* Botões de ação rápida - sempre visíveis */}
+      {pagamentoLancado && (
+        <div className="flex items-center gap-2 mb-4 p-3 bg-green-50 border border-green-300 rounded-xl text-green-800">
+          <Lock className="w-4 h-4 flex-shrink-0" />
+          <span className="text-sm font-semibold">Atendimento finalizado — pagamento lançado no caixa. Edições bloqueadas.</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-6">
         <Button
           className="bg-purple-600 hover:bg-purple-700 h-auto py-3"
           onClick={() => setShowAssistenteIA(true)}
+          disabled={pagamentoLancado}
         >
           <div className="flex flex-col items-center gap-1">
             <Sparkles className="w-5 h-5" />
@@ -584,6 +592,7 @@ export default function VerAtendimento() {
         </Button>
         <Button
           className="bg-orange-500 hover:bg-orange-600 h-auto py-3"
+          disabled={pagamentoLancado}
           onClick={async () => {
             try {
               await base44.auth.me();
@@ -602,6 +611,7 @@ export default function VerAtendimento() {
         <Button
           variant="outline"
           className="h-auto py-3"
+          disabled={pagamentoLancado}
           onClick={async () => {
             try {
               await base44.auth.me();
