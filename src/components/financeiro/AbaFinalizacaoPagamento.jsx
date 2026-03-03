@@ -360,6 +360,58 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         Salvar Observações
       </Button>
 
+      {/* Técnicos Responsáveis */}
+      <Card className={tecnicosSelecionados.length === 0 && !jaLancado ? 'border-red-300 bg-red-50' : ''}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <Wrench className="w-4 h-4 text-blue-500" />
+            Técnicos Responsáveis
+            <Badge variant="outline" className="text-xs text-red-600 border-red-300">Obrigatório</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {/* Selecionados */}
+          {tecnicosSelecionados.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tecnicosSelecionados.map(t => (
+                <div key={t.id} className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
+                  <Wrench className="w-3 h-3" />
+                  {t.nome}
+                  {!jaLancado && (
+                    <button onClick={() => removeTecnico(t.id)} className="ml-1 hover:text-red-600">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!jaLancado && (
+            <>
+              {tecnicos.length === 0 ? (
+                <p className="text-xs text-slate-500">Nenhum técnico cadastrado. Vá em Usuários e defina o perfil "Técnico".</p>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {tecnicos.filter(t => !tecnicosSelecionados.find(s => s.id === t.id)).map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => addTecnico(t)}
+                      className="px-2 py-1 rounded text-xs border border-blue-200 text-blue-700 hover:bg-blue-50 transition-all"
+                    >
+                      + {t.full_name || t.email}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {tecnicosSelecionados.length === 0 && (
+                <p className="text-xs text-red-500 font-medium">⚠ Selecione ao menos um técnico para lançar no caixa</p>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Desconto */}
       <Card>
         <CardHeader className="pb-2">
