@@ -138,7 +138,7 @@ export default function Layout({ children, currentPageName }) {
               </div>
             </Link>
           </div>
-          <div className="flex-1 p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
+          <div className="flex-1 p-4 overflow-y-auto" style={{overflowY: 'auto', scrollbarWidth: 'thin'}}>
             <NavLinks />
           </div>
         </div>
