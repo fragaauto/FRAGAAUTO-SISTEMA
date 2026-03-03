@@ -464,9 +464,54 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
 
       {/* Botão Lançar no Caixa */}
       {jaLancado ? (
-        <div className="flex items-center justify-center gap-2 py-4 text-green-700 bg-green-50 rounded-xl border border-green-200">
-          <CheckCircle2 className="w-5 h-5" />
-          <span className="font-semibold">Já lançado no caixa</span>
+        <div className="space-y-3">
+          <div className="flex items-center justify-center gap-3 py-5 text-green-700 bg-green-50 rounded-xl border-2 border-green-300">
+            <Lock className="w-6 h-6" />
+            <div className="text-center">
+              <p className="font-bold text-lg">Lançado no Caixa</p>
+              <p className="text-sm text-green-600">
+                {atendimento.data_pagamento
+                  ? `em ${new Date(atendimento.data_pagamento).toLocaleString('pt-BR')}`
+                  : ''}
+                {atendimento.usuario_pagamento ? ` por ${atendimento.usuario_pagamento.split('@')[0]}` : ''}
+              </p>
+            </div>
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="w-full border-red-300 text-red-600 hover:bg-red-50">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Estornar e Reabrir Atendimento
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                  Confirmar Estorno?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação irá:<br />
+                  • Estornar todos os lançamentos financeiros deste atendimento<br />
+                  • Reverter as baixas de estoque<br />
+                  • Reabrir o atendimento para edição<br /><br />
+                  Esta operação não pode ser desfeita automaticamente.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => estornarMutation.mutate()}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {estornarMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-2" />}
+                  Confirmar Estorno
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       ) : (
         <Button
