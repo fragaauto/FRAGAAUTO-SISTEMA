@@ -429,6 +429,7 @@ export default function Atendimentos() {
           <div className="space-y-3">
             {filteredAtendimentos.map((atendimento, index) => {
               const isSelecionado = selecionados.includes(atendimento.id);
+              const pago = !!atendimento.status_pagamento && atendimento.status_pagamento !== null;
               return (
                 <motion.div
                   key={atendimento.id}
@@ -437,24 +438,32 @@ export default function Atendimentos() {
                   transition={{ delay: index * 0.03 }}
                 >
                   <Card
-                    className={`transition-all border-2 ${isSelecionado ? 'border-orange-300 bg-orange-50' : 'hover:shadow-lg hover:border-orange-200 cursor-pointer'}`}
-                    onClick={() => !isSelecionado && navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
+                    className={`transition-all border-2 ${
+                      pago
+                        ? 'border-green-200 bg-green-50/60'
+                        : isSelecionado
+                        ? 'border-orange-300 bg-orange-50'
+                        : 'hover:shadow-lg hover:border-orange-200 cursor-pointer'
+                    }`}
+                    onClick={() => !isSelecionado && !pago && navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         {/* Checkbox */}
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            checked={isSelecionado}
-                            onCheckedChange={(checked) => {
-                              setSelecionados(prev => checked ? [...prev, atendimento.id] : prev.filter(x => x !== atendimento.id));
-                            }}
-                          />
-                        </div>
+                        {!pago && (
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={isSelecionado}
+                              onCheckedChange={(checked) => {
+                                setSelecionados(prev => checked ? [...prev, atendimento.id] : prev.filter(x => x !== atendimento.id));
+                              }}
+                            />
+                          </div>
+                        )}
 
-                        {/* Ícone carro */}
-                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <Car className="w-5 h-5 text-slate-600" />
+                        {/* Ícone */}
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${pago ? 'bg-green-100' : 'bg-slate-100'}`}>
+                          {pago ? <Lock className="w-5 h-5 text-green-600" /> : <Car className="w-5 h-5 text-slate-600" />}
                         </div>
 
                         {/* Dados */}
@@ -462,6 +471,11 @@ export default function Atendimentos() {
                           <div className="flex flex-wrap items-center gap-2 mb-0.5">
                             <h3 className="font-bold text-slate-800">{atendimento.placa}</h3>
                             <StatusBadge statusValue={atendimento.status} statusPersonalizados={statusPersonalizados} />
+                            {pago && (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-600 text-white">
+                                <CheckCircle2 className="w-3 h-3" /> Pago
+                              </span>
+                            )}
                           </div>
                           <p className="text-sm text-slate-600 truncate">
                             {atendimento.marca} {atendimento.modelo} {atendimento.ano && `• ${atendimento.ano}`}
@@ -470,20 +484,55 @@ export default function Atendimentos() {
                             <p className="text-xs text-slate-500">{atendimento.cliente_nome}</p>
                           )}
 
-                          {/* Select de status individual */}
-                          <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                            <StatusSelect
-                              value={atendimento.status}
-                              onChange={(novoStatus) => handleAlterarStatusIndividual(atendimento.id, novoStatus, atendimento.status)}
-                              statusPersonalizados={statusPersonalizados}
-                            />
-                          </div>
+                          {/* Status select — apenas se não pago */}
+                          {!pago && (
+                            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                              <StatusSelect
+                                value={atendimento.status}
+                                onChange={(novoStatus) => handleAlterarStatusIndividual(atendimento.id, novoStatus, atendimento.status)}
+                                statusPersonalizados={statusPersonalizados}
+                              />
+                            </div>
+                          )}
+
+                          {/* Ações para atendimento pago */}
+                          {pago && (
+                            <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="outline" className="h-7 text-xs border-red-200 text-red-600 hover:bg-red-50 px-2">
+                                    <RotateCcw className="w-3 h-3 mr-1" /> Estornar
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar estorno?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Todos os lançamentos financeiros serão estornados e o estoque revertido. O atendimento será reaberto para edição.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={(e) => estornarPagamento(atendimento, e)}>
+                                      Confirmar Estorno
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                              <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={(e) => imprimirAtendimento(atendimento, e)}>
+                                <Printer className="w-3 h-3 mr-1" /> Imprimir
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50 px-2" onClick={(e) => enviarWhatsApp(atendimento, e)}>
+                                <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
+                              </Button>
+                            </div>
+                          )}
                         </div>
 
                         {/* Valor e data */}
                         <div className="text-right flex-shrink-0 hidden sm:block">
-                          <p className="font-bold text-green-600 text-sm">
-                            R$ {atendimento.valor_final?.toFixed(2) || '0.00'}
+                          <p className={`font-bold text-sm ${pago ? 'text-green-700' : 'text-green-600'}`}>
+                            R$ {(pago ? atendimento.valor_final_pago : atendimento.valor_final)?.toFixed(2) || '0.00'}
                           </p>
                           <p className="text-xs text-slate-500 flex items-center gap-1 justify-end">
                             <Calendar className="w-3 h-3" />
@@ -492,11 +541,19 @@ export default function Atendimentos() {
                               : format(new Date(atendimento.created_date), "dd/MM/yyyy", { locale: ptBR })
                             }
                           </p>
+                          {pago && atendimento.data_pagamento && (
+                            <p className="text-xs text-green-600 font-medium mt-0.5">
+                              Pago: {format(new Date(atendimento.data_pagamento), "dd/MM", { locale: ptBR })}
+                            </p>
+                          )}
                         </div>
-                        <ArrowRight
-                          className="w-5 h-5 text-slate-400 flex-shrink-0 hidden sm:block"
-                          onClick={() => navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
-                        />
+
+                        {!pago && (
+                          <ArrowRight
+                            className="w-5 h-5 text-slate-400 flex-shrink-0 hidden sm:block"
+                            onClick={() => navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
+                          />
+                        )}
                       </div>
                     </CardContent>
                   </Card>
