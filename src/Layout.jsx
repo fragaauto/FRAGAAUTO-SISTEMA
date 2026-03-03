@@ -122,8 +122,8 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-white border-r border-slate-200">
-          <div className="p-6 border-b border-slate-200">
+        <div className="flex flex-col bg-white border-r border-slate-200 h-screen">
+          <div className="p-6 border-b border-slate-200 flex-shrink-0">
             <Link to={createPageUrl('Home')} className="flex items-center gap-3">
               <img src="/logo.png" alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
                 e.target.style.display = 'none';
