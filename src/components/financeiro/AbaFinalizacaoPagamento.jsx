@@ -63,7 +63,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   };
 
   const valorBase = atendimento.valor_final || atendimento.subtotal || 0;
-  const jaLancado = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial';
+  const jaLancado = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial' || atendimento.status_pagamento === 'faturado';
 
   const [obsInterna, setObsInterna] = useState(atendimento.obs_interna || '');
   const [obsExterna, setObsExterna] = useState(atendimento.obs_externa || '');
