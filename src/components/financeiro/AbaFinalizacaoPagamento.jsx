@@ -292,39 +292,71 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {pagamentos.map((pag, i) => (
-            <div key={i} className="flex gap-2 items-center">
-              <div className="grid grid-cols-2 gap-2 flex-1">
-                <div className="flex flex-wrap gap-1">
-                  {FORMAS.map(f => (
-                    <button
-                      key={f.value}
-                      onClick={() => updatePagamento(i, 'forma', f.value)}
-                      className={`px-2 py-1 rounded text-xs border transition-all ${
-                        pag.forma === f.value
-                          ? 'bg-orange-500 text-white border-orange-500'
-                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
+          {pagamentos.map((pag, i) => {
+            const taxa = pag.forma === 'cartao_credito' && parcelasSelecionadas[i] > 1
+              ? getTaxaParcela(parcelasSelecionadas[i])
+              : getTaxaForma(pag.forma);
+            const liquido = calcValorLiquido(pag, i);
+            const mostraTaxa = taxa > 0;
+
+            return (
+              <div key={i} className="p-3 border border-slate-200 rounded-lg space-y-2">
+                <div className="flex gap-2 items-start">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex flex-wrap gap-1">
+                      {FORMAS.map(f => (
+                        <button
+                          key={f.value}
+                          onClick={() => {
+                            updatePagamento(i, 'forma', f.value);
+                            setParcelasSelecionadas(prev => ({ ...prev, [i]: 1 }));
+                          }}
+                          className={`px-2 py-1 rounded text-xs border transition-all ${
+                            pag.forma === f.value
+                              ? 'bg-orange-500 text-white border-orange-500'
+                              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        type="number"
+                        value={pag.valor}
+                        onChange={e => updatePagamento(i, 'valor', e.target.value)}
+                        placeholder="R$ 0,00"
+                        className="text-right flex-1"
+                      />
+                      {pag.forma === 'cartao_credito' && parcelasConfig.length > 0 && (
+                        <select
+                          value={parcelasSelecionadas[i] || 1}
+                          onChange={e => setParcelasSelecionadas(prev => ({ ...prev, [i]: parseInt(e.target.value) }))}
+                          className="border border-slate-200 rounded px-2 py-2 text-sm bg-white"
+                        >
+                          <option value={1}>1x (à vista)</option>
+                          {parcelasConfig.sort((a, b) => a.parcelas - b.parcelas).map(p => (
+                            <option key={p.parcelas} value={p.parcelas}>{p.parcelas}x</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    {mostraTaxa && (
+                      <p className="text-xs text-slate-400">
+                        Taxa: {taxa}% → Líquido: <span className="font-semibold text-green-700">R$ {liquido.toFixed(2)}</span>
+                      </p>
+                    )}
+                  </div>
+                  {pagamentos.length > 1 && (
+                    <Button size="icon" variant="ghost" onClick={() => removePagamento(i)}>
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </Button>
+                  )}
                 </div>
-                <Input
-                  type="number"
-                  value={pag.valor}
-                  onChange={e => updatePagamento(i, 'valor', e.target.value)}
-                  placeholder="R$ 0,00"
-                  className="text-right"
-                />
               </div>
-              {pagamentos.length > 1 && (
-                <Button size="icon" variant="ghost" onClick={() => removePagamento(i)}>
-                  <Trash2 className="w-4 h-4 text-red-400" />
-                </Button>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 
