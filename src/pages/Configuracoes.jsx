@@ -69,6 +69,16 @@ export default function Configuracoes() {
     lembrete_checklist_ativo: config.lembrete_checklist_ativo ?? false,
     lembrete_checklist_intervalo: config.lembrete_checklist_intervalo || 30,
     lembrete_checklist_whatsapp: config.lembrete_checklist_whatsapp || '',
+    agenda_google_api_key: config.agenda_google_api_key || '',
+    agenda_google_sheets_id: config.agenda_google_sheets_id || '',
+    agenda_google_sheets_aba: config.agenda_google_sheets_aba || 'Agendamentos',
+    agenda_sheets_col_data: config.agenda_sheets_col_data || 'A',
+    agenda_sheets_col_hora: config.agenda_sheets_col_hora || 'B',
+    agenda_sheets_col_cliente: config.agenda_sheets_col_cliente || 'C',
+    agenda_sheets_col_servico: config.agenda_sheets_col_servico || 'D',
+    agenda_sheets_col_placa: config.agenda_sheets_col_placa || 'E',
+    agenda_sheets_col_obs: config.agenda_sheets_col_obs || 'F',
+    agenda_google_calendar_id: config.agenda_google_calendar_id || '',
   });
 
   React.useEffect(() => {
