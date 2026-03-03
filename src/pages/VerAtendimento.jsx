@@ -1233,6 +1233,20 @@ export default function VerAtendimento() {
           </TabsContent>
 
           <TabsContent value="orcamento" className="space-y-4">
+            <AdicionarItemOrcamento
+              atendimento={atendimento}
+              produtos={produtos}
+              user={user}
+              onSave={(itensAtualizados) => {
+                const subtotal_queixa = (atendimento.itens_queixa || []).reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
+                const subtotal_checklist = itensAtualizados.reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
+                const subtotal = subtotal_queixa + subtotal_checklist;
+                const valor_final = subtotal - (Number(atendimento.desconto) || 0);
+                updateMutation.mutate({ itens_orcamento: itensAtualizados, subtotal_checklist, subtotal, valor_final });
+              }}
+              isLoading={updateMutation.isPending}
+            />
+
             {checklistAssinado && isAdmin && (
               <Card className="bg-amber-50 border-amber-200">
                 <CardContent className="pt-6">
