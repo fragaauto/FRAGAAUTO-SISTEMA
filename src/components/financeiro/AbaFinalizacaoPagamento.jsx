@@ -71,6 +71,17 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const totalPago = pagamentos.reduce((s, p) => s + (parseFloat(p.valor) || 0), 0);
   const diferenca = totalPago - totalComDesconto;
 
+  // Calcula valor líquido por pagamento (descontando taxa da maquininha)
+  const calcValorLiquido = (pag, idx) => {
+    const valor = parseFloat(pag.valor) || 0;
+    let taxa = getTaxaForma(pag.forma);
+    if (pag.forma === 'cartao_credito' && parcelasSelecionadas[idx] > 1) {
+      taxa = getTaxaParcela(parcelasSelecionadas[idx]);
+    }
+    return valor * (1 - taxa / 100);
+  };
+  const totalLiquido = pagamentos.reduce((s, p, i) => s + calcValorLiquido(p, i), 0);
+
   const addPagamento = () => setPagamentos([...pagamentos, { forma: 'dinheiro', valor: 0 }]);
   const removePagamento = (i) => setPagamentos(pagamentos.filter((_, idx) => idx !== i));
   const updatePagamento = (i, field, val) => {
