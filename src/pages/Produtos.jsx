@@ -285,13 +285,17 @@ export default function Produtos() {
       codigo: '',
       nome: '',
       categoria: '',
+      unidade: 'unidade',
       valor: '',
       descricao: '',
       vantagens: '',
       desvantagens: '',
       aplicacao_universal: false,
       modelos_compativeis: [],
-      ativo: true
+      ativo: true,
+      controla_estoque: false,
+      estoque_atual: 0,
+      estoque_minimo: 0
     });
   };
 
