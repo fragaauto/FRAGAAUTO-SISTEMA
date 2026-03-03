@@ -349,6 +349,13 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
+        <TaxasMaquininha
+          taxas={formData.taxas_pagamento}
+          parcelas={formData.parcelas_credito}
+          onChangeTaxas={(val) => setFormData(prev => ({ ...prev, taxas_pagamento: val }))}
+          onChangeParcelas={(val) => setFormData(prev => ({ ...prev, parcelas_credito: val }))}
+        />
+
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
