@@ -33,7 +33,8 @@ import {
   Save,
   Search,
   Plus,
-  Sparkles
+  Sparkles,
+  Lock
 } from 'lucide-react';
 import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
 import AssistenteIAModal from '../components/atendimento/AssistenteIAModal';
