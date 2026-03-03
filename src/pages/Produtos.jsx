@@ -1261,6 +1261,23 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
               </Select>
             </div>
             <div>
+              <Label>Unidade</Label>
+              <Select
+                value={formData.unidade || 'unidade'}
+                onValueChange={(value) => setFormData({ ...formData, unidade: value })}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unidade">Unidade</SelectItem>
+                  <SelectItem value="par">Par</SelectItem>
+                  <SelectItem value="jogo">Jogo</SelectItem>
+                  <SelectItem value="kit">Kit</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label>Valor *</Label>
               <Input
                 type="number"
