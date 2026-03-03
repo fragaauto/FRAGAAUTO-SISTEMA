@@ -488,7 +488,12 @@ export default function Produtos() {
       const codigoIdx = getHeaderIndex(['codigo', 'código', 'code']);
       const nomeIdx = getHeaderIndex(['nome', 'name', 'produto', 'servico', 'serviço']);
       const categoriaIdx = getHeaderIndex(['categoria', 'category', 'tipo']);
+      const unidadeIdx = getHeaderIndex(['unidade', 'unit', 'tipo_unidade']);
       const valorIdx = getHeaderIndex(['valor', 'preco', 'preço', 'price']);
+      const custoIdx = getHeaderIndex(['custo', 'cost', 'preco_custo', 'preço_custo']);
+      const controlaEstoqueIdx = getHeaderIndex(['controla_estoque', 'estoque', 'controla estoque']);
+      const estoqueAtualIdx = getHeaderIndex(['estoque_atual', 'quantidade', 'qtd', 'qty']);
+      const estoqueMinimoIdx = getHeaderIndex(['estoque_minimo', 'minimo', 'mínimo', 'min']);
       const descricaoIdx = getHeaderIndex(['descricao', 'descrição', 'description', 'obs', 'observacao', 'observação']);
       const vantagensIdx = getHeaderIndex(['vantagens', 'beneficios', 'benefícios', 'vantagens_de_fazer', 'vantagens_fazer']);
       const desvantagensIdx = getHeaderIndex(['desvantagens', 'riscos', 'desvantagens_nao_fazer', 'desvantagens_de_nao_fazer']);
