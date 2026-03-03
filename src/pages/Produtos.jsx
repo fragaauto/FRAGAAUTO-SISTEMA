@@ -1346,6 +1346,44 @@ P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora 
               </p>
             </div>
 
+            {/* Estoque */}
+            <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="controla-estoque"
+                  checked={formData.controla_estoque}
+                  onCheckedChange={(checked) => setFormData({ ...formData, controla_estoque: checked })}
+                />
+                <label htmlFor="controla-estoque" className="font-medium cursor-pointer text-sm">
+                  Controlar estoque físico
+                </label>
+              </div>
+              {formData.controla_estoque && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Estoque Atual</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={formData.estoque_atual}
+                      onChange={(e) => setFormData({ ...formData, estoque_atual: parseFloat(e.target.value) || 0 })}
+                      className="h-10"
+                    />
+                  </div>
+                  <div>
+                    <Label>Estoque Mínimo</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={formData.estoque_minimo}
+                      onChange={(e) => setFormData({ ...formData, estoque_minimo: parseFloat(e.target.value) || 0 })}
+                      className="h-10"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-3 p-4 bg-slate-100 rounded-lg border">
               <div className="flex items-center gap-3">
                 <Checkbox
