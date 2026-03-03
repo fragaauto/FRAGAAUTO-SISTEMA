@@ -63,9 +63,20 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     return p?.taxa_percentual || 0;
   };
 
+  // Buscar técnicos cadastrados
+  const { data: tecnicos = [] } = useQuery({
+    queryKey: ['tecnicos'],
+    queryFn: async () => {
+      const all = await base44.entities.User.list();
+      return all.filter(u => u.role === 'tecnico');
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const valorBase = atendimento.valor_final || atendimento.subtotal || 0;
   const jaLancado = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial' || atendimento.status_pagamento === 'faturado';
 
+  const [tecnicosSelecionados, setTecnicosSelecionados] = useState(atendimento.tecnicos_responsaveis || []);
   const [obsInterna, setObsInterna] = useState(atendimento.obs_interna || '');
   const [obsExterna, setObsExterna] = useState(atendimento.obs_externa || '');
   const [descontoTipo, setDescontoTipo] = useState('valor');
