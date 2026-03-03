@@ -244,13 +244,17 @@ export default function Produtos() {
         codigo: produto.codigo || '',
         nome: produto.nome,
         categoria: produto.categoria,
+        unidade: produto.unidade || 'unidade',
         valor: produto.valor,
         descricao: produto.descricao || '',
         vantagens: produto.vantagens || '',
         desvantagens: produto.desvantagens || '',
         aplicacao_universal: produto.aplicacao_universal !== false,
         modelos_compativeis: produto.modelos_compativeis || [],
-        ativo: produto.ativo !== false
+        ativo: produto.ativo !== false,
+        controla_estoque: produto.controla_estoque || false,
+        estoque_atual: produto.estoque_atual ?? 0,
+        estoque_minimo: produto.estoque_minimo ?? 0
       });
     } else {
       setEditingProduto(null);
@@ -258,13 +262,17 @@ export default function Produtos() {
         codigo: '',
         nome: '',
         categoria: '',
+        unidade: 'unidade',
         valor: '',
         descricao: '',
         vantagens: '',
         desvantagens: '',
         aplicacao_universal: false,
         modelos_compativeis: [],
-        ativo: true
+        ativo: true,
+        controla_estoque: false,
+        estoque_atual: 0,
+        estoque_minimo: 0
       });
     }
     setShowModal(true);
