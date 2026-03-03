@@ -176,6 +176,10 @@ export default function Dashboard() {
           ))}
         </div>
 
+        <div className="mt-6">
+          <AgendaHoje />
+        </div>
+
         <Card className="mt-6">
           <CardHeader>
             <CardTitle>Atendimentos Recentes</CardTitle>

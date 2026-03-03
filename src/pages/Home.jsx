@@ -261,6 +261,11 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Agenda */}
+      <div className="max-w-6xl mx-auto px-4 pb-4">
+        <AgendaHoje />
+      </div>
+
       {/* Dashboard Stats */}
       <div className="bg-white border-t border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-12">
