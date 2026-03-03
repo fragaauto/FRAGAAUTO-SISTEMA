@@ -126,9 +126,32 @@ export default function FluxoCaixaTab() {
                   </p>
                 </div>
               </div>
-              <p className={`font-bold text-sm ${l.tipo === 'entrada' ? 'text-green-600' : 'text-red-500'}`}>
-                {l.tipo === 'entrada' ? '+' : '-'} R$ {(l.valor || 0).toFixed(2)}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className={`font-bold text-sm ${l.tipo === 'entrada' ? 'text-green-600' : 'text-red-500'}`}>
+                  {l.tipo === 'entrada' ? '+' : '-'} R$ {(l.valor || 0).toFixed(2)}
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="icon" variant="ghost" className="w-7 h-7 text-slate-400 hover:text-red-500">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir movimentação?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        "{l.descricao}" — R$ {(l.valor || 0).toFixed(2)}<br />Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => deleteMutation.mutate(l.id)} className="bg-red-600 hover:bg-red-700">
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           ))
         )}
