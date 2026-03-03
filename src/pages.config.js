@@ -47,6 +47,7 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import Agenda from './pages/Agenda';
 import AprovarOrcamento from './pages/AprovarOrcamento';
 import AssistenteIA from './pages/AssistenteIA';
 import Atendimentos from './pages/Atendimentos';
@@ -56,6 +57,7 @@ import Configuracoes from './pages/Configuracoes';
 import Dashboard from './pages/Dashboard';
 import EditarAtendimento from './pages/EditarAtendimento';
 import EditarQueixa from './pages/EditarQueixa';
+import Financeiro from './pages/Financeiro';
 import GerenciarChecklist from './pages/GerenciarChecklist';
 import Home from './pages/Home';
 import ManualTreinamento from './pages/ManualTreinamento';
@@ -66,12 +68,11 @@ import Remarketing from './pages/Remarketing';
 import ServicosReprovados from './pages/ServicosReprovados';
 import Usuarios from './pages/Usuarios';
 import VerAtendimento from './pages/VerAtendimento';
-import Financeiro from './pages/Financeiro';
-import Agenda from './pages/Agenda';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Agenda": Agenda,
     "AprovarOrcamento": AprovarOrcamento,
     "AssistenteIA": AssistenteIA,
     "Atendimentos": Atendimentos,
@@ -81,6 +82,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "EditarAtendimento": EditarAtendimento,
     "EditarQueixa": EditarQueixa,
+    "Financeiro": Financeiro,
     "GerenciarChecklist": GerenciarChecklist,
     "Home": Home,
     "ManualTreinamento": ManualTreinamento,
@@ -91,8 +93,6 @@ export const PAGES = {
     "ServicosReprovados": ServicosReprovados,
     "Usuarios": Usuarios,
     "VerAtendimento": VerAtendimento,
-    "Financeiro": Financeiro,
-    "Agenda": Agenda,
 }
 
 export const pagesConfig = {

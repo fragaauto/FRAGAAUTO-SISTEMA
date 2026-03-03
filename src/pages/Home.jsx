@@ -235,6 +235,11 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Agenda */}
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-2">
+        <AgendaHoje />
+      </div>
+
       {/* Features Grid */}
       <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">
         <motion.div
@@ -259,11 +264,6 @@ export default function Home() {
 
           )}
         </div>
-      </div>
-
-      {/* Agenda */}
-      <div className="max-w-6xl mx-auto px-4 pb-4">
-        <AgendaHoje />
       </div>
 
       {/* Dashboard Stats */}
