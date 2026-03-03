@@ -51,6 +51,7 @@ import AprovarOrcamento from './pages/AprovarOrcamento';
 import AssistenteIA from './pages/AssistenteIA';
 import Atendimentos from './pages/Atendimentos';
 import Clientes from './pages/Clientes';
+import Compras from './pages/Compras';
 import Configuracoes from './pages/Configuracoes';
 import Dashboard from './pages/Dashboard';
 import EditarAtendimento from './pages/EditarAtendimento';
@@ -66,7 +67,6 @@ import ServicosReprovados from './pages/ServicosReprovados';
 import Usuarios from './pages/Usuarios';
 import VerAtendimento from './pages/VerAtendimento';
 import Financeiro from './pages/Financeiro';
-import Compras from './pages/Compras';
 import __Layout from './Layout.jsx';
 
 
@@ -75,6 +75,7 @@ export const PAGES = {
     "AssistenteIA": AssistenteIA,
     "Atendimentos": Atendimentos,
     "Clientes": Clientes,
+    "Compras": Compras,
     "Configuracoes": Configuracoes,
     "Dashboard": Dashboard,
     "EditarAtendimento": EditarAtendimento,
@@ -90,7 +91,6 @@ export const PAGES = {
     "Usuarios": Usuarios,
     "VerAtendimento": VerAtendimento,
     "Financeiro": Financeiro,
-    "Compras": Compras,
 }
 
 export const pagesConfig = {

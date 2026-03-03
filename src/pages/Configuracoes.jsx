@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import GerenciarStatus from '@/components/configuracoes/GerenciarStatus';
+import TaxasMaquininha from '@/components/configuracoes/TaxasMaquininha';
 
 export default function Configuracoes() {
   const queryClient = useQueryClient();
