@@ -616,7 +616,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       ) : (
         <Button
           onClick={() => lancarCaixaMutation.mutate()}
-          disabled={lancarCaixaMutation.isPending || Math.abs(diferenca) > 0.01}
+          disabled={lancarCaixaMutation.isPending || Math.abs(diferenca) > 0.01 || tecnicosSelecionados.length === 0}
           className="w-full h-14 text-base font-bold bg-green-600 hover:bg-green-700"
         >
           {lancarCaixaMutation.isPending ? (
