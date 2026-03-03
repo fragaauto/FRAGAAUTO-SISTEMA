@@ -930,16 +930,39 @@ export default function Produtos() {
   };
 
   const downloadTemplate = () => {
-    // Adicionar BOM UTF-8 para garantir que Excel abra corretamente com acentos
-    const BOM = '\uFEFF';
-    const csvContent = `codigo;nome;categoria;valor;descricao;vantagens;desvantagens
-P001;"Troca de motor de vidro elétrico";"eletrica";150.00;"Serviço completo de substituição";"Restaura o funcionamento completo do vidro, evita acidentes e melhora o conforto";"Sem o reparo, o vidro pode travar aberto ou fechado, comprometendo segurança e conforto"
-P002;"Regulagem de fechadura";"portas";89.90;"Ajuste e lubrificação";"Melhora o fechamento da porta, evita desgaste prematuro das travas";"Porta pode não fechar corretamente, permitindo entrada de água, sujeira e até furtos"`;
-    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'modelo_produtos.csv';
-    link.click();
+    const wb = XLSX.utils.book_new();
+    const headers = ['codigo', 'nome', 'categoria', 'unidade', 'valor', 'custo', 'controla_estoque', 'estoque_atual', 'estoque_minimo', 'descricao', 'vantagens', 'desvantagens'];
+    const rows = [
+      ['P001', 'Troca de motor de vidro elétrico', 'eletrica', 'unidade', 150.00, 80.00, 'sim', 5, 2, 'Serviço completo de substituição', 'Restaura o funcionamento completo do vidro', 'Vidro pode travar aberto ou fechado'],
+      ['P002', 'Regulagem de fechadura', 'portas', 'unidade', 89.90, 0, 'não', 0, 0, 'Ajuste e lubrificação', 'Melhora o fechamento da porta', 'Porta pode não fechar corretamente'],
+      ['P003', 'Kit película solar completo', 'estetica', 'kit', 350.00, 120.00, 'sim', 10, 3, 'Proteção UV e privacidade', 'Reduz calor e protege o interior', 'Exposição prolongada danifica bancos e painel'],
+      ['P004', 'Par de maçanetas externas', 'portas', 'par', 120.00, 60.00, 'sim', 8, 2, 'Reposição de peças originais', 'Melhora estética e funcionalidade', 'Maçaneta quebrada impede abertura da porta'],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    // Largura das colunas
+    ws['!cols'] = headers.map((h, i) => ({ wch: [8, 40, 12, 10, 8, 8, 16, 14, 15, 35, 50, 50][i] || 20 }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+    // Aba de instruções
+    const wsInfo = XLSX.utils.aoa_to_sheet([
+      ['INSTRUÇÕES DE PREENCHIMENTO'],
+      [],
+      ['Campo', 'Obrigatório', 'Valores Válidos', 'Exemplo'],
+      ['codigo', 'Sim', 'Texto livre (único)', 'P001'],
+      ['nome', 'Sim', 'Texto livre', 'Motor de vidro elétrico'],
+      ['categoria', 'Sim', 'eletrica | portas | acessorios | estetica | seguranca | vidros | limpeza | outros', 'eletrica'],
+      ['unidade', 'Não', 'unidade | par | jogo | kit', 'unidade'],
+      ['valor', 'Sim', 'Número (preço de venda)', '150.00'],
+      ['custo', 'Não', 'Número (custo de compra)', '80.00'],
+      ['controla_estoque', 'Não', 'sim | não', 'sim'],
+      ['estoque_atual', 'Não', 'Número inteiro', '5'],
+      ['estoque_minimo', 'Não', 'Número inteiro', '2'],
+      ['descricao', 'Não', 'Texto livre', 'Serviço completo'],
+      ['vantagens', 'Não', 'Texto livre (máx 500 chars)', 'Melhora a segurança'],
+      ['desvantagens', 'Não', 'Texto livre (máx 500 chars)', 'Risco de...'],
+    ]);
+    wsInfo['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 60 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, wsInfo, 'Instruções');
+    XLSX.writeFile(wb, 'modelo_produtos.xlsx');
   };
 
   return (
