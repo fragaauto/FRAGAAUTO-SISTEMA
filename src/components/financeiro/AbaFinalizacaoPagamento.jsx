@@ -381,6 +381,12 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
             <span>Total Informado</span>
             <span>R$ {totalPago.toFixed(2)}</span>
           </div>
+          {totalLiquido < totalPago && (
+            <div className="flex justify-between text-sm text-green-700 font-medium border-t pt-1">
+              <span>💵 Valor Líquido (após taxas)</span>
+              <span>R$ {totalLiquido.toFixed(2)}</span>
+            </div>
+          )}
           {Math.abs(diferenca) > 0.01 && (
             <div className={`flex items-center gap-1 text-sm font-medium ${diferenca > 0 ? 'text-blue-600' : 'text-red-600'}`}>
               <AlertTriangle className="w-4 h-4" />
