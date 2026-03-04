@@ -484,6 +484,20 @@ export default function Remarketing() {
           }}
         />
       )}
+
+      {envioEmMassaOpen && (
+        <EnvioEmMassaModal
+          itens={filaPorStatus.pendente.filter(i => selecionados.includes(i.id))}
+          config={config}
+          onClose={() => { setEnvioEmMassaOpen(false); setSelecionados([]); }}
+          onEnviado={(id) => {
+            updateFilaMutation.mutate({
+              id,
+              data: { status: 'enviado', dataUltimoEnvio: new Date().toISOString(), tentativas: 1 }
+            });
+          }}
+        />
+      )}
     </div>
   );
 }
