@@ -1,45 +1,69 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
+async function enviarViaEvolution(baseUrl, apiKey, instance, telefone, mensagem) {
+  let numero = telefone.replace(/\D/g, '');
+  if (numero.length === 10 || numero.length === 11) {
+    numero = `55${numero}`;
+  }
+
+  const resp = await fetch(`${baseUrl}/message/sendText/${instance}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': apiKey,
+    },
+    body: JSON.stringify({ number: numero, text: mensagem }),
+  });
+
+  if (!resp.ok) {
+    const body = await resp.text();
+    throw new Error(`Evolution API retornou ${resp.status}: ${body}`);
+  }
+  return await resp.json();
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
     const agora = new Date();
-    // Horário em America/Sao_Paulo
     const horaAtual = agora.toLocaleTimeString('pt-BR', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'America/Sao_Paulo',
-    }); // ex: "17:30"
+    });
 
-    const diaAtual = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getDay(); // 0-6
+    const diaAtual = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getDay();
+
+    // Buscar configurações
+    const configs = await base44.asServiceRole.entities.Configuracao.list();
+    const config = configs[0];
+
+    const evolutionOk = config?.evolution_api_url && config?.evolution_api_key && config?.evolution_instance;
+    const evolutionBase = evolutionOk ? config.evolution_api_url.replace(/\/$/, '') : null;
 
     // Buscar lembretes ativos
     const lembretes = await base44.asServiceRole.entities.LembreteWhatsApp.list();
     const ativos = lembretes.filter(l => l.ativo);
 
     let enviados = 0;
+    const erros = [];
 
     for (const lembrete of ativos) {
-      // Checar horário (compara HH:MM)
       const horarioLembrete = (lembrete.horario || '').trim();
       if (horarioLembrete !== horaAtual) continue;
 
-      // Checar dia da semana
       if (lembrete.dias_semana && lembrete.dias_semana.length > 0) {
         if (!lembrete.dias_semana.includes(diaAtual)) continue;
       }
 
-      // Checar se já foi enviado nesta janela (evitar reenvio em caso de múltiplas execuções no mesmo minuto)
       if (lembrete.ultimo_envio) {
-        const ultimoEnvio = new Date(lembrete.ultimo_envio);
-        const diffMin = (agora - ultimoEnvio) / (1000 * 60);
-        if (diffMin < 4) continue; // evita reenvio nos próximos 4 minutos
+        const diffMin = (agora - new Date(lembrete.ultimo_envio)) / (1000 * 60);
+        if (diffMin < 4) continue;
       }
 
       let mensagem = lembrete.mensagem;
 
-      // Se for do tipo resumo_agenda, gera o texto automaticamente
       if (lembrete.tipo === 'resumo_agenda') {
         const inicioDia = new Date(agora);
         inicioDia.setHours(0, 0, 0, 0);
@@ -82,30 +106,42 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Enviar para todas as conversas ativas (últimos 30 dias)
-      const conversas = await base44.asServiceRole.agents.listConversations('atendimento_whatsapp');
-      for (const c of conversas) {
-        const ultimaMsg = c.updated_date || c.created_date;
-        const diasDesdeUltima = (Date.now() - new Date(ultimaMsg)) / (1000 * 60 * 60 * 24);
-        if (diasDesdeUltima > 30) continue;
-
-        // Busca o objeto completo da conversa antes de enviar
-        const conversa = await base44.asServiceRole.agents.getConversation(c.id);
-        await base44.asServiceRole.agents.addMessage(conversa, {
-          role: 'assistant',
-          content: mensagem,
-        });
+      // Enviar via Evolution API se configurado
+      if (evolutionOk && config.lembrete_checklist_whatsapp) {
+        try {
+          await enviarViaEvolution(
+            evolutionBase,
+            config.evolution_api_key,
+            config.evolution_instance,
+            config.lembrete_checklist_whatsapp,
+            mensagem
+          );
+          enviados++;
+        } catch (e) {
+          erros.push(`Lembrete "${lembrete.nome}": ${e.message}`);
+        }
+      } else if (!evolutionOk) {
+        // Fallback: enviar via agente WhatsApp interno
+        const conversas = await base44.asServiceRole.agents.listConversations('atendimento_whatsapp');
+        for (const c of conversas) {
+          const diasDesde = (Date.now() - new Date(c.updated_date || c.created_date)) / (1000 * 60 * 60 * 24);
+          if (diasDesde > 30) continue;
+          const conversa = await base44.asServiceRole.agents.getConversation(c.id);
+          await base44.asServiceRole.agents.addMessage(conversa, { role: 'assistant', content: mensagem });
+        }
+        enviados++;
       }
 
-      // Marcar último envio
       await base44.asServiceRole.entities.LembreteWhatsApp.update(lembrete.id, {
         ultimo_envio: agora.toISOString(),
       });
-
-      enviados++;
     }
 
-    return Response.json({ message: `${enviados} lembrete(s) enviado(s) no horário ${horaAtual}.`, enviados });
+    return Response.json({
+      message: `${enviados} lembrete(s) enviado(s) no horário ${horaAtual}.`,
+      enviados,
+      erros: erros.length > 0 ? erros : undefined
+    });
 
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
