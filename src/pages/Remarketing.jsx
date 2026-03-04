@@ -34,16 +34,6 @@ const STATUS_CONFIG = {
 export default function Remarketing() {
   const queryClient = useQueryClient();
 
-  const { data: configs = [] } = useQuery({
-    queryKey: ['configuracoes'],
-    queryFn: () => base44.entities.Configuracao.list(),
-    staleTime: 5 * 60 * 1000,
-  });
-  const modulosAtivos = configs[0]?.modulos_ativos ?? null;
-  if (!paginaPermitida(modulosAtivos, 'Remarketing')) {
-    return <ModuloBloqueado nomeModulo="Remarketing" />;
-  }
-
   const [activeTab, setActiveTab] = useState('fila');
   const [mensagemModalItem, setMensagemModalItem] = useState(null);
   const [campanhModalOpen, setCampanhaModalOpen] = useState(false);
