@@ -382,11 +382,30 @@ export default function Clientes() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label>Nome *</Label>
+              <Label>Tipo de Pessoa *</Label>
+              <div className="flex gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, tipo_pessoa: 'fisica' })}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 transition-all text-sm font-medium ${formData.tipo_pessoa === 'fisica' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}
+                >
+                  <User className="w-4 h-4" /> Pessoa Física
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, tipo_pessoa: 'juridica' })}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border-2 transition-all text-sm font-medium ${formData.tipo_pessoa === 'juridica' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}
+                >
+                  <Building2 className="w-4 h-4" /> Pessoa Jurídica
+                </button>
+              </div>
+            </div>
+            <div>
+              <Label>Nome {formData.tipo_pessoa === 'juridica' ? '/ Razão Social' : ''} *</Label>
               <Input
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                placeholder="Nome completo"
+                placeholder={formData.tipo_pessoa === 'juridica' ? 'Razão social ou nome fantasia' : 'Nome completo'}
                 className="h-12"
               />
             </div>
