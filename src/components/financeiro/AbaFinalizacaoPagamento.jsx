@@ -595,6 +595,11 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         </CardContent>
       </Card>
 
+      {/* Recibo — aparece apenas após lançado */}
+      {jaLancado && (
+        <ReciboAtendimento atendimento={atendimento} config={config} />
+      )}
+
       {/* Botão Lançar no Caixa */}
       {jaLancado ? (
         <div className="space-y-3">
