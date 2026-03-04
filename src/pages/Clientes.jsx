@@ -134,6 +134,7 @@ export default function Clientes() {
       setEditingCliente(cliente);
       setFormData({
         nome: cliente.nome,
+        tipo_pessoa: cliente.tipo_pessoa || 'fisica',
         telefone: cliente.telefone,
         email: cliente.email || '',
         cpf_cnpj: cliente.cpf_cnpj || '',
@@ -143,6 +144,7 @@ export default function Clientes() {
       setEditingCliente(null);
       setFormData({
         nome: '',
+        tipo_pessoa: 'fisica',
         telefone: '',
         email: '',
         cpf_cnpj: '',
@@ -157,12 +159,16 @@ export default function Clientes() {
     setEditingCliente(null);
     setFormData({
       nome: '',
+      tipo_pessoa: 'fisica',
       telefone: '',
       email: '',
       cpf_cnpj: '',
       endereco: ''
     });
   };
+
+  const filtrosAtivos = filtroTipo !== 'todos' || filtroBloqueado !== 'todos' || filtroAtendimento !== 'todos';
+  const limparFiltros = () => { setFiltroTipo('todos'); setFiltroBloqueado('todos'); setFiltroAtendimento('todos'); };
 
   const handleSave = () => {
     if (!formData.nome || !formData.telefone) {
