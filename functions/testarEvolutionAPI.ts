@@ -1,0 +1,94 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { url, apiKey, instance } = await req.json();
+
+    if (!url || !apiKey || !instance) {
+      return Response.json({
+        ok: false,
+        mensagem: 'Preencha todos os campos antes de testar.',
+        detalhes: [
+          !url && '• URL da API está vazia.',
+          !apiKey && '• API Key está vazia.',
+          !instance && '• Nome da instância está vazio.',
+        ].filter(Boolean).join('\n')
+      });
+    }
+
+    const baseUrl = url.replace(/\/$/, '');
+
+    // 1. Verificar se a API responde
+    let apiResp;
+    try {
+      apiResp = await fetch(`${baseUrl}/instance/fetchInstances`, {
+        headers: { 'apikey': apiKey }
+      });
+    } catch (e) {
+      return Response.json({
+        ok: false,
+        mensagem: 'Não foi possível conectar à URL informada.',
+        detalhes: `Verifique se a URL está correta e acessível.\nDetalhe: ${e.message}`
+      });
+    }
+
+    if (apiResp.status === 401 || apiResp.status === 403) {
+      return Response.json({
+        ok: false,
+        mensagem: 'API Key inválida ou sem permissão.',
+        detalhes: 'Verifique a API Key global nas configurações da Evolution API.'
+      });
+    }
+
+    if (!apiResp.ok) {
+      return Response.json({
+        ok: false,
+        mensagem: `A API respondeu com erro HTTP ${apiResp.status}.`,
+        detalhes: 'Verifique se a URL está correta e se o servidor está rodando.'
+      });
+    }
+
+    const instances = await apiResp.json();
+    const lista = Array.isArray(instances) ? instances : (instances.data || []);
+
+    // 2. Verificar se a instância existe
+    const instanceFound = lista.find(i => i.name === instance || i.instance?.instanceName === instance);
+
+    if (!instanceFound) {
+      const nomes = lista.map(i => i.name || i.instance?.instanceName).filter(Boolean).join(', ') || 'nenhuma encontrada';
+      return Response.json({
+        ok: false,
+        mensagem: `Instância "${instance}" não encontrada.`,
+        detalhes: `Instâncias disponíveis: ${nomes}\n\nVerifique o nome exato da instância.`
+      });
+    }
+
+    // 3. Verificar se a instância está conectada
+    const status = instanceFound.connectionStatus || instanceFound.instance?.connectionStatus || instanceFound.state;
+
+    if (status && status !== 'open' && status !== 'connected') {
+      return Response.json({
+        ok: false,
+        mensagem: `Instância encontrada mas não está conectada ao WhatsApp.`,
+        detalhes: `Status atual: "${status}"\n\nAcesse o painel da Evolution API e conecte a instância via QR Code.`
+      });
+    }
+
+    return Response.json({
+      ok: true,
+      mensagem: `✅ Conexão OK! Instância "${instance}" conectada ao WhatsApp.`,
+      detalhes: `Status: ${status || 'conectado'}`
+    });
+
+  } catch (error) {
+    return Response.json({
+      ok: false,
+      mensagem: 'Erro inesperado ao testar conexão.',
+      detalhes: error.message
+    }, { status: 500 });
+  }
+});
