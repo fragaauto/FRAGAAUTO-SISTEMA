@@ -276,7 +276,8 @@ export default function Produtos() {
         ativo: produto.ativo !== false,
         controla_estoque: produto.controla_estoque || false,
         estoque_atual: produto.estoque_atual ?? 0,
-        estoque_minimo: produto.estoque_minimo ?? 0
+        estoque_minimo: produto.estoque_minimo ?? 0,
+        estoque_desejado: produto.estoque_desejado ?? 0
       });
     } else {
       setEditingProduto(null);
