@@ -108,11 +108,20 @@ export default function Clientes() {
     }
   });
 
-  const filteredClientes = clientes.filter(c =>
-    c.nome?.toLowerCase().includes(search.toLowerCase()) ||
-    c.telefone?.includes(search) ||
-    c.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredClientes = clientes.filter(c => {
+    const matchSearch = !search ||
+      c.nome?.toLowerCase().includes(search.toLowerCase()) ||
+      c.telefone?.includes(search) ||
+      c.email?.toLowerCase().includes(search.toLowerCase()) ||
+      c.cpf_cnpj?.includes(search);
+    const matchTipo = filtroTipo === 'todos' || (c.tipo_pessoa || 'fisica') === filtroTipo;
+    const matchBloqueado = filtroBloqueado === 'todos' || (filtroBloqueado === 'bloqueado' ? c.bloqueado : !c.bloqueado);
+    const qtdAt = getClienteAtendimentos(c.nome);
+    const matchAtendimento = filtroAtendimento === 'todos' ||
+      (filtroAtendimento === 'com' && qtdAt > 0) ||
+      (filtroAtendimento === 'sem' && qtdAt === 0);
+    return matchSearch && matchTipo && matchBloqueado && matchAtendimento;
+  });
 
   const getClienteAtendimentos = (clienteNome) => {
     return atendimentos.filter(a => 
