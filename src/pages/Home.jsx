@@ -240,7 +240,7 @@ export default function Home() {
                 </div>
                 <span className="text-orange-400 font-semibold tracking-wider text-sm">SISTEMA DE GESTÃO</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">HOME - FRAGATECH
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">FRAGAUTO
 
               </h1>
               <p className="text-slate-300 text-lg md:text-xl max-w-xl">Sistema de atendimento de alto performance
