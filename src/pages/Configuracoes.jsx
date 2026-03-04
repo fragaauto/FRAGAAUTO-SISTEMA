@@ -790,6 +790,8 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
+        <LembretesWhatsApp />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
