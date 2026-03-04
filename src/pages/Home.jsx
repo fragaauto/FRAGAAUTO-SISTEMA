@@ -162,6 +162,55 @@ export default function Home() {
     color: 'bg-purple-500'
   },
   {
+    icon: Calendar,
+    title: 'Agenda',
+    description: 'Visualizar e gerenciar serviços agendados.',
+    href: createPageUrl('Agenda'),
+    color: 'bg-cyan-500'
+  },
+  {
+    icon: TrendingUp,
+    title: 'Financeiro',
+    description: 'Fluxo de caixa, contas a pagar e a receber.',
+    href: createPageUrl('Financeiro'),
+    color: 'bg-emerald-600'
+  },
+  {
+    icon: Package,
+    title: 'Compras',
+    description: 'Gestão de compras, fornecedores e NF-e.',
+    href: createPageUrl('Compras'),
+    color: 'bg-indigo-500'
+  },
+  {
+    icon: TrendingUp,
+    title: 'Remarketing',
+    description: 'Campanhas e follow-up de serviços reprovados.',
+    href: createPageUrl('Remarketing'),
+    color: 'bg-pink-500'
+  },
+  {
+    icon: FileText,
+    title: 'Relatórios',
+    description: 'Relatórios completos de desempenho e faturamento.',
+    href: createPageUrl('Relatorios'),
+    color: 'bg-violet-500'
+  },
+  {
+    icon: ClipboardCheck,
+    title: 'Checklist',
+    description: 'Gerenciar itens e categorias do checklist técnico.',
+    href: createPageUrl('GerenciarChecklist'),
+    color: 'bg-amber-500'
+  },
+  {
+    icon: Users,
+    title: 'Usuários',
+    description: 'Gerenciar usuários e permissões de acesso.',
+    href: createPageUrl('Usuarios'),
+    color: 'bg-slate-600'
+  },
+  {
     icon: FileText,
     title: 'Manual de Treinamento',
     description: 'Guia passo a passo do fluxo de atendimento para colaboradores.',
