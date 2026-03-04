@@ -239,7 +239,14 @@ export default function Clientes() {
                             <User className="w-6 h-6 text-blue-600" />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-slate-800">{cliente.nome}</h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-slate-800">{cliente.nome}</h3>
+                              {cliente.bloqueado && (
+                                <span className="flex items-center gap-1 text-xs text-red-500 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
+                                  <Ban className="w-3 h-3" /> Bloqueado
+                                </span>
+                              )}
+                            </div>
                             <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-slate-500">
                               <span className="flex items-center gap-1">
                                 <Phone className="w-3 h-3" />
