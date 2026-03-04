@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import GerenciarStatus from '@/components/configuracoes/GerenciarStatus';
 import TaxasMaquininha from '@/components/configuracoes/TaxasMaquininha';
+import LembretesWhatsApp from '@/components/configuracoes/LembretesWhatsApp';
 
 export default function Configuracoes() {
   const queryClient = useQueryClient();
