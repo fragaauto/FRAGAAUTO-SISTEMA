@@ -156,17 +156,30 @@ export default function Compras() {
 
         {tab === 'estoque' && (
           <div className="space-y-3">
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { refetchProdutos(); toast.success('Estoque atualizado!'); }}
-                disabled={isFetchingProdutos}
-                className="gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${isFetchingProdutos ? 'animate-spin' : ''}`} />
-                Verificar Estoque
-              </Button>
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-slate-500">{estoqueBaixo.length} produto(s) com estoque baixo</p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { refetchProdutos(); toast.success('Estoque atualizado!'); }}
+                  disabled={isFetchingProdutos}
+                  className="gap-2"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isFetchingProdutos ? 'animate-spin' : ''}`} />
+                  Verificar Estoque
+                </Button>
+                {estoqueBaixo.length > 0 && (
+                  <Button
+                    size="sm"
+                    onClick={abrirGerarLista}
+                    className="bg-blue-600 hover:bg-blue-700 gap-2"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    Montar Lista de Compras
+                  </Button>
+                )}
+              </div>
             </div>
             {estoqueBaixo.length === 0 ? (
               <div className="text-center py-12 text-green-600">
@@ -174,24 +187,28 @@ export default function Compras() {
                 <p className="font-semibold">Estoque em dia!</p>
               </div>
             ) : (
-              estoqueBaixo.map(prod => (
-                <Card key={prod.id} className={`border-2 ${(prod.estoque_atual || 0) <= 0 ? 'border-red-200 bg-red-50' : 'border-orange-200 bg-orange-50'}`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-slate-800">{prod.nome}</p>
-                        <p className="text-sm text-slate-500">{prod.codigo} · {prod.categoria}</p>
+              estoqueBaixo.map(prod => {
+                const qtdFalta = Math.max(0, (prod.estoque_desejado || prod.estoque_minimo || 0) - (prod.estoque_atual || 0));
+                return (
+                  <Card key={prod.id} className={`border-2 ${(prod.estoque_atual || 0) <= 0 ? 'border-red-200 bg-red-50' : 'border-orange-200 bg-orange-50'}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-slate-800">{prod.nome}</p>
+                          <p className="text-sm text-slate-500">{prod.codigo} · {prod.categoria}</p>
+                        </div>
+                        <div className="text-right space-y-0.5">
+                          <p className={`font-bold text-lg ${(prod.estoque_atual || 0) <= 0 ? 'text-red-600' : 'text-orange-600'}`}>
+                            {prod.estoque_atual || 0}
+                          </p>
+                          <p className="text-xs text-slate-500">mín: {prod.estoque_minimo || 0}{prod.estoque_desejado ? ` · desejado: ${prod.estoque_desejado}` : ''}</p>
+                          {qtdFalta > 0 && <p className="text-xs text-blue-600 font-semibold">comprar: {qtdFalta}</p>}
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className={`font-bold text-lg ${(prod.estoque_atual || 0) <= 0 ? 'text-red-600' : 'text-orange-600'}`}>
-                          {prod.estoque_atual || 0}
-                        </p>
-                        <p className="text-xs text-slate-500">mín: {prod.estoque_minimo || 0}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         )}
