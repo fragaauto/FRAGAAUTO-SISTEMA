@@ -48,6 +48,40 @@ export default function Compras() {
   const [nomeLista, setNomeLista] = useState('');
   const [salvandoLista, setSalvandoLista] = useState(false);
 
+  const abrirGerarLista = () => {
+    const itens = estoqueBaixo.map(p => {
+      const qtdFalta = Math.max(0, (p.estoque_desejado || p.estoque_minimo || 0) - (p.estoque_atual || 0));
+      return {
+        produto_id: p.id,
+        produto_nome: p.nome,
+        codigo: p.codigo,
+        quantidade: qtdFalta > 0 ? qtdFalta : 1,
+        obs: `Estoque atual: ${p.estoque_atual || 0} | Mín: ${p.estoque_minimo || 0}${p.estoque_desejado ? ` | Desejado: ${p.estoque_desejado}` : ''}`,
+      };
+    });
+    setItensLista(itens);
+    setNomeLista(`Reposição de Estoque - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`);
+    setShowGerarLista(true);
+  };
+
+  const salvarListaGerada = async () => {
+    if (!nomeLista.trim()) return toast.error('Informe o nome da lista');
+    const itensValidos = itensLista.filter(i => i.quantidade > 0);
+    if (itensValidos.length === 0) return toast.error('Nenhum item com quantidade > 0');
+    setSalvandoLista(true);
+    await base44.entities.ListaCompras.create({
+      nome: nomeLista,
+      itens: itensValidos,
+      itens_livres: [],
+      status: 'aberta',
+    });
+    setSalvandoLista(false);
+    setShowGerarLista(false);
+    toast.success('Lista de compras criada!');
+    qc.invalidateQueries(['listas-compras']);
+    setTab('listas');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
