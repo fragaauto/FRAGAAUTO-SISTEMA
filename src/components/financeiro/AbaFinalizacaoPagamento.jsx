@@ -13,6 +13,7 @@ import {
   CreditCard, Banknote, Smartphone, Building2, FileText, Receipt, RotateCcw, Lock,
   Wrench, X
 } from 'lucide-react';
+import ReciboAtendimento from './ReciboAtendimento';
 import {
   AlertDialog,
   AlertDialogAction,
