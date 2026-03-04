@@ -1458,26 +1458,42 @@ export default function Produtos() {
                 </label>
               </div>
               {formData.controla_estoque && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Estoque Atual</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={formData.estoque_atual}
-                      onChange={(e) => setFormData({ ...formData, estoque_atual: parseFloat(e.target.value) || 0 })}
-                      className="h-10"
-                    />
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Estoque Atual</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formData.estoque_atual}
+                        onChange={(e) => setFormData({ ...formData, estoque_atual: parseFloat(e.target.value) || 0 })}
+                        className="h-10"
+                      />
+                    </div>
+                    <div>
+                      <Label>Estoque Mínimo <span className="text-xs text-slate-400">(alerta de baixo)</span></Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formData.estoque_minimo}
+                        onChange={(e) => setFormData({ ...formData, estoque_minimo: parseFloat(e.target.value) || 0 })}
+                        className="h-10"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <Label>Estoque Mínimo</Label>
+                    <Label>Estoque Desejado <span className="text-xs text-slate-400">(qtd ideal para manter)</span></Label>
                     <Input
                       type="number"
                       min="0"
-                      value={formData.estoque_minimo}
-                      onChange={(e) => setFormData({ ...formData, estoque_minimo: parseFloat(e.target.value) || 0 })}
+                      value={formData.estoque_desejado}
+                      onChange={(e) => setFormData({ ...formData, estoque_desejado: parseFloat(e.target.value) || 0 })}
                       className="h-10"
+                      placeholder="0"
                     />
+                    <p className="text-xs text-slate-400 mt-1">
+                      Ao gerar lista de compras, a quantidade sugerida será: estoque desejado − estoque atual
+                    </p>
                   </div>
                 </div>
               )}
