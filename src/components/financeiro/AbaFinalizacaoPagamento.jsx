@@ -73,7 +73,19 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     staleTime: 5 * 60 * 1000,
   });
 
-  const valorBase = atendimento.valor_final || atendimento.subtotal || 0;
+  // Somente itens aprovados pelo cliente vão para o pagamento
+  const itensAprovadosQueixa = (atendimento.itens_queixa || []).filter(i => i.status_aprovacao === 'aprovado');
+  const itensAprovadosOrcamento = (atendimento.itens_orcamento || []).filter(i => i.status_aprovacao === 'aprovado');
+  const todosItensAprovados = [...itensAprovadosQueixa, ...itensAprovadosOrcamento];
+
+  // Se nenhum item foi aprovado/reprovado ainda, usar valor_final normal (comportamento antigo)
+  const temDecisoes = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])].some(
+    i => i.status_aprovacao === 'aprovado' || i.status_aprovacao === 'reprovado'
+  );
+
+  const valorBase = temDecisoes
+    ? todosItensAprovados.reduce((acc, i) => acc + (Number(i.valor_total) || 0), 0)
+    : (atendimento.valor_final || atendimento.subtotal || 0);
   const jaLancado = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial' || atendimento.status_pagamento === 'faturado';
 
   const [tecnicosSelecionados, setTecnicosSelecionados] = useState(atendimento.tecnicos_responsaveis || []);
