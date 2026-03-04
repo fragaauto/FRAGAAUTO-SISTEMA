@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Loader2, Save, Shield, Lock, CheckCircle2, XCircle } from 'lucide-react';
-import { TODOS_MODULOS, MODULOS_DEFAULT } from '@/lib/modulos';
+import { TODOS_MODULOS, MODULOS_DEFAULT } from '@/components/modulos';
 
 export default function GerenciarPlano() {
   const queryClient = useQueryClient();
