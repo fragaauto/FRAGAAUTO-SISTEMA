@@ -377,6 +377,16 @@ export default function Clientes() {
         </DialogContent>
       </Dialog>
 
+      {showImportar && (
+        <ImportarClientesModal
+          onClose={() => setShowImportar(false)}
+          onImportado={() => {
+            queryClient.invalidateQueries(['clientes']);
+            setShowImportar(false);
+          }}
+        />
+      )}
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
