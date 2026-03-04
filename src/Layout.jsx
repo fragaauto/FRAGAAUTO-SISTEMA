@@ -12,28 +12,34 @@ import {
   Wrench,
   TrendingUp,
   Sparkles,
-  Calendar
+  Calendar,
+  Shield
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { TODOS_MODULOS } from '@/components/modulos';
 
+// Todos os itens de navegação com módulo associado
 const NAV_ITEMS = [
-  { name: 'Home', icon: Home, path: 'Home' },
-  { name: 'Dashboard', icon: Home, path: 'Dashboard' },
-  { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento' },
-  { name: 'Atendimentos', icon: FileText, path: 'Atendimentos' },
-  { name: 'REMARKETING', icon: TrendingUp, path: 'Remarketing' },
-  { name: 'Relatórios', icon: FileText, path: 'Relatorios' },
-  { name: 'Produtos', icon: Package, path: 'Produtos' },
-  { name: 'Clientes', icon: Users, path: 'Clientes' },
-  { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist' },
-  { name: 'Agenda', icon: Calendar, path: 'Agenda' },
-  { name: 'Financeiro', icon: TrendingUp, path: 'Financeiro' },
-  { name: 'Compras', icon: Package, path: 'Compras' },
-  { name: 'Configurações', icon: Wrench, path: 'Configuracoes' },
-  { name: 'Usuários', icon: Users, path: 'Usuarios' },
-  { name: 'Manual de Treinamento', icon: FileText, path: 'ManualTreinamento' },
+  { name: 'Home', icon: Home, path: 'Home', modulo: null },
+  { name: 'Dashboard', icon: Home, path: 'Dashboard', modulo: 'relatorios' },
+  { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento', modulo: 'atendimentos' },
+  { name: 'Atendimentos', icon: FileText, path: 'Atendimentos', modulo: 'atendimentos' },
+  { name: 'REMARKETING', icon: TrendingUp, path: 'Remarketing', modulo: 'remarketing' },
+  { name: 'Relatórios', icon: FileText, path: 'Relatorios', modulo: 'relatorios' },
+  { name: 'Produtos', icon: Package, path: 'Produtos', modulo: 'estoque' },
+  { name: 'Clientes', icon: Users, path: 'Clientes', modulo: 'clientes' },
+  { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist', modulo: 'checklist' },
+  { name: 'Agenda', icon: Calendar, path: 'Agenda', modulo: 'agenda' },
+  { name: 'Financeiro', icon: TrendingUp, path: 'Financeiro', modulo: 'financeiro' },
+  { name: 'Compras', icon: Package, path: 'Compras', modulo: 'estoque' },
+  { name: 'Configurações', icon: Wrench, path: 'Configuracoes', modulo: null },
+  { name: 'Usuários', icon: Users, path: 'Usuarios', modulo: null },
+  { name: 'Gerenciar Plano', icon: Shield, path: 'GerenciarPlano', modulo: null, apenasAdmin: true },
+  { name: 'Manual de Treinamento', icon: FileText, path: 'ManualTreinamento', modulo: null },
 ];
 
 
