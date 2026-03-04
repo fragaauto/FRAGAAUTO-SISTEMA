@@ -214,16 +214,55 @@ export default function Clientes() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="max-w-4xl mx-auto px-4 py-4">
+      {/* Search + Filters */}
+      <div className="max-w-4xl mx-auto px-4 py-4 space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <Input
-            placeholder="Buscar por nome, telefone ou email..."
+            placeholder="Buscar por nome, telefone, email ou CPF/CNPJ..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 h-12"
           />
+        </div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <Filter className="w-4 h-4 text-slate-400" />
+          <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+            <SelectTrigger className="w-44 h-9">
+              <SelectValue placeholder="Tipo de pessoa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os tipos</SelectItem>
+              <SelectItem value="fisica">Pessoa Física</SelectItem>
+              <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filtroBloqueado} onValueChange={setFiltroBloqueado}>
+            <SelectTrigger className="w-44 h-9">
+              <SelectValue placeholder="Status remarketing" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="ativo">Ativos no remarketing</SelectItem>
+              <SelectItem value="bloqueado">Bloqueados</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filtroAtendimento} onValueChange={setFiltroAtendimento}>
+            <SelectTrigger className="w-44 h-9">
+              <SelectValue placeholder="Atendimentos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="com">Com atendimentos</SelectItem>
+              <SelectItem value="sem">Sem atendimentos</SelectItem>
+            </SelectContent>
+          </Select>
+          {filtrosAtivos && (
+            <Button variant="ghost" size="sm" onClick={limparFiltros} className="text-slate-500 h-9">
+              <X className="w-3 h-3 mr-1" /> Limpar filtros
+            </Button>
+          )}
+          <span className="text-sm text-slate-500 ml-auto">{filteredClientes.length} resultado(s)</span>
         </div>
       </div>
 
