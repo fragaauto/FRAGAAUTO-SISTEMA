@@ -7,21 +7,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Send, Users, Filter, Save } from 'lucide-react';
+import { Send, Users, Save, Loader2, Play, CheckCircle2, XCircle, AlertTriangle, X, Clock } from 'lucide-react';
 
 const VARIAVEIS = ['{nome}', '{veiculo}', '{ultimo_servico}', '{placa}'];
 
 export default function CampanhaModal({ campanha, atendimentos, onClose, onSaved }) {
   const [nome, setNome] = useState(campanha?.nomeCampanha || '');
   const [mensagem, setMensagem] = useState(campanha?.mensagemBase || 'Olá {nome} 👋\n\nGostaria de te oferecer uma condição especial para o seu {veiculo}.\n\nPosso te ajudar?');
-  const [contatosSelecionados, setContatosSelecionados] = useState(
-    campanha?.listaContatos?.map(c => c.clienteId) || []
-  );
+  const [contatosSelecionados, setContatosSelecionados] = useState(campanha?.listaContatos?.map(c => c.clienteId) || []);
   const [filtroNome, setFiltroNome] = useState('');
+  const [intervalo, setIntervalo] = useState(15);
+  const [enviando, setEnviando] = useState(false);
+  const [resultados, setResultados] = useState([]);
+  const [indiceAtual, setIndiceAtual] = useState(-1);
+  const [cancelado, setCancelado] = useState(false);
 
-  // Montar lista de contatos únicos a partir dos atendimentos
   const contatosDisponiveis = useMemo(() => {
     const map = {};
     atendimentos.forEach(at => {
@@ -44,23 +46,17 @@ export default function CampanhaModal({ campanha, atendimentos, onClose, onSaved
     !filtroNome || c.clienteNome.toLowerCase().includes(filtroNome.toLowerCase())
   );
 
-  const toggleContato = (id) => {
-    setContatosSelecionados(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  };
-
+  const toggleContato = (id) => setContatosSelecionados(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   const selecionarTodos = () => setContatosSelecionados(contatosFiltrados.map(c => c.clienteId));
   const deselecionarTodos = () => setContatosSelecionados([]);
 
   const saveMutation = useMutation({
-    mutationFn: (data) => campanha?.id
-      ? base44.entities.Campanha.update(campanha.id, data)
-      : base44.entities.Campanha.create(data),
-    onSuccess: () => {
-      toast.success(campanha?.id ? 'Campanha atualizada!' : 'Campanha criada!');
-      onSaved();
-    }
+    mutationFn: (data) => campanha?.id ? base44.entities.Campanha.update(campanha.id, data) : base44.entities.Campanha.create(data),
+    onSuccess: () => { toast.success(campanha?.id ? 'Campanha atualizada!' : 'Campanha criada!'); onSaved(); }
+  });
+
+  const updateCampanhaMutation = useMutation({
+    mutationFn: (data) => base44.entities.Campanha.update(campanha?.id, data)
   });
 
   const handleSave = (statusCampanha = 'rascunho') => {
@@ -69,22 +65,74 @@ export default function CampanhaModal({ campanha, atendimentos, onClose, onSaved
       const c = contatosDisponiveis.find(x => x.clienteId === id);
       return c ? { ...c, status: 'pendente' } : null;
     }).filter(Boolean);
-
-    saveMutation.mutate({
-      nomeCampanha: nome,
-      mensagemBase: mensagem,
-      listaContatos,
-      status: statusCampanha,
-      totalEnviados: campanha?.totalEnviados || 0,
-      totalRespondidos: campanha?.totalRespondidos || 0,
-      totalConvertidos: campanha?.totalConvertidos || 0,
-    });
+    saveMutation.mutate({ nomeCampanha: nome, mensagemBase: mensagem, listaContatos, status: statusCampanha, totalEnviados: campanha?.totalEnviados || 0, totalRespondidos: campanha?.totalRespondidos || 0, totalConvertidos: campanha?.totalConvertidos || 0 });
   };
+
+  const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+  const gerarMensagemPersonalizada = (contato) => {
+    return mensagem
+      .replace('{nome}', contato.clienteNome || 'Cliente')
+      .replace('{veiculo}', contato.veiculo || '')
+      .replace('{placa}', contato.veiculo?.split(' - ')[0] || '')
+      .replace('{ultimo_servico}', contato.ultimoServico || '');
+  };
+
+  const iniciarEnvioMassa = async () => {
+    if (contatosSelecionados.length === 0) { toast.error('Selecione ao menos um contato'); return; }
+    setEnviando(true);
+    setCancelado(false);
+    setResultados([]);
+    const cancelRef = { value: false };
+
+    const contatos = contatosSelecionados.map(id => contatosDisponiveis.find(c => c.clienteId === id)).filter(Boolean);
+
+    for (let i = 0; i < contatos.length; i++) {
+      if (cancelRef.value) break;
+      const contato = contatos[i];
+      setIndiceAtual(i);
+
+      const tel = (contato.telefone || '').replace(/\D/g, '');
+      if (!tel) {
+        setResultados(prev => [...prev, { id: contato.clienteId, nome: contato.clienteNome, ok: false, erro: 'Telefone inválido' }]);
+        continue;
+      }
+
+      const msg = gerarMensagemPersonalizada(contato);
+      try {
+        const res = await base44.functions.invoke('enviarMensagemWhatsApp', { telefone: tel, mensagem: msg });
+        if (res.data?.ok) {
+          setResultados(prev => [...prev, { id: contato.clienteId, nome: contato.clienteNome, ok: true }]);
+        } else {
+          const errMsg = res.data?.error || 'Erro desconhecido';
+          const semWhatsapp = errMsg.includes('exists":false') || errMsg.toLowerCase().includes('not registered');
+          setResultados(prev => [...prev, { id: contato.clienteId, nome: contato.clienteNome, ok: false, semWhatsapp, erro: semWhatsapp ? 'Sem WhatsApp' : errMsg }]);
+        }
+      } catch (e) {
+        setResultados(prev => [...prev, { id: contato.clienteId, nome: contato.clienteNome, ok: false, erro: e.message }]);
+      }
+
+      if (i < contatos.length - 1 && !cancelRef.value) {
+        for (let s = 0; s < intervalo; s++) {
+          if (cancelRef.value) break;
+          await sleep(1000);
+        }
+      }
+    }
+
+    setEnviando(false);
+    setIndiceAtual(-1);
+  };
+
+  const progresso = contatosSelecionados.length > 0 ? Math.round((resultados.length / contatosSelecionados.length) * 100) : 0;
+  const finalizado = contatosSelecionados.length > 0 && resultados.length === contatosSelecionados.length;
+  const sucessos = resultados.filter(r => r.ok).length;
+  const erros = resultados.filter(r => !r.ok).length;
 
   const inserirVariavel = (v) => setMensagem(prev => prev + v);
 
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open onOpenChange={!enviando ? onClose : undefined}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -104,21 +152,28 @@ export default function CampanhaModal({ campanha, atendimentos, onClose, onSaved
               <Label>Mensagem Base</Label>
               <div className="flex gap-1 flex-wrap">
                 {VARIAVEIS.map(v => (
-                  <Button key={v} size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => inserirVariavel(v)}>
-                    {v}
-                  </Button>
+                  <Button key={v} size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => inserirVariavel(v)}>{v}</Button>
                 ))}
               </div>
             </div>
-            <Textarea
-              value={mensagem}
-              onChange={e => setMensagem(e.target.value)}
-              className="min-h-[150px]"
-              placeholder="Digite a mensagem..."
-            />
+            <Textarea value={mensagem} onChange={e => setMensagem(e.target.value)} className="min-h-[150px]" />
             <p className="text-xs text-slate-400 mt-1">Use as variáveis acima para personalizar automaticamente</p>
           </div>
 
+          {/* Intervalo */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="w-4 h-4 text-amber-600" />
+              <Label className="text-amber-700 font-medium text-sm">Intervalo entre envios</Label>
+            </div>
+            <div className="flex items-center gap-3">
+              <Input type="number" min={5} max={300} value={intervalo} onChange={e => setIntervalo(Number(e.target.value))} className="w-24" />
+              <span className="text-sm text-amber-700">segundos</span>
+            </div>
+            <p className="text-xs text-amber-600 mt-1">Mínimo 10s recomendado para evitar bloqueios.</p>
+          </div>
+
+          {/* Contatos */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <Label className="flex items-center gap-1">
@@ -129,39 +184,80 @@ export default function CampanhaModal({ campanha, atendimentos, onClose, onSaved
                 <Button size="sm" variant="ghost" className="text-xs" onClick={deselecionarTodos}>Nenhum</Button>
               </div>
             </div>
-            <Input
-              placeholder="Filtrar por nome..."
-              value={filtroNome}
-              onChange={e => setFiltroNome(e.target.value)}
-              className="mb-2"
-            />
+            <Input placeholder="Filtrar por nome..." value={filtroNome} onChange={e => setFiltroNome(e.target.value)} className="mb-2" />
             <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
               {contatosFiltrados.map(c => (
                 <div key={c.clienteId} className="flex items-center gap-3 p-2 hover:bg-slate-50">
-                  <Checkbox
-                    checked={contatosSelecionados.includes(c.clienteId)}
-                    onCheckedChange={() => toggleContato(c.clienteId)}
-                  />
+                  <Checkbox checked={contatosSelecionados.includes(c.clienteId)} onCheckedChange={() => toggleContato(c.clienteId)} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-800 truncate">{c.clienteNome}</p>
                     <p className="text-xs text-slate-500">{c.veiculo} • {c.telefone}</p>
                   </div>
                 </div>
               ))}
-              {contatosFiltrados.length === 0 && (
-                <p className="text-center py-4 text-slate-500 text-sm">Nenhum contato encontrado</p>
-              )}
+              {contatosFiltrados.length === 0 && <p className="text-center py-4 text-slate-500 text-sm">Nenhum contato encontrado</p>}
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
-            <Button onClick={() => handleSave('rascunho')} variant="outline" className="flex-1" disabled={saveMutation.isPending}>
-              <Save className="w-4 h-4 mr-2" />Salvar Rascunho
-            </Button>
-            <Button onClick={() => handleSave('agendada')} className="flex-1 bg-orange-500 hover:bg-orange-600" disabled={saveMutation.isPending}>
-              <Send className="w-4 h-4 mr-2" />Agendar
-            </Button>
+          {/* Progresso do envio */}
+          {(enviando || resultados.length > 0) && (
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm text-slate-600">
+                <span>{resultados.length} de {contatosSelecionados.length} enviados</span>
+                <span>{progresso}%</span>
+              </div>
+              <Progress value={progresso} className="h-3" />
+              {enviando && indiceAtual >= 0 && (
+                <p className="text-xs text-slate-500 flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Enviando para: {contatosDisponiveis.find(c => c.clienteId === contatosSelecionados[indiceAtual])?.clienteNome}
+                </p>
+              )}
+              {resultados.length > 0 && (
+                <div className="flex gap-3">
+                  <div className="flex items-center gap-1 text-sm text-green-700 bg-green-50 rounded px-2 py-1">
+                    <CheckCircle2 className="w-4 h-4" /> {sucessos} ok
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-red-700 bg-red-50 rounded px-2 py-1">
+                    <XCircle className="w-4 h-4" /> {erros} erros
+                  </div>
+                </div>
+              )}
+              <div className="max-h-36 overflow-y-auto border rounded-lg divide-y">
+                {resultados.map((r, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 text-sm">
+                    {r.ok ? <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" /> : r.semWhatsapp ? <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0" /> : <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
+                    <span className="flex-1 font-medium text-slate-700 truncate">{r.nome}</span>
+                    {!r.ok && <span className="text-xs text-slate-400">{r.erro}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Botões */}
+          <div className="flex gap-3 pt-2 flex-wrap">
+            <Button variant="outline" onClick={onClose} disabled={enviando} className="flex-1">Cancelar</Button>
+            {!enviando && !finalizado && (
+              <>
+                <Button onClick={() => handleSave('rascunho')} variant="outline" className="flex-1" disabled={saveMutation.isPending}>
+                  <Save className="w-4 h-4 mr-2" />Salvar
+                </Button>
+                <Button onClick={iniciarEnvioMassa} className="flex-1 bg-green-600 hover:bg-green-700" disabled={contatosSelecionados.length === 0}>
+                  <Play className="w-4 h-4 mr-2" />Enviar Agora ({contatosSelecionados.length})
+                </Button>
+              </>
+            )}
+            {enviando && (
+              <Button variant="destructive" onClick={() => setCancelado(true)} className="flex-1">
+                <X className="w-4 h-4 mr-2" /> Interromper
+              </Button>
+            )}
+            {finalizado && (
+              <Button onClick={onClose} className="flex-1 bg-green-600 hover:bg-green-700">
+                <CheckCircle2 className="w-4 h-4 mr-2" /> Concluído
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>
