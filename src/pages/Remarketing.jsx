@@ -20,6 +20,8 @@ import { ptBR } from 'date-fns/locale';
 import RemarketingMensagemModal from '../components/remarketing/RemarketingMensagemModal';
 import CampanhaModal from '../components/remarketing/CampanhaModal';
 import EnvioEmMassaModal from '../components/remarketing/EnvioEmMassaModal';
+import ModuloBloqueado from '@/components/ModuloBloqueado';
+import { paginaPermitida } from '@/components/modulos';
 
 const STATUS_CONFIG = {
   pendente: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800', icon: Clock },

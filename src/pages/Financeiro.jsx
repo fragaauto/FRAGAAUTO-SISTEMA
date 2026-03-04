@@ -20,6 +20,8 @@ import FluxoCaixaChart from '@/components/financeiro/FluxoCaixaChart';
 import ContasReceberTab from '@/components/financeiro/ContasReceberTab.jsx';
 import ContasPagarTab from '@/components/financeiro/ContasPagarTab.jsx';
 import FluxoCaixaTab from '@/components/financeiro/FluxoCaixaTab.jsx';
+import ModuloBloqueado from '@/components/ModuloBloqueado';
+import { paginaPermitida } from '@/components/modulos';
 
 const TABS = [
   { id: 'dashboard', label: '📊 Dashboard' },
