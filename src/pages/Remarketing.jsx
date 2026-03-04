@@ -276,9 +276,15 @@ export default function Remarketing() {
               </Card>
             ) : (
               filaPorStatus.pendente.map(item => (
-                <Card key={item.id} className="hover:shadow-md transition-shadow">
+                <Card key={item.id} className={`hover:shadow-md transition-shadow ${selecionados.includes(item.id) ? 'ring-2 ring-green-400' : ''}`}>
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between gap-4">
+                    <input
+                      type="checkbox"
+                      checked={selecionados.includes(item.id)}
+                      onChange={e => setSelecionados(prev => e.target.checked ? [...prev, item.id] : prev.filter(i => i !== item.id))}
+                      className="w-4 h-4 mt-1 accent-orange-500 flex-shrink-0"
+                    />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-slate-800">{item.clienteNome}</p>
