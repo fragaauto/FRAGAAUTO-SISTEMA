@@ -213,6 +213,58 @@ export default function Compras() {
           </div>
         )}
       </div>
+
+      {/* Modal Gerar Lista de Compras */}
+      <Dialog open={showGerarLista} onOpenChange={setShowGerarLista}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-blue-600" />
+              Montar Lista de Compras — Estoque Baixo
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Nome da lista</label>
+              <Input value={nomeLista} onChange={e => setNomeLista(e.target.value)} className="mt-1" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-slate-700">Itens a comprar <span className="text-xs text-slate-400">(edite as quantidades conforme necessário)</span></p>
+              {itensLista.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-3 bg-slate-50 border rounded-lg p-3">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-slate-800">{item.produto_nome}</p>
+                    <p className="text-xs text-slate-400">{item.obs}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">Qtd:</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={item.quantidade}
+                      onChange={e => setItensLista(prev => prev.map((it, i) => i === idx ? { ...it, quantidade: parseInt(e.target.value) || 0 } : it))}
+                      className="w-20 h-8 text-center text-sm"
+                    />
+                    <button onClick={() => setItensLista(prev => prev.filter((_, i) => i !== idx))}>
+                      <X className="w-4 h-4 text-red-400 hover:text-red-600" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {itensLista.length === 0 && (
+                <p className="text-sm text-slate-400 text-center py-4">Nenhum item. Todos foram removidos.</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGerarLista(false)}>Cancelar</Button>
+            <Button onClick={salvarListaGerada} disabled={salvandoLista} className="bg-blue-600 hover:bg-blue-700">
+              {salvandoLista ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShoppingBag className="w-4 h-4 mr-2" />}
+              Criar Lista
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
