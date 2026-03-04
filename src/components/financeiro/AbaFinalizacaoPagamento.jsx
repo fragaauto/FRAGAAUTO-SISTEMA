@@ -538,11 +538,31 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         </CardContent>
       </Card>
 
+      {/* Aviso de itens autorizados */}
+      {temDecisoes && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-4 pb-3">
+            <p className="text-sm text-blue-800 font-medium flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+              Cobrança baseada apenas nos {todosItensAprovados.length} serviço(s) autorizado(s) pelo cliente
+            </p>
+            <div className="mt-2 space-y-1">
+              {todosItensAprovados.map((item, idx) => (
+                <div key={idx} className="flex justify-between text-xs text-blue-700">
+                  <span>{item.nome} {item.quantidade > 1 ? `x${item.quantidade}` : ''}</span>
+                  <span>R$ {Number(item.valor_total).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Resumo */}
       <Card className={`border-2 ${Math.abs(diferenca) < 0.01 ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}`}>
         <CardContent className="pt-4 space-y-1">
           <div className="flex justify-between text-sm text-slate-600">
-            <span>Subtotal</span>
+            <span>Serviços Autorizados</span>
             <span>R$ {valorBase.toFixed(2)}</span>
           </div>
           {desconto > 0 && (
