@@ -1114,6 +1114,17 @@ export default function Produtos() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={ordenacao} onValueChange={setOrdenacao}>
+            <SelectTrigger className="w-full sm:w-52 h-12">
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="nome_asc">Nome A→Z</SelectItem>
+              <SelectItem value="nome_desc">Nome Z→A</SelectItem>
+              <SelectItem value="data_desc">Última alteração (mais recente)</SelectItem>
+              <SelectItem value="data_asc">Última alteração (mais antiga)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
