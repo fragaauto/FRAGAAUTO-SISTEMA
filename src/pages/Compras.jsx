@@ -34,6 +34,12 @@ export default function Compras() {
     staleTime: 60 * 1000,
   });
 
+  const { refetch: refetchProdutos, isFetching: isFetchingProdutos } = useQuery({
+    queryKey: ['produtos-estoque'],
+    queryFn: () => base44.entities.Produto.filter({ ativo: true }),
+    staleTime: 60 * 1000,
+  });
+
   const estoqueBaixo = produtos.filter(p => p.controla_estoque && (p.estoque_atual || 0) <= (p.estoque_minimo || 0));
 
   return (
