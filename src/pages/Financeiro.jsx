@@ -41,6 +41,16 @@ const PERIODOS = [
 ];
 
 export default function Financeiro() {
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const modulosAtivos = configs[0]?.modulos_ativos ?? null;
+  if (!paginaPermitida(modulosAtivos, 'Financeiro')) {
+    return <ModuloBloqueado nomeModulo="Financeiro" />;
+  }
+
   const [tab, setTab] = useState('dashboard');
   const [periodo, setPeriodo] = useState('mes');
   const [dataInicio, setDataInicio] = useState('');
