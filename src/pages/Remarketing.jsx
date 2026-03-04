@@ -244,6 +244,23 @@ export default function Remarketing() {
 
           {/* FILA DE VENDAS PERDIDAS */}
           <TabsContent value="fila" className="space-y-4 mt-4">
+            {/* Seleção em massa */}
+            {filaPorStatus.pendente.length > 0 && (
+              <div className="flex items-center gap-3 bg-white border rounded-lg px-4 py-2">
+                <input
+                  type="checkbox"
+                  checked={selecionados.length === filaPorStatus.pendente.length}
+                  onChange={e => setSelecionados(e.target.checked ? filaPorStatus.pendente.map(i => i.id) : [])}
+                  className="w-4 h-4 accent-orange-500"
+                />
+                <span className="text-sm text-slate-600">{selecionados.length} selecionado(s)</span>
+                {selecionados.length > 0 && (
+                  <Button size="sm" className="ml-auto bg-green-600 hover:bg-green-700" onClick={() => setEnvioEmMassaOpen(true)}>
+                    <Send className="w-3 h-3 mr-1" /> Enviar {selecionados.length} selecionados
+                  </Button>
+                )}
+              </div>
+            )}
             {loadingFila ? (
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>
             ) : filaPorStatus.pendente.length === 0 ? (
