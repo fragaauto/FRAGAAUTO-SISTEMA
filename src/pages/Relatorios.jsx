@@ -22,6 +22,8 @@ import {
 import { toast } from "sonner";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import ModuloBloqueado from '@/components/ModuloBloqueado';
+import { paginaPermitida } from '@/components/modulos';
 
 export default function Relatorios() {
   const { data: configs = [] } = useQuery({

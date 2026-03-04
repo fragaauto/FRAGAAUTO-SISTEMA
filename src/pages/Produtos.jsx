@@ -65,6 +65,16 @@ const getCategoriaColor = (cat) => CATEGORIAS.find(c => c.value === cat)?.color 
 export default function Produtos() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
+
+  const { data: cfgs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const modulosAtivos = cfgs[0]?.modulos_ativos ?? null;
+  if (!paginaPermitida(modulosAtivos, 'Produtos')) {
+    return <ModuloBloqueado nomeModulo="Estoque & Produtos" />;
+  }
   
   const [search, setSearch] = useState('');
   const [categoriaFilter, setCategoriaFilter] = useState('all');
