@@ -298,8 +298,11 @@ export default function Clientes() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <User className="w-6 h-6 text-blue-600" />
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${(cliente.tipo_pessoa || 'fisica') === 'juridica' ? 'bg-purple-100' : 'bg-blue-100'}`}>
+                            {(cliente.tipo_pessoa || 'fisica') === 'juridica'
+                              ? <Building2 className="w-6 h-6 text-purple-600" />
+                              : <User className="w-6 h-6 text-blue-600" />
+                            }
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
