@@ -19,6 +19,7 @@ import { format, subDays, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import RemarketingMensagemModal from '../components/remarketing/RemarketingMensagemModal';
 import CampanhaModal from '../components/remarketing/CampanhaModal';
+import EnvioEmMassaModal from '../components/remarketing/EnvioEmMassaModal';
 
 const STATUS_CONFIG = {
   pendente: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
@@ -35,6 +36,8 @@ export default function Remarketing() {
   const [campanhModalOpen, setCampanhaModalOpen] = useState(false);
   const [campanhaSelecionada, setCampanhaSelecionada] = useState(null);
   const [sincronizando, setSincronizando] = useState(false);
+  const [selecionados, setSelecionados] = useState([]);
+  const [envioEmMassaOpen, setEnvioEmMassaOpen] = useState(false);
 
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos-remarketing'],
