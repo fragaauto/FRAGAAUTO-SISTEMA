@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ShoppingCart, Package, AlertTriangle, Check, Loader2, FileText, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Package, AlertTriangle, Check, Loader2, FileText, ShoppingBag, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ListaComprasTab from '../components/compras/ListaComprasTab';
