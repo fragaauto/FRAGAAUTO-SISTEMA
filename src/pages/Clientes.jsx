@@ -25,10 +25,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { 
   Plus, 
   Search, 
   User,
+  Building2,
   Phone,
   Mail,
   Edit,
@@ -37,7 +40,9 @@ import {
   Car,
   FileText,
   Upload,
-  Ban
+  Ban,
+  Filter,
+  X
 } from 'lucide-react';
 import ImportarClientesModal from '../components/clientes/ImportarClientesModal';
 import { motion } from 'framer-motion';
