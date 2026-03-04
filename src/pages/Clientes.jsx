@@ -35,8 +35,11 @@ import {
   Trash2,
   Loader2,
   Car,
-  FileText
+  FileText,
+  Upload,
+  Ban
 } from 'lucide-react';
+import ImportarClientesModal from '../components/clientes/ImportarClientesModal';
 import { motion } from 'framer-motion';
 
 export default function Clientes() {
