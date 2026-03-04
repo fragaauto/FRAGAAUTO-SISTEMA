@@ -116,6 +116,18 @@ export default function Compras() {
 
         {tab === 'estoque' && (
           <div className="space-y-3">
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { refetchProdutos(); toast.success('Estoque atualizado!'); }}
+                disabled={isFetchingProdutos}
+                className="gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${isFetchingProdutos ? 'animate-spin' : ''}`} />
+                Verificar Estoque
+              </Button>
+            </div>
             {estoqueBaixo.length === 0 ? (
               <div className="text-center py-12 text-green-600">
                 <Check className="w-12 h-12 mx-auto mb-2" />
