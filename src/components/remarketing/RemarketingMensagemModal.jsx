@@ -125,11 +125,23 @@ export default function RemarketingMensagemModal({ item, config, onClose, onEnvi
             <Button variant="outline" onClick={onClose} className="flex-1">
               Cancelar
             </Button>
-            <Button onClick={enviarWhatsApp} className="flex-1 bg-green-600 hover:bg-green-700">
-              <Send className="w-4 h-4 mr-2" />
-              Abrir WhatsApp
-            </Button>
+            {evolutionConfigurado ? (
+              <Button onClick={enviarViaEvolution} disabled={enviando} className="flex-1 bg-green-600 hover:bg-green-700">
+                {enviando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                {enviando ? 'Enviando...' : 'Enviar pelo WhatsApp'}
+              </Button>
+            ) : (
+              <Button onClick={enviarViaLink} className="flex-1 bg-green-600 hover:bg-green-700">
+                <Send className="w-4 h-4 mr-2" />
+                Abrir WhatsApp
+              </Button>
+            )}
           </div>
+          {!evolutionConfigurado && (
+            <p className="text-xs text-center text-slate-400">
+              Configure a Evolution API nas Configurações para envio automático.
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>
