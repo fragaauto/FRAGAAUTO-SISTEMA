@@ -50,6 +50,7 @@ export default function Clientes() {
   const [showModal, setShowModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [showImportar, setShowImportar] = useState(false);
   
   const [formData, setFormData] = useState({
     nome: '',
