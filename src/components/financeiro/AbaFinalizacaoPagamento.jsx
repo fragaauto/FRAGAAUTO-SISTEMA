@@ -96,7 +96,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const [pagamentos, setPagamentos] = useState(
     atendimento.formas_pagamento_lancamento?.length > 0
       ? atendimento.formas_pagamento_lancamento
-      : [{ forma: 'pix', valor: valorBase }]
+      : [{ forma: 'pix', valor: valorBase > 0 ? valorBase : (atendimento.valor_final || 0) }]
   );
 
   const desconto = descontoTipo === 'percentual'
