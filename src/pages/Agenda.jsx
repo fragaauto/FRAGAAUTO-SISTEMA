@@ -211,9 +211,15 @@ export default function Agenda() {
             </h1>
             <p className="text-slate-500 text-sm mt-0.5">Serviços agendados</p>
           </div>
-          <Button onClick={() => { setEditando(null); setShowModal(true); }} className="bg-orange-500 hover:bg-orange-600">
-            <Plus className="w-4 h-4 mr-1" /> Novo Agendamento
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={sincronizarSheets} disabled={sincronizando}>
+              {sincronizando ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
+              Sync Sheets
+            </Button>
+            <Button onClick={() => { setEditando(null); setShowModal(true); }} className="bg-orange-500 hover:bg-orange-600">
+              <Plus className="w-4 h-4 mr-1" /> Novo Agendamento
+            </Button>
+          </div>
         </div>
       </div>
 
