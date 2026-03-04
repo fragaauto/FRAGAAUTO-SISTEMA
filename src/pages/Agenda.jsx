@@ -141,6 +141,7 @@ export default function Agenda() {
   const [dataBase, setDataBase] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
   const [editando, setEditando] = useState(null);
+  const [sincronizando, setSincronizando] = useState(false);
 
   const { data: agendamentos = [], isLoading } = useQuery({
     queryKey: ['agendamentos'],
