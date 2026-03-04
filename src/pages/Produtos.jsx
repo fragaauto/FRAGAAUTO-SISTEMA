@@ -46,6 +46,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ModuloBloqueado from '@/components/ModuloBloqueado';
+import { paginaPermitida } from '@/components/modulos';
 
 const CATEGORIAS = [
   { value: 'eletrica', label: 'Elétrica', color: 'bg-yellow-100 text-yellow-800' },

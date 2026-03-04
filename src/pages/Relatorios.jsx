@@ -24,6 +24,16 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function Relatorios() {
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const modulosAtivos = configs[0]?.modulos_ativos ?? null;
+  if (!paginaPermitida(modulosAtivos, 'Relatorios')) {
+    return <ModuloBloqueado nomeModulo="Relatórios" />;
+  }
+
   const [periodo, setPeriodo] = useState('30');
 
   const { data: atendimentos = [] } = useQuery({
