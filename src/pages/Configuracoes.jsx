@@ -19,6 +19,7 @@ import {
 import GerenciarStatus from '@/components/configuracoes/GerenciarStatus';
 import TaxasMaquininha from '@/components/configuracoes/TaxasMaquininha';
 import LembretesWhatsApp from '@/components/configuracoes/LembretesWhatsApp';
+import EvolutionAPIConfig from '@/components/configuracoes/EvolutionAPIConfig';
 
 export default function Configuracoes() {
   const queryClient = useQueryClient();
