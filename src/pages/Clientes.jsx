@@ -305,8 +305,11 @@ export default function Clientes() {
                             }
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-semibold text-slate-800">{cliente.nome}</h3>
+                              <Badge variant="outline" className={`text-xs px-1.5 py-0 ${(cliente.tipo_pessoa || 'fisica') === 'juridica' ? 'border-purple-300 text-purple-700' : 'border-blue-300 text-blue-700'}`}>
+                                {(cliente.tipo_pessoa || 'fisica') === 'juridica' ? 'PJ' : 'PF'}
+                              </Badge>
                               {cliente.bloqueado && (
                                 <span className="flex items-center gap-1 text-xs text-red-500 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
                                   <Ban className="w-3 h-3" /> Bloqueado
