@@ -46,6 +46,18 @@ const NAV_ITEMS = [
 
 export default function Layout({ children, currentPageName }) {
   const [open, setOpen] = React.useState(false);
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const modulosAtivos = configs[0]?.modulos_ativos ?? null;
 
   // Páginas públicas que não devem mostrar navegação
   const paginasPublicas = ['AprovarOrcamento'];
