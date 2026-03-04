@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { MessageCircle, Send, Edit2 } from 'lucide-react';
+import { MessageCircle, Send, Edit2, Loader2 } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { base44 } from '@/api/base44Client';
 
 function gerarMensagem(item, config) {
   const nomeEmpresa = config.nome_empresa || 'nossa empresa';
