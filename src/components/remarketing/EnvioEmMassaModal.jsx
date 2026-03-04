@@ -36,7 +36,8 @@ function gerarMensagem(item, config) {
 }
 
 export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado }) {
-  const [intervalo, setIntervalo] = useState(15); // segundos
+  const [intervaloMin, setIntervaloMin] = useState(15);
+  const [intervaloMax, setIntervaloMax] = useState(25);
   const [rodando, setRodando] = useState(false);
   const [cancelado, setCancelado] = useState(false);
   const [resultados, setResultados] = useState([]); // { id, nome, ok, semWhatsapp, erro }

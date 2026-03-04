@@ -18,7 +18,8 @@ export default function CampanhaModal({ campanha, atendimentos, onClose, onSaved
   const [mensagem, setMensagem] = useState(campanha?.mensagemBase || 'Olá {nome} 👋\n\nGostaria de te oferecer uma condição especial para o seu {veiculo}.\n\nPosso te ajudar?');
   const [contatosSelecionados, setContatosSelecionados] = useState(campanha?.listaContatos?.map(c => c.clienteId) || []);
   const [filtroNome, setFiltroNome] = useState('');
-  const [intervalo, setIntervalo] = useState(15);
+  const [intervaloMin, setIntervaloMin] = useState(15);
+  const [intervaloMax, setIntervaloMax] = useState(25);
   const [enviando, setEnviando] = useState(false);
   const [resultados, setResultados] = useState([]);
   const [indiceAtual, setIndiceAtual] = useState(-1);
