@@ -81,6 +81,9 @@ export default function Configuracoes() {
     agenda_sheets_col_placa: config.agenda_sheets_col_placa || 'E',
     agenda_sheets_col_obs: config.agenda_sheets_col_obs || 'F',
     agenda_google_calendar_id: config.agenda_google_calendar_id || '',
+    evolution_api_url: config.evolution_api_url || '',
+    evolution_api_key: config.evolution_api_key || '',
+    evolution_instance: config.evolution_instance || '',
   });
 
   React.useEffect(() => {
