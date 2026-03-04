@@ -261,21 +261,30 @@ export default function Clientes() {
                           </div>
                         </div>
                         <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openModal(cliente)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteId(cliente.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openModal(cliente)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={cliente.bloqueado ? 'Desbloquear' : 'Bloquear remarketing'}
+                          onClick={() => updateMutation.mutate({ id: cliente.id, data: { bloqueado: !cliente.bloqueado } })}
+                          className={cliente.bloqueado ? 'text-red-500 hover:text-red-700' : 'text-slate-400 hover:text-red-500'}
+                        >
+                          <Ban className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteId(cliente.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                         </div>
                       </div>
                     </CardContent>
