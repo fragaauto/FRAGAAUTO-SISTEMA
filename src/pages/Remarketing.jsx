@@ -66,6 +66,11 @@ export default function Remarketing() {
     staleTime: 10 * 60 * 1000
   });
 
+  const modulosAtivos = configs[0]?.modulos_ativos ?? null;
+  if (!paginaPermitida(modulosAtivos, 'Remarketing')) {
+    return <ModuloBloqueado nomeModulo="Remarketing" />;
+  }
+
   const config = configs[0] || {};
   const diasMinimos = config.dias_minimos_reenvio || 30;
 
