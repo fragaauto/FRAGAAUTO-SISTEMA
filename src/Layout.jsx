@@ -63,9 +63,19 @@ export default function Layout({ children, currentPageName }) {
   const paginasPublicas = ['AprovarOrcamento'];
   const isPaginaPublica = paginasPublicas.includes(currentPageName);
 
+  // Filtra itens do menu conforme módulos ativos e role do usuário
+  const itensFiltrados = NAV_ITEMS.filter(item => {
+    if (item.apenasAdmin && user?.role !== 'admin') return false;
+    if (!item.modulo) return true;
+    if (!modulosAtivos || modulosAtivos.length === 0) return true;
+    const modulo = TODOS_MODULOS.find(m => m.id === item.modulo);
+    if (modulo?.essencial) return true;
+    return modulosAtivos.includes(item.modulo);
+  });
+
   const NavLinks = ({ onNavigate }) => (
     <div className="space-y-1">
-      {NAV_ITEMS.map((item) => {
+      {itensFiltrados.map((item) => {
         const isActive = currentPageName === item.path;
         return (
           <Link
