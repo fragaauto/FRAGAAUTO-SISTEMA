@@ -52,6 +52,9 @@ export default function Clientes() {
   const queryClient = useQueryClient();
   
   const [search, setSearch] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [filtroBloqueado, setFiltroBloqueado] = useState('todos');
+  const [filtroAtendimento, setFiltroAtendimento] = useState('todos');
   const [showModal, setShowModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
@@ -59,6 +62,7 @@ export default function Clientes() {
   
   const [formData, setFormData] = useState({
     nome: '',
+    tipo_pessoa: 'fisica',
     telefone: '',
     email: '',
     cpf_cnpj: '',
