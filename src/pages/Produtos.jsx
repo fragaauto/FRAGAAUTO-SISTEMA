@@ -229,12 +229,20 @@ export default function Produtos() {
     }
   });
 
-  const filteredProdutos = produtos.filter(p => {
-    const matchSearch = p.nome?.toLowerCase().includes(search.toLowerCase()) || 
-                        p.codigo?.toLowerCase().includes(search.toLowerCase());
-    const matchCategoria = categoriaFilter === 'all' || p.categoria === categoriaFilter;
-    return matchSearch && matchCategoria;
-  });
+  const filteredProdutos = produtos
+    .filter(p => {
+      const matchSearch = p.nome?.toLowerCase().includes(search.toLowerCase()) || 
+                          p.codigo?.toLowerCase().includes(search.toLowerCase());
+      const matchCategoria = categoriaFilter === 'all' || p.categoria === categoriaFilter;
+      return matchSearch && matchCategoria;
+    })
+    .sort((a, b) => {
+      if (ordenacao === 'nome_asc') return (a.nome || '').localeCompare(b.nome || '', 'pt-BR');
+      if (ordenacao === 'nome_desc') return (b.nome || '').localeCompare(a.nome || '', 'pt-BR');
+      if (ordenacao === 'data_desc') return new Date(b.updated_date || 0) - new Date(a.updated_date || 0);
+      if (ordenacao === 'data_asc') return new Date(a.updated_date || 0) - new Date(b.updated_date || 0);
+      return 0;
+    });
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredProdutos.length) {
