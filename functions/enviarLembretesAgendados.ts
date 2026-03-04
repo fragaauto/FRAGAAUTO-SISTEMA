@@ -84,11 +84,13 @@ Deno.serve(async (req) => {
 
       // Enviar para todas as conversas ativas (últimos 30 dias)
       const conversas = await base44.asServiceRole.agents.listConversations('atendimento_whatsapp');
-      for (const conversa of conversas) {
-        const ultimaMsg = conversa.updated_date || conversa.created_date;
+      for (const c of conversas) {
+        const ultimaMsg = c.updated_date || c.created_date;
         const diasDesdeUltima = (Date.now() - new Date(ultimaMsg)) / (1000 * 60 * 60 * 24);
         if (diasDesdeUltima > 30) continue;
 
+        // Busca o objeto completo da conversa antes de enviar
+        const conversa = await base44.asServiceRole.agents.getConversation(c.id);
         await base44.asServiceRole.agents.addMessage(conversa, {
           role: 'assistant',
           content: mensagem,
