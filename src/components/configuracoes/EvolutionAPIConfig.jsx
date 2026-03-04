@@ -21,9 +21,23 @@ export default function EvolutionAPIConfig({ formData, setFormData }) {
       setResultado({
         ok: false,
         mensagem: 'Preencha todos os campos antes de testar.',
-        detalhes: !evolution_api_url ? '• URL da API está vazia.\n' : '' +
-                  !evolution_api_key ? '• API Key está vazia.\n' : '' +
-                  !evolution_instance ? '• Nome da instância está vazio.' : ''
+        detalhes: [
+          !evolution_api_url && '• URL da API está vazia.',
+          !evolution_api_key && '• API Key está vazia.',
+          !evolution_instance && '• Nome da instância está vazio.',
+        ].filter(Boolean).join('\n')
+      });
+      setTestando(false);
+      return;
+    }
+
+    // Validar se parece URL base válida (sem caminhos de manager/painel)
+    const urlLimpa = evolution_api_url.replace(/\/$/, '');
+    if (urlLimpa.includes('/manager') || urlLimpa.includes('/instance/')) {
+      setResultado({
+        ok: false,
+        mensagem: 'URL inválida — parece ser o link do painel, não da API.',
+        detalhes: 'A URL deve ser apenas a base da API, como:\nhttps://api.seudominio.com.br\n\nNão inclua caminhos como /manager ou /instance/...'
       });
       setTestando(false);
       return;
