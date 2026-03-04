@@ -42,7 +42,11 @@ export default function Compras() {
     staleTime: 60 * 1000,
   });
 
-  const estoqueBaixo = produtos.filter(p => p.controla_estoque && (p.estoque_atual || 0) <= (p.estoque_minimo || 0));
+  const estoqueBaixo = produtos.filter(p => p.controla_estoque && (p.estoque_atual || 0) <= (p.estoque_minimo || 0) && (p.estoque_minimo || 0) > 0);
+  const [showGerarLista, setShowGerarLista] = useState(false);
+  const [itensLista, setItensLista] = useState([]);
+  const [nomeLista, setNomeLista] = useState('');
+  const [salvandoLista, setSalvandoLista] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-50">
