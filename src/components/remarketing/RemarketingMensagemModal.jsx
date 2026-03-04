@@ -41,6 +41,9 @@ function gerarMensagem(item, config) {
 export default function RemarketingMensagemModal({ item, config, onClose, onEnviado }) {
   const [mensagem, setMensagem] = useState('');
   const [editando, setEditando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+
+  const evolutionConfigurado = config?.evolution_api_url && config?.evolution_api_key && config?.evolution_instance;
 
   useEffect(() => {
     if (item && config) {
@@ -48,12 +51,32 @@ export default function RemarketingMensagemModal({ item, config, onClose, onEnvi
     }
   }, [item, config]);
 
-  const enviarWhatsApp = () => {
+  const enviarViaEvolution = async () => {
     const tel = (item.clienteTelefone || '').replace(/\D/g, '');
-    if (!tel) {
-      toast.error('Telefone inválido');
-      return;
+    if (!tel) { toast.error('Telefone inválido'); return; }
+
+    setEnviando(true);
+    try {
+      const res = await base44.functions.invoke('enviarMensagemWhatsApp', {
+        telefone: tel,
+        mensagem,
+      });
+      if (res.data?.ok) {
+        onEnviado(item.id);
+        toast.success('Mensagem enviada via WhatsApp!');
+        onClose();
+      } else {
+        toast.error(res.data?.error || 'Erro ao enviar mensagem.');
+      }
+    } catch (e) {
+      toast.error('Erro ao enviar: ' + e.message);
     }
+    setEnviando(false);
+  };
+
+  const enviarViaLink = () => {
+    const tel = (item.clienteTelefone || '').replace(/\D/g, '');
+    if (!tel) { toast.error('Telefone inválido'); return; }
     const numero = tel.length === 11 ? `55${tel}` : tel;
     window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, '_blank');
     onEnviado(item.id);
