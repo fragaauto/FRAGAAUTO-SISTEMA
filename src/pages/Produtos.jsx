@@ -307,21 +307,22 @@ export default function Produtos() {
     setEditingProduto(null);
     setFormData({
       codigo: '',
-      nome: '',
-      categoria: '',
-      unidade: 'unidade',
-      valor: '',
-      descricao: '',
-      vantagens: '',
-      desvantagens: '',
-      aplicacao_universal: false,
-      modelos_compativeis: [],
-      ativo: true,
-      controla_estoque: false,
-      estoque_atual: 0,
-      estoque_minimo: 0
-    });
-  };
+        nome: '',
+        categoria: '',
+        unidade: 'unidade',
+        valor: '',
+        descricao: '',
+        vantagens: '',
+        desvantagens: '',
+        aplicacao_universal: false,
+        modelos_compativeis: [],
+        ativo: true,
+        controla_estoque: false,
+        estoque_atual: 0,
+        estoque_minimo: 0,
+        estoque_desejado: 0
+      });
+      };
 
   // Detectar modelos automaticamente no texto
   const detectarModelos = (texto) => {
