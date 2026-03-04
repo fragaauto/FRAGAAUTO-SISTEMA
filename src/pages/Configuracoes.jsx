@@ -797,6 +797,8 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
+        <EvolutionAPIConfig formData={formData} setFormData={setFormData} />
+
         <LembretesWhatsApp />
 
         <Card>
