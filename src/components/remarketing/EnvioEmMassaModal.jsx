@@ -122,21 +122,17 @@ export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado })
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="w-4 h-4 text-amber-600" />
-                <Label className="text-amber-700 font-medium">Intervalo entre envios</Label>
+                <Label className="text-amber-700 font-medium">Intervalo aleatório entre envios</Label>
               </div>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="number"
-                  min={5}
-                  max={300}
-                  value={intervalo}
-                  onChange={e => setIntervalo(Number(e.target.value))}
-                  className="w-24"
-                />
-                <span className="text-sm text-amber-700">segundos entre cada mensagem</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-amber-700">De</span>
+                <Input type="number" min={5} max={300} value={intervaloMin} onChange={e => setIntervaloMin(Number(e.target.value))} className="w-20" />
+                <span className="text-sm text-amber-700">até</span>
+                <Input type="number" min={5} max={300} value={intervaloMax} onChange={e => setIntervaloMax(Number(e.target.value))} className="w-20" />
+                <span className="text-sm text-amber-700">segundos</span>
               </div>
               <p className="text-xs text-amber-600 mt-2">
-                ⚠️ Recomendamos mínimo 10s para evitar bloqueios do WhatsApp. Tempo total estimado: ~{Math.ceil(itens.length * intervalo / 60)} min.
+                ⚠️ Intervalo aleatório para parecer mais humano e evitar bloqueios. Tempo estimado: ~{Math.ceil(itens.length * ((intervaloMin + intervaloMax) / 2) / 60)} min.
               </p>
             </div>
           )}
