@@ -114,7 +114,10 @@ export default function CampanhaModal({ campanha, atendimentos, onClose, onSaved
       }
 
       if (i < contatos.length - 1 && !cancelRef.value) {
-        for (let s = 0; s < intervalo; s++) {
+        const min = Math.min(intervaloMin, intervaloMax);
+        const max = Math.max(intervaloMin, intervaloMax);
+        const segundos = min + Math.floor(Math.random() * (max - min + 1));
+        for (let s = 0; s < segundos; s++) {
           if (cancelRef.value) break;
           await sleep(1000);
         }

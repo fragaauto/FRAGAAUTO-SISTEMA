@@ -81,9 +81,12 @@ export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado })
         setResultados(prev => [...prev, { id: item.id, nome: item.clienteNome, ok: false, erro: e.message }]);
       }
 
-      // Aguardar intervalo entre envios (exceto o último)
+      // Aguardar intervalo aleatório entre envios (exceto o último)
       if (i < itens.length - 1 && !cancelRef.value) {
-        for (let s = 0; s < intervalo; s++) {
+        const min = Math.min(intervaloMin, intervaloMax);
+        const max = Math.max(intervaloMin, intervaloMax);
+        const segundos = min + Math.floor(Math.random() * (max - min + 1));
+        for (let s = 0; s < segundos; s++) {
           if (cancelRef.value) break;
           await sleep(1000);
         }
