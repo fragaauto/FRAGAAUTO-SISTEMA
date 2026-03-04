@@ -295,7 +295,8 @@ export default function Produtos() {
         ativo: true,
         controla_estoque: false,
         estoque_atual: 0,
-        estoque_minimo: 0
+        estoque_minimo: 0,
+        estoque_desejado: 0
       });
     }
     setShowModal(true);
