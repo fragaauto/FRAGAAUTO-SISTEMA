@@ -180,6 +180,20 @@ export default function Agenda() {
     toast.success('Agendamento salvo!');
   };
 
+  const sincronizarSheets = async () => {
+    setSincronizando(true);
+    try {
+      const res = await base44.functions.invoke('sincronizarAgenda', {});
+      const msg = res.data?.message || 'Sincronizado!';
+      toast.success(msg);
+      qc.invalidateQueries(['agendamentos']);
+    } catch (e) {
+      toast.error(e?.response?.data?.error || 'Erro ao sincronizar com Google Sheets');
+    } finally {
+      setSincronizando(false);
+    }
+  };
+
   const labelDia = (dia) => {
     if (isToday(dia)) return 'Hoje';
     if (isTomorrow(dia)) return 'Amanhã';
