@@ -169,13 +169,23 @@ export default function Clientes() {
               <h1 className="text-2xl font-bold text-slate-800">Clientes</h1>
               <p className="text-slate-500">{clientes.length} cadastrados</p>
             </div>
-            <Button 
-              onClick={() => openModal()}
-              className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Cliente
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => setShowImportar(true)}
+                className="flex-1 sm:flex-none"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Importar Planilha
+              </Button>
+              <Button 
+                onClick={() => openModal()}
+                className="bg-orange-500 hover:bg-orange-600 flex-1 sm:flex-none"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Cliente
+              </Button>
+            </div>
           </div>
         </div>
       </div>
