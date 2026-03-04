@@ -429,11 +429,11 @@ export default function Clientes() {
               />
             </div>
             <div>
-              <Label>CPF/CNPJ</Label>
+              <Label>{formData.tipo_pessoa === 'juridica' ? 'CNPJ' : 'CPF'}</Label>
               <Input
                 value={formData.cpf_cnpj}
                 onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value })}
-                placeholder="000.000.000-00"
+                placeholder={formData.tipo_pessoa === 'juridica' ? '00.000.000/0001-00' : '000.000.000-00'}
                 className="h-12"
               />
             </div>
