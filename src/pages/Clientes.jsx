@@ -44,7 +44,7 @@ import {
   Filter,
   X
 } from 'lucide-react';
-import ImportarClientesModal from '../components/clientes/ImportarClientesModal';
+import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
 import { motion } from 'framer-motion';
 
 export default function Clientes() {
