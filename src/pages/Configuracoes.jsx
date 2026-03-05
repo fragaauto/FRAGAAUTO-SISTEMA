@@ -84,9 +84,10 @@ export default function Configuracoes() {
     evolution_api_url: config.evolution_api_url || '',
     evolution_api_key: config.evolution_api_key || '',
     evolution_instance: config.evolution_instance || '',
-  });
+    impostos: config.impostos || [],
+    });
 
-  React.useEffect(() => {
+    React.useEffect(() => {
     if (config.id) {
       setFormData({
         nome_empresa: config.nome_empresa || 'Fraga Auto Portas',
