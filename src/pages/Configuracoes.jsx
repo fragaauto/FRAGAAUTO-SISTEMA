@@ -799,6 +799,54 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
+        {/* IMPOSTOS */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Percent className="w-5 h-5 text-red-500" />
+                Impostos
+              </CardTitle>
+              <Button
+                size="sm"
+                className="bg-orange-500 hover:bg-orange-600"
+                onClick={() => setFormData(prev => ({ ...prev, impostos: [...(prev.impostos || []), { nome: '', percentual: 0, ativo: true }] }))}
+              >
+                <Plus className="w-4 h-4 mr-1" />Adicionar Imposto
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-slate-500">Configure os impostos incidentes sobre o faturamento. Serão descontados no relatório de produção dos técnicos.</p>
+            {(formData.impostos || []).length === 0 ? (
+              <div className="text-center py-6 text-slate-400"><Percent className="w-8 h-8 mx-auto mb-2 opacity-30" /><p className="text-sm">Nenhum imposto configurado</p></div>
+            ) : (
+              (formData.impostos || []).map((imp, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                  <Input
+                    value={imp.nome}
+                    onChange={e => { const ni = [...formData.impostos]; ni[idx].nome = e.target.value; setFormData(prev => ({ ...prev, impostos: ni })); }}
+                    placeholder="Nome (ex: ISS, Simples Nacional)"
+                    className="flex-1"
+                  />
+                  <div className="flex items-center gap-1 w-28">
+                    <Input
+                      type="number"
+                      value={imp.percentual}
+                      onChange={e => { const ni = [...formData.impostos]; ni[idx].percentual = parseFloat(e.target.value) || 0; setFormData(prev => ({ ...prev, impostos: ni })); }}
+                      placeholder="0"
+                    />
+                    <span className="text-slate-500 text-sm">%</span>
+                  </div>
+                  <Button variant="ghost" size="icon" className="text-red-500" onClick={() => setFormData(prev => ({ ...prev, impostos: prev.impostos.filter((_, i) => i !== idx) }))}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
         <EvolutionAPIConfig formData={formData} setFormData={setFormData} />
 
         <LembretesWhatsApp />
