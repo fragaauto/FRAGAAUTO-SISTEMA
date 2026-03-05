@@ -48,7 +48,9 @@ import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
 import { motion } from 'framer-motion';
 
 export default function Clientes() {
+  // Redirect to new Cadastros page
   const navigate = useNavigate();
+  React.useEffect(() => { navigate('/Cadastros'); }, []);
   const queryClient = useQueryClient();
   
   const [search, setSearch] = useState('');
