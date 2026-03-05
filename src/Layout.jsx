@@ -39,6 +39,7 @@ const NAV_ITEMS = [
   { name: 'Configurações', icon: Wrench, path: 'Configuracoes', modulo: null },
   { name: 'Usuários', icon: Users, path: 'Usuarios', modulo: null },
   { name: 'Gerenciar Plano', icon: Shield, path: 'GerenciarPlano', modulo: null, apenasAdmin: true },
+  { name: 'Base de Conhecimento IA', icon: Sparkles, path: 'BaseConhecimentoIA', modulo: null, apenasAdmin: true },
   { name: 'Manual de Treinamento', icon: FileText, path: 'ManualTreinamento', modulo: null },
 ];
 
