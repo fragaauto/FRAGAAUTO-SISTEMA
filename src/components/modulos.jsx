@@ -13,7 +13,7 @@ export const TODOS_MODULOS = [
     nome: 'Clientes',
     descricao: 'Cadastro e histórico de clientes e veículos',
     icone: '👥',
-    paginas: ['Clientes'],
+    paginas: ['Cadastros', 'Clientes'],
   },
   {
     id: 'checklist',
