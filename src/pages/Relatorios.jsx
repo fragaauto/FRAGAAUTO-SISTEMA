@@ -99,25 +99,30 @@ export default function Relatorios() {
   };
 
   const exportarGeralPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('Relatório Geral de Atendimentos', 14, 18);
-    doc.setFontSize(10);
-    doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
-    doc.autoTable({
-      startY: 32,
-      head: [['Data', 'Placa', 'Cliente', 'Produto/Serviço', 'Qtd', 'Valor Total', 'Status']],
-      body: dadosRelatorio.detalhesServicos.map(item => [
-        format(new Date(item.data), 'dd/MM/yyyy', { locale: ptBR }),
-        item.atendimento_placa,
-        item.cliente || '-',
-        item.produto,
-        item.quantidade,
-        `R$ ${item.valor_total?.toFixed(2)}`,
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFontSize(16); doc.text('Relatório Geral de Atendimentos', 14, 18);
+    doc.setFontSize(9); doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
+    const headers = ['Data', 'Placa', 'Cliente', 'Produto/Serviço', 'Qtd', 'Valor Total', 'Status'];
+    const colW = [22, 20, 35, 70, 12, 25, 22];
+    let y = 34;
+    doc.setFillColor(249, 115, 22); doc.rect(14, y, 262, 7, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(8);
+    let x = 14; headers.forEach((h, i) => { doc.text(h, x + 1, y + 5); x += colW[i]; });
+    doc.setTextColor(0,0,0); y += 9;
+    dadosRelatorio.detalhesServicos.forEach((item, idx) => {
+      if (y > 190) { doc.addPage(); y = 14; }
+      if (idx % 2 === 0) { doc.setFillColor(248,250,252); doc.rect(14, y - 1, 262, 7, 'F'); }
+      const row = [
+        format(new Date(item.data), 'dd/MM/yy', { locale: ptBR }),
+        item.atendimento_placa || '',
+        (item.cliente || '-').substring(0, 20),
+        (item.produto || '').substring(0, 38),
+        String(item.quantidade || ''),
+        `R$ ${(item.valor_total || 0).toFixed(2)}`,
         item.status === 'aprovado' ? 'Aprovado' : item.status === 'reprovado' ? 'Reprovado' : 'Pendente',
-      ]),
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [249, 115, 22] },
+      ];
+      x = 14; row.forEach((v, i) => { doc.text(String(v), x + 1, y + 4); x += colW[i]; });
+      y += 7;
     });
     doc.save(`relatorio_geral_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
     toast.success('PDF gerado com sucesso!');
