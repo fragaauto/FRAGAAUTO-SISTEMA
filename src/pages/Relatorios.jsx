@@ -85,14 +85,43 @@ export default function Relatorios() {
     return { totalOrcamentos: atendimentosFiltrados.length, servicosAprovados, servicosReprovados, valorTotalAprovado, valorTotalReprovado, detalhesServicos, atendimentosFiltrados, rankingServicos: rankingArray };
   }, [atendimentos, periodo, dataEspecifica]);
 
-  const exportarCSV = () => {
+  const labelPeriodo = periodo === 'especifica'
+    ? (dataEspecifica.from ? (dataEspecifica.to ? `${format(dataEspecifica.from, 'dd/MM/yyyy')} - ${format(dataEspecifica.to, 'dd/MM/yyyy')}` : format(dataEspecifica.from, 'dd/MM/yyyy')) : 'Data específica')
+    : periodo === '0' ? 'Todo o período' : `Últimos ${periodo} dias`;
+
+  const exportarGeralCSV = () => {
     const linhas = ['Data;Placa;Cliente;Produto/Serviço;Quantidade;Valor Unit.;Valor Total;Status'];
     dadosRelatorio.detalhesServicos.forEach(item => {
       linhas.push([format(new Date(item.data), 'dd/MM/yyyy', { locale: ptBR }), item.atendimento_placa, item.cliente || '-', item.produto, item.quantidade, item.valor_unitario?.toFixed(2), item.valor_total?.toFixed(2), item.status === 'aprovado' ? 'Aprovado' : item.status === 'reprovado' ? 'Reprovado' : 'Pendente'].join(';'));
     });
     const blob = new Blob(['\ufeff' + linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `relatorio_${format(new Date(), 'yyyy-MM-dd')}.csv`; link.click();
-    toast.success('Relatório exportado!');
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `relatorio_geral_${format(new Date(), 'yyyy-MM-dd')}.csv`; link.click();
+    toast.success('Exportado com sucesso!');
+  };
+
+  const exportarGeralPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Relatório Geral de Atendimentos', 14, 18);
+    doc.setFontSize(10);
+    doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
+    doc.autoTable({
+      startY: 32,
+      head: [['Data', 'Placa', 'Cliente', 'Produto/Serviço', 'Qtd', 'Valor Total', 'Status']],
+      body: dadosRelatorio.detalhesServicos.map(item => [
+        format(new Date(item.data), 'dd/MM/yyyy', { locale: ptBR }),
+        item.atendimento_placa,
+        item.cliente || '-',
+        item.produto,
+        item.quantidade,
+        `R$ ${item.valor_total?.toFixed(2)}`,
+        item.status === 'aprovado' ? 'Aprovado' : item.status === 'reprovado' ? 'Reprovado' : 'Pendente',
+      ]),
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [249, 115, 22] },
+    });
+    doc.save(`relatorio_geral_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast.success('PDF gerado com sucesso!');
   };
 
   return (
