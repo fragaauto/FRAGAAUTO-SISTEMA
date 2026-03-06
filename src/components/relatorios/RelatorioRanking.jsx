@@ -37,8 +37,40 @@ export default function RelatorioRanking({ ranking = [], labelPeriodo = '' }) {
     );
   };
 
+  const exportarExcel = () => {
+    const linhas = ['Serviço/Produto;Qtd Aprovado;Qtd Reprovado;Qtd Total;Valor Total;Taxa Aprovação'];
+    [...ranking].sort((a, b) => b.qtd_aprovado - a.qtd_aprovado).forEach(item => {
+      const taxa = item.qtd_total > 0 ? ((item.qtd_aprovado / item.qtd_total) * 100).toFixed(0) : 0;
+      linhas.push([item.nome, item.qtd_aprovado, item.qtd_reprovado, item.qtd_total, item.valor_total.toFixed(2), `${taxa}%`].join(';'));
+    });
+    const blob = new Blob(['\ufeff' + linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `ranking_servicos_${format(new Date(), 'yyyy-MM-dd')}.csv`; link.click();
+    toast.success('Exportado com sucesso!');
+  };
+
+  const exportarPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16); doc.text('Ranking de Serviços', 14, 18);
+    doc.setFontSize(10); doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
+    doc.autoTable({
+      startY: 32,
+      head: [['Serviço/Produto', 'Qtd Aprovado', 'Qtd Reprovado', 'Qtd Total', 'Valor Total', 'Taxa']],
+      body: [...ranking].sort((a, b) => b.qtd_aprovado - a.qtd_aprovado).map(item => {
+        const taxa = item.qtd_total > 0 ? ((item.qtd_aprovado / item.qtd_total) * 100).toFixed(0) : 0;
+        return [item.nome, item.qtd_aprovado, item.qtd_reprovado, item.qtd_total, `R$ ${item.valor_total.toFixed(2)}`, `${taxa}%`];
+      }),
+      styles: { fontSize: 8 }, headStyles: { fillColor: [249, 115, 22] },
+    });
+    doc.save(`ranking_servicos_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast.success('PDF gerado com sucesso!');
+  };
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={exportarExcel}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel / CSV</Button>
+        <Button variant="outline" size="sm" onClick={exportarPDF}><FileDown className="w-4 h-4 mr-2" />PDF</Button>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
