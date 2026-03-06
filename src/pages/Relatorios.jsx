@@ -230,12 +230,16 @@ export default function Relatorios() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="produtos">
+            <RelatorioProdutos atendimentos={dadosRelatorio.atendimentosFiltrados} labelPeriodo={labelPeriodo} />
+          </TabsContent>
+
           <TabsContent value="ranking">
-            <RelatorioRanking ranking={dadosRelatorio.rankingServicos} />
+            <RelatorioRanking ranking={dadosRelatorio.rankingServicos} labelPeriodo={labelPeriodo} />
           </TabsContent>
 
           <TabsContent value="tecnicos">
-            <RelatorioTecnicos atendimentos={dadosRelatorio.atendimentosFiltrados} config={config} />
+            <RelatorioTecnicos atendimentos={dadosRelatorio.atendimentosFiltrados} config={config} labelPeriodo={labelPeriodo} />
           </TabsContent>
         </Tabs>
       </div>
