@@ -51,6 +51,8 @@ import Agenda from './pages/Agenda';
 import AprovarOrcamento from './pages/AprovarOrcamento';
 import AssistenteIA from './pages/AssistenteIA';
 import Atendimentos from './pages/Atendimentos';
+import BaseConhecimentoIA from './pages/BaseConhecimentoIA';
+import Cadastros from './pages/Cadastros';
 import Clientes from './pages/Clientes';
 import Compras from './pages/Compras';
 import Configuracoes from './pages/Configuracoes';
@@ -69,8 +71,6 @@ import Remarketing from './pages/Remarketing';
 import ServicosReprovados from './pages/ServicosReprovados';
 import Usuarios from './pages/Usuarios';
 import VerAtendimento from './pages/VerAtendimento';
-import Cadastros from './pages/Cadastros';
-import BaseConhecimentoIA from './pages/BaseConhecimentoIA';
 import __Layout from './Layout.jsx';
 
 
@@ -79,6 +79,8 @@ export const PAGES = {
     "AprovarOrcamento": AprovarOrcamento,
     "AssistenteIA": AssistenteIA,
     "Atendimentos": Atendimentos,
+    "BaseConhecimentoIA": BaseConhecimentoIA,
+    "Cadastros": Cadastros,
     "Clientes": Clientes,
     "Compras": Compras,
     "Configuracoes": Configuracoes,
@@ -97,8 +99,6 @@ export const PAGES = {
     "ServicosReprovados": ServicosReprovados,
     "Usuarios": Usuarios,
     "VerAtendimento": VerAtendimento,
-    "Cadastros": Cadastros,
-    "BaseConhecimentoIA": BaseConhecimentoIA,
 }
 
 export const pagesConfig = {

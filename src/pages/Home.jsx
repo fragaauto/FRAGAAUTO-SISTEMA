@@ -60,6 +60,13 @@ export default function Home() {
   const [periodo, setPeriodo] = useState('30');
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
 
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const logoUrl = configs[0]?.logo_url;
+
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list('-created_date', 500),
