@@ -184,6 +184,10 @@ export default function Relatorios() {
           </TabsList>
 
           <TabsContent value="geral">
+            <div className="flex justify-end gap-2 mb-4">
+              <Button variant="outline" size="sm" onClick={exportarGeralCSV}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel / CSV</Button>
+              <Button variant="outline" size="sm" onClick={exportarGeralPDF}><FileDown className="w-4 h-4 mr-2" />PDF</Button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
               {[
                 { label: 'Total de Orçamentos', value: dadosRelatorio.totalOrcamentos, icon: FileText, color: 'text-blue-600', bg: 'text-blue-500' },
