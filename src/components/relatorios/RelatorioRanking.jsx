@@ -1,8 +1,13 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Award } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, Award, FileSpreadsheet, FileDown } from 'lucide-react';
+import { format } from 'date-fns';
+import { toast } from "sonner";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
-export default function RelatorioRanking({ ranking = [] }) {
+export default function RelatorioRanking({ ranking = [], labelPeriodo = '' }) {
   const maisVendidos = [...ranking].sort((a, b) => b.qtd_aprovado - a.qtd_aprovado).slice(0, 15);
   const menosVendidos = [...ranking].filter(r => r.qtd_total > 0).sort((a, b) => a.qtd_aprovado - b.qtd_aprovado).slice(0, 10);
   const maiorValor = [...ranking].sort((a, b) => b.valor_total - a.valor_total).slice(0, 10);
