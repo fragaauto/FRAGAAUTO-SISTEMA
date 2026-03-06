@@ -178,6 +178,7 @@ export default function Relatorios() {
         <Tabs defaultValue="geral">
           <TabsList className="mb-6">
             <TabsTrigger value="geral" className="flex items-center gap-2"><FileText className="w-4 h-4" />Geral</TabsTrigger>
+            <TabsTrigger value="produtos" className="flex items-center gap-2"><Package className="w-4 h-4" />Produtos Vendidos</TabsTrigger>
             <TabsTrigger value="ranking" className="flex items-center gap-2"><TrendingUp className="w-4 h-4" />Ranking Serviços</TabsTrigger>
             <TabsTrigger value="tecnicos" className="flex items-center gap-2"><Users className="w-4 h-4" />Produção Técnicos</TabsTrigger>
           </TabsList>
