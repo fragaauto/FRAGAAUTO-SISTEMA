@@ -102,15 +102,40 @@ export default function Relatorios() {
               <p className="text-slate-500">Análise detalhada dos atendimentos e produção</p>
             </div>
             <div className="flex items-center gap-3">
-              <Select value={periodo} onValueChange={setPeriodo}>
+              <Select value={periodo} onValueChange={(v) => { setPeriodo(v); if (v !== 'especifica') setDataEspecifica({ from: null, to: null }); }}>
                 <SelectTrigger className="w-48"><Calendar className="w-4 h-4 mr-2" /><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="7">Últimos 7 dias</SelectItem>
                   <SelectItem value="30">Últimos 30 dias</SelectItem>
                   <SelectItem value="90">Últimos 90 dias</SelectItem>
                   <SelectItem value="0">Todo o período</SelectItem>
+                  <SelectItem value="especifica">Data específica</SelectItem>
                 </SelectContent>
               </Select>
+              {periodo === 'especifica' && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-64">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {dataEspecifica.from
+                        ? dataEspecifica.to
+                          ? `${format(dataEspecifica.from, 'dd/MM/yyyy')} - ${format(dataEspecifica.to, 'dd/MM/yyyy')}`
+                          : format(dataEspecifica.from, 'dd/MM/yyyy')
+                        : 'Selecionar período'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="range"
+                      selected={dataEspecifica}
+                      onSelect={(range) => setDataEspecifica(range || { from: null, to: null })}
+                      initialFocus
+                      numberOfMonths={2}
+                      locale={ptBR}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
               <Button onClick={exportarCSV} variant="outline"><FileSpreadsheet className="w-4 h-4 mr-2" />Exportar CSV</Button>
             </div>
           </div>
