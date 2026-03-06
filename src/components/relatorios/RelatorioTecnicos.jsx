@@ -73,6 +73,31 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
   const totalLiquido = dadosTecnicos.reduce((sum, t) => sum + t.valorLiquidoTotal, 0);
 
+  const exportarExcel = () => {
+    const linhas = ['Técnico;Atendimentos;Concluídos;Valor Bruto;Valor Líquido'];
+    dadosTecnicos.forEach(t => {
+      linhas.push([t.nome, t.qtdAtendimentos, t.atendimentosConcluidos, t.valorBrutoTotal.toFixed(2), t.valorLiquidoTotal.toFixed(2)].join(';'));
+    });
+    const blob = new Blob(['\ufeff' + linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `producao_tecnicos_${format(new Date(), 'yyyy-MM-dd')}.csv`; link.click();
+    toast.success('Exportado com sucesso!');
+  };
+
+  const exportarPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16); doc.text('Produção por Técnico', 14, 18);
+    doc.setFontSize(10); doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
+    if (totalImpostos > 0) doc.text(`Impostos descontados: ${totalImpostos}%`, 14, 33);
+    doc.autoTable({
+      startY: totalImpostos > 0 ? 39 : 32,
+      head: [['Técnico', 'Atendimentos', 'Concluídos', 'Valor Bruto', 'Valor Líquido']],
+      body: dadosTecnicos.map(t => [t.nome, t.qtdAtendimentos, t.atendimentosConcluidos, `R$ ${t.valorBrutoTotal.toFixed(2)}`, `R$ ${t.valorLiquidoTotal.toFixed(2)}`]),
+      styles: { fontSize: 9 }, headStyles: { fillColor: [249, 115, 22] },
+    });
+    doc.save(`producao_tecnicos_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast.success('PDF gerado com sucesso!');
+  };
+
   return (
     <div className="space-y-6">
       {totalImpostos > 0 && (
