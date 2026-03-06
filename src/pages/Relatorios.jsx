@@ -80,7 +80,7 @@ export default function Relatorios() {
     const rankingArray = Object.values(rankingServicos).sort((a, b) => b.qtd_aprovado - a.qtd_aprovado);
 
     return { totalOrcamentos: atendimentosFiltrados.length, servicosAprovados, servicosReprovados, valorTotalAprovado, valorTotalReprovado, detalhesServicos, atendimentosFiltrados, rankingServicos: rankingArray };
-  }, [atendimentos, periodo]);
+  }, [atendimentos, periodo, dataEspecifica]);
 
   const exportarCSV = () => {
     const linhas = ['Data;Placa;Cliente;Produto/Serviço;Quantidade;Valor Unit.;Valor Total;Status'];
