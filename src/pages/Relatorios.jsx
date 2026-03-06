@@ -168,7 +168,7 @@ export default function Relatorios() {
                   </PopoverContent>
                 </Popover>
               )}
-              <Button onClick={exportarCSV} variant="outline"><FileSpreadsheet className="w-4 h-4 mr-2" />Exportar CSV</Button>
+              {/* export buttons shown per tab */}
             </div>
           </div>
         </div>
