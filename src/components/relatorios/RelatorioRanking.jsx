@@ -50,15 +50,21 @@ export default function RelatorioRanking({ ranking = [], labelPeriodo = '' }) {
   const exportarPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(16); doc.text('Ranking de Serviços', 14, 18);
-    doc.setFontSize(10); doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
-    doc.autoTable({
-      startY: 32,
-      head: [['Serviço/Produto', 'Qtd Aprovado', 'Qtd Reprovado', 'Qtd Total', 'Valor Total', 'Taxa']],
-      body: [...ranking].sort((a, b) => b.qtd_aprovado - a.qtd_aprovado).map(item => {
-        const taxa = item.qtd_total > 0 ? ((item.qtd_aprovado / item.qtd_total) * 100).toFixed(0) : 0;
-        return [item.nome, item.qtd_aprovado, item.qtd_reprovado, item.qtd_total, `R$ ${item.valor_total.toFixed(2)}`, `${taxa}%`];
-      }),
-      styles: { fontSize: 8 }, headStyles: { fillColor: [249, 115, 22] },
+    doc.setFontSize(9); doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
+    const headers = ['Serviço/Produto', 'Qtd Aprov.', 'Qtd Reprov.', 'Qtd Total', 'Valor Total', 'Taxa'];
+    const colW = [80, 22, 25, 22, 28, 18];
+    let y = 34;
+    doc.setFillColor(249, 115, 22); doc.rect(14, y, 181, 7, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(8);
+    let x = 14; headers.forEach((h, i) => { doc.text(h, x + 1, y + 5); x += colW[i]; });
+    doc.setTextColor(0,0,0); y += 9;
+    [...ranking].sort((a, b) => b.qtd_aprovado - a.qtd_aprovado).forEach((item, idx) => {
+      if (y > 275) { doc.addPage(); y = 14; }
+      if (idx % 2 === 0) { doc.setFillColor(248,250,252); doc.rect(14, y - 1, 181, 7, 'F'); }
+      const taxa = item.qtd_total > 0 ? ((item.qtd_aprovado / item.qtd_total) * 100).toFixed(0) : 0;
+      const row = [item.nome.substring(0,42), String(item.qtd_aprovado), String(item.qtd_reprovado), String(item.qtd_total), `R$ ${item.valor_total.toFixed(2)}`, `${taxa}%`];
+      x = 14; row.forEach((v, i) => { doc.text(String(v), x + 1, y + 4); x += colW[i]; });
+      y += 7;
     });
     doc.save(`ranking_servicos_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
     toast.success('PDF gerado com sucesso!');
