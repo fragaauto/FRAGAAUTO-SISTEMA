@@ -27,6 +27,7 @@ export default function Relatorios() {
 
   const config = configs[0] || {};
   const [periodo, setPeriodo] = useState('30');
+  const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
 
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],
