@@ -100,6 +100,10 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={exportarExcel}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel / CSV</Button>
+        <Button variant="outline" size="sm" onClick={exportarPDF}><FileDown className="w-4 h-4 mr-2" />PDF</Button>
+      </div>
       {totalImpostos > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
           Impostos configurados: <strong>{totalImpostos}%</strong> já descontados do valor líquido.
