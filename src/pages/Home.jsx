@@ -283,7 +283,11 @@ export default function Home() {
               <div className="relative">
                 <div className="w-64 h-64 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-full absolute blur-3xl" />
                 <div className="relative bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
-                  <Car className="w-32 h-32 text-orange-400" />
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Logo" className="w-32 h-32 object-contain rounded-2xl" />
+                  ) : (
+                    <Car className="w-32 h-32 text-orange-400" />
+                  )}
                 </div>
               </div>
             </motion.div>
