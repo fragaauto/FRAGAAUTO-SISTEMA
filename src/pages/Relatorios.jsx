@@ -10,7 +10,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import RelatorioProdutos from '@/components/relatorios/RelatorioProdutos';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from "sonner";

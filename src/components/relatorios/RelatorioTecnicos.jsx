@@ -5,7 +5,6 @@ import { Users, Award, FileSpreadsheet, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '' }) {
   const taxasMap = useMemo(() => {

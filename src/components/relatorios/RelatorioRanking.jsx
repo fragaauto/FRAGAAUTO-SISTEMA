@@ -5,7 +5,6 @@ import { TrendingUp, TrendingDown, Award, FileSpreadsheet, FileDown } from 'luci
 import { format } from 'date-fns';
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 export default function RelatorioRanking({ ranking = [], labelPeriodo = '' }) {
   const maisVendidos = [...ranking].sort((a, b) => b.qtd_aprovado - a.qtd_aprovado).slice(0, 15);
