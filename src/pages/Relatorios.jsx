@@ -37,11 +37,23 @@ export default function Relatorios() {
 
   const dadosRelatorio = useMemo(() => {
     const now = new Date();
-    const diasFiltro = parseInt(periodo);
 
     const atendimentosFiltrados = atendimentos.filter(a => {
+      const dataAtendimento = new Date(a.created_date);
+      dataAtendimento.setHours(0, 0, 0, 0);
+
+      if (periodo === 'especifica') {
+        if (!dataEspecifica.from) return true;
+        const from = new Date(dataEspecifica.from); from.setHours(0, 0, 0, 0);
+        if (dataEspecifica.to) {
+          const to = new Date(dataEspecifica.to); to.setHours(23, 59, 59, 999);
+          return dataAtendimento >= from && dataAtendimento <= to;
+        }
+        return dataAtendimento.toDateString() === from.toDateString();
+      }
+      const diasFiltro = parseInt(periodo);
       if (diasFiltro === 0) return true;
-      const diff = Math.floor((now - new Date(a.created_date)) / (1000 * 60 * 60 * 24));
+      const diff = Math.floor((now - dataAtendimento) / (1000 * 60 * 60 * 24));
       return diff <= diasFiltro;
     });
 
