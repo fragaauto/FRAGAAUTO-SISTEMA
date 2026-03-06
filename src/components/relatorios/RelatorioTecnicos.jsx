@@ -85,13 +85,21 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
   const exportarPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(16); doc.text('Produção por Técnico', 14, 18);
-    doc.setFontSize(10); doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
-    if (totalImpostos > 0) doc.text(`Impostos descontados: ${totalImpostos}%`, 14, 33);
-    doc.autoTable({
-      startY: totalImpostos > 0 ? 39 : 32,
-      head: [['Técnico', 'Atendimentos', 'Concluídos', 'Valor Bruto', 'Valor Líquido']],
-      body: dadosTecnicos.map(t => [t.nome, t.qtdAtendimentos, t.atendimentosConcluidos, `R$ ${t.valorBrutoTotal.toFixed(2)}`, `R$ ${t.valorLiquidoTotal.toFixed(2)}`]),
-      styles: { fontSize: 9 }, headStyles: { fillColor: [249, 115, 22] },
+    doc.setFontSize(9); doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
+    let y = 32;
+    if (totalImpostos > 0) { doc.text(`Impostos descontados: ${totalImpostos}%`, 14, y); y += 7; }
+    const headers = ['Técnico', 'Atendimentos', 'Concluídos', 'Valor Bruto', 'Valor Líquido'];
+    const colW = [70, 28, 26, 32, 32];
+    doc.setFillColor(249, 115, 22); doc.rect(14, y, 181, 7, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(8);
+    let x = 14; headers.forEach((h, i) => { doc.text(h, x + 1, y + 5); x += colW[i]; });
+    doc.setTextColor(0,0,0); y += 9;
+    dadosTecnicos.forEach((t, idx) => {
+      if (y > 275) { doc.addPage(); y = 14; }
+      if (idx % 2 === 0) { doc.setFillColor(248,250,252); doc.rect(14, y - 1, 181, 7, 'F'); }
+      const row = [t.nome.substring(0,36), String(t.qtdAtendimentos), String(t.atendimentosConcluidos), `R$ ${t.valorBrutoTotal.toFixed(2)}`, `R$ ${t.valorLiquidoTotal.toFixed(2)}`];
+      x = 14; row.forEach((v, i) => { doc.text(String(v), x + 1, y + 4); x += colW[i]; });
+      y += 7;
     });
     doc.save(`producao_tecnicos_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
     toast.success('PDF gerado com sucesso!');
