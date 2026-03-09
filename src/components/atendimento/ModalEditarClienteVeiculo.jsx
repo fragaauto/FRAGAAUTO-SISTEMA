@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Car, User, Save, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Car, User, Save, Loader2, Wrench } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 
 export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose, isLoading }) {
   const [dados, setDados] = useState({
@@ -17,6 +20,13 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
     marca: atendimento.marca || '',
     ano: atendimento.ano || '',
     km_atual: atendimento.km_atual || '',
+    tecnico: atendimento.tecnico || '',
+  });
+
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios'],
+    queryFn: () => base44.entities.User.list(),
+    staleTime: 10 * 60 * 1000
   });
 
   const handleSave = () => {
@@ -40,6 +50,9 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
             </TabsTrigger>
             <TabsTrigger value="veiculo" className="flex-1">
               <Car className="w-4 h-4 mr-2" /> Veículo
+            </TabsTrigger>
+            <TabsTrigger value="tecnico" className="flex-1">
+              <Wrench className="w-4 h-4 mr-2" /> Técnico
             </TabsTrigger>
           </TabsList>
 
@@ -132,6 +145,30 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
                 />
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="tecnico" className="space-y-4 pt-4">
+            <div>
+              <Label>Técnico Responsável</Label>
+              <Select value={dados.tecnico || ''} onValueChange={(v) => setDados(p => ({ ...p, tecnico: v }))}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Selecione o técnico..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>Sem técnico definido</SelectItem>
+                  {usuarios.filter(u => u.full_name).map(u => (
+                    <SelectItem key={u.id} value={u.full_name}>{u.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {dados.tecnico && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <span className="font-semibold">Técnico atribuído:</span> {dados.tecnico}
+                </p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 
