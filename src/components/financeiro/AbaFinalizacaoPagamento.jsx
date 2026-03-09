@@ -400,7 +400,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
           {!jaLancado && (
             <>
               {tecnicos.length === 0 ? (
-                <p className="text-xs text-slate-500">Nenhum técnico cadastrado. Vá em Usuários e defina o perfil "Técnico".</p>
+                <p className="text-xs text-slate-500">Nenhum funcionário cadastrado. Convide funcionários no menu Cadastros.</p>
               ) : (
                 <div className="flex flex-wrap gap-1">
                   {tecnicos.filter(t => !tecnicosSelecionados.find(s => s.id === t.id)).map(t => (
