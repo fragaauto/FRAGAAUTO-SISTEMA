@@ -228,7 +228,7 @@ export default function Clientes() {
           <Input
             placeholder="Buscar por nome, telefone, email ou CPF/CNPJ..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPagina(1); }}
             className="pl-10 h-12"
           />
         </div>

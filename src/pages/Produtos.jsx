@@ -1109,11 +1109,11 @@ export default function Produtos() {
             <Input
               placeholder="Buscar produto ou serviço..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPagina(1); }}
               className="pl-10 h-12"
             />
           </div>
-          <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
+          <Select value={categoriaFilter} onValueChange={(v) => { setCategoriaFilter(v); setPagina(1); }}>
             <SelectTrigger className="w-full sm:w-48 h-12">
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>

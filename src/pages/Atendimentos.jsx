@@ -284,11 +284,11 @@ export default function Atendimentos() {
             <Input
               placeholder="Buscar por placa, modelo ou cliente..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPagina(1); }}
               className="pl-10 h-12"
             />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPagina(1); }}>
             <SelectTrigger className="w-full sm:w-56 h-12">
               <Filter className="w-4 h-4 mr-2 flex-shrink-0" />
               <SelectValue placeholder="Todos os status" />
