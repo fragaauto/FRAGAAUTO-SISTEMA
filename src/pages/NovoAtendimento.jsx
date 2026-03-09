@@ -26,8 +26,16 @@ import {
   Search,
   Phone,
   CreditCard,
-  UserPlus
+  UserPlus,
+  Wrench
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { motion, AnimatePresence } from 'framer-motion';
 import ChecklistSection from '../components/checklist/ChecklistSection';
 import ItemOrcamento from '../components/orcamento/ItemOrcamento';
