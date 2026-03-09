@@ -180,16 +180,7 @@ export default function Layout({ children, currentPageName }) {
         </main>
       </div>
 
-      {/* Botão flutuante Assistente IA */}
-      {currentPageName !== 'AssistenteIA' && (
-        <Link
-          to={createPageUrl('AssistenteIA')}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-full shadow-lg shadow-purple-500/40 transition-all hover:scale-105 active:scale-95"
-        >
-          <Sparkles className="w-5 h-5" />
-          <span className="font-semibold text-sm">Assistente IA</span>
-        </Link>
-      )}
+
     </div>
   );
 }
