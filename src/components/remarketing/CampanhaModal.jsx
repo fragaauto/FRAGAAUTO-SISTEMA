@@ -222,12 +222,13 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
                   <Checkbox checked={contatosSelecionados.includes(c.clienteId)} onCheckedChange={() => toggleContato(c.clienteId)} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-800 truncate">{c.clienteNome}</p>
-                    <p className="text-xs text-slate-500">{c.veiculo} • {c.telefone}</p>
+                    <p className="text-xs text-slate-500">{[c.veiculo, c.telefone].filter(Boolean).join(' • ')}</p>
                   </div>
                 </div>
               ))}
               {contatosFiltrados.length === 0 && <p className="text-center py-4 text-slate-500 text-sm">Nenhum contato encontrado</p>}
             </div>
+            <p className="text-xs text-slate-400">Clientes bloqueados não são exibidos nesta lista.</p>
           </div>
 
           {/* Progresso do envio */}
