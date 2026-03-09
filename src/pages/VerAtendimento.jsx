@@ -531,7 +531,7 @@ export default function VerAtendimento() {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {atendimento.numero_os && (
-                    <span className="text-xs font-mono bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-bold">
+                    <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border">
                       OS #{String(atendimento.numero_os).padStart(6, '0')}
                     </span>
                   )}
@@ -767,8 +767,8 @@ export default function VerAtendimento() {
                     </div>
                   )}
                   {atendimento.tecnico && (
-                    <div>
-                      <p className="text-sm text-slate-500">Técnico</p>
+                    <div className="col-span-2">
+                      <p className="text-sm text-slate-500">Técnico Responsável</p>
                       <p className="font-semibold">{atendimento.tecnico}</p>
                     </div>
                   )}
