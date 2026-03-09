@@ -40,6 +40,7 @@ const FORMAS = [
 
 export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [user, setUser] = React.useState(null);
   const [parcelasSelecionadas, setParcelasSelecionadas] = useState({});
 
