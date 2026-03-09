@@ -48,6 +48,7 @@ import {
 import { motion } from 'framer-motion';
 import ModuloBloqueado from '@/components/ModuloBloqueado';
 import { paginaPermitida } from '@/components/modulos';
+import Paginacao from '@/components/ui/Paginacao';
 
 const CATEGORIAS = [
   { value: 'eletrica', label: 'Elétrica', color: 'bg-yellow-100 text-yellow-800' },

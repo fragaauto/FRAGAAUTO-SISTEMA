@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
 import { motion } from 'framer-motion';
+import Paginacao from '@/components/ui/Paginacao';
 
 export default function Clientes() {
   const navigate = useNavigate();

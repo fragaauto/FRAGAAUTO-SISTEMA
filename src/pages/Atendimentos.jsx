@@ -49,6 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import Paginacao from '@/components/ui/Paginacao';
 
 const STATUS_FIXOS = {
   rascunho: { label: 'Rascunho', cor: '#94a3b8' },
