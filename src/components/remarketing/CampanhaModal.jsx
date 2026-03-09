@@ -70,9 +70,24 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
     return Object.values(map);
   }, [atendimentos, clientes]);
 
-  const contatosFiltrados = contatosDisponiveis.filter(c =>
-    !filtroNome || c.clienteNome.toLowerCase().includes(filtroNome.toLowerCase())
-  );
+  const contatosFiltrados = contatosDisponiveis.filter(c => {
+    if (filtroNome && !c.clienteNome.toLowerCase().includes(filtroNome.toLowerCase())) return false;
+    if (filtroTipo !== 'todos') {
+      const clienteObj = clientes.find(cl => cl.id === c.clienteId);
+      if (!clienteObj) return filtroTipo !== 'cadastrado';
+      if (filtroTipo === 'fisica' && clienteObj.tipo_pessoa !== 'fisica') return false;
+      if (filtroTipo === 'juridica' && clienteObj.tipo_pessoa !== 'juridica') return false;
+    }
+    if (filtroCodigoMin !== '') {
+      const clienteObj = clientes.find(cl => cl.id === c.clienteId);
+      if (!clienteObj?.codigo || clienteObj.codigo < Number(filtroCodigoMin)) return false;
+    }
+    if (filtroCodigoMax !== '') {
+      const clienteObj = clientes.find(cl => cl.id === c.clienteId);
+      if (!clienteObj?.codigo || clienteObj.codigo > Number(filtroCodigoMax)) return false;
+    }
+    return true;
+  });
 
   const toggleContato = (id) => setContatosSelecionados(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   const selecionarTodos = () => setContatosSelecionados(contatosFiltrados.map(c => c.clienteId));
