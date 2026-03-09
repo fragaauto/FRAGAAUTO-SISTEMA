@@ -127,6 +127,9 @@ export default function ClientesTab() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
+                          {cliente.codigo && (
+                            <span className="font-mono text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">#{String(cliente.codigo).padStart(4, '0')}</span>
+                          )}
                           <h3 className="font-semibold text-slate-800">{cliente.nome}</h3>
                           {cliente.bloqueado && <span className="flex items-center gap-1 text-xs text-red-500 bg-red-50 border border-red-200 rounded px-1.5 py-0.5"><Ban className="w-3 h-3" />Bloqueado</span>}
                         </div>
