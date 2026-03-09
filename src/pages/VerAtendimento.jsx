@@ -743,10 +743,10 @@ export default function VerAtendimento() {
                     <p className="text-sm text-slate-500">Telefone</p>
                     <p className="font-semibold">{atendimento.cliente_telefone || '-'}</p>
                   </div>
-                  {atendimento.cliente_cpf_cnpj && (
+                  {(atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj) && (
                     <div>
                       <p className="text-sm text-slate-500">CPF / CNPJ</p>
-                      <p className="font-semibold">{atendimento.cliente_cpf_cnpj}</p>
+                      <p className="font-semibold">{atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj}</p>
                     </div>
                   )}
                   {atendimento.cliente_nascimento && (
@@ -764,6 +764,12 @@ export default function VerAtendimento() {
                     <div className="col-span-2">
                       <p className="text-sm text-slate-500">Endereço</p>
                       <p className="font-semibold">{atendimento.cliente_endereco}</p>
+                    </div>
+                  )}
+                  {atendimento.tecnico && (
+                    <div>
+                      <p className="text-sm text-slate-500">Técnico</p>
+                      <p className="font-semibold">{atendimento.tecnico}</p>
                     </div>
                   )}
                 </div>
