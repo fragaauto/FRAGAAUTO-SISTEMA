@@ -247,9 +247,10 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       });
     },
     onSuccess: () => {
-      toast.success('✅ Lançado no caixa com sucesso! Atendimento bloqueado para edição.');
+      toast.success('✅ Lançado no caixa com sucesso!');
       queryClient.invalidateQueries(['atendimento']);
       onUpdate?.();
+      navigate(createPageUrl('Atendimentos'));
     },
     onError: (e) => toast.error(e.message || 'Erro ao lançar no caixa'),
   });
