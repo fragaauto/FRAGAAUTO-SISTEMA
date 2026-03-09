@@ -234,7 +234,33 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
                 <Button size="sm" variant="ghost" className="text-xs" onClick={deselecionarTodos}>Nenhum</Button>
               </div>
             </div>
-            <Input placeholder="Filtrar por nome..." value={filtroNome} onChange={e => setFiltroNome(e.target.value)} className="mb-2" />
+            {/* Filtros */}
+            <div className="space-y-2 mb-2">
+              <Input placeholder="Filtrar por nome..." value={filtroNome} onChange={e => setFiltroNome(e.target.value)} />
+              <div className="flex gap-2 flex-wrap">
+                <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+                  <SelectTrigger className="h-8 text-xs flex-1 min-w-[120px]">
+                    <SelectValue placeholder="Tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os tipos</SelectItem>
+                    <SelectItem value="fisica">Pessoa Física</SelectItem>
+                    <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-1 flex-1 min-w-[160px]">
+                  <span className="text-xs text-slate-500 whitespace-nowrap">Cód. de</span>
+                  <Input type="number" placeholder="Ex: 1" value={filtroCodigoMin} onChange={e => setFiltroCodigoMin(e.target.value)} className="h-8 text-xs w-20" />
+                  <span className="text-xs text-slate-500">até</span>
+                  <Input type="number" placeholder="Ex: 100" value={filtroCodigoMax} onChange={e => setFiltroCodigoMax(e.target.value)} className="h-8 text-xs w-20" />
+                </div>
+                {(filtroTipo !== 'todos' || filtroCodigoMin || filtroCodigoMax || filtroNome) && (
+                  <button onClick={() => { setFiltroNome(''); setFiltroTipo('todos'); setFiltroCodigoMin(''); setFiltroCodigoMax(''); }} className="text-xs text-slate-400 hover:text-slate-600 px-2">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
             <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
               {contatosFiltrados.map(c => (
                 <div key={c.clienteId} className="flex items-center gap-3 p-2 hover:bg-slate-50">
