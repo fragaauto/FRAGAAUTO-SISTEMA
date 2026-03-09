@@ -48,6 +48,8 @@ export default function ImpressaoQueixa({ atendimento, config, onClose }) {
     t += `👤 *CLIENTE*\n`;
     t += `Nome: *${(atendimento.cliente_nome || '-').toUpperCase()}*\n`;
     t += `Tel: ${atendimento.cliente_telefone || '-'}\n`;
+    if (atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj) t += `CPF/CNPJ: ${atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj}\n`;
+    if (atendimento.cliente_endereco) t += `Endereço: ${atendimento.cliente_endereco}\n`;
     t += `${sep}\n`;
 
     if (linhasQueixa.length > 0) {
@@ -183,6 +185,8 @@ export default function ImpressaoQueixa({ atendimento, config, onClose }) {
           <div class="section-title">👤 CLIENTE</div>
           <div class="info-row"><span class="info-label">Nome:</span> <strong>${(atendimento.cliente_nome || '-').toUpperCase()}</strong></div>
           <div class="info-row"><span class="info-label">Tel:</span> ${atendimento.cliente_telefone || '-'}</div>
+          ${(atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj) ? `<div class="info-row"><span class="info-label">CPF/CNPJ:</span> ${atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj}</div>` : ''}
+          ${atendimento.cliente_endereco ? `<div class="info-row"><span class="info-label">Endereço:</span> ${atendimento.cliente_endereco}</div>` : ''}
 
           ${linhasQueixa.length > 0 ? `
             <hr class="sep-duplo"/>
