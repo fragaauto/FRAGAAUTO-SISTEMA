@@ -80,6 +80,8 @@ export default function Produtos() {
   const [search, setSearch] = useState('');
   const [categoriaFilter, setCategoriaFilter] = useState('all');
   const [ordenacao, setOrdenacao] = useState('nome_asc');
+  const [pagina, setPagina] = useState(1);
+  const POR_PAGINA = 20;
   const [showModal, setShowModal] = useState(false);
   const [editingProduto, setEditingProduto] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
