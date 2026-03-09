@@ -48,6 +48,12 @@ export default function Remarketing() {
     staleTime: 2 * 60 * 1000
   });
 
+  const { data: clientes = [] } = useQuery({
+    queryKey: ['clientes-marketing'],
+    queryFn: () => base44.entities.Cliente.list(),
+    staleTime: 5 * 60 * 1000
+  });
+
   const { data: filaRaw = [], isLoading: loadingFila } = useQuery({
     queryKey: ['remarketing-fila'],
     queryFn: () => base44.entities.RemarketingFila.list('-created_date'),
@@ -146,7 +152,16 @@ export default function Remarketing() {
     toast.success('Marcado como convertido!');
   };
 
-  const fila = filaRaw.filter(f => f.status !== 'cancelado' || f.naoDesejaMensagem);
+  // Clientes bloqueados não aparecem na fila nem em campanhas
+  const clientesBloqueadosIds = new Set(clientes.filter(c => c.bloqueado).map(c => c.id));
+  const clientesBloqueadosTelefones = new Set(clientes.filter(c => c.bloqueado).map(c => c.telefone).filter(Boolean));
+
+  const fila = filaRaw.filter(f => {
+    if (f.status === 'cancelado' && !f.naoDesejaMensagem) return false;
+    if (f.clienteId && clientesBloqueadosIds.has(f.clienteId)) return false;
+    if (f.clienteTelefone && clientesBloqueadosTelefones.has(f.clienteTelefone)) return false;
+    return true;
+  });
 
   const stats = useMemo(() => {
     const total = filaRaw.length;
@@ -485,6 +500,7 @@ export default function Remarketing() {
         <CampanhaModal
           campanha={campanhaSelecionada}
           atendimentos={atendimentos}
+          clientes={clientes}
           onClose={() => setCampanhaModalOpen(false)}
           onSaved={() => {
             queryClient.invalidateQueries(['campanhas']);
