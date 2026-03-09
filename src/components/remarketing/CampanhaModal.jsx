@@ -13,7 +13,7 @@ import { Send, Users, Save, Loader2, Play, CheckCircle2, XCircle, AlertTriangle,
 
 const VARIAVEIS = ['{nome}', '{veiculo}', '{ultimo_servico}', '{placa}'];
 
-export default function CampanhaModal({ campanha, atendimentos, onClose, onSaved }) {
+export default function CampanhaModal({ campanha, atendimentos, clientes = [], onClose, onSaved }) {
   const [nome, setNome] = useState(campanha?.nomeCampanha || '');
   const [mensagem, setMensagem] = useState(campanha?.mensagemBase || 'Olá {nome} 👋\n\nGostaria de te oferecer uma condição especial para o seu {veiculo}.\n\nPosso te ajudar?');
   const [contatosSelecionados, setContatosSelecionados] = useState(campanha?.listaContatos?.map(c => c.clienteId) || []);
@@ -26,12 +26,35 @@ export default function CampanhaModal({ campanha, atendimentos, onClose, onSaved
   const [cancelado, setCancelado] = useState(false);
 
   const contatosDisponiveis = useMemo(() => {
+    // Prioriza contatos do cadastro de clientes (não bloqueados)
     const map = {};
+
+    // 1. Adiciona clientes cadastrados (não bloqueados)
+    clientes.filter(c => !c.bloqueado && c.telefone).forEach(c => {
+      map[c.id] = {
+        clienteId: c.id,
+        clienteNome: c.nome || 'Sem nome',
+        telefone: c.telefone,
+        veiculo: '',
+        ultimoServico: '',
+        atendimentoId: ''
+      };
+    });
+
+    // 2. Complementa com dados de atendimentos (veículo e último serviço), mas não adiciona bloqueados
+    const bloqueadosTelefones = new Set(clientes.filter(c => c.bloqueado).map(c => c.telefone).filter(Boolean));
     atendimentos.forEach(at => {
       if (!at.cliente_telefone) return;
-      if (!map[at.cliente_id || at.cliente_nome]) {
-        map[at.cliente_id || at.cliente_nome] = {
-          clienteId: at.cliente_id || at.cliente_nome,
+      if (bloqueadosTelefones.has(at.cliente_telefone)) return;
+      const chave = at.cliente_id || at.cliente_nome;
+      if (map[chave]) {
+        // Atualiza veiculo e ultimo servico se ja existe
+        if (!map[chave].veiculo && at.placa) map[chave].veiculo = `${at.placa} - ${at.modelo}`;
+        if (!map[chave].ultimoServico && at.queixa_inicial) map[chave].ultimoServico = at.queixa_inicial;
+      } else {
+        // Adiciona se não estava no cadastro de clientes
+        map[chave] = {
+          clienteId: chave,
           clienteNome: at.cliente_nome || 'Sem nome',
           telefone: at.cliente_telefone,
           veiculo: `${at.placa} - ${at.modelo}`,
@@ -40,8 +63,9 @@ export default function CampanhaModal({ campanha, atendimentos, onClose, onSaved
         };
       }
     });
+
     return Object.values(map);
-  }, [atendimentos]);
+  }, [atendimentos, clientes]);
 
   const contatosFiltrados = contatosDisponiveis.filter(c =>
     !filtroNome || c.clienteNome.toLowerCase().includes(filtroNome.toLowerCase())
