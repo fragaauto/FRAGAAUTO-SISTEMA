@@ -748,6 +748,41 @@ export default function NovoAtendimento() {
                       />
                     </div>
                   </div>
+                  <div>
+                    <Label>Endereço</Label>
+                    <Input
+                      placeholder="Rua, número, bairro, cidade"
+                      value={formData.cliente_endereco || ''}
+                      onChange={(e) => handleInputChange('cliente_endereco', e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Técnico Responsável */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Wrench className="w-5 h-5 text-orange-500" />
+                    Técnico Responsável {config.os_tecnico_obrigatorio && <span className="text-red-500 text-sm">*</span>}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Select
+                    value={formData.tecnico || ''}
+                    onValueChange={(v) => handleInputChange('tecnico', v)}
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder="Selecione o técnico responsável..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>Sem técnico definido</SelectItem>
+                      {usuarios.filter(u => u.full_name).map(u => (
+                        <SelectItem key={u.id} value={u.full_name}>{u.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </CardContent>
               </Card>
 
