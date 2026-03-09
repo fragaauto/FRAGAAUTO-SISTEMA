@@ -68,7 +68,7 @@ export default function Remarketing() {
 
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
   if (!paginaPermitida(modulosAtivos, 'Remarketing')) {
-    return <ModuloBloqueado nomeModulo="Remarketing" />;
+    return <ModuloBloqueado nomeModulo="Marketing Direto" />;
   }
 
   const config = configs[0] || {};
@@ -178,9 +178,9 @@ export default function Remarketing() {
             <div>
               <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                 <TrendingUp className="w-6 h-6 text-orange-500" />
-                REMARKETING
+                MARKETING DIRETO
               </h1>
-              <p className="text-slate-500 mt-1">Recupere vendas perdidas e gerencie campanhas</p>
+              <p className="text-slate-500 mt-1">Recupere vendas perdidas, gerencie campanhas e marketing direto</p>
             </div>
             <div className="flex gap-2">
               <Button

@@ -28,7 +28,7 @@ const NAV_ITEMS = [
   { name: 'Dashboard', icon: Home, path: 'Dashboard', modulo: 'relatorios' },
   { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento', modulo: 'atendimentos' },
   { name: 'Atendimentos', icon: FileText, path: 'Atendimentos', modulo: 'atendimentos' },
-  { name: 'REMARKETING', icon: TrendingUp, path: 'Remarketing', modulo: 'remarketing' },
+  { name: 'Marketing Direto', icon: TrendingUp, path: 'Remarketing', modulo: 'remarketing' },
   { name: 'Relatórios', icon: FileText, path: 'Relatorios', modulo: 'relatorios' },
   { name: 'Produtos', icon: Package, path: 'Produtos', modulo: 'estoque' },
   { name: 'Cadastros', icon: Users, path: 'Cadastros', modulo: 'clientes' },
