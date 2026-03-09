@@ -543,7 +543,7 @@ export default function Atendimentos() {
                         </div>
 
                         {/* Valor e data */}
-                        <div className="text-right flex-shrink-0 hidden sm:block">
+                        <div className="text-right flex-shrink-0">
                           <p className={`font-bold text-sm ${pago ? 'text-green-700' : 'text-green-600'}`}>
                             R$ {(pago ? atendimento.valor_final_pago : atendimento.valor_final)?.toFixed(2) || '0.00'}
                           </p>
