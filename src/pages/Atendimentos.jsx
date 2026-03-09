@@ -171,6 +171,9 @@ export default function Atendimentos() {
     return matchSearch && matchStatus && matchDataInicio && matchDataFim;
   });
 
+  const totalPaginas = Math.ceil(filteredAtendimentos.length / POR_PAGINA);
+  const atendimentosPaginados = filteredAtendimentos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+
   const todosStatusOpcoes = [
     ...Object.entries(STATUS_FIXOS).map(([valor, s]) => ({ valor, label: s.label, cor: s.cor })),
     ...statusPersonalizados

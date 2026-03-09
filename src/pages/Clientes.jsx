@@ -172,7 +172,10 @@ export default function Clientes() {
   };
 
   const filtrosAtivos = filtroTipo !== 'todos' || filtroBloqueado !== 'todos' || filtroAtendimento !== 'todos';
-  const limparFiltros = () => { setFiltroTipo('todos'); setFiltroBloqueado('todos'); setFiltroAtendimento('todos'); };
+  const limparFiltros = () => { setFiltroTipo('todos'); setFiltroBloqueado('todos'); setFiltroAtendimento('todos'); setPagina(1); };
+
+  const totalPaginas = Math.ceil(filteredClientes.length / POR_PAGINA);
+  const clientesPaginados = filteredClientes.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
 
   const handleSave = () => {
     if (!formData.nome || !formData.telefone) {

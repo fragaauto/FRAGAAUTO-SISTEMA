@@ -248,6 +248,9 @@ export default function Produtos() {
       return 0;
     });
 
+  const totalPaginas = Math.ceil(filteredProdutos.length / POR_PAGINA);
+  const produtosPaginados = filteredProdutos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredProdutos.length) {
       setSelectedIds([]);
