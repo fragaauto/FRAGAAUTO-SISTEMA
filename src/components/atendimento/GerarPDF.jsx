@@ -82,7 +82,7 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
 
           <div class="info-row">
             <span><strong>Data:</strong> ${hoje}</span>
-            <span><strong>Nº:</strong> ${atendimento.id?.slice(-8).toUpperCase()}</span>
+            <span><strong>OS Nº:</strong> ${atendimento.numero_os ? String(atendimento.numero_os).padStart(6, '0') : atendimento.id?.slice(-8).toUpperCase()}</span>
           </div>
 
           <div class="section">
@@ -90,6 +90,8 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
             <div class="grid">
               <div class="grid-item"><strong>Nome:</strong>${atendimento.cliente_nome || '-'}</div>
               <div class="grid-item"><strong>Telefone:</strong>${atendimento.cliente_telefone || '-'}</div>
+              ${(atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj) ? `<div class="grid-item"><strong>CPF/CNPJ:</strong>${atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj}</div>` : ''}
+              ${atendimento.cliente_endereco ? `<div class="grid-item" style="grid-column:span 2"><strong>Endereço:</strong>${atendimento.cliente_endereco}</div>` : ''}
             </div>
           </div>
 

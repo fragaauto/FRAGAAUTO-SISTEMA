@@ -37,7 +37,7 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
     t += `${sep}\n`;
     t += `🔧 *ORDEM DE SERVIÇO TÉCNICA* 🔧\n`;
     t += `${sep}\n`;
-    t += `📋 *OS:* ${atendimento.id?.slice(-8).toUpperCase()}\n`;
+    t += `📋 *OS Nº:* ${atendimento.numero_os ? String(atendimento.numero_os).padStart(6, '0') : atendimento.id?.slice(-8).toUpperCase()}\n`;
     t += `📅 *Data:* ${hoje}\n`;
     t += `${sepFino}\n`;
     t += `🚗 *VEÍCULO*\n`;
@@ -48,6 +48,8 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
     t += `👤 *CLIENTE*\n`;
     t += `Nome: *${(atendimento.cliente_nome || '-').toUpperCase()}*\n`;
     t += `Tel: ${atendimento.cliente_telefone || '-'}\n`;
+    if (atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj) t += `CPF/CNPJ: ${atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj}\n`;
+    if (atendimento.cliente_endereco) t += `Endereço: ${atendimento.cliente_endereco}\n`;
     t += `${sep}\n`;
     t += `✅ *SERVIÇOS APROVADOS: ${itensAprovados.length}*\n`;
     t += `${sep}\n`;
@@ -154,7 +156,7 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
           <div class="subtitle">— ÁREA TÉCNICA —</div>
           <hr class="sep-duplo"/>
 
-          <div class="info-row">📋 <span class="info-label">OS:</span> <span class="os-num">${atendimento.id?.slice(-8).toUpperCase()}</span></div>
+          <div class="info-row">📋 <span class="info-label">OS Nº:</span> <span class="os-num">${atendimento.numero_os ? String(atendimento.numero_os).padStart(6, '0') : atendimento.id?.slice(-8).toUpperCase()}</span></div>
           <div class="info-row">📅 <span class="info-label">Data:</span> ${hoje}</div>
 
           <hr class="sep"/>
@@ -167,6 +169,8 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
           <div class="section-title">👤 CLIENTE</div>
           <div class="info-row"><span class="info-label">Nome:</span> <strong>${(atendimento.cliente_nome || '-').toUpperCase()}</strong></div>
           <div class="info-row"><span class="info-label">Tel:</span> ${atendimento.cliente_telefone || '-'}</div>
+          ${(atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj) ? `<div class="info-row"><span class="info-label">CPF/CNPJ:</span> ${atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj}</div>` : ''}
+          ${atendimento.cliente_endereco ? `<div class="info-row"><span class="info-label">Endereço:</span> ${atendimento.cliente_endereco}</div>` : ''}
 
           <hr class="sep-duplo"/>
           <div class="section-title">✅ SERVIÇOS APROVADOS: ${itensAprovados.length}</div>
