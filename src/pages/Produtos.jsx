@@ -1239,7 +1239,7 @@ export default function Produtos() {
           </Card>
         ) : (
           <div className="grid gap-3">
-            {filteredProdutos.map((produto, index) => (
+            {produtosPaginados.map((produto, index) => (
               <motion.div
                 key={produto.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -1314,6 +1314,13 @@ export default function Produtos() {
               </motion.div>
             ))}
           </div>
+          <Paginacao
+            paginaAtual={pagina}
+            totalPaginas={totalPaginas}
+            onMudar={(p) => { setPagina(p); window.scrollTo(0, 0); }}
+            totalRegistros={filteredProdutos.length}
+            porPagina={POR_PAGINA}
+          />
         )}
       </div>
 

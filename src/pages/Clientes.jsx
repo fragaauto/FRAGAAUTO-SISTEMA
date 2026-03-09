@@ -292,7 +292,7 @@ export default function Clientes() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {filteredClientes.map((cliente, index) => {
+            {clientesPaginados.map((cliente, index) => {
               const atendimentosCount = getClienteAtendimentos(cliente.nome);
               return (
                 <motion.div
@@ -376,6 +376,13 @@ export default function Clientes() {
               );
             })}
           </div>
+          <Paginacao
+            paginaAtual={pagina}
+            totalPaginas={totalPaginas}
+            onMudar={(p) => { setPagina(p); window.scrollTo(0, 0); }}
+            totalRegistros={filteredClientes.length}
+            porPagina={POR_PAGINA}
+          />
         )}
       </div>
 

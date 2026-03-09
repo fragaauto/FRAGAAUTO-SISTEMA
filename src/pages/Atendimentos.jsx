@@ -433,7 +433,7 @@ export default function Atendimentos() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {filteredAtendimentos.map((atendimento, index) => {
+            {atendimentosPaginados.map((atendimento, index) => {
               const isSelecionado = selecionados.includes(atendimento.id);
               const pago = !!atendimento.status_pagamento && atendimento.status_pagamento !== null;
               return (
@@ -567,6 +567,13 @@ export default function Atendimentos() {
               );
             })}
           </div>
+          <Paginacao
+            paginaAtual={pagina}
+            totalPaginas={totalPaginas}
+            onMudar={(p) => { setPagina(p); window.scrollTo(0, 0); }}
+            totalRegistros={filteredAtendimentos.length}
+            porPagina={POR_PAGINA}
+          />
         )}
       </div>
     </div>
