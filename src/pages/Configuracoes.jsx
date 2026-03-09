@@ -865,6 +865,7 @@ export default function Configuracoes() {
               { key: 'os_modelo_obrigatorio', label: 'Modelo do Veículo' },
               { key: 'os_km_obrigatorio', label: 'KM Atual' },
               { key: 'os_queixa_obrigatorio', label: 'Queixa Inicial' },
+              { key: 'os_tecnico_obrigatorio', label: 'Técnico Responsável' },
             ].map(({ key, label }) => (
               <div key={key} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                 <Label>{label}</Label>
