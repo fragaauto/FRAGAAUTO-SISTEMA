@@ -162,7 +162,7 @@ export default function Atendimentos() {
       a.placa?.toLowerCase().includes(search.toLowerCase()) ||
       a.modelo?.toLowerCase().includes(search.toLowerCase()) ||
       a.cliente_nome?.toLowerCase().includes(search.toLowerCase()) ||
-      (a.numero_os && String(a.numero_os).includes(search.replace(/\D/g, '')));
+      (a.numero_os && String(a.numero_os).includes(search));
     const matchStatus = statusFilter === 'all' || a.status === statusFilter;
 
     const dataAtendimento = a.data_entrada ? new Date(a.data_entrada) : new Date(a.created_date);
@@ -283,7 +283,7 @@ export default function Atendimentos() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <Input
-              placeholder="Buscar por nº OS, placa, modelo ou cliente..."
+              placeholder="Buscar por placa, modelo, cliente ou Nº OS..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPagina(1); }}
               className="pl-10 h-12"
@@ -475,14 +475,14 @@ export default function Atendimentos() {
                         </div>
 
                         {/* Dados */}
-                         <div className="flex-1 min-w-0">
-                           <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                             {atendimento.numero_os && (
-                               <span className="text-xs font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
-                                 OS #{String(atendimento.numero_os).padStart(6, '0')}
-                               </span>
-                             )}
-                             <h3 className="font-bold text-slate-800">{atendimento.placa}</h3>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                            {atendimento.numero_os && (
+                              <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                                OS #{String(atendimento.numero_os).padStart(6, '0')}
+                              </span>
+                            )}
+                            <h3 className="font-bold text-slate-800">{atendimento.placa}</h3>
                             <StatusBadge statusValue={atendimento.status} statusPersonalizados={statusPersonalizados} />
                             {pago && (
                               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-600 text-white">
