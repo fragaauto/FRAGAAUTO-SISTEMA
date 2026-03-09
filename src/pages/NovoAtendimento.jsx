@@ -75,6 +75,7 @@ export default function NovoAtendimento() {
     desconto: 0,
     valor_final: 0,
     observacoes: '',
+    tecnico: '',
     status: 'queixa_pendente'
   });
 
@@ -96,6 +97,18 @@ export default function NovoAtendimento() {
     staleTime: 10 * 60 * 1000
   });
   const config = configs[0] || {};
+
+  const { data: todosAtendimentos = [] } = useQuery({
+    queryKey: ['atendimentos-count'],
+    queryFn: () => base44.entities.Atendimento.list(),
+    staleTime: 60 * 1000
+  });
+
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios'],
+    queryFn: () => base44.entities.User.list(),
+    staleTime: 10 * 60 * 1000
+  });
 
   const { data: checklistItems = [] } = useQuery({
     queryKey: ['checklist-items'],
@@ -321,14 +334,27 @@ export default function NovoAtendimento() {
       return;
     }
 
+    if (config.os_tecnico_obrigatorio && !formData.tecnico) {
+      toast.error('❌ Atribuição de técnico é obrigatória');
+      setActiveTab('dados');
+      return;
+    }
+
     const checklistArray = Object.entries(formData.checklist).map(([id, data]) => ({
       item_id: id,
       ...data
     }));
 
+    // Gerar número sequencial da OS
+    const maxOs = todosAtendimentos.reduce((max, a) => Math.max(max, a.numero_os || 0), 0);
+    const novoNumeroOs = maxOs + 1;
+
     const dataToSave = {
+      numero_os: novoNumeroOs,
       cliente_nome: formData.cliente_nome || '',
       cliente_telefone: formData.cliente_telefone || '',
+      cliente_cpf: formData.cliente_cpf || '',
+      cliente_endereco: formData.cliente_endereco || '',
       placa: formData.placa.toUpperCase(),
       modelo: formData.modelo,
       marca: formData.marca || '',
@@ -346,6 +372,7 @@ export default function NovoAtendimento() {
       desconto: formData.desconto || 0,
       valor_final: formData.valor_final || 0,
       observacoes: formData.observacoes || '',
+      tecnico: formData.tecnico || '',
       status: formData.status || 'queixa_pendente',
       historico_edicoes: [{
         data: new Date().toISOString(),
