@@ -529,7 +529,12 @@ export default function VerAtendimento() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {atendimento.numero_os && (
+                    <span className="text-xs font-mono bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-bold">
+                      OS #{String(atendimento.numero_os).padStart(6, '0')}
+                    </span>
+                  )}
                   <h1 className="text-xl font-bold text-slate-800">{atendimento.placa}</h1>
                   <Badge className={STATUS_CONFIG[atendimento.status]?.color}>
                     {STATUS_CONFIG[atendimento.status]?.label}

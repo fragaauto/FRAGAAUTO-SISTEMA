@@ -10,7 +10,8 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
   const [dados, setDados] = useState({
     cliente_nome: atendimento.cliente_nome || '',
     cliente_telefone: atendimento.cliente_telefone || '',
-    cliente_cpf: atendimento.cliente_cpf || '',
+    cliente_cpf: atendimento.cliente_cpf || atendimento.cliente_cpf_cnpj || '',
+    cliente_endereco: atendimento.cliente_endereco || '',
     placa: atendimento.placa || '',
     modelo: atendimento.modelo || '',
     marca: atendimento.marca || '',
@@ -67,6 +68,15 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
                 value={dados.cliente_cpf}
                 onChange={(e) => setDados(p => ({ ...p, cliente_cpf: e.target.value }))}
                 placeholder="000.000.000-00"
+                className="h-11"
+              />
+            </div>
+            <div>
+              <Label>Endereço</Label>
+              <Input
+                value={dados.cliente_endereco}
+                onChange={(e) => setDados(p => ({ ...p, cliente_endereco: e.target.value }))}
+                placeholder="Rua, número, bairro, cidade"
                 className="h-11"
               />
             </div>
