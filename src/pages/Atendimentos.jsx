@@ -575,6 +575,7 @@ export default function Atendimentos() {
             totalRegistros={filteredAtendimentos.length}
             porPagina={POR_PAGINA}
           />
+          </>
         )}
       </div>
     </div>

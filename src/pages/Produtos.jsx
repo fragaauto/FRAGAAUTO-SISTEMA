@@ -1322,6 +1322,7 @@ export default function Produtos() {
             totalRegistros={filteredProdutos.length}
             porPagina={POR_PAGINA}
           />
+          </>
         )}
       </div>
 

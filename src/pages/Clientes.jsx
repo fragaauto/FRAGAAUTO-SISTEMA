@@ -384,6 +384,7 @@ export default function Clientes() {
             totalRegistros={filteredClientes.length}
             porPagina={POR_PAGINA}
           />
+          </>
         )}
       </div>
 
