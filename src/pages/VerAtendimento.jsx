@@ -540,7 +540,10 @@ export default function VerAtendimento() {
                     {STATUS_CONFIG[atendimento.status]?.label}
                   </Badge>
                 </div>
-                <p className="text-sm text-slate-500">{atendimento.modelo}</p>
+                <p className="text-sm text-slate-500">
+                  {atendimento.numero_os && <span className="font-mono font-semibold text-orange-600">OS #{String(atendimento.numero_os).padStart(6, '0')} · </span>}
+                  {atendimento.modelo}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
