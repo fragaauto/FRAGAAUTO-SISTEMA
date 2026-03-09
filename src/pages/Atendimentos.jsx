@@ -559,6 +559,11 @@ export default function Atendimentos() {
                               Pago: {format(new Date(atendimento.data_pagamento), "dd/MM", { locale: ptBR })}
                             </p>
                           )}
+                          {atendimento.numero_os && (
+                            <p className="text-xs font-mono text-slate-400 mt-0.5">
+                              #{String(atendimento.numero_os).padStart(6, '0')}
+                            </p>
+                          )}
                         </div>
 
                         {!pago && (
