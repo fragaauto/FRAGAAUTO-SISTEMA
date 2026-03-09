@@ -64,6 +64,7 @@ export default function Configuracoes() {
     os_modelo_obrigatorio: config.os_modelo_obrigatorio ?? true,
     os_km_obrigatorio: config.os_km_obrigatorio ?? false,
     os_queixa_obrigatorio: config.os_queixa_obrigatorio ?? false,
+    os_tecnico_obrigatorio: config.os_tecnico_obrigatorio ?? false,
     dias_minimos_reenvio: config.dias_minimos_reenvio || 30,
     dias_validade_oferta: config.dias_validade_oferta || 7,
     oferta_padrao_remarketing: config.oferta_padrao_remarketing || '',
