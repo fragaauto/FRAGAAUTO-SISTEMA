@@ -89,6 +89,22 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
       if (!clienteObj?.codigo || clienteObj.codigo > Number(filtroCodigoMax)) return false;
     }
     return true;
+  }).sort((a, b) => {
+    if (ordenacao === 'alfabetica') return a.clienteNome.localeCompare(b.clienteNome, 'pt-BR');
+    if (ordenacao === 'nascimento') {
+      const ca = clientes.find(cl => cl.id === a.clienteId);
+      const cb = clientes.find(cl => cl.id === b.clienteId);
+      const da = ca?.data_nascimento || '';
+      const db = cb?.data_nascimento || '';
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da.localeCompare(db);
+    }
+    // default: codigo
+    const ca = clientes.find(cl => cl.id === a.clienteId);
+    const cb = clientes.find(cl => cl.id === b.clienteId);
+    return (ca?.codigo || 0) - (cb?.codigo || 0);
   });
 
   const toggleContato = (id) => setContatosSelecionados(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
