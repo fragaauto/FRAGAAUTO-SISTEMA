@@ -4,7 +4,6 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Buscar configurações
     const configs = await base44.asServiceRole.entities.Configuracao.list();
     const config = configs[0];
 
@@ -16,10 +15,9 @@ Deno.serve(async (req) => {
     const abaName = config.agenda_google_sheets_aba || 'Agendamentos';
 
     if (!spreadsheetId) {
-      return Response.json({ error: 'ID da planilha não configurado. Configure em Configurações > Agenda.' }, { status: 400 });
+      return Response.json({ error: 'ID da planilha não configurado. Configure em Configurações > Integrações.' }, { status: 400 });
     }
 
-    // Colunas configuráveis (com fallback padrão A=data, B=hora, C=cliente, D=serviço, E=placa, F=obs)
     const colData     = config.agenda_sheets_col_data     || 'A';
     const colHora     = config.agenda_sheets_col_hora     || 'B';
     const colCliente  = config.agenda_sheets_col_cliente  || 'C';
@@ -27,14 +25,12 @@ Deno.serve(async (req) => {
     const colPlaca    = config.agenda_sheets_col_placa    || 'E';
     const colObs      = config.agenda_sheets_col_obs      || 'F';
 
-    // Função para converter letra de coluna em índice (A=0, B=1, ...)
     const colIdx = (letter) => letter.toUpperCase().charCodeAt(0) - 65;
 
-    // Buscar token OAuth do Google Sheets
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlesheets');
 
-    // Ler planilha
-    const range = `${abaName}!A:Z`;
+    // Colocar o nome da aba entre aspas simples para suportar espaços e caracteres especiais
+    const range = `'${abaName}'!A:Z`;
     const sheetsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`;
     const sheetsRes = await fetch(sheetsUrl, {
       headers: { Authorization: `Bearer ${accessToken}` }
@@ -49,16 +45,12 @@ Deno.serve(async (req) => {
     const rows = sheetsData.values || [];
 
     if (rows.length <= 1) {
-      return Response.json({ message: 'Nenhum dado na planilha', sincronizados: 0 });
+      return Response.json({ message: 'Nenhum dado na planilha (ou apenas cabeçalho)', sincronizados: 0 });
     }
 
-    // Pular linha de cabeçalho (row[0])
     const dataRows = rows.slice(1);
 
-    // Buscar agendamentos existentes para evitar duplicatas
     const agendamentosExistentes = await base44.asServiceRole.entities.Agendamento.list();
-    
-    // Criar um set de chaves únicas dos existentes: data_hora + cliente_nome
     const existentesSet = new Set(
       agendamentosExistentes
         .filter(a => a.data_hora && a.cliente_nome)
@@ -79,19 +71,13 @@ Deno.serve(async (req) => {
       const placa      = (row[colIdx(colPlaca)]   || '').trim();
       const obs        = (row[colIdx(colObs)]     || '').trim();
 
-      // Ignorar linhas sem data ou serviço
-      if (!dataStr || !servico) {
-        ignorados++;
-        continue;
-      }
+      if (!dataStr || !servico) { ignorados++; continue; }
 
-      // Parsear data/hora — aceita formatos: DD/MM/YYYY, YYYY-MM-DD
       let dataHoraISO = null;
       try {
         let datePart = dataStr;
         let timePart = horaStr || '08:00';
 
-        // Normalizar hora (aceita HH:MM ou H:MM)
         if (!/^\d{1,2}:\d{2}$/.test(timePart)) timePart = '08:00';
 
         // Converter DD/MM/YYYY → YYYY-MM-DD
@@ -106,19 +92,11 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      if (!dataHoraISO || isNaN(new Date(dataHoraISO))) {
-        ignorados++;
-        continue;
-      }
+      if (!dataHoraISO || isNaN(new Date(dataHoraISO))) { ignorados++; continue; }
 
-      // Verificar duplicata
       const chave = `${dataHoraISO.slice(0, 16)}_${cliente.toLowerCase()}`;
-      if (existentesSet.has(chave)) {
-        ignorados++;
-        continue;
-      }
+      if (existentesSet.has(chave)) { ignorados++; continue; }
 
-      // Criar agendamento
       await base44.asServiceRole.entities.Agendamento.create({
         titulo: servico,
         cliente_nome: cliente || null,
@@ -133,7 +111,7 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({
-      message: `Sincronização concluída: ${sincronizados} novo(s) agendamento(s) importado(s), ${ignorados} linha(s) ignorada(s).`,
+      message: `Sincronização concluída: ${sincronizados} novo(s) agendamento(s), ${ignorados} linha(s) ignorada(s).`,
       sincronizados,
       ignorados,
     });

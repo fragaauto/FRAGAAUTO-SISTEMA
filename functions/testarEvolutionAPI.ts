@@ -45,17 +45,30 @@ Deno.serve(async (req) => {
     }
 
     if (!apiResp.ok) {
+      const errText = await apiResp.text().catch(() => '');
       return Response.json({
         ok: false,
         mensagem: `A API respondeu com erro HTTP ${apiResp.status}.`,
-        detalhes: 'Verifique se a URL está correta e se o servidor está rodando.'
+        detalhes: `Verifique se a URL está correta e se o servidor está rodando.\n${errText.slice(0, 200)}`
       });
     }
 
-    const instances = await apiResp.json();
+    // 2. Ler resposta como texto e depois parsear (evita erro se resposta não for JSON)
+    const responseText = await apiResp.text();
+    let instances;
+    try {
+      instances = JSON.parse(responseText);
+    } catch (e) {
+      return Response.json({
+        ok: false,
+        mensagem: 'A API não retornou JSON válido.',
+        detalhes: `Resposta recebida: ${responseText.slice(0, 300)}`
+      });
+    }
+
     const lista = Array.isArray(instances) ? instances : (instances.data || []);
 
-    // 2. Verificar se a instância existe
+    // 3. Verificar se a instância existe
     const instanceFound = lista.find(i => i.name === instance || i.instance?.instanceName === instance);
 
     if (!instanceFound) {
@@ -67,14 +80,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3. Verificar se a instância está conectada
+    // 4. Verificar status da instância
     const status = instanceFound.connectionStatus || instanceFound.instance?.connectionStatus || instanceFound.state;
 
     if (status && status !== 'open' && status !== 'connected') {
       return Response.json({
         ok: false,
         mensagem: `Instância encontrada mas não está conectada ao WhatsApp.`,
-        detalhes: `Status atual: "${status}"\n\nAcesse o painel da Evolution API e conecte a instância via QR Code.`
+        detalhes: `Status atual: "${status}"\n\nAcesse o painel da Evolution API e conecte via QR Code.`
       });
     }
 
