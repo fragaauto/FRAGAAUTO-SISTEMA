@@ -1238,6 +1238,7 @@ export default function Produtos() {
             </CardContent>
           </Card>
         ) : (
+          <>
           <div className="grid gap-3">
             {produtosPaginados.map((produto, index) => (
               <motion.div

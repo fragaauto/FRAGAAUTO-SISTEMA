@@ -432,6 +432,7 @@ export default function Atendimentos() {
             </CardContent>
           </Card>
         ) : (
+          <>
           <div className="space-y-3">
             {atendimentosPaginados.map((atendimento, index) => {
               const isSelecionado = selecionados.includes(atendimento.id);

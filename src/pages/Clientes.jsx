@@ -291,6 +291,7 @@ export default function Clientes() {
             </CardContent>
           </Card>
         ) : (
+          <>
           <div className="space-y-3">
             {clientesPaginados.map((cliente, index) => {
               const atendimentosCount = getClienteAtendimentos(cliente.nome);
