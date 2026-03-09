@@ -230,7 +230,8 @@ export default function NovoAtendimento() {
       ...prev,
       cliente_nome: cliente.nome,
       cliente_telefone: cliente.telefone,
-      cliente_cpf: cliente.cpf_cnpj || ''
+      cliente_cpf: cliente.cpf_cnpj || '',
+      cliente_endereco: cliente.endereco || ''
     }));
     setShowSugestoes(false);
     setClienteSugestoes([]);
@@ -486,7 +487,8 @@ export default function NovoAtendimento() {
       ...prev,
       cliente_nome: cliente.nome,
       cliente_telefone: cliente.telefone,
-      cliente_cpf: cliente.cpf_cnpj || ''
+      cliente_cpf: cliente.cpf_cnpj || '',
+      cliente_endereco: cliente.endereco || ''
     }));
     setShowBuscarCliente(false);
     setShowSugestoes(false);
