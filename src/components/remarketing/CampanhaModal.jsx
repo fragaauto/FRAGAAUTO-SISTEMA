@@ -22,6 +22,7 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [filtroCodigoMin, setFiltroCodigoMin] = useState('');
   const [filtroCodigoMax, setFiltroCodigoMax] = useState('');
+  const [ordenacao, setOrdenacao] = useState('codigo');
   const [intervaloMin, setIntervaloMin] = useState(15);
   const [intervaloMax, setIntervaloMax] = useState(25);
   const [enviando, setEnviando] = useState(false);
