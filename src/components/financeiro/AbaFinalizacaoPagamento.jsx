@@ -64,13 +64,10 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     return p?.taxa_percentual || 0;
   };
 
-  // Buscar técnicos cadastrados
+  // Buscar técnicos cadastrados (todos os usuários registrados no menu Cadastros)
   const { data: tecnicos = [] } = useQuery({
     queryKey: ['tecnicos'],
-    queryFn: async () => {
-      const all = await base44.entities.User.list();
-      return all.filter(u => u.role === 'tecnico');
-    },
+    queryFn: () => base44.entities.User.list(),
     staleTime: 5 * 60 * 1000,
   });
 
