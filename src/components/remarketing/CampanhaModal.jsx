@@ -262,15 +262,23 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
               </div>
             </div>
             <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
-              {contatosFiltrados.map(c => (
-                <div key={c.clienteId} className="flex items-center gap-3 p-2 hover:bg-slate-50">
-                  <Checkbox checked={contatosSelecionados.includes(c.clienteId)} onCheckedChange={() => toggleContato(c.clienteId)} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 truncate">{c.clienteNome}</p>
-                    <p className="text-xs text-slate-500">{[c.veiculo, c.telefone].filter(Boolean).join(' • ')}</p>
+              {contatosFiltrados.map(c => {
+                const clienteObj = clientes.find(cl => cl.id === c.clienteId);
+                return (
+                  <div key={c.clienteId} className="flex items-center gap-3 p-2 hover:bg-slate-50">
+                    <Checkbox checked={contatosSelecionados.includes(c.clienteId)} onCheckedChange={() => toggleContato(c.clienteId)} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        {clienteObj?.codigo && (
+                          <span className="font-mono text-xs text-slate-400">#{String(clienteObj.codigo).padStart(4, '0')}</span>
+                        )}
+                        <p className="text-sm font-medium text-slate-800 truncate">{c.clienteNome}</p>
+                      </div>
+                      <p className="text-xs text-slate-500">{[c.veiculo, c.telefone].filter(Boolean).join(' • ')}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {contatosFiltrados.length === 0 && <p className="text-center py-4 text-slate-500 text-sm">Nenhum contato encontrado</p>}
             </div>
             <p className="text-xs text-slate-400">Clientes bloqueados não são exibidos nesta lista.</p>
