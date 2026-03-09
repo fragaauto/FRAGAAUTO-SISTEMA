@@ -290,8 +290,6 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
                   </SelectContent>
                 </Select>
               </div>
-              <div style={{display:'none'}}> {/* fechando div fake para fechar o bloco abaixo */}
-              </div>
             </div>
             <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
               {contatosFiltrados.map(c => {
