@@ -259,6 +259,16 @@ export default function Home() {
 
               </p>
               <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-8">
+                {!isLoggedIn && (
+                  <Button
+                    size="lg"
+                    className="bg-white text-slate-900 hover:bg-slate-100 h-12 px-6 text-base font-bold"
+                    onClick={() => base44.auth.redirectToLogin()}
+                  >
+                    <Shield className="w-5 h-5 mr-2" />
+                    Fazer Login
+                  </Button>
+                )}
                 <Link to={createPageUrl('NovoAtendimento')}>
                   <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-white h-12 px-6 text-base">
                     <ClipboardCheck className="w-5 h-5 mr-2" />
