@@ -34,8 +34,14 @@ export default function RelatorioProdutos({ atendimentos = [], labelPeriodo = ''
     return Object.values(map).sort((a, b) => b.quantidade - a.quantidade);
   }, [atendimentos]);
 
-  const totalQtd = produtos.reduce((s, p) => s + p.quantidade, 0);
-  const totalValor = produtos.reduce((s, p) => s + p.valor_total, 0);
+  const produtosFiltrados = useMemo(() => {
+    if (!busca.trim()) return produtos;
+    const q = busca.toLowerCase();
+    return produtos.filter(p => p.nome.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q));
+  }, [produtos, busca]);
+
+  const totalQtd = produtosFiltrados.reduce((s, p) => s + p.quantidade, 0);
+  const totalValor = produtosFiltrados.reduce((s, p) => s + p.valor_total, 0);
 
   const exportarExcel = () => {
     const linhas = ['Código;Nome do Produto;Quantidade Vendida;Valor Total'];
