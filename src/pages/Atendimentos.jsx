@@ -513,6 +513,18 @@ export default function Atendimentos() {
                             </div>
                           )}
 
+                          {/* Comprovante para concluído não pago */}
+                          {!pago && atendimento.status === 'concluido' && (
+                            <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => { e.stopPropagation(); setReciboAtendimento(atendimento); }}>
+                                <FileCheck className="w-3 h-3 mr-1" /> Comprovante
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50 px-2" onClick={(e) => enviarWhatsApp(atendimento, e)}>
+                                <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
+                              </Button>
+                            </div>
+                          )}
+
                           {/* Ações para atendimento pago */}
                           {pago && (
                             <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
