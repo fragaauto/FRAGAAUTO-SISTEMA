@@ -50,6 +50,9 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import Paginacao from '@/components/ui/Paginacao';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ReciboAtendimento from '@/components/financeiro/ReciboAtendimento';
+import { FileCheck } from 'lucide-react';
 
 const STATUS_FIXOS = {
   rascunho: { label: 'Rascunho', cor: '#94a3b8' },

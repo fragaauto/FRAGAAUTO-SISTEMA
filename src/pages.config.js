@@ -55,6 +55,7 @@ import BaseConhecimentoIA from './pages/BaseConhecimentoIA';
 import Cadastros from './pages/Cadastros';
 import Clientes from './pages/Clientes';
 import Compras from './pages/Compras';
+import Configuracoes from './pages/Configuracoes';
 import Dashboard from './pages/Dashboard';
 import EditarAtendimento from './pages/EditarAtendimento';
 import EditarQueixa from './pages/EditarQueixa';
@@ -70,7 +71,6 @@ import Remarketing from './pages/Remarketing';
 import ServicosReprovados from './pages/ServicosReprovados';
 import Usuarios from './pages/Usuarios';
 import VerAtendimento from './pages/VerAtendimento';
-import Configuracoes from './pages/Configuracoes';
 import __Layout from './Layout.jsx';
 
 
@@ -83,6 +83,7 @@ export const PAGES = {
     "Cadastros": Cadastros,
     "Clientes": Clientes,
     "Compras": Compras,
+    "Configuracoes": Configuracoes,
     "Dashboard": Dashboard,
     "EditarAtendimento": EditarAtendimento,
     "EditarQueixa": EditarQueixa,
@@ -98,7 +99,6 @@ export const PAGES = {
     "ServicosReprovados": ServicosReprovados,
     "Usuarios": Usuarios,
     "VerAtendimento": VerAtendimento,
-    "Configuracoes": Configuracoes,
 }
 
 export const pagesConfig = {
