@@ -118,8 +118,8 @@ export default function RelatorioProdutos({ atendimentos = [], labelPeriodo = ''
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {produtos.length === 0 ? (
-            <p className="text-slate-500 text-sm text-center py-12">Nenhum produto vendido (aprovado) no período</p>
+          {produtosFiltrados.length === 0 ? (
+            <p className="text-slate-500 text-sm text-center py-12">{busca ? 'Nenhum produto encontrado para a busca' : 'Nenhum produto vendido (aprovado) no período'}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -131,7 +131,7 @@ export default function RelatorioProdutos({ atendimentos = [], labelPeriodo = ''
                   </tr>
                 </thead>
                 <tbody>
-                  {produtos.map((p, i) => (
+                  {produtosFiltrados.map((p, i) => (
                     <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
                       <td className="p-3 text-sm text-slate-400 font-bold">#{i + 1}</td>
                       <td className="p-3 text-sm font-mono text-slate-600">{p.codigo}</td>
