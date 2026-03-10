@@ -262,6 +262,7 @@ export default function Atendimentos() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
       {/* Header */}
       <div className="bg-white border-b border-slate-200">
