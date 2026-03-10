@@ -609,5 +609,6 @@ export default function Atendimentos() {
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }
