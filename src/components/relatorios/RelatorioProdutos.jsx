@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import jsPDF from 'jspdf';
 
 export default function RelatorioProdutos({ atendimentos = [], labelPeriodo = '' }) {
+  const [busca, setBusca] = useState('');
+
   const produtos = useMemo(() => {
     const map = {};
     atendimentos.forEach(a => {
