@@ -597,5 +597,17 @@ export default function Atendimentos() {
         )}
       </div>
     </div>
+
+    {/* Modal Comprovante */}
+    <Dialog open={!!reciboAtendimento} onOpenChange={(open) => !open && setReciboAtendimento(null)}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Comprovante de Serviço</DialogTitle>
+        </DialogHeader>
+        {reciboAtendimento && (
+          <ReciboAtendimento atendimento={reciboAtendimento} config={config} />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
