@@ -173,7 +173,6 @@ export default function Configuracoes() {
 }
 
 function ModulosTab({ formData, onChange, onSave, isSaving }) {
-  const { Switch } = require ? null : null;
   const modulosAtivos = formData.modulos_ativos || TODOS_MODULOS.map(m => m.id);
 
   const toggleModulo = (id) => {
