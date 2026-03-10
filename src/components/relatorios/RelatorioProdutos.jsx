@@ -94,8 +94,18 @@ export default function RelatorioProdutos({ atendimentos = [], labelPeriodo = ''
         </Button>
       </div>
 
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          placeholder="Buscar produto ou serviço pelo nome ou código..."
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Produtos distintos</p><p className="text-3xl font-bold text-blue-600 mt-1">{produtos.length}</p></CardContent></Card>
+        <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Produtos distintos</p><p className="text-3xl font-bold text-blue-600 mt-1">{produtosFiltrados.length}</p></CardContent></Card>
         <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Total de itens vendidos</p><p className="text-3xl font-bold text-green-600 mt-1">{totalQtd}</p></CardContent></Card>
         <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Valor total</p><p className="text-2xl font-bold text-orange-600 mt-1">R$ {totalValor.toFixed(2)}</p></CardContent></Card>
       </div>
