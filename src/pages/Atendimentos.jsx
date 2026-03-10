@@ -124,6 +124,7 @@ export default function Atendimentos() {
   const [selecionados, setSelecionados] = useState([]);
   const [statusEmMassa, setStatusEmMassa] = useState('');
   const [pagina, setPagina] = useState(1);
+  const [reciboAtendimento, setReciboAtendimento] = useState(null);
   const POR_PAGINA = 20;
 
   const { data: atendimentos = [], isLoading } = useQuery({
