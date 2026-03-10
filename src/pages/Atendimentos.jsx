@@ -537,7 +537,10 @@ export default function Atendimentos() {
                                 </AlertDialogContent>
                               </AlertDialog>
                               <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={(e) => imprimirAtendimento(atendimento, e)}>
-                                <Printer className="w-3 h-3 mr-1" /> Imprimir
+                               <Printer className="w-3 h-3 mr-1" /> Imprimir
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => { e.stopPropagation(); setReciboAtendimento(atendimento); }}>
+                                <FileCheck className="w-3 h-3 mr-1" /> Comprovante
                               </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50 px-2" onClick={(e) => enviarWhatsApp(atendimento, e)}>
                                 <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
