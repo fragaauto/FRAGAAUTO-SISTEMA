@@ -102,6 +102,6 @@ Deno.serve(async (req) => {
       ok: false,
       mensagem: 'Erro inesperado ao testar conexão.',
       detalhes: error.message
-    }, { status: 500 });
+    });
   }
 });
