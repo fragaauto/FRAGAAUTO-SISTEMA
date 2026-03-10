@@ -58,6 +58,11 @@ const FeatureCard = ({ icon: Icon, title, description, href, color, delay }) =>
 
 export default function Home() {
   const [periodo, setPeriodo] = useState('30');
+  const [isLoggedIn, setIsLoggedIn] = React.useState(true);
+
+  React.useEffect(() => {
+    base44.auth.isAuthenticated().then(setIsLoggedIn).catch(() => setIsLoggedIn(false));
+  }, []);
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
 
   const { data: configs = [] } = useQuery({
