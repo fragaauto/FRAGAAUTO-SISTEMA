@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Users, UserPlus, Loader2, Mail, Shield, User } from 'lucide-react';
+import { Users, UserPlus, Loader2, Mail, Shield, User, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 const ROLE_LABELS = {
   admin: { label: 'Admin', color: 'bg-red-100 text-red-700' },
@@ -22,6 +22,7 @@ export default function Usuarios() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('user');
   const [convidando, setConvidando] = useState(false);
+  const [aprovando, setAprovando] = useState(null);
 
   const { data: usuarios = [], isLoading } = useQuery({
     queryKey: ['usuarios'],
@@ -45,6 +46,22 @@ export default function Usuarios() {
     }
   };
 
+  const handleAprovar = async (u, aprovar) => {
+    setAprovando(u.id);
+    try {
+      await base44.entities.User.update(u.id, { aprovado: aprovar });
+      toast.success(aprovar ? `${u.full_name || u.email} aprovado!` : `${u.full_name || u.email} reprovado.`);
+      qc.invalidateQueries(['usuarios']);
+    } catch (e) {
+      toast.error('Erro ao atualizar usuário');
+    } finally {
+      setAprovando(null);
+    }
+  };
+
+  const pendentes = usuarios.filter(u => u.role !== 'admin' && !u.aprovado);
+  const ativos = usuarios.filter(u => u.role === 'admin' || u.aprovado);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="bg-white border-b border-slate-200">
@@ -61,24 +78,75 @@ export default function Usuarios() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* Pendentes de aprovação */}
+        {pendentes.length > 0 && (
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-700">
+                <Clock className="w-5 h-5" />
+                Aguardando Aprovação ({pendentes.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {pendentes.map(u => (
+                  <div key={u.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-orange-200">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5 text-orange-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-800 truncate">{u.full_name || '—'}</p>
+                      <p className="text-sm text-slate-500 flex items-center gap-1 truncate">
+                        <Mail className="w-3 h-3" /> {u.email}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <Button
+                        size="sm"
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                        onClick={() => handleAprovar(u, true)}
+                        disabled={aprovando === u.id}
+                      >
+                        {aprovando === u.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                        <span className="ml-1 hidden sm:inline">Aprovar</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 border-red-300 hover:bg-red-50"
+                        onClick={() => handleAprovar(u, false)}
+                        disabled={aprovando === u.id}
+                      >
+                        <XCircle className="w-3 h-3" />
+                        <span className="ml-1 hidden sm:inline">Recusar</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Usuários ativos */}
         <Card>
           <CardHeader>
-            <CardTitle>Usuários cadastrados ({usuarios.length})</CardTitle>
+            <CardTitle>Usuários ativos ({ativos.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-orange-400" />
               </div>
-            ) : usuarios.length === 0 ? (
+            ) : ativos.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
                 <Users className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                <p>Nenhum usuário encontrado.</p>
+                <p>Nenhum usuário ativo.</p>
               </div>
             ) : (
               <div className="space-y-2">
-                {usuarios.map(u => (
+                {ativos.map(u => (
                   <div key={u.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <User className="w-5 h-5 text-orange-500" />
@@ -89,10 +157,23 @@ export default function Usuarios() {
                         <Mail className="w-3 h-3" /> {u.email}
                       </p>
                     </div>
-                    <Badge className={ROLE_LABELS[u.role]?.color || 'bg-slate-100 text-slate-600'}>
-                      <Shield className="w-3 h-3 mr-1" />
-                      {ROLE_LABELS[u.role]?.label || u.role || 'Usuário'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={ROLE_LABELS[u.role]?.color || 'bg-slate-100 text-slate-600'}>
+                        <Shield className="w-3 h-3 mr-1" />
+                        {ROLE_LABELS[u.role]?.label || u.role || 'Usuário'}
+                      </Badge>
+                      {u.role !== 'admin' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 border-red-300 hover:bg-red-50 text-xs"
+                          onClick={() => handleAprovar(u, false)}
+                          disabled={aprovando === u.id}
+                        >
+                          Revogar
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
