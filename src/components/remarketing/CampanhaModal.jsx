@@ -399,6 +399,7 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
               })}
               {contatosFiltrados.length === 0 && <p className="text-center py-4 text-slate-500 text-sm">Nenhum contato encontrado</p>}
             </div>
+            </div>
             <p className="text-xs text-slate-400">Clientes bloqueados não são exibidos nesta lista.</p>
           </div>
 
