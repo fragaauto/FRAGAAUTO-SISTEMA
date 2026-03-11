@@ -200,7 +200,7 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
 
       const msg = gerarMensagemPersonalizada(contato);
       try {
-        const res = await base44.functions.invoke('enviarMensagemWhatsApp', { telefone: tel, mensagem: msg });
+        const res = await base44.functions.invoke('enviarMensagemWhatsApp', { telefone: tel, mensagem: msg, midiaUrl: midiaUrl || null, midiaTipo: midiaTipo || null });
         if (res.data?.ok) {
           setResultados(prev => [...prev, { id: contato.clienteId, nome: contato.clienteNome, ok: true }]);
         } else {
