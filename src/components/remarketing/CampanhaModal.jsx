@@ -340,8 +340,8 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
           </div>
 
           {/* Intervalo */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-3">
+            <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-amber-600" />
               <Label className="text-amber-700 font-medium text-sm">Intervalo aleatório entre envios</Label>
             </div>
@@ -352,7 +352,28 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
               <Input type="number" min={5} max={300} value={intervaloMax} onChange={e => setIntervaloMax(Number(e.target.value))} className="w-20" />
               <span className="text-sm text-amber-700">segundos</span>
             </div>
-            <p className="text-xs text-amber-600 mt-1">⚠️ Intervalo aleatório para parecer mais humano e evitar bloqueios. Estimado: ~{Math.ceil(contatosSelecionados.length * ((intervaloMin + intervaloMax) / 2) / 60)} min.</p>
+            <p className="text-xs text-amber-600">⚠️ Intervalo aleatório para parecer mais humano e evitar bloqueios. Estimado: ~{Math.ceil(contatosSelecionados.length * ((intervaloMin + intervaloMax) / 2) / 60)} min.</p>
+
+            {/* Pausa automática */}
+            <div className="border-t border-amber-200 pt-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Pause className="w-4 h-4 text-amber-600" />
+                <Label className="text-amber-700 font-medium text-sm">Pausa automática</Label>
+                <button
+                  onClick={() => setPausaAtivada(p => !p)}
+                  className={`ml-auto text-xs px-2 py-0.5 rounded-full border font-medium transition-all ${pausaAtivada ? 'bg-amber-500 text-white border-amber-500' : 'border-amber-400 text-amber-600 hover:bg-amber-100'}`}
+                >{pausaAtivada ? 'Ativada' : 'Desativada'}</button>
+              </div>
+              {pausaAtivada && (
+                <div className="flex items-center gap-2 flex-wrap text-sm text-amber-700">
+                  <span>Pausar a cada</span>
+                  <Input type="number" min={1} max={500} value={pausarACada} onChange={e => setPausarACada(Number(e.target.value))} className="w-16 h-7 text-xs" />
+                  <span>envios por</span>
+                  <Input type="number" min={1} max={60} value={duracaoPausa} onChange={e => setDuracaoPausa(Number(e.target.value))} className="w-16 h-7 text-xs" />
+                  <span>minutos</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Contatos */}
