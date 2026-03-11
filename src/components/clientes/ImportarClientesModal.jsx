@@ -66,7 +66,7 @@ export default function ImportarClientesModal({ onClose, onImportado }) {
     reader.onload = (evt) => {
       const wb = XLSX.read(evt.target.result, { type: 'binary', cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+      const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
       setPreview(data.slice(0, 5));
       setRows(data);
     };
