@@ -124,6 +124,26 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
       const clienteObj = clientes.find(cl => cl.id === c.clienteId);
       if (!clienteObj?.codigo || clienteObj.codigo > Number(filtroCodigoMax)) return false;
     }
+    // Filtro de aniversário: compara apenas dia e mês (ignora o ano)
+    if (filtroNascimentoInicio || filtroNascimentoFim) {
+      const clienteObj = clientes.find(cl => cl.id === c.clienteId);
+      const nasc = clienteObj?.data_nascimento;
+      if (!nasc) return false;
+      const nascDate = new Date(nasc + 'T00:00:00');
+      // Monta datas de comparação com o mesmo ano base para comparar só dia/mês
+      const anoBase = 2000;
+      const nascMD = new Date(anoBase, nascDate.getMonth(), nascDate.getDate());
+      if (filtroNascimentoInicio) {
+        const [yI, mI, dI] = filtroNascimentoInicio.split('-').map(Number);
+        const inicio = new Date(anoBase, mI - 1, dI);
+        if (nascMD < inicio) return false;
+      }
+      if (filtroNascimentoFim) {
+        const [yF, mF, dF] = filtroNascimentoFim.split('-').map(Number);
+        const fim = new Date(anoBase, mF - 1, dF);
+        if (nascMD > fim) return false;
+      }
+    }
     return true;
   }).sort((a, b) => {
     if (ordenacao === 'alfabetica') return a.clienteNome.localeCompare(b.clienteNome, 'pt-BR');

@@ -58,12 +58,12 @@ export default function ClientesTab() {
   });
 
   const openModal = (cliente = null) => {
-    if (cliente) { setEditingCliente(cliente); setFormData({ nome: cliente.nome, tipo_pessoa: cliente.tipo_pessoa || 'fisica', telefone: cliente.telefone, email: cliente.email || '', cpf_cnpj: cliente.cpf_cnpj || '', endereco: cliente.endereco || '' }); }
-    else { setEditingCliente(null); setFormData({ nome: '', tipo_pessoa: 'fisica', telefone: '', email: '', cpf_cnpj: '', endereco: '' }); }
+    if (cliente) { setEditingCliente(cliente); setFormData({ nome: cliente.nome, tipo_pessoa: cliente.tipo_pessoa || 'fisica', telefone: cliente.telefone, email: cliente.email || '', cpf_cnpj: cliente.cpf_cnpj || '', data_nascimento: cliente.data_nascimento || '', endereco: cliente.endereco || '' }); }
+    else { setEditingCliente(null); setFormData({ nome: '', tipo_pessoa: 'fisica', telefone: '', email: '', cpf_cnpj: '', data_nascimento: '', endereco: '' }); }
     setShowModal(true);
   };
 
-  const closeModal = () => { setShowModal(false); setEditingCliente(null); setFormData({ nome: '', tipo_pessoa: 'fisica', telefone: '', email: '', cpf_cnpj: '', endereco: '' }); };
+  const closeModal = () => { setShowModal(false); setEditingCliente(null); setFormData({ nome: '', tipo_pessoa: 'fisica', telefone: '', email: '', cpf_cnpj: '', data_nascimento: '', endereco: '' }); };
 
   const handleSave = () => {
     if (!formData.nome || !formData.telefone) return toast.error('Preencha nome e telefone');
