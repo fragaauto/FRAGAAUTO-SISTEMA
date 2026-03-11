@@ -484,7 +484,22 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
                 <span>{progresso}%</span>
               </div>
               <Progress value={progresso} className="h-3" />
-              {enviando && indiceAtual >= 0 && (
+              {enviando && contagemRegressiva > 0 && (
+                <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                  <Pause className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                  <p className="text-xs text-blue-700 flex-1">
+                    Pausa automática — retomando em <strong>{Math.floor(contagemRegressiva / 60)}:{String(contagemRegressiva % 60).padStart(2, '0')}</strong>
+                  </p>
+                  <button onClick={() => { setContagemRegressiva(1); }} className="text-xs text-blue-500 hover:text-blue-700 underline whitespace-nowrap">Pular pausa</button>
+                </div>
+              )}
+              {enviando && pausado && contagemRegressiva === 0 && (
+                <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+                  <Pause className="w-4 h-4 text-yellow-600 flex-shrink-0" />
+                  <p className="text-xs text-yellow-700 flex-1">Envio pausado manualmente.</p>
+                </div>
+              )}
+              {enviando && !pausado && contagemRegressiva === 0 && indiceAtual >= 0 && (
                 <p className="text-xs text-slate-500 flex items-center gap-1">
                   <Loader2 className="w-3 h-3 animate-spin" />
                   Enviando para: {contatosDisponiveis.find(c => c.clienteId === contatosSelecionados[indiceAtual])?.clienteNome}
