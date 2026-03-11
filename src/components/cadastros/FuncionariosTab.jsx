@@ -234,12 +234,22 @@ export default function FuncionariosTab() {
             <div>
               <Label className="mb-2 block">Módulos Liberados</Label>
               <div className="space-y-2">
-                {TODOS_MODULOS.map(m => (
-                  <div key={m.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                    <span className="text-sm">{m.nome}</span>
-                    <Switch checked={funcaoForm.modulos_liberados.includes(m.id)} onCheckedChange={() => toggleModulo(m.id)} />
-                  </div>
-                ))}
+                {TODOS_MODULOS.map(m => {
+                  const ativo = funcaoForm.modulos_liberados.includes(m.id);
+                  return (
+                    <button
+                      type="button"
+                      key={m.id}
+                      onClick={() => toggleModulo(m.id)}
+                      className={`w-full flex items-center justify-between p-2 rounded-lg border text-left transition-all ${ativo ? 'bg-orange-50 border-orange-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
+                    >
+                      <span className={`text-sm font-medium ${ativo ? 'text-orange-700' : 'text-slate-700'}`}>{m.nome}</span>
+                      <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${ativo ? 'bg-orange-500 border-orange-500' : 'border-slate-300'}`}>
+                        {ativo && <span className="text-white text-xs font-bold">✓</span>}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
