@@ -69,9 +69,31 @@ export default function Layout({ children, currentPageName }) {
   });
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
 
-  // Páginas públicas que não devem mostrar navegação
-  const paginasPublicas = ['AprovarOrcamento'];
-  const isPaginaPublica = paginasPublicas.includes(currentPageName);
+  const isPaginaPublica = PAGINAS_PUBLICAS.includes(currentPageName);
+
+  // Mostrar loading enquanto verifica auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
+  // Redirecionar para login se não autenticado (exceto páginas públicas)
+  if (!user && !isPaginaPublica) {
+    base44.auth.redirectToLogin();
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
+  // Mostrar tela de aguardando aprovação se usuário não for admin e não estiver aprovado
+  if (user && user.role !== 'admin' && !user.aprovado && !isPaginaPublica) {
+    return <AguardandoAprovacao user={user} />;
+  }
 
   // Filtra itens do menu conforme módulos ativos e role do usuário
   const itensFiltrados = NAV_ITEMS.filter(item => {
