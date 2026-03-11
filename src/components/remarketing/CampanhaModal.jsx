@@ -98,18 +98,6 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
     }
   };
 
-  const todosFiltradosSelecionados = contatosFiltrados.every(c => contatosSelecionados.includes(c.clienteId));
-  const algunsFiltradosSelecionados = contatosFiltrados.some(c => contatosSelecionados.includes(c.clienteId));
-
-  const toggleTodosFiltrados = () => {
-    if (todosFiltradosSelecionados) {
-      setContatosSelecionados(prev => prev.filter(id => !contatosFiltrados.find(c => c.clienteId === id)));
-    } else {
-      const novoIds = contatosFiltrados.map(c => c.clienteId).filter(id => !contatosSelecionados.includes(id));
-      setContatosSelecionados(prev => [...prev, ...novoIds]);
-    }
-  };
-
   const contatosFiltrados = contatosDisponiveis.filter(c => {
     if (filtroLetra && !c.clienteNome.toUpperCase().startsWith(filtroLetra)) return false;
     if (filtroNome && !c.clienteNome.toLowerCase().includes(filtroNome.toLowerCase())) return false;
