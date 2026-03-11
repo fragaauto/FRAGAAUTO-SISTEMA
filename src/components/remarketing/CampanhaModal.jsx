@@ -541,9 +541,14 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
               </>
             )}
             {enviando && (
-              <Button variant="destructive" onClick={() => setCancelado(true)} className="flex-1">
-                <X className="w-4 h-4 mr-2" /> Interromper
-              </Button>
+              <>
+                <Button variant="outline" onClick={togglePausaManual} className="flex-1 border-yellow-400 text-yellow-700 hover:bg-yellow-50">
+                  {pausado ? <><SkipForward className="w-4 h-4 mr-2" /> Retomar</> : <><Pause className="w-4 h-4 mr-2" /> Pausar</>}
+                </Button>
+                <Button variant="destructive" onClick={() => { canceladoRef.current = true; setCancelado(true); }} className="flex-1">
+                  <X className="w-4 h-4 mr-2" /> Interromper
+                </Button>
+              </>
             )}
             {finalizado && (
               <Button onClick={onClose} className="flex-1 bg-green-600 hover:bg-green-700">
