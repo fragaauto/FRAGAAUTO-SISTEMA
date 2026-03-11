@@ -51,7 +51,7 @@ export default function Usuarios() {
     try {
       await base44.entities.User.update(u.id, { aprovado: aprovar });
       toast.success(aprovar ? `${u.full_name || u.email} aprovado!` : `${u.full_name || u.email} reprovado.`);
-      qc.invalidateQueries(['usuarios']);
+      qc.invalidateQueries({ queryKey: ['usuarios'] });
     } catch (e) {
       toast.error('Erro ao atualizar usuário');
     } finally {

@@ -94,7 +94,7 @@ export default function FuncionariosTab() {
       setConvidandoEmail('');
       setConvidandoFuncaoId('');
       setShowConvidarModal(false);
-      queryClient.invalidateQueries(['usuarios']);
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
     } catch (e) {
       toast.error(e?.message || 'Erro ao enviar convite');
     } finally {
