@@ -7,14 +7,30 @@ import { Upload, FileSpreadsheet, Loader2, CheckCircle2, XCircle, Download, Aler
 import { base44 } from '@/api/base44Client';
 import * as XLSX from 'xlsx';
 
-// Converte data em dd/MM/AAAA ou AAAA-MM-DD para AAAA-MM-DD
+// Converte data em qualquer formato para AAAA-MM-DD
 function parseDateToISO(val) {
   if (!val) return '';
+  // Date object (quando cellDates: true)
+  if (val instanceof Date) {
+    const yyyy = val.getUTCFullYear();
+    const mm = String(val.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(val.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
   const str = String(val).trim();
+  // Serial numérico do Excel (ex: 28537)
+  const num = Number(str);
+  if (!isNaN(num) && num > 10000 && /^\d+$/.test(str)) {
+    const date = new Date((num - 25569) * 86400 * 1000);
+    const yyyy = date.getUTCFullYear();
+    const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(date.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
   // Formato dd/MM/AAAA
   const ddMMYYYY = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (ddMMYYYY) return `${ddMMYYYY[3]}-${ddMMYYYY[2]}-${ddMMYYYY[1]}`;
-  // Formato AAAA-MM-DD já está correto
+  // Formato AAAA-MM-DD
   const isoDate = str.match(/^\d{4}-\d{2}-\d{2}$/);
   if (isoDate) return str;
   return '';
