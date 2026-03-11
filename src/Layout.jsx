@@ -13,7 +13,8 @@ import {
   TrendingUp,
   Sparkles,
   Calendar,
-  Shield
+  Shield,
+  Loader2
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -21,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { TODOS_MODULOS } from '@/components/modulos';
+import AguardandoAprovacao from '@/components/AguardandoAprovacao';
 
 // Todos os itens de navegação com módulo associado
 const NAV_ITEMS = [
