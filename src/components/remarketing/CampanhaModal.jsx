@@ -30,10 +30,17 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
   const fileInputRef = useRef(null);
   const [intervaloMin, setIntervaloMin] = useState(15);
   const [intervaloMax, setIntervaloMax] = useState(25);
+  const [pausaAtivada, setPausaAtivada] = useState(false);
+  const [pausarACada, setPausarACada] = useState(10);
+  const [duracaoPausa, setDuracaoPausa] = useState(5);
   const [enviando, setEnviando] = useState(false);
+  const [pausado, setPausado] = useState(false);
+  const [contagemRegressiva, setContagemRegressiva] = useState(0);
   const [resultados, setResultados] = useState([]);
   const [indiceAtual, setIndiceAtual] = useState(-1);
   const [cancelado, setCancelado] = useState(false);
+  const pausadoRef = useRef(false);
+  const canceladoRef = useRef(false);
 
   const contatosDisponiveis = useMemo(() => {
     // Prioriza contatos do cadastro de clientes (não bloqueados)
