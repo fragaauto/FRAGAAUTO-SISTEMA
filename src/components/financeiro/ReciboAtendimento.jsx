@@ -292,18 +292,24 @@ export default function ReciboAtendimento({ atendimento, config }) {
           </div>
         )}
 
-        {/* Técnico */}
-        {atendimento.tecnico && (
+        {/* Técnico(s) */}
+        {tecnicosResp.length > 0 && (
+          <div className="flex justify-between text-slate-600">
+            <span className="text-slate-500">Técnico(s):</span>
+            <span className="text-right">{tecnicosResp.map(t => t.nome).join(', ')}</span>
+          </div>
+        )}
+        {!tecnicosResp.length && atendimento.tecnico && (
           <div className="flex justify-between text-slate-600">
             <span className="text-slate-500">Técnico:</span>
             <span>{atendimento.tecnico}</span>
           </div>
         )}
 
-        {/* Obs */}
-        {atendimento.observacoes && (
+        {/* Obs para o cliente */}
+        {obsCliente && (
           <div className="p-2 bg-white border border-green-200 rounded text-slate-600">
-            <span className="font-semibold">Obs: </span>{atendimento.observacoes}
+            <span className="font-semibold">Obs / Garantia: </span>{obsCliente}
           </div>
         )}
 
