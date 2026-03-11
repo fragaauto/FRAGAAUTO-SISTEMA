@@ -373,32 +373,31 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
                 <Checkbox
                   checked={todosFiltradosSelecionados && contatosFiltrados.length > 0}
                   onCheckedChange={toggleTodosFiltrados}
-                  className="data-[state=indeterminate]:bg-orange-100"
                 />
                 <span className="text-xs font-medium text-slate-600">
                   {todosFiltradosSelecionados ? 'Desmarcar todos' : `Marcar todos (${contatosFiltrados.length})`}
                 </span>
               </div>
-            <div className="max-h-48 overflow-y-auto divide-y">
-              {contatosFiltrados.map(c => {
-                const clienteObj = clientes.find(cl => cl.id === c.clienteId);
-                return (
-                  <div key={c.clienteId} className="flex items-center gap-3 p-2 hover:bg-slate-50">
-                    <Checkbox checked={contatosSelecionados.includes(c.clienteId)} onCheckedChange={() => toggleContato(c.clienteId)} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        {clienteObj?.codigo && (
-                          <span className="font-mono text-xs text-slate-400">#{String(clienteObj.codigo).padStart(4, '0')}</span>
-                        )}
-                        <p className="text-sm font-medium text-slate-800 truncate">{c.clienteNome}</p>
+              <div className="max-h-48 overflow-y-auto divide-y">
+                {contatosFiltrados.map(c => {
+                  const clienteObj = clientes.find(cl => cl.id === c.clienteId);
+                  return (
+                    <div key={c.clienteId} className="flex items-center gap-3 p-2 hover:bg-slate-50">
+                      <Checkbox checked={contatosSelecionados.includes(c.clienteId)} onCheckedChange={() => toggleContato(c.clienteId)} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          {clienteObj?.codigo && (
+                            <span className="font-mono text-xs text-slate-400">#{String(clienteObj.codigo).padStart(4, '0')}</span>
+                          )}
+                          <p className="text-sm font-medium text-slate-800 truncate">{c.clienteNome}</p>
+                        </div>
+                        <p className="text-xs text-slate-500">{[c.veiculo, c.telefone].filter(Boolean).join(' • ')}</p>
                       </div>
-                      <p className="text-xs text-slate-500">{[c.veiculo, c.telefone].filter(Boolean).join(' • ')}</p>
                     </div>
-                  </div>
-                );
-              })}
-              {contatosFiltrados.length === 0 && <p className="text-center py-4 text-slate-500 text-sm">Nenhum contato encontrado</p>}
-            </div>
+                  );
+                })}
+                {contatosFiltrados.length === 0 && <p className="text-center py-4 text-slate-500 text-sm">Nenhum contato encontrado</p>}
+              </div>
             </div>
             <p className="text-xs text-slate-400">Clientes bloqueados não são exibidos nesta lista.</p>
           </div>
