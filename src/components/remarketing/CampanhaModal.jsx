@@ -316,6 +316,20 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
             {/* Filtros */}
             <div className="space-y-2 mb-2">
               <Input placeholder="Filtrar por nome..." value={filtroNome} onChange={e => setFiltroNome(e.target.value)} />
+              {/* Filtro por letra */}
+              <div className="flex flex-wrap gap-0.5">
+                <button
+                  onClick={() => setFiltroLetra('')}
+                  className={`px-1.5 py-0.5 rounded text-xs font-mono border transition-all ${!filtroLetra ? 'bg-orange-500 text-white border-orange-500' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                >Tds</button>
+                {LETRAS.map(l => (
+                  <button
+                    key={l}
+                    onClick={() => setFiltroLetra(prev => prev === l ? '' : l)}
+                    className={`px-1.5 py-0.5 rounded text-xs font-mono border transition-all ${filtroLetra === l ? 'bg-orange-500 text-white border-orange-500' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                  >{l}</button>
+                ))}
+              </div>
               <div className="flex gap-2 flex-wrap">
                 <Select value={filtroTipo} onValueChange={setFiltroTipo}>
                   <SelectTrigger className="h-8 text-xs flex-1 min-w-[120px]">
