@@ -169,8 +169,19 @@ export default function ReciboAtendimento({ atendimento, config }) {
       ${descontoHtml}
       <div class="row total"><span>TOTAL</span><span>${fmtMoeda(valorFinalPago)}</span></div>
       ${formasHtml}
-      ${atendimento.tecnico ? `<div class="divider"></div><div class="row"><span>Técnico:</span><span>${atendimento.tecnico}</span></div>` : ''}
-      ${atendimento.observacoes ? `<div class="divider"></div><div style="font-size:12px;color:#555"><b>Obs:</b> ${atendimento.observacoes}</div>` : ''}
+      ${tecnicosResp.length > 0 ? `<div class="divider"></div><div class="row"><span>Técnico(s):</span><span>${tecnicosResp.map(t => t.nome).join(', ')}</span></div>` : atendimento.tecnico ? `<div class="divider"></div><div class="row"><span>Técnico:</span><span>${atendimento.tecnico}</span></div>` : ''}
+      ${obsCliente ? `<div class="divider"></div><div style="font-size:12px;margin:4px 0"><b>Observações / Garantia:</b><br>${obsCliente}</div>` : ''}
+      <div class="divider"></div>
+      <div style="margin-top:32px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:32px">
+          <div style="flex:1;text-align:center">
+            <div style="border-top:1px solid #333;padding-top:6px;font-size:12px;color:#555">Assinatura do Cliente</div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div style="border-top:1px solid #333;padding-top:6px;font-size:12px;color:#555">Responsável pela Empresa</div>
+          </div>
+        </div>
+      </div>
       <div class="divider"></div>
       <div class="footer">✅ Obrigado pela preferência!</div>
       </body></html>
