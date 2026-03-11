@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Send, Users, Save, Loader2, Play, CheckCircle2, XCircle, AlertTriangle, X, Clock, Image, Music, Trash2 } from 'lucide-react';
+import { Send, Users, Save, Loader2, Play, CheckCircle2, XCircle, AlertTriangle, X, Clock, Image, Music, Trash2, Pause, SkipForward } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const VARIAVEIS = ['{nome}', '{veiculo}', '{ultimo_servico}', '{placa}'];
