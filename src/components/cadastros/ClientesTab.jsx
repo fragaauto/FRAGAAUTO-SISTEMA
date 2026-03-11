@@ -24,7 +24,7 @@ export default function ClientesTab() {
   const [deleteId, setDeleteId] = useState(null);
   const [showImportar, setShowImportar] = useState(false);
 
-  const [formData, setFormData] = useState({ nome: '', tipo_pessoa: 'fisica', telefone: '', email: '', cpf_cnpj: '', endereco: '' });
+  const [formData, setFormData] = useState({ nome: '', tipo_pessoa: 'fisica', telefone: '', email: '', cpf_cnpj: '', data_nascimento: '', endereco: '' });
 
   const { data: clientes = [], isLoading } = useQuery({
     queryKey: ['clientes'],
