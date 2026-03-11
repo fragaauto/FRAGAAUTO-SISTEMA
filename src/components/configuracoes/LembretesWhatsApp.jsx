@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Bell, Plus, Trash2, Edit, Save, X, Loader2, MessageCircle } from 'lucide-react';
+import { Bell, Plus, Trash2, Edit, Save, X, Loader2, MessageCircle, Phone } from 'lucide-react';
 
 const DIAS_SEMANA = [
   { value: 0, label: 'Dom' },
