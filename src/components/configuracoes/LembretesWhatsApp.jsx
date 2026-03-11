@@ -129,6 +129,40 @@ function FormLembrete({ lembrete, onSave, onCancel, isSaving }) {
         )}
       </div>
 
+      <div>
+        <Label className="flex items-center gap-1 mb-2">
+          <Phone className="w-4 h-4" /> Destinatários (números WhatsApp)
+        </Label>
+        <p className="text-xs text-slate-500 mb-2">Informe os números que receberão este lembrete (com DDI, apenas dígitos). Deixe vazio para não enviar.</p>
+        <div className="flex gap-2 mb-2">
+          <Input
+            value={novoNumero}
+            onChange={e => setNovoNumero(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), adicionarNumero())}
+            placeholder="Ex: 5511999998888"
+            className="flex-1"
+          />
+          <Button type="button" size="sm" variant="outline" onClick={adicionarNumero}>
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+        {(form.destinatarios || []).length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {form.destinatarios.map(num => (
+              <div key={num} className="flex items-center gap-1 bg-green-50 border border-green-200 rounded-full px-3 py-1 text-sm">
+                <span className="text-green-800 font-mono">+{num}</span>
+                <button type="button" onClick={() => removerNumero(num)} className="text-green-600 hover:text-red-500 ml-1">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {(form.destinatarios || []).length === 0 && (
+          <p className="text-xs text-amber-600">⚠️ Nenhum destinatário configurado — o lembrete não será enviado.</p>
+        )}
+      </div>
+
       <div className="flex gap-2 pt-2">
         <Button variant="outline" onClick={onCancel} size="sm">
           <X className="w-4 h-4 mr-1" /> Cancelar
