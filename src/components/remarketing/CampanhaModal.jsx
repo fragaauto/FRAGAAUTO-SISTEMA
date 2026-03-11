@@ -165,7 +165,7 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
       const c = contatosDisponiveis.find(x => x.clienteId === id);
       return c ? { ...c, status: 'pendente' } : null;
     }).filter(Boolean);
-    saveMutation.mutate({ nomeCampanha: nome, mensagemBase: mensagem, listaContatos, status: statusCampanha, totalEnviados: campanha?.totalEnviados || 0, totalRespondidos: campanha?.totalRespondidos || 0, totalConvertidos: campanha?.totalConvertidos || 0 });
+    saveMutation.mutate({ nomeCampanha: nome, mensagemBase: mensagem, midiaUrl, midiaTipo, listaContatos, status: statusCampanha, totalEnviados: campanha?.totalEnviados || 0, totalRespondidos: campanha?.totalRespondidos || 0, totalConvertidos: campanha?.totalConvertidos || 0 });
   };
 
   const sleep = (ms) => new Promise(res => setTimeout(res, ms));
