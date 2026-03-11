@@ -711,6 +711,25 @@ export default function NovoAtendimento() {
                     )}
                   </div>
 
+                  {/* Alerta de dados incompletos do cliente selecionado */}
+                  {clienteSelecionado && (() => {
+                    const faltando = [];
+                    if (!clienteSelecionado.email) faltando.push('E-mail');
+                    if (!clienteSelecionado.cpf_cnpj) faltando.push('CPF/CNPJ');
+                    if (!clienteSelecionado.data_nascimento) faltando.push('Data de nascimento');
+                    if (!clienteSelecionado.endereco) faltando.push('Endereço');
+                    if (faltando.length === 0) return null;
+                    return (
+                      <div className="flex items-start gap-2 bg-amber-50 border border-amber-300 rounded-lg px-3 py-2.5">
+                        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div className="text-xs text-amber-800">
+                          <p className="font-semibold mb-0.5">Cadastro incompleto — lembre-se de atualizar!</p>
+                          <p>Dados faltando: <strong>{faltando.join(', ')}</strong></p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Botão de cadastrar novo cliente quando nome digitado mas não selecionado */}
                   {formData.cliente_nome && formData.cliente_nome.length >= 2 && !clienteSelecionado && (
                     <button
