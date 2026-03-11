@@ -367,7 +367,19 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
                 </Select>
               </div>
             </div>
-            <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
+            <div className="border rounded-lg overflow-hidden">
+              {/* Linha marcar todos */}
+              <div className="flex items-center gap-3 px-3 py-2 bg-slate-50 border-b">
+                <Checkbox
+                  checked={todosFiltradosSelecionados && contatosFiltrados.length > 0}
+                  onCheckedChange={toggleTodosFiltrados}
+                  className="data-[state=indeterminate]:bg-orange-100"
+                />
+                <span className="text-xs font-medium text-slate-600">
+                  {todosFiltradosSelecionados ? 'Desmarcar todos' : `Marcar todos (${contatosFiltrados.length})`}
+                </span>
+              </div>
+            <div className="max-h-48 overflow-y-auto divide-y">
               {contatosFiltrados.map(c => {
                 const clienteObj = clientes.find(cl => cl.id === c.clienteId);
                 return (
