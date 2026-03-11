@@ -167,6 +167,7 @@ export default function ClientesTab() {
             <div><Label>Telefone *</Label><Input value={formData.telefone} onChange={e => setFormData({ ...formData, telefone: e.target.value })} placeholder="(11) 99999-9999" /></div>
             <div><Label>Email</Label><Input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="email@exemplo.com" /></div>
             <div><Label>{formData.tipo_pessoa === 'juridica' ? 'CNPJ' : 'CPF'}</Label><Input value={formData.cpf_cnpj} onChange={e => setFormData({ ...formData, cpf_cnpj: e.target.value })} /></div>
+            <div><Label>Data de Nascimento</Label><Input type="date" value={formData.data_nascimento} onChange={e => setFormData({ ...formData, data_nascimento: e.target.value })} /></div>
             <div><Label>Endereço</Label><Input value={formData.endereco} onChange={e => setFormData({ ...formData, endereco: e.target.value })} /></div>
           </div>
           <DialogFooter>

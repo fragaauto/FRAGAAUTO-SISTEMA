@@ -443,11 +443,20 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
                   <span className="text-xs text-slate-500">até</span>
                   <Input type="number" placeholder="Ex: 100" value={filtroCodigoMax} onChange={e => setFiltroCodigoMax(e.target.value)} className="h-8 text-xs w-20" />
                 </div>
-                {(filtroTipo !== 'todos' || filtroCodigoMin || filtroCodigoMax || filtroNome) && (
-                  <button onClick={() => { setFiltroNome(''); setFiltroTipo('todos'); setFiltroCodigoMin(''); setFiltroCodigoMax(''); }} className="text-xs text-slate-400 hover:text-slate-600 px-2">
+                {(filtroTipo !== 'todos' || filtroCodigoMin || filtroCodigoMax || filtroNome || filtroNascimentoInicio || filtroNascimentoFim) && (
+                  <button onClick={() => { setFiltroNome(''); setFiltroTipo('todos'); setFiltroCodigoMin(''); setFiltroCodigoMax(''); setFiltroNascimentoInicio(''); setFiltroNascimentoFim(''); }} className="text-xs text-slate-400 hover:text-slate-600 px-2">
                     <X className="w-3 h-3" />
                   </button>
                 )}
+              </div>
+              {/* Filtro aniversário */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-500 whitespace-nowrap">🎂 Aniversário entre</span>
+                <Input type="date" value={filtroNascimentoInicio} onChange={e => setFiltroNascimentoInicio(e.target.value)} className="h-8 text-xs w-36" />
+                <span className="text-xs text-slate-500">e</span>
+                <Input type="date" value={filtroNascimentoFim} onChange={e => setFiltroNascimentoFim(e.target.value)} className="h-8 text-xs w-36" />
+              </div>
+              <div className="flex items-center gap-2" style={{display:'none'}}>{/* spacer fechado */}
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500 whitespace-nowrap">Ordenar por:</span>
