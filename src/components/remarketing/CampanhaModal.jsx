@@ -456,8 +456,6 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
                 <span className="text-xs text-slate-500">e</span>
                 <Input type="date" value={filtroNascimentoFim} onChange={e => setFiltroNascimentoFim(e.target.value)} className="h-8 text-xs w-36" />
               </div>
-              <div className="flex items-center gap-2" style={{display:'none'}}>{/* spacer fechado */}
-              </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500 whitespace-nowrap">Ordenar por:</span>
                 <Select value={ordenacao} onValueChange={setOrdenacao}>
