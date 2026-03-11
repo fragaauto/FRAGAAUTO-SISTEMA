@@ -47,20 +47,20 @@ export default function FuncionariosTab() {
 
   const createFuncaoMutation = useMutation({
     mutationFn: (data) => base44.entities.FuncaoFuncionario.create(data),
-    onSuccess: () => { queryClient.invalidateQueries(['funcoes_funcionario']); toast.success('Função criada!'); closeFuncaoModal(); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['funcoes_funcionario'] }); toast.success('Função criada!'); closeFuncaoModal(); }
   });
   const updateFuncaoMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.FuncaoFuncionario.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries(['funcoes_funcionario']); toast.success('Função atualizada!'); closeFuncaoModal(); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['funcoes_funcionario'] }); toast.success('Função atualizada!'); closeFuncaoModal(); }
   });
   const deleteFuncaoMutation = useMutation({
     mutationFn: (id) => base44.entities.FuncaoFuncionario.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries(['funcoes_funcionario']); toast.success('Função excluída!'); setDeleteFuncaoId(null); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['funcoes_funcionario'] }); toast.success('Função excluída!'); setDeleteFuncaoId(null); }
   });
 
   const updateUserMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries(['usuarios']); toast.success('Usuário atualizado!'); setEditUserModal(null); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['usuarios'] }); toast.success('Usuário atualizado!'); setEditUserModal(null); }
   });
 
   const openFuncaoModal = (f = null) => {

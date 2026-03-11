@@ -38,7 +38,7 @@ export default function Usuarios() {
       setEmail('');
       setRole('user');
       setShowConvidar(false);
-      qc.invalidateQueries(['usuarios']);
+      qc.invalidateQueries({ queryKey: ['usuarios'] });
     } catch (e) {
       toast.error(e?.message || 'Erro ao enviar convite');
     } finally {
