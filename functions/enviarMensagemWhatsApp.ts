@@ -30,6 +30,40 @@ async function enviarViaEvolution(url, apiKey, instance, telefone, mensagem) {
   return await resp.json();
 }
 
+async function enviarMidiaViaEvolution(url, apiKey, instance, telefone, caption, mediaUrl, tipo) {
+  const baseUrl = url.replace(/\/$/, '');
+  let numero = telefone.replace(/\D/g, '');
+  if (numero.length === 10 || numero.length === 11) numero = `55${numero}`;
+
+  let endpoint, body;
+
+  if (tipo === 'audio') {
+    endpoint = `${baseUrl}/message/sendWhatsAppAudio/${instance}`;
+    body = { number: numero, audio: mediaUrl };
+  } else {
+    endpoint = `${baseUrl}/message/sendMedia/${instance}`;
+    body = { number: numero, mediatype: 'image', media: mediaUrl, caption };
+  }
+
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': apiKey },
+    body: JSON.stringify(body),
+  });
+
+  if (!resp.ok) {
+    const bodyText = await resp.text();
+    throw new Error(`Evolution API retornou ${resp.status}: ${bodyText}`);
+  }
+
+  // Se tem áudio, envia também o texto após
+  if (tipo === 'audio' && caption) {
+    await enviarViaEvolution(url, apiKey, instance, telefone, caption);
+  }
+
+  return await resp.json();
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
