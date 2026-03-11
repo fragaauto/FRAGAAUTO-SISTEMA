@@ -23,13 +23,24 @@ Deno.serve(async (req) => {
 
     const baseUrl = url.replace(/\/$/, '');
 
-    // 1. Verificar se a API responde
+    // 1. Verificar se a API responde (timeout de 10s)
     let apiResp;
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
       apiResp = await fetch(`${baseUrl}/instance/fetchInstances`, {
-        headers: { 'apikey': apiKey }
+        headers: { 'apikey': apiKey },
+        signal: controller.signal
       });
+      clearTimeout(timeout);
     } catch (e) {
+      if (e.name === 'AbortError') {
+        return Response.json({
+          ok: false,
+          mensagem: 'Tempo esgotado ao conectar à Evolution API.',
+          detalhes: 'A API não respondeu em 10 segundos. Verifique se a URL está correta e o servidor está acessível.'
+        });
+      }
       return Response.json({
         ok: false,
         mensagem: 'Não foi possível conectar à URL informada.',
