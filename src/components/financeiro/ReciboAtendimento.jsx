@@ -45,6 +45,8 @@ export default function ReciboAtendimento({ atendimento, config }) {
   const desconto = atendimento.desconto_pagamento ?? atendimento.desconto ?? 0;
   const formas = atendimento.formas_pagamento_lancamento || [];
   const formaUnica = atendimento.forma_pagamento_lancamento;
+  const obsCliente = atendimento.obs_externa || '';
+  const tecnicosResp = atendimento.tecnicos_responsaveis || [];
 
   const dataServico = atendimento.data_pagamento || atendimento.data_entrada || atendimento.created_date;
   const osNum = atendimento.numero_os ? `OS #${String(atendimento.numero_os).padStart(6, '0')}` : '';
