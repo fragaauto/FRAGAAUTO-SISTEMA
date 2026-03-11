@@ -298,6 +298,14 @@ export default function LembretesWhatsApp() {
                   {l.mensagem && (
                     <p className="text-sm text-slate-600 mt-1 line-clamp-2">{l.mensagem}</p>
                   )}
+                  {l.destinatarios && l.destinatarios.length > 0 ? (
+                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                      <Phone className="w-3 h-3" />
+                      {l.destinatarios.map(n => `+${n}`).join(', ')}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-amber-500 mt-1">⚠️ Sem destinatários configurados</p>
+                  )}
                 </div>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="icon" onClick={() => { setEditandoId(l.id); setCriandoNovo(false); }}>
