@@ -52,13 +52,27 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    const resultado = await enviarViaEvolution(
-      config.evolution_api_url,
-      config.evolution_api_key,
-      config.evolution_instance,
-      telefone,
-      mensagem
-    );
+    let resultado;
+
+    if (midiaUrl && midiaTipo) {
+      resultado = await enviarMidiaViaEvolution(
+        config.evolution_api_url,
+        config.evolution_api_key,
+        config.evolution_instance,
+        telefone,
+        mensagem,
+        midiaUrl,
+        midiaTipo
+      );
+    } else {
+      resultado = await enviarViaEvolution(
+        config.evolution_api_url,
+        config.evolution_api_key,
+        config.evolution_instance,
+        telefone,
+        mensagem
+      );
+    }
 
     return Response.json({ ok: true, resultado });
 
