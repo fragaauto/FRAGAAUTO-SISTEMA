@@ -28,6 +28,7 @@ const LEMBRETE_VAZIO = {
   horario: '08:00',
   dias_semana: [],
   tipo: 'personalizado',
+  destinatarios: [],
   ativo: true,
 };
 
