@@ -98,8 +98,9 @@ export default function ReciboAtendimento({ atendimento, config }) {
       texto += `\n*Pagamento:* ${FORMA_LABEL[formaUnica] || formaUnica}\n`;
     }
 
-    if (atendimento.tecnico) texto += `\n*Técnico:* ${atendimento.tecnico}\n`;
-    if (atendimento.observacoes) texto += `\n📝 *Obs:* ${atendimento.observacoes}\n`;
+    if (tecnicosResp.length > 0) texto += `\n*Técnico(s):* ${tecnicosResp.map(t => t.nome).join(', ')}\n`;
+    else if (atendimento.tecnico) texto += `\n*Técnico:* ${atendimento.tecnico}\n`;
+    if (obsCliente) texto += `\n📝 *Observações:*\n${obsCliente}\n`;
 
     texto += `\n✅ Obrigado pela preferência!`;
     return texto;
