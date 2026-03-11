@@ -52,6 +52,7 @@ export default function ImportarClientesModal({ onClose, onImportado }) {
             telefone,
             email: row['email'] || row['Email'] || row['EMAIL'] || '',
             cpf_cnpj: row['cpf_cnpj'] || row['CPF'] || row['CNPJ'] || '',
+            data_nascimento: row['data_nascimento'] || row['Data de Nascimento'] || row['data_nascimento'] || '',
             endereco: row['endereco'] || row['Endereço'] || row['ENDERECO'] || '',
           });
           ok++;
@@ -67,8 +68,8 @@ export default function ImportarClientesModal({ onClose, onImportado }) {
 
   const baixarModelo = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['nome', 'telefone', 'email', 'cpf_cnpj', 'endereco'],
-      ['João Silva', '31999998888', 'joao@email.com', '123.456.789-00', 'Rua das Flores, 100'],
+      ['nome', 'telefone', 'email', 'cpf_cnpj', 'data_nascimento', 'endereco'],
+      ['João Silva', '31999998888', 'joao@email.com', '123.456.789-00', '1985-06-15', 'Rua das Flores, 100'],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
@@ -88,7 +89,7 @@ export default function ImportarClientesModal({ onClose, onImportado }) {
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
             <p className="font-medium mb-1">Colunas aceitas na planilha:</p>
-            <p><strong>nome</strong>, <strong>telefone</strong> (obrigatórios), email, cpf_cnpj, endereco</p>
+            <p><strong>nome</strong>, <strong>telefone</strong> (obrigatórios), email, cpf_cnpj, data_nascimento (AAAA-MM-DD), endereco</p>
             <Button size="sm" variant="ghost" className="mt-2 text-blue-700 text-xs px-0" onClick={baixarModelo}>
               <Download className="w-3 h-3 mr-1" /> Baixar planilha modelo
             </Button>
