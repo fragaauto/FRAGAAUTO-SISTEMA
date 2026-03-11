@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { telefone, mensagem } = await req.json();
+    const { telefone, mensagem, midiaUrl, midiaTipo } = await req.json();
 
     if (!telefone || !mensagem) {
       return Response.json({ error: 'Telefone e mensagem são obrigatórios.' }, { status: 400 });
