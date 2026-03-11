@@ -263,6 +263,29 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
             <p className="text-xs text-slate-400 mt-1">Use as variáveis acima para personalizar automaticamente</p>
           </div>
 
+          {/* Mídia */}
+          <div>
+            <Label className="mb-2 block">📎 Anexar Imagem ou Áudio <span className="text-slate-400 font-normal text-xs">(opcional)</span></Label>
+            {midiaUrl ? (
+              <div className="flex items-center gap-2 p-2 border rounded-lg bg-slate-50">
+                {midiaTipo === 'audio' ? <Music className="w-4 h-4 text-blue-500" /> : <Image className="w-4 h-4 text-green-500" />}
+                <span className="text-xs text-slate-600 flex-1 truncate">{midiaTipo === 'audio' ? 'Áudio anexado' : 'Imagem anexada'}</span>
+                {midiaTipo === 'image' && <img src={midiaUrl} alt="" className="h-10 w-10 object-cover rounded" />}
+                <Button size="sm" variant="ghost" onClick={() => { setMidiaUrl(''); setMidiaTipo(''); }}>
+                  <Trash2 className="w-3 h-3 text-red-400" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input ref={fileInputRef} type="file" accept="image/*,audio/*" className="hidden" onChange={handleMidiaUpload} />
+                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={midiaUploadando} className="flex-1">
+                  {midiaUploadando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Image className="w-4 h-4 mr-2" />}
+                  {midiaUploadando ? 'Enviando...' : 'Selecionar Imagem ou Áudio'}
+                </Button>
+              </div>
+            )}
+          </div>
+
           {/* Intervalo */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-2">
