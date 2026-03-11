@@ -211,6 +211,9 @@ export default function ReciboAtendimento({ atendimento, config }) {
       <CardContent className="space-y-3 text-xs">
         {/* Empresa */}
         <div className="text-center pb-1 border-b border-green-200">
+          {config?.logo_url && (
+            <img src={config.logo_url} alt="Logo" className="h-12 object-contain mx-auto mb-1" />
+          )}
           <p className="font-bold text-slate-800 text-sm">{config?.nome_empresa || 'Auto Center'}</p>
           {config?.cnpj && <p className="text-slate-500">CNPJ: {config.cnpj}</p>}
           {config?.endereco && <p className="text-slate-500">{config.endereco}</p>}
