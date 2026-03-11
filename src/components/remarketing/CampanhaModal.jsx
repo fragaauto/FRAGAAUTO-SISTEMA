@@ -184,17 +184,40 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
       .replace('{ultimo_servico}', contato.ultimoServico || '');
   };
 
+  const togglePausaManual = () => {
+    if (pausadoRef.current) {
+      pausadoRef.current = false;
+      setPausado(false);
+      setContagemRegressiva(0);
+      toast.success('Retomando envios...');
+    } else {
+      pausadoRef.current = true;
+      setPausado(true);
+      toast.info('Envio pausado manualmente. Clique em Retomar para continuar.');
+    }
+  };
+
   const iniciarEnvioMassa = async () => {
     if (contatosSelecionados.length === 0) { toast.error('Selecione ao menos um contato'); return; }
     setEnviando(true);
     setCancelado(false);
+    setPausado(false);
     setResultados([]);
-    const cancelRef = { value: false };
+    canceladoRef.current = false;
+    pausadoRef.current = false;
 
     const contatos = contatosSelecionados.map(id => contatosDisponiveis.find(c => c.clienteId === id)).filter(Boolean);
+    let enviadosNesteLote = 0;
 
     for (let i = 0; i < contatos.length; i++) {
-      if (cancelRef.value) break;
+      if (canceladoRef.current) break;
+
+      // Aguarda se pausado manualmente
+      while (pausadoRef.current && !canceladoRef.current) {
+        await sleep(500);
+      }
+      if (canceladoRef.current) break;
+
       const contato = contatos[i];
       setIndiceAtual(i);
 
@@ -218,18 +241,42 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
         setResultados(prev => [...prev, { id: contato.clienteId, nome: contato.clienteNome, ok: false, erro: e.message }]);
       }
 
-      if (i < contatos.length - 1 && !cancelRef.value) {
-        const min = Math.min(intervaloMin, intervaloMax);
-        const max = Math.max(intervaloMin, intervaloMax);
-        const segundos = min + Math.floor(Math.random() * (max - min + 1));
-        for (let s = 0; s < segundos; s++) {
-          if (cancelRef.value) break;
-          await sleep(1000);
+      enviadosNesteLote++;
+
+      // Pausa automática a cada X envios
+      const ehUltimo = i === contatos.length - 1;
+      if (!ehUltimo && !canceladoRef.current) {
+        if (pausaAtivada && enviadosNesteLote >= pausarACada) {
+          enviadosNesteLote = 0;
+          const totalSegundos = duracaoPausa * 60;
+          toast.info(`Pausa automática: aguardando ${duracaoPausa} min antes de continuar...`);
+          for (let s = totalSegundos; s > 0; s--) {
+            if (canceladoRef.current) break;
+            // Pula pausa automática se usuário pausou/retomou manualmente
+            while (pausadoRef.current && !canceladoRef.current) { await sleep(500); }
+            setContagemRegressiva(s);
+            await sleep(1000);
+          }
+          setContagemRegressiva(0);
+          if (!canceladoRef.current) toast.success('Retomando envios...');
+        } else {
+          // Intervalo normal entre envios
+          const min = Math.min(intervaloMin, intervaloMax);
+          const max = Math.max(intervaloMin, intervaloMax);
+          const segundos = min + Math.floor(Math.random() * (max - min + 1));
+          for (let s = 0; s < segundos; s++) {
+            if (canceladoRef.current) break;
+            while (pausadoRef.current && !canceladoRef.current) { await sleep(500); }
+            await sleep(1000);
+          }
         }
       }
     }
 
     setEnviando(false);
+    setPausado(false);
+    pausadoRef.current = false;
+    setContagemRegressiva(0);
     setIndiceAtual(-1);
   };
 
