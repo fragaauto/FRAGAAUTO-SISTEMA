@@ -146,6 +146,7 @@ export default function ReciboAtendimento({ atendimento, config }) {
         .footer { text-align: center; margin-top: 16px; font-size: 12px; color: #888; }
         .os { text-align:center; font-size: 13px; font-weight:bold; margin-bottom: 4px; }
       </style></head><body>
+      ${config?.logo_url ? `<div style="text-align:center;margin-bottom:8px"><img src="${config.logo_url}" style="max-height:64px;max-width:180px;object-fit:contain" /></div>` : ''}
       <h2>${empresa}</h2>
       ${config?.cnpj ? `<div class="center">CNPJ: ${config.cnpj}</div>` : ''}
       ${config?.endereco ? `<div class="center">${config.endereco}</div>` : ''}
