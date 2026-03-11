@@ -134,6 +134,17 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
     return (ca?.codigo || 0) - (cb?.codigo || 0);
   });
 
+  const todosFiltradosSelecionados = contatosFiltrados.length > 0 && contatosFiltrados.every(c => contatosSelecionados.includes(c.clienteId));
+
+  const toggleTodosFiltrados = () => {
+    if (todosFiltradosSelecionados) {
+      setContatosSelecionados(prev => prev.filter(id => !contatosFiltrados.find(c => c.clienteId === id)));
+    } else {
+      const novoIds = contatosFiltrados.map(c => c.clienteId).filter(id => !contatosSelecionados.includes(id));
+      setContatosSelecionados(prev => [...prev, ...novoIds]);
+    }
+  };
+
   const toggleContato = (id) => setContatosSelecionados(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   const selecionarTodos = () => setContatosSelecionados(contatosFiltrados.map(c => c.clienteId));
   const deselecionarTodos = () => setContatosSelecionados([]);
