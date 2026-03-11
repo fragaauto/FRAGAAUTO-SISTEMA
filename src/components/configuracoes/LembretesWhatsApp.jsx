@@ -33,7 +33,8 @@ const LEMBRETE_VAZIO = {
 };
 
 function FormLembrete({ lembrete, onSave, onCancel, isSaving }) {
-  const [form, setForm] = useState(lembrete);
+  const [form, setForm] = useState({ ...lembrete, destinatarios: lembrete.destinatarios || [] });
+  const [novoNumero, setNovoNumero] = useState('');
 
   const toggleDia = (dia) => {
     const atual = form.dias_semana || [];
@@ -42,6 +43,18 @@ function FormLembrete({ lembrete, onSave, onCancel, isSaving }) {
     } else {
       setForm(f => ({ ...f, dias_semana: [...atual, dia].sort() }));
     }
+  };
+
+  const adicionarNumero = () => {
+    const num = novoNumero.replace(/\D/g, '');
+    if (!num) return;
+    if ((form.destinatarios || []).includes(num)) return;
+    setForm(f => ({ ...f, destinatarios: [...(f.destinatarios || []), num] }));
+    setNovoNumero('');
+  };
+
+  const removerNumero = (num) => {
+    setForm(f => ({ ...f, destinatarios: f.destinatarios.filter(d => d !== num) }));
   };
 
   return (
