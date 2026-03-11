@@ -77,7 +77,41 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
     return Object.values(map);
   }, [atendimentos, clientes]);
 
+  const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+  const handleMidiaUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const isAudio = file.type.startsWith('audio/');
+    const isImagem = file.type.startsWith('image/');
+    if (!isAudio && !isImagem) { toast.error('Apenas imagens ou áudios são suportados'); return; }
+    setMidiaUploadando(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setMidiaUrl(file_url);
+      setMidiaTipo(isAudio ? 'audio' : 'image');
+      toast.success('Arquivo enviado!');
+    } catch (e) {
+      toast.error('Erro ao enviar arquivo');
+    } finally {
+      setMidiaUploadando(false);
+    }
+  };
+
+  const todosFiltradosSelecionados = contatosFiltrados.every(c => contatosSelecionados.includes(c.clienteId));
+  const algunsFiltradosSelecionados = contatosFiltrados.some(c => contatosSelecionados.includes(c.clienteId));
+
+  const toggleTodosFiltrados = () => {
+    if (todosFiltradosSelecionados) {
+      setContatosSelecionados(prev => prev.filter(id => !contatosFiltrados.find(c => c.clienteId === id)));
+    } else {
+      const novoIds = contatosFiltrados.map(c => c.clienteId).filter(id => !contatosSelecionados.includes(id));
+      setContatosSelecionados(prev => [...prev, ...novoIds]);
+    }
+  };
+
   const contatosFiltrados = contatosDisponiveis.filter(c => {
+    if (filtroLetra && !c.clienteNome.toUpperCase().startsWith(filtroLetra)) return false;
     if (filtroNome && !c.clienteNome.toLowerCase().includes(filtroNome.toLowerCase())) return false;
     if (filtroTipo !== 'todos') {
       const clienteObj = clientes.find(cl => cl.id === c.clienteId);
