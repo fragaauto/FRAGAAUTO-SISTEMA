@@ -47,12 +47,19 @@ const NAV_ITEMS = [
 
 
 
+// Páginas acessíveis sem autenticação
+const PAGINAS_PUBLICAS = ['AprovarOrcamento'];
+
 export default function Layout({ children, currentPageName }) {
   const [open, setOpen] = React.useState(false);
   const [user, setUser] = React.useState(null);
+  const [authLoading, setAuthLoading] = React.useState(true);
 
   React.useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setAuthLoading(false));
   }, []);
 
   const { data: configs = [] } = useQuery({
