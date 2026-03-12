@@ -46,6 +46,7 @@ import ImpressaoQueixa from '../components/atendimento/ImpressaoQueixa';
 import ModalEditarClienteVeiculo from '../components/atendimento/ModalEditarClienteVeiculo';
 import AbaFinalizacaoPagamento from '../components/financeiro/AbaFinalizacaoPagamento';
 import AdicionarItemOrcamento from '../components/orcamento/AdicionarItemOrcamento';
+import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -1391,62 +1392,72 @@ export default function VerAtendimento() {
                   </CardHeader>
                   <CardContent>
                     {modoEdicaoOrcamento ? (
-                      <div className="space-y-4">
-                        {itensOrcamentoEdit.map((item, idx) => (
-                          <div key={idx} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                            <div className="flex items-start justify-between mb-3">
-                              <div>
-                                <p className="font-medium">{item.nome}</p>
-                                {item.origem === 'checklist' && (
-                                  <p className="text-xs text-blue-600">Do checklist: {item.item_checklist}</p>
-                                )}
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removerItemOrcamentoEdit(idx)}
-                                className="text-red-500"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <Label className="text-xs">Quantidade</Label>
-                                <Input
-                                  type="number"
-                                  inputMode="numeric"
-                                  min="1"
-                                  value={item.quantidade}
-                                  onChange={(e) => atualizarItemOrcamentoEdit(idx, 'quantidade', e.target.value)}
-                                  onFocus={(e) => e.target.select()}
-                                  onBlur={(e) => {
-                                    if (e.target.value === '' || parseInt(e.target.value) < 1) {
-                                      atualizarItemOrcamentoEdit(idx, 'quantidade', 1);
-                                    }
-                                  }}
-                                  className="h-9"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-xs">Valor Unitário</Label>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  value={item.valor_unitario}
-                                  onChange={(e) => atualizarItemOrcamentoEdit(idx, 'valor_unitario', parseFloat(e.target.value) || 0)}
-                                  className="h-9"
-                                />
-                              </div>
-                            </div>
-                            <div className="mt-2 text-right">
-                              <span className="text-sm font-bold text-green-600">
-                                Total: R$ {item.valor_total?.toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
+                     <div className="space-y-4">
+                       {itensOrcamentoEdit.map((item, idx) => (
+                         <div key={idx} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                           <div className="flex items-start justify-between mb-3">
+                             <div>
+                               <p className="font-medium">{item.nome}</p>
+                               {item.origem === 'checklist' && (
+                                 <p className="text-xs text-blue-600">Do checklist: {item.item_checklist}</p>
+                               )}
+                             </div>
+                             <Button
+                               variant="ghost"
+                               size="sm"
+                               onClick={() => removerItemOrcamentoEdit(idx)}
+                               className="text-red-500"
+                             >
+                               <Trash2 className="w-4 h-4" />
+                             </Button>
+                           </div>
+                           <div className="grid grid-cols-2 gap-3 mb-3">
+                             <div>
+                               <Label className="text-xs">Quantidade</Label>
+                               <Input
+                                 type="number"
+                                 inputMode="numeric"
+                                 min="1"
+                                 value={item.quantidade}
+                                 onChange={(e) => atualizarItemOrcamentoEdit(idx, 'quantidade', e.target.value)}
+                                 onFocus={(e) => e.target.select()}
+                                 onBlur={(e) => {
+                                   if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                                     atualizarItemOrcamentoEdit(idx, 'quantidade', 1);
+                                   }
+                                 }}
+                                 className="h-9"
+                               />
+                             </div>
+                             <div>
+                               <Label className="text-xs">Valor Unitário</Label>
+                               <Input
+                                 type="number"
+                                 step="0.01"
+                                 min="0"
+                                 value={item.valor_unitario}
+                                 onChange={(e) => atualizarItemOrcamentoEdit(idx, 'valor_unitario', parseFloat(e.target.value) || 0)}
+                                 className="h-9"
+                               />
+                             </div>
+                           </div>
+                           <ItemOrcamento
+                             item={item}
+                             onUpdate={(updated) => {
+                               const novosItens = [...itensOrcamentoEdit];
+                               novosItens[idx] = updated;
+                               setItensOrcamentoEdit(novosItens);
+                             }}
+                             onRemove={() => removerItemOrcamentoEdit(idx)}
+                             showDeleteButton={false}
+                           />
+                           <div className="mt-2 text-right">
+                             <span className="text-sm font-bold text-green-600">
+                               Total: R$ {item.valor_total?.toFixed(2)}
+                             </span>
+                           </div>
+                         </div>
+                       ))}
                         <div className="flex gap-2 pt-4 border-t">
                           <Button
                             variant="outline"
