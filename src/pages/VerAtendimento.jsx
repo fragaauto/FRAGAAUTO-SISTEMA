@@ -34,7 +34,8 @@ import {
   Search,
   Plus,
   Sparkles,
-  Lock
+  Lock,
+  Wrench
 } from 'lucide-react';
 import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
 import AssistenteIAModal from '../components/atendimento/AssistenteIAModal';
@@ -1321,22 +1322,44 @@ export default function VerAtendimento() {
 
             {atendimento.itens_queixa?.length > 0 && (
               <Card className="border-blue-200">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-blue-700">Orçamento da Queixa Inicial</CardTitle>
+                  {isAdmin && !pagamentoLancado && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(createPageUrl(`EditarQueixa?id=${atendimento.id}`))}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Editar
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {atendimento.itens_queixa.map((item, idx) => (
                     <div key={idx} className="space-y-2">
-                      <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div>
-                          <p className="font-medium">{item.nome}</p>
-                          <p className="text-sm text-slate-500">
-                            {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="font-medium">{item.nome}</p>
+                            <p className="text-sm text-slate-500">
+                              {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                            </p>
+                          </div>
+                          <p className="font-bold text-blue-600">
+                            R$ {item.valor_total?.toFixed(2)}
                           </p>
                         </div>
-                        <p className="font-bold text-blue-600">
-                          R$ {item.valor_total?.toFixed(2)}
-                        </p>
+                        <ItemOrcamento
+                          item={item}
+                          onUpdate={(updated) => {
+                            const novosItens = [...atendimento.itens_queixa];
+                            novosItens[idx] = updated;
+                            updateMutation.mutate({ itens_queixa: novosItens });
+                          }}
+                          onRemove={() => {}}
+                          showDeleteButton={false}
+                        />
                       </div>
                       {item.observacao_item && (
                         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -1376,148 +1399,102 @@ export default function VerAtendimento() {
               </Card>
             ) : (
               <>
-                <Card className="border-orange-200">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-orange-700">Itens do Checklist</CardTitle>
-                    {isAdmin && !modoEdicaoOrcamento && !checklistAssinado && !pagamentoLancado && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={iniciarEdicaoOrcamento}
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Editar
-                      </Button>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {modoEdicaoOrcamento ? (
-                     <div className="space-y-4">
-                       {itensOrcamentoEdit.map((item, idx) => (
-                         <div key={idx} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                           <div className="flex items-start justify-between mb-3">
-                             <div>
-                               <p className="font-medium">{item.nome}</p>
-                               {item.origem === 'checklist' && (
-                                 <p className="text-xs text-blue-600">Do checklist: {item.item_checklist}</p>
-                               )}
-                             </div>
-                             <Button
-                               variant="ghost"
-                               size="sm"
-                               onClick={() => removerItemOrcamentoEdit(idx)}
-                               className="text-red-500"
-                             >
-                               <Trash2 className="w-4 h-4" />
-                             </Button>
-                           </div>
-                           <div className="grid grid-cols-2 gap-3 mb-3">
-                             <div>
-                               <Label className="text-xs">Quantidade</Label>
-                               <Input
-                                 type="number"
-                                 inputMode="numeric"
-                                 min="1"
-                                 value={item.quantidade}
-                                 onChange={(e) => atualizarItemOrcamentoEdit(idx, 'quantidade', e.target.value)}
-                                 onFocus={(e) => e.target.select()}
-                                 onBlur={(e) => {
-                                   if (e.target.value === '' || parseInt(e.target.value) < 1) {
-                                     atualizarItemOrcamentoEdit(idx, 'quantidade', 1);
-                                   }
-                                 }}
-                                 className="h-9"
-                               />
-                             </div>
-                             <div>
-                               <Label className="text-xs">Valor Unitário</Label>
-                               <Input
-                                 type="number"
-                                 step="0.01"
-                                 min="0"
-                                 value={item.valor_unitario}
-                                 onChange={(e) => atualizarItemOrcamentoEdit(idx, 'valor_unitario', parseFloat(e.target.value) || 0)}
-                                 className="h-9"
-                               />
-                             </div>
-                           </div>
-                           <ItemOrcamento
-                             item={item}
-                             onUpdate={(updated) => {
-                               const novosItens = [...itensOrcamentoEdit];
-                               novosItens[idx] = updated;
-                               setItensOrcamentoEdit(novosItens);
-                             }}
-                             onRemove={() => removerItemOrcamentoEdit(idx)}
-                             showDeleteButton={false}
-                           />
-                           <div className="mt-2 text-right">
-                             <span className="text-sm font-bold text-green-600">
-                               Total: R$ {item.valor_total?.toFixed(2)}
-                             </span>
-                           </div>
-                         </div>
-                       ))}
-                        <div className="flex gap-2 pt-4 border-t">
-                          <Button
-                            variant="outline"
-                            onClick={() => setModoEdicaoOrcamento(false)}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            onClick={salvarEdicaoOrcamento}
-                            disabled={updateMutation.isPending}
-                            className="bg-orange-500 hover:bg-orange-600"
-                          >
-                            {updateMutation.isPending ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                              <Save className="w-4 h-4 mr-2" />
-                            )}
-                            Salvar Alterações
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                       {atendimento.itens_orcamento?.map((item, idx) => (
-                         <div key={idx} className="space-y-2">
-                           <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-                             <div>
-                               <p className="font-medium">{item.nome}</p>
-                               <p className="text-sm text-slate-500">
-                                 {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
-                               </p>
-                             </div>
-                             <p className="font-bold text-orange-600">
-                               R$ {item.valor_total?.toFixed(2)}
-                             </p>
-                           </div>
-                            {item.observacao_item && (
-                              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
-                                <p className="text-sm text-blue-700">{item.observacao_item}</p>
-                              </div>
-                            )}
-                            {item.vantagens && (
-                              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                                <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
-                                <p className="text-sm text-green-700">{item.vantagens}</p>
-                              </div>
-                            )}
-                            {item.desvantagens && (
-                              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
-                                <p className="text-sm text-amber-700">{item.desvantagens}</p>
-                              </div>
-                            )}
+            {atendimento.queixa_inicial && (
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardHeader>
+                  <CardTitle className="text-blue-700 flex items-center gap-2">
+                    <MessageCircle className="w-5 h-5" />
+                    Queixa Inicial do Cliente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-slate-700 whitespace-pre-wrap">{atendimento.queixa_inicial}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {atendimento.itens_queixa?.length > 0 && (
+              <Card className="border-blue-200">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-blue-700">Orçamento da Queixa Inicial</CardTitle>
+                  {isAdmin && !pagamentoLancado && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(createPageUrl(`EditarQueixa?id=${atendimento.id}`))}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Editar Itens
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {atendimento.itens_queixa.map((item, idx) => (
+                    <div key={idx} className="space-y-2">
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="font-medium">{item.nome}</p>
+                            <p className="text-sm text-slate-500">
+                              {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                            </p>
                           </div>
-                        ))}
+                          <p className="font-bold text-blue-600">
+                            R$ {item.valor_total?.toFixed(2)}
+                          </p>
+                        </div>
+                        {!pagamentoLancado && (
+                          <ItemOrcamento
+                            item={item}
+                            onUpdate={(updated) => {
+                              const novosItens = [...atendimento.itens_queixa];
+                              novosItens[idx] = updated;
+                              updateMutation.mutate({ itens_queixa: novosItens });
+                            }}
+                            onRemove={() => {}}
+                            showDeleteButton={false}
+                          />
+                        )}
+                        {item.tecnicos && item.tecnicos.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {item.tecnicos.map((tec, i) => (
+                              <Badge key={i} variant="outline" className="text-xs bg-blue-100 text-blue-700">
+                                <Wrench className="w-3 h-3 mr-1" />
+                                {tec.nome}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      {item.observacao_item && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
+                          <p className="text-sm text-blue-700">{item.observacao_item}</p>
+                        </div>
+                      )}
+                      {item.vantagens && (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
+                          <p className="text-sm text-green-700">{item.vantagens}</p>
+                        </div>
+                      )}
+                      {item.desvantagens && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                          <p className="text-sm text-amber-700">{item.desvantagens}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div className="p-3 bg-blue-100 border-t-2 border-blue-400 rounded-lg">
+                    <div className="flex justify-between items-center text-lg font-bold text-blue-700">
+                      <span>Subtotal da Queixa:</span>
+                      <span>R$ {atendimento.subtotal_queixa?.toFixed(2) || '0.00'}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
                 {(atendimento.itens_orcamento?.length > 0) && atendimento.subtotal_checklist > 0 && (
                   <Card className="bg-orange-100 border-orange-300">
