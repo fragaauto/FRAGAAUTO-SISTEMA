@@ -49,6 +49,7 @@ import { motion } from 'framer-motion';
 import ModuloBloqueado from '@/components/ModuloBloqueado';
 import { paginaPermitida } from '@/components/modulos';
 import Paginacao from '@/components/ui/Paginacao';
+import FormularioProduto from '../components/produtos/FormularioProduto';
 
 const CATEGORIAS = [
   { value: 'eletrica', label: 'Elétrica', color: 'bg-yellow-100 text-yellow-800' },
@@ -125,7 +126,9 @@ export default function Produtos() {
     controla_estoque: false,
     estoque_atual: 0,
     estoque_minimo: 0,
-    estoque_desejado: 0
+    estoque_desejado: 0,
+    localizacao_estoque: '',
+    fornecedores: []
   });
 
   const { data: produtos = [], isLoading } = useQuery({
@@ -283,7 +286,9 @@ export default function Produtos() {
         controla_estoque: produto.controla_estoque || false,
         estoque_atual: produto.estoque_atual ?? 0,
         estoque_minimo: produto.estoque_minimo ?? 0,
-        estoque_desejado: produto.estoque_desejado ?? 0
+        estoque_desejado: produto.estoque_desejado ?? 0,
+        localizacao_estoque: produto.localizacao_estoque || '',
+        fornecedores: produto.fornecedores || []
       });
     } else {
       setEditingProduto(null);
@@ -326,7 +331,9 @@ export default function Produtos() {
         controla_estoque: false,
         estoque_atual: 0,
         estoque_minimo: 0,
-        estoque_desejado: 0
+        estoque_desejado: 0,
+        localizacao_estoque: '',
+        fornecedores: []
       });
       };
 
@@ -525,6 +532,9 @@ export default function Produtos() {
       const controlaEstoqueIdx = getHeaderIndex(['controla_estoque', 'estoque', 'controla estoque']);
       const estoqueAtualIdx = getHeaderIndex(['estoque_atual', 'quantidade', 'qtd', 'qty']);
       const estoqueMinimoIdx = getHeaderIndex(['estoque_minimo', 'minimo', 'mínimo', 'min']);
+      const localizacaoIdx = getHeaderIndex(['localizacao_estoque', 'localizacao', 'localização', 'posicao', 'posição']);
+      const fornecedorIdx = getHeaderIndex(['fornecedor', 'fornecedor_principal', 'supplier']);
+      const codigoFornecedorIdx = getHeaderIndex(['codigo_fornecedor', 'código_fornecedor', 'cod_fornecedor']);
       const descricaoIdx = getHeaderIndex(['descricao', 'descrição', 'description', 'obs', 'observacao', 'observação']);
       const vantagensIdx = getHeaderIndex(['vantagens', 'beneficios', 'benefícios', 'vantagens_de_fazer', 'vantagens_fazer']);
       const desvantagensIdx = getHeaderIndex(['desvantagens', 'riscos', 'desvantagens_nao_fazer', 'desvantagens_de_nao_fazer']);
@@ -672,6 +682,19 @@ export default function Produtos() {
           const controlaEstoque = ['sim', 'yes', 'true', '1'].includes(controlaEstoqueRaw);
           const estoqueAtual = estoqueAtualIdx !== -1 ? parseFloat(values[estoqueAtualIdx]) || 0 : 0;
           const estoqueMinimo = estoqueMinimoIdx !== -1 ? parseFloat(values[estoqueMinimoIdx]) || 0 : 0;
+          const localizacao = (localizacaoIdx !== -1 ? values[localizacaoIdx] : '').trim();
+          const fornecedorNome = (fornecedorIdx !== -1 ? values[fornecedorIdx] : '').trim();
+          const codigoFornecedor = (codigoFornecedorIdx !== -1 ? values[codigoFornecedorIdx] : '').trim();
+
+          // Montar array de fornecedores se houver dados
+          const fornecedoresArr = [];
+          if (fornecedorNome || codigoFornecedor) {
+            fornecedoresArr.push({
+              fornecedor_nome: fornecedorNome,
+              codigo_fornecedor: codigoFornecedor,
+              principal: true
+            });
+          }
 
           const produto = {
             codigo,
@@ -683,6 +706,8 @@ export default function Produtos() {
             controla_estoque: controlaEstoque,
             estoque_atual: estoqueAtual,
             estoque_minimo: estoqueMinimo,
+            localizacao_estoque: localizacao,
+            fornecedores: fornecedoresArr,
             descricao: (values[descricaoIdx] || '').trim(),
             vantagens: vantagens.substring(0, 500),
             desvantagens: desvantagens.substring(0, 500),
@@ -987,16 +1012,16 @@ export default function Produtos() {
 
   const downloadTemplate = () => {
     const wb = XLSX.utils.book_new();
-    const headers = ['codigo', 'nome', 'categoria', 'unidade', 'valor', 'custo', 'controla_estoque', 'estoque_atual', 'estoque_minimo', 'descricao', 'vantagens', 'desvantagens'];
+    const headers = ['codigo', 'nome', 'categoria', 'unidade', 'valor', 'custo', 'controla_estoque', 'estoque_atual', 'estoque_minimo', 'localizacao_estoque', 'fornecedor', 'codigo_fornecedor', 'descricao', 'vantagens', 'desvantagens'];
     const rows = [
-      ['P001', 'Troca de motor de vidro elétrico', 'eletrica', 'unidade', 150.00, 80.00, 'sim', 5, 2, 'Serviço completo de substituição', 'Restaura o funcionamento completo do vidro', 'Vidro pode travar aberto ou fechado'],
-      ['P002', 'Regulagem de fechadura', 'portas', 'unidade', 89.90, 0, 'não', 0, 0, 'Ajuste e lubrificação', 'Melhora o fechamento da porta', 'Porta pode não fechar corretamente'],
-      ['P003', 'Kit película solar completo', 'estetica', 'kit', 350.00, 120.00, 'sim', 10, 3, 'Proteção UV e privacidade', 'Reduz calor e protege o interior', 'Exposição prolongada danifica bancos e painel'],
-      ['P004', 'Par de maçanetas externas', 'portas', 'par', 120.00, 60.00, 'sim', 8, 2, 'Reposição de peças originais', 'Melhora estética e funcionalidade', 'Maçaneta quebrada impede abertura da porta'],
+      ['P001', 'Troca de motor de vidro elétrico', 'eletrica', 'unidade', 150.00, 80.00, 'sim', 5, 2, 'Prateleira A3', 'Auto Peças Silva', 'MVE-2024', 'Serviço completo de substituição', 'Restaura o funcionamento completo do vidro', 'Vidro pode travar aberto ou fechado'],
+      ['P002', 'Regulagem de fechadura', 'portas', 'unidade', 89.90, 0, 'não', 0, 0, '', '', '', 'Ajuste e lubrificação', 'Melhora o fechamento da porta', 'Porta pode não fechar corretamente'],
+      ['P003', 'Kit película solar completo', 'estetica', 'kit', 350.00, 120.00, 'sim', 10, 3, 'Gaveta 5', 'Películas Center', 'KIT-SOLAR-PRO', 'Proteção UV e privacidade', 'Reduz calor e protege o interior', 'Exposição prolongada danifica bancos e painel'],
+      ['P004', 'Par de maçanetas externas', 'portas', 'par', 120.00, 60.00, 'sim', 8, 2, 'Estante B2', 'Importados BR', 'MAC-EXT-2024', 'Reposição de peças originais', 'Melhora estética e funcionalidade', 'Maçaneta quebrada impede abertura da porta'],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     // Largura das colunas
-    ws['!cols'] = headers.map((h, i) => ({ wch: [8, 40, 12, 10, 8, 8, 16, 14, 15, 35, 50, 50][i] || 20 }));
+    ws['!cols'] = headers.map((h, i) => ({ wch: [8, 40, 12, 10, 8, 8, 16, 14, 15, 20, 25, 20, 35, 50, 50][i] || 20 }));
     XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
     // Aba de instruções
     const wsInfo = XLSX.utils.aoa_to_sheet([
@@ -1012,6 +1037,9 @@ export default function Produtos() {
       ['controla_estoque', 'Não', 'sim | não', 'sim'],
       ['estoque_atual', 'Não', 'Número inteiro', '5'],
       ['estoque_minimo', 'Não', 'Número inteiro', '2'],
+      ['localizacao_estoque', 'Não', 'Texto livre', 'Prateleira A3'],
+      ['fornecedor', 'Não', 'Nome do fornecedor', 'Auto Peças Silva'],
+      ['codigo_fornecedor', 'Não', 'Código no catálogo do fornecedor', 'MVE-2024'],
       ['descricao', 'Não', 'Texto livre', 'Serviço completo'],
       ['vantagens', 'Não', 'Texto livre (máx 500 chars)', 'Melhora a segurança'],
       ['desvantagens', 'Não', 'Texto livre (máx 500 chars)', 'Risco de...'],
@@ -1334,224 +1362,11 @@ export default function Produtos() {
               {editingProduto ? 'Editar Produto' : 'Novo Produto'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label>Código *</Label>
-              <Input
-                value={formData.codigo}
-                onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-                placeholder="Ex: P001"
-                className="h-12"
-              />
-            </div>
-            <div>
-              <Label>Nome *</Label>
-              <Input
-                value={formData.nome}
-                onChange={(e) => {
-                  setFormData({ ...formData, nome: e.target.value });
-                  // Detectar modelos automaticamente após pequeno delay
-                  clearTimeout(window.detectModelosTimeout);
-                  window.detectModelosTimeout = setTimeout(atualizarModelosDetectados, 800);
-                }}
-                placeholder="Nome do produto ou serviço"
-                className="h-12"
-              />
-            </div>
-            <div>
-              <Label>Categoria *</Label>
-              <Select
-                value={formData.categoria}
-                onValueChange={(value) => setFormData({ ...formData, categoria: value })}
-              >
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIAS.map(cat => (
-                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Unidade</Label>
-              <Select
-                value={formData.unidade || 'unidade'}
-                onValueChange={(value) => setFormData({ ...formData, unidade: value })}
-              >
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unidade">Unidade</SelectItem>
-                  <SelectItem value="par">Par</SelectItem>
-                  <SelectItem value="jogo">Jogo</SelectItem>
-                  <SelectItem value="kit">Kit</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Valor *</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.valor}
-                onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                placeholder="0.00"
-                className="h-12"
-              />
-            </div>
-            <div>
-              <Label>Descrição</Label>
-              <Textarea
-                value={formData.descricao}
-                onChange={(e) => {
-                  setFormData({ ...formData, descricao: e.target.value });
-                  // Detectar modelos automaticamente após pequeno delay
-                  clearTimeout(window.detectModelosTimeout);
-                  window.detectModelosTimeout = setTimeout(atualizarModelosDetectados, 800);
-                }}
-                placeholder="Observações sobre o produto..."
-                className="min-h-[60px]"
-              />
-            </div>
-            <div>
-              <Label className="flex items-center justify-between">
-                <span>Vantagens de Fazer</span>
-                <span className="text-xs text-slate-500">
-                  {formData.vantagens?.length || 0}/500
-                </span>
-              </Label>
-              <Textarea
-                value={formData.vantagens}
-                onChange={(e) => {
-                  const value = e.target.value.substring(0, 500);
-                  setFormData({ ...formData, vantagens: value });
-                }}
-                placeholder="Benefícios de realizar o serviço..."
-                className="min-h-[60px]"
-                maxLength={500}
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                Máximo 500 caracteres
-              </p>
-            </div>
-            <div>
-              <Label className="flex items-center justify-between">
-                <span>Desvantagens de Não Fazer</span>
-                <span className="text-xs text-slate-500">
-                  {formData.desvantagens?.length || 0}/500
-                </span>
-              </Label>
-              <Textarea
-                value={formData.desvantagens}
-                onChange={(e) => {
-                  const value = e.target.value.substring(0, 500);
-                  setFormData({ ...formData, desvantagens: value });
-                }}
-                placeholder="Riscos de não realizar o serviço..."
-                className="min-h-[60px]"
-                maxLength={500}
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                Máximo 500 caracteres
-              </p>
-            </div>
-
-            {/* Estoque */}
-            <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  id="controla-estoque"
-                  checked={formData.controla_estoque}
-                  onCheckedChange={(checked) => setFormData({ ...formData, controla_estoque: checked })}
-                />
-                <label htmlFor="controla-estoque" className="font-medium cursor-pointer text-sm">
-                  Controlar estoque físico
-                </label>
-              </div>
-              {formData.controla_estoque && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label>Estoque Atual</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={formData.estoque_atual}
-                        onChange={(e) => setFormData({ ...formData, estoque_atual: parseFloat(e.target.value) || 0 })}
-                        className="h-10"
-                      />
-                    </div>
-                    <div>
-                      <Label>Estoque Mínimo <span className="text-xs text-slate-400">(alerta de baixo)</span></Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={formData.estoque_minimo}
-                        onChange={(e) => setFormData({ ...formData, estoque_minimo: parseFloat(e.target.value) || 0 })}
-                        className="h-10"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Estoque Desejado <span className="text-xs text-slate-400">(qtd ideal para manter)</span></Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={formData.estoque_desejado}
-                      onChange={(e) => setFormData({ ...formData, estoque_desejado: parseFloat(e.target.value) || 0 })}
-                      className="h-10"
-                      placeholder="0"
-                    />
-                    <p className="text-xs text-slate-400 mt-1">
-                      Ao gerar lista de compras, a quantidade sugerida será: estoque desejado − estoque atual
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-3 p-4 bg-slate-100 rounded-lg border">
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  id="aplicacao-universal"
-                  checked={formData.aplicacao_universal}
-                  onCheckedChange={(checked) => setFormData({ 
-                    ...formData, 
-                    aplicacao_universal: checked,
-                    modelos_compativeis: checked ? [] : formData.modelos_compativeis
-                  })}
-                />
-                <label htmlFor="aplicacao-universal" className="font-medium cursor-pointer text-sm">
-                  ✓ Aplicação Universal (serve para todos os veículos)
-                </label>
-              </div>
-
-              {!formData.aplicacao_universal && (
-                <div>
-                  <Label>Modelos Compatíveis</Label>
-                  <Input
-                    value={Array.isArray(formData.modelos_compativeis) 
-                      ? formData.modelos_compativeis.join(', ')
-                      : formData.modelos_compativeis || ''
-                    }
-                    onChange={(e) => {
-                      const modelos = e.target.value.split(',').map(m => m.trim()).filter(Boolean);
-                      setFormData({ ...formData, modelos_compativeis: modelos });
-                    }}
-                    placeholder="Ex: Gol, Palio, Uno, Celta"
-                    className="h-10"
-                  />
-                  <p className="text-xs text-slate-500 mt-2">
-                    🤖 Modelos são detectados automaticamente ao digitar no nome/descrição. Você pode adicionar ou remover modelos manualmente separando por vírgula.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+          <FormularioProduto
+            formData={formData}
+            setFormData={setFormData}
+            atualizarModelosDetectados={atualizarModelosDetectados}
+          />
           <DialogFooter>
             <Button variant="outline" onClick={closeModal}>
               Cancelar
