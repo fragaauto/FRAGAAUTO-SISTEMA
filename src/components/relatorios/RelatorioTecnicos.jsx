@@ -392,10 +392,10 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
                               )}
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-green-700">R$ {srv.valorTecnico.toFixed(2)}</p>
-                              {srv.valorTotal !== srv.valorTecnico && (
+                              <p className="font-bold text-green-700">R$ {(srv.valorTecnico || 0).toFixed(2)}</p>
+                              {srv.valorTotal !== srv.valorTecnico && srv.valorTotal != null && (
                                 <p className="text-xs text-slate-400">
-                                  Total: R$ {srv.valorTotal.toFixed(2)}
+                                  Total: R$ {(srv.valorTotal || 0).toFixed(2)}
                                 </p>
                               )}
                             </div>
