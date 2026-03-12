@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2 } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Wrench } from 'lucide-react';
+import AtribuirTecnicoModal from './AtribuirTecnicoModal';
 
 export default function ItemOrcamento({ item, onUpdate, onRemove }) {
+  const [mostrarModalTecnico, setMostrarModalTecnico] = useState(false);
   const handleQuantidadeChange = (e) => {
     const value = e.target.value;
     // Se estiver vazio, manter vazio temporariamente
@@ -33,13 +36,41 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
     });
   };
 
+  const handleAtribuirTecnico = (tecnico) => {
+    onUpdate({
+      ...item,
+      tecnico_id: tecnico?.id || null,
+      tecnico_nome: tecnico?.nome || null,
+    });
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-slate-800 truncate">{item.nome}</p>
-      </div>
-      
-      <div className="flex items-center gap-2 w-full sm:w-auto">
+    <>
+      <div className="flex flex-col gap-2 p-4 bg-slate-50 rounded-xl border border-slate-200">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-slate-800 truncate">{item.nome}</p>
+            {item.tecnico_nome && (
+              <Badge variant="outline" className="mt-1 text-xs bg-blue-50 border-blue-200 text-blue-700">
+                <Wrench className="w-3 h-3 mr-1" />
+                {item.tecnico_nome}
+              </Badge>
+            )}
+          </div>
+          
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setMostrarModalTecnico(true)}
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2"
+          >
+            <Wrench className="w-4 h-4 mr-1" />
+            <span className="text-xs">{item.tecnico_nome ? 'Trocar' : 'Atribuir'}</span>
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-2 flex-wrap">
         <div className="flex flex-col">
           <span className="text-xs text-slate-500 mb-1">Qtd</span>
           <Input
@@ -77,16 +108,25 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
           </div>
         </div>
         
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onRemove}
-          className="text-red-500 hover:text-red-700 hover:bg-red-50 self-end"
-        >
-          <Trash2 className="w-5 h-5" />
-        </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onRemove}
+            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
-    </div>
+
+      {mostrarModalTecnico && (
+        <AtribuirTecnicoModal
+          item={item}
+          onConfirm={handleAtribuirTecnico}
+          onClose={() => setMostrarModalTecnico(false)}
+        />
+      )}
+    </>
   );
 }
