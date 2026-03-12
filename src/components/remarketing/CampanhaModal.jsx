@@ -43,6 +43,9 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
   const [cancelado, setCancelado] = useState(false);
   const pausadoRef = useRef(false);
   const canceladoRef = useRef(false);
+  const [modoEnvio, setModoEnvio] = useState('agora'); // 'agora' ou 'agendar'
+  const [dataAgendamento, setDataAgendamento] = useState('');
+  const [horaAgendamento, setHoraAgendamento] = useState('');
 
   const contatosDisponiveis = useMemo(() => {
     // Prioriza contatos do cadastro de clientes (não bloqueados)
@@ -193,7 +196,32 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
       const c = contatosDisponiveis.find(x => x.clienteId === id);
       return c ? { ...c, status: 'pendente' } : null;
     }).filter(Boolean);
-    saveMutation.mutate({ nomeCampanha: nome, mensagemBase: mensagem, midiaUrl, midiaTipo, listaContatos, status: statusCampanha, totalEnviados: campanha?.totalEnviados || 0, totalRespondidos: campanha?.totalRespondidos || 0, totalConvertidos: campanha?.totalConvertidos || 0 });
+    
+    let dataAgendada = null;
+    if (modoEnvio === 'agendar' && dataAgendamento && horaAgendamento) {
+      dataAgendada = `${dataAgendamento}T${horaAgendamento}:00`;
+    }
+    
+    saveMutation.mutate({ 
+      nomeCampanha: nome, 
+      mensagemBase: mensagem, 
+      midiaUrl, 
+      midiaTipo, 
+      listaContatos, 
+      status: statusCampanha, 
+      dataAgendada,
+      totalEnviados: campanha?.totalEnviados || 0, 
+      totalRespondidos: campanha?.totalRespondidos || 0, 
+      totalConvertidos: campanha?.totalConvertidos || 0 
+    });
+  };
+
+  const handleAgendar = () => {
+    if (!dataAgendamento || !horaAgendamento) {
+      toast.error('Informe data e hora do agendamento');
+      return;
+    }
+    handleSave('agendada');
   };
 
   const sleep = (ms) => new Promise(res => setTimeout(res, ms));
@@ -556,6 +584,42 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
             </div>
           )}
 
+          {/* Modo de Envio */}
+          {!enviando && !finalizado && (
+            <div className="bg-slate-50 border rounded-lg p-4 space-y-3">
+              <Label className="text-sm font-medium">Quando enviar?</Label>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setModoEnvio('agora')}
+                  className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${modoEnvio === 'agora' ? 'border-green-500 bg-green-50 text-green-700 font-medium' : 'border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                >
+                  <Play className="w-4 h-4 inline mr-2" />
+                  Enviar Agora
+                </button>
+                <button
+                  onClick={() => setModoEnvio('agendar')}
+                  className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${modoEnvio === 'agendar' ? 'border-orange-500 bg-orange-50 text-orange-700 font-medium' : 'border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+                >
+                  <Clock className="w-4 h-4 inline mr-2" />
+                  Agendar
+                </button>
+              </div>
+              
+              {modoEnvio === 'agendar' && (
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div>
+                    <Label className="text-xs">Data</Label>
+                    <Input type="date" value={dataAgendamento} onChange={e => setDataAgendamento(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Hora</Label>
+                    <Input type="time" value={horaAgendamento} onChange={e => setHoraAgendamento(e.target.value)} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Botões */}
           <div className="flex gap-3 pt-2 flex-wrap">
             <Button variant="outline" onClick={onClose} disabled={enviando} className="flex-1">Cancelar</Button>
@@ -564,9 +628,15 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
                 <Button onClick={() => handleSave('rascunho')} variant="outline" className="flex-1" disabled={saveMutation.isPending}>
                   <Save className="w-4 h-4 mr-2" />Salvar
                 </Button>
-                <Button onClick={iniciarEnvioMassa} className="flex-1 bg-green-600 hover:bg-green-700" disabled={contatosSelecionados.length === 0}>
-                  <Play className="w-4 h-4 mr-2" />Enviar Agora ({contatosSelecionados.length})
-                </Button>
+                {modoEnvio === 'agora' ? (
+                  <Button onClick={iniciarEnvioMassa} className="flex-1 bg-green-600 hover:bg-green-700" disabled={contatosSelecionados.length === 0}>
+                    <Play className="w-4 h-4 mr-2" />Enviar Agora ({contatosSelecionados.length})
+                  </Button>
+                ) : (
+                  <Button onClick={handleAgendar} className="flex-1 bg-orange-600 hover:bg-orange-700" disabled={contatosSelecionados.length === 0 || saveMutation.isPending}>
+                    <Clock className="w-4 h-4 mr-2" />Agendar Envio ({contatosSelecionados.length})
+                  </Button>
+                )}
               </>
             )}
             {enviando && (
