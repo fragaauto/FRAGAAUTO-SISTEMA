@@ -14,6 +14,9 @@ export default function RelatorioProdutos({ atendimentos = [], labelPeriodo = ''
   const produtos = useMemo(() => {
     const map = {};
     atendimentos.forEach(a => {
+      // Só considerar atendimentos concluídos e pagos
+      if (a.status !== 'concluido' || !a.status_pagamento || a.status_pagamento === 'pendente') return;
+      
       const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
       todosItens.forEach(item => {
         if (item.status_aprovacao !== 'aprovado') return;

@@ -64,17 +64,29 @@ export default function Relatorios() {
     const rankingServicos = {};
 
     atendimentosFiltrados.forEach(a => {
+      // Só considerar atendimentos concluídos e pagos nos valores de aprovado
+      const atendimentoConcluido = a.status === 'concluido' && a.status_pagamento && a.status_pagamento !== 'pendente';
+      
       const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
       todosItens.forEach(item => {
-        detalhesServicos.push({ atendimento_placa: a.placa, cliente: a.cliente_nome, produto: item.nome, quantidade: item.quantidade, valor_unitario: item.valor_unitario, valor_total: item.valor_total, status: item.status_aprovacao, data: a.created_date });
-        if (item.status_aprovacao === 'aprovado') { servicosAprovados++; valorTotalAprovado += item.valor_total || 0; }
-        else if (item.status_aprovacao === 'reprovado') { servicosReprovados++; valorTotalReprovado += item.valor_total || 0; }
+        detalhesServicos.push({ atendimento_placa: a.placa, cliente: a.cliente_nome, produto: item.nome, quantidade: item.quantidade, valor_unitario: item.valor_unitario, valor_total: item.valor_total, status: item.status_aprovacao, data: a.created_date, atendimento_concluido: atendimentoConcluido });
+        
         if (item.nome) {
           if (!rankingServicos[item.nome]) rankingServicos[item.nome] = { nome: item.nome, qtd_total: 0, qtd_aprovado: 0, qtd_reprovado: 0, valor_total: 0 };
           rankingServicos[item.nome].qtd_total++;
-          rankingServicos[item.nome].valor_total += item.valor_total || 0;
-          if (item.status_aprovacao === 'aprovado') rankingServicos[item.nome].qtd_aprovado++;
-          else if (item.status_aprovacao === 'reprovado') rankingServicos[item.nome].qtd_reprovado++;
+          if (item.status_aprovacao === 'reprovado') {
+            rankingServicos[item.nome].qtd_reprovado++;
+          }
+          // Só contar como aprovado se o atendimento foi concluído e pago
+          if (item.status_aprovacao === 'aprovado' && atendimentoConcluido) {
+            servicosAprovados++;
+            valorTotalAprovado += item.valor_total || 0;
+            rankingServicos[item.nome].qtd_aprovado++;
+            rankingServicos[item.nome].valor_total += item.valor_total || 0;
+          } else if (item.status_aprovacao === 'reprovado') {
+            servicosReprovados++;
+            valorTotalReprovado += item.valor_total || 0;
+          }
         }
       });
     });
