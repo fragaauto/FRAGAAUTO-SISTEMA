@@ -1,12 +1,19 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Award, FileSpreadsheet, FileDown } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, Award, FileSpreadsheet, FileDown, Filter, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
+import { Badge } from "@/components/ui/badge";
 
 export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '' }) {
+  const [filtroTecnico, setFiltroTecnico] = useState('todos');
+  const [filtroProduto, setFiltroProduto] = useState('');
+  const [tecnicoExpandido, setTecnicoExpandido] = useState(null);
   const taxasMap = useMemo(() => {
     const map = {};
     (config.taxas_pagamento || []).forEach(t => { map[t.forma] = t.taxa_percentual || 0; });
@@ -19,8 +26,18 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
   const dadosTecnicos = useMemo(() => {
     const tecnicos = {};
+    const atendimentosFiltrados = atendimentos.filter(a => {
+      if (filtroProduto) {
+        const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
+        const temProduto = todosItens.some(item => 
+          item.nome?.toLowerCase().includes(filtroProduto.toLowerCase())
+        );
+        if (!temProduto) return false;
+      }
+      return true;
+    });
 
-    atendimentos.forEach(a => {
+    atendimentosFiltrados.forEach(a => {
       // Usar tecnicos_responsaveis (novo) ou fallback para campo tecnico (legado)
       const listaTecnicos = a.tecnicos_responsaveis?.length > 0
         ? a.tecnicos_responsaveis
@@ -45,7 +62,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         taxaPagamento = valorBrutoTotal > 0 ? (totalComTaxa / valorBrutoTotal) * 100 : 0;
       }
 
-      // Agrupar serviços por técnico
+      // Agrupar serviços por técnico COM DETALHAMENTO
       const servicosPorTecnico = {};
       todosItens.forEach(item => {
         const tecnicosItem = item.tecnicos?.length > 0 ? item.tecnicos : null;
@@ -55,16 +72,40 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           const valorPorTecnico = (item.valor_total || 0) / tecnicosItem.length;
           tecnicosItem.forEach(tec => {
             if (!servicosPorTecnico[tec.id]) {
-              servicosPorTecnico[tec.id] = { nome: tec.nome, valorBruto: 0 };
+              servicosPorTecnico[tec.id] = { nome: tec.nome, valorBruto: 0, servicos: [] };
             }
             servicosPorTecnico[tec.id].valorBruto += valorPorTecnico;
+            servicosPorTecnico[tec.id].servicos.push({
+              atendimentoId: a.id,
+              numeroOS: a.numero_os,
+              placa: a.placa,
+              cliente: a.cliente_nome,
+              servico: item.nome,
+              quantidade: item.quantidade || 1,
+              valorTotal: item.valor_total || 0,
+              valorTecnico: valorPorTecnico,
+              compartilhadoCom: tecnicosItem.length > 1 ? tecnicosItem.filter(t => t.id !== tec.id).map(t => t.nome).join(', ') : null,
+              data: a.data_entrada || a.created_date,
+            });
           });
         } else {
           // Sem técnico atribuído (geral)
           if (!servicosPorTecnico['geral']) {
-            servicosPorTecnico['geral'] = { nome: 'Geral', valorBruto: 0 };
+            servicosPorTecnico['geral'] = { nome: 'Geral', valorBruto: 0, servicos: [] };
           }
           servicosPorTecnico['geral'].valorBruto += item.valor_total || 0;
+          servicosPorTecnico['geral'].servicos.push({
+            atendimentoId: a.id,
+            numeroOS: a.numero_os,
+            placa: a.placa,
+            cliente: a.cliente_nome,
+            servico: item.nome,
+            quantidade: item.quantidade || 1,
+            valorTotal: item.valor_total || 0,
+            valorTecnico: item.valor_total || 0,
+            compartilhadoCom: null,
+            data: a.data_entrada || a.created_date,
+          });
         }
       });
 
@@ -84,9 +125,20 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           tecnicos[nome].valorBrutoTotal += valorBruto;
           tecnicos[nome].valorLiquidoTotal += valorLiquido;
           if (a.status === 'concluido') tecnicos[nome].atendimentosConcluidos++;
+          
+          // Adicionar registro de serviço genérico
+          tecnicos[nome].servicos.push({
+            atendimentoId: a.id,
+            numeroOS: a.numero_os,
+            placa: a.placa,
+            cliente: a.cliente_nome,
+            servico: 'Atendimento geral',
+            valorTecnico: valorPorTecnico,
+            data: a.data_entrada || a.created_date,
+          });
         });
       } else {
-        // Distribuir conforme atribuição dos serviços
+        // Distribuir conforme atribuição dos serviços COM DETALHAMENTO
         Object.entries(servicosPorTecnico).forEach(([tecnicoId, dados]) => {
           const nome = dados.nome;
           const valorBruto = dados.valorBruto;
@@ -100,12 +152,41 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           tecnicos[nome].valorBrutoTotal += valorBruto;
           tecnicos[nome].valorLiquidoTotal += valorLiquido;
           if (a.status === 'concluido') tecnicos[nome].atendimentosConcluidos++;
+          
+          // Adicionar serviços detalhados
+          tecnicos[nome].servicos.push(...dados.servicos);
         });
       }
     });
 
-    return Object.values(tecnicos).sort((a, b) => b.valorLiquidoTotal - a.valorLiquidoTotal);
-  }, [atendimentos, taxasMap, totalImpostos]);
+    const todosTecnicos = Object.values(tecnicos).sort((a, b) => b.valorLiquidoTotal - a.valorLiquidoTotal);
+    
+    // Aplicar filtro de técnico
+    if (filtroTecnico !== 'todos') {
+      return todosTecnicos.filter(t => t.nome === filtroTecnico);
+    }
+    
+    return todosTecnicos;
+  }, [atendimentos, taxasMap, totalImpostos, filtroTecnico, filtroProduto]);
+
+  // Lista de todos os técnicos para o filtro
+  const listaTecnicos = useMemo(() => {
+    const nomes = new Set();
+    atendimentos.forEach(a => {
+      const lista = a.tecnicos_responsaveis?.length > 0
+        ? a.tecnicos_responsaveis
+        : (a.tecnico ? a.tecnico.split(',').map(t => ({ nome: t.trim() })) : []);
+      lista.forEach(t => nomes.add(t.nome));
+      
+      const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
+      todosItens.forEach(item => {
+        if (item.tecnicos?.length > 0) {
+          item.tecnicos.forEach(tec => nomes.add(tec.nome));
+        }
+      });
+    });
+    return Array.from(nomes).sort();
+  }, [atendimentos]);
 
   if (dadosTecnicos.length === 0) {
     return (
@@ -156,6 +237,59 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
   return (
     <div className="space-y-6">
+      {/* Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Técnico</Label>
+              <Select value={filtroTecnico} onValueChange={setFiltroTecnico}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os técnicos</SelectItem>
+                  {listaTecnicos.map(nome => (
+                    <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Produto/Serviço</Label>
+              <Input
+                placeholder="Buscar por nome do serviço..."
+                value={filtroProduto}
+                onChange={e => setFiltroProduto(e.target.value)}
+                className="h-10"
+              />
+            </div>
+          </div>
+          {(filtroTecnico !== 'todos' || filtroProduto) && (
+            <div className="flex gap-2 flex-wrap">
+              {filtroTecnico !== 'todos' && (
+                <Badge variant="outline" className="gap-1">
+                  Técnico: {filtroTecnico}
+                  <button onClick={() => setFiltroTecnico('todos')} className="ml-1 hover:text-red-600">×</button>
+                </Badge>
+              )}
+              {filtroProduto && (
+                <Badge variant="outline" className="gap-1">
+                  Serviço: {filtroProduto}
+                  <button onClick={() => setFiltroProduto('')} className="ml-1 hover:text-red-600">×</button>
+                </Badge>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={exportarExcel}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel / CSV</Button>
         <Button variant="outline" size="sm" onClick={exportarPDF}><FileDown className="w-4 h-4 mr-2" />PDF</Button>
@@ -209,6 +343,61 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
                     <div className={`${color} h-2 rounded-full transition-all`} style={{ width: `${pct}%` }} />
                   </div>
                   <p className="text-xs text-slate-400 mt-1">{pct.toFixed(1)}% da produção total do período</p>
+                  
+                  {/* Botão Ver Detalhes */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTecnicoExpandido(tecnicoExpandido === tecnico.nome ? null : tecnico.nome)}
+                    className="w-full mt-3 h-8 text-xs"
+                  >
+                    {tecnicoExpandido === tecnico.nome ? (
+                      <><ChevronUp className="w-3 h-3 mr-1" />Ocultar detalhes</>
+                    ) : (
+                      <><Eye className="w-3 h-3 mr-1" />Ver detalhes dos serviços ({tecnico.servicos?.length || 0})</>
+                    )}
+                  </Button>
+
+                  {/* Detalhes expandidos */}
+                  {tecnicoExpandido === tecnico.nome && tecnico.servicos && tecnico.servicos.length > 0 && (
+                    <div className="mt-3 space-y-2 border-t pt-3">
+                      <p className="text-xs font-semibold text-slate-700 mb-2">Serviços realizados:</p>
+                      {tecnico.servicos.map((srv, idx) => (
+                        <div key={idx} className="bg-slate-50 rounded-lg p-3 text-xs space-y-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <p className="font-semibold text-slate-800">
+                                OS #{srv.numeroOS} - {srv.placa}
+                              </p>
+                              <p className="text-slate-600">{srv.cliente}</p>
+                              <p className="text-slate-500 mt-1">
+                                <span className="font-medium text-slate-700">{srv.servico}</span>
+                                {srv.quantidade > 1 && <span className="text-slate-400"> x{srv.quantidade}</span>}
+                              </p>
+                              {srv.compartilhadoCom && (
+                                <p className="text-blue-600 mt-1">
+                                  Compartilhado com: {srv.compartilhadoCom}
+                                </p>
+                              )}
+                              {srv.data && (
+                                <p className="text-slate-400 mt-1">
+                                  {format(new Date(srv.data), 'dd/MM/yyyy')}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-green-700">R$ {srv.valorTecnico.toFixed(2)}</p>
+                              {srv.valorTotal !== srv.valorTecnico && (
+                                <p className="text-xs text-slate-400">
+                                  Total: R$ {srv.valorTotal.toFixed(2)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
