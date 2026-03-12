@@ -36,11 +36,10 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
     });
   };
 
-  const handleAtribuirTecnico = (tecnico) => {
+  const handleAtribuirTecnico = (tecnicos) => {
     onUpdate({
       ...item,
-      tecnico_id: tecnico?.id || null,
-      tecnico_nome: tecnico?.nome || null,
+      tecnicos: tecnicos || [],
     });
   };
 
@@ -50,11 +49,15 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-slate-800 truncate">{item.nome}</p>
-            {item.tecnico_nome && (
-              <Badge variant="outline" className="mt-1 text-xs bg-blue-50 border-blue-200 text-blue-700">
-                <Wrench className="w-3 h-3 mr-1" />
-                {item.tecnico_nome}
-              </Badge>
+            {item.tecnicos && item.tecnicos.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {item.tecnicos.map((tec, idx) => (
+                  <Badge key={idx} variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-700">
+                    <Wrench className="w-3 h-3 mr-1" />
+                    {tec.nome}
+                  </Badge>
+                ))}
+              </div>
             )}
           </div>
           
@@ -66,7 +69,7 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2"
           >
             <Wrench className="w-4 h-4 mr-1" />
-            <span className="text-xs">{item.tecnico_nome ? 'Trocar' : 'Atribuir'}</span>
+            <span className="text-xs">{item.tecnicos?.length > 0 ? 'Editar' : 'Atribuir'}</span>
           </Button>
         </div>
         

@@ -78,6 +78,7 @@ export default function TabAtendimento({ formData, onChange, onSave, isSaving })
             { key: 'os_km_obrigatorio', label: 'KM Atual' },
             { key: 'os_queixa_obrigatorio', label: 'Queixa Inicial' },
             { key: 'os_tecnico_obrigatorio', label: 'Técnico Responsável' },
+            { key: 'os_atribuicao_servico_obrigatoria', label: 'Atribuir técnico a cada serviço' },
           ].map(({ key, label }) => (
             <div key={key} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
               <Label>{label}</Label>

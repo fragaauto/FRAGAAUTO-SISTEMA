@@ -48,12 +48,24 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       // Agrupar serviços por técnico
       const servicosPorTecnico = {};
       todosItens.forEach(item => {
-        const tecnicoId = item.tecnico_id || 'geral';
-        const tecnicoNome = item.tecnico_nome || 'Geral';
-        if (!servicosPorTecnico[tecnicoId]) {
-          servicosPorTecnico[tecnicoId] = { nome: tecnicoNome, valorBruto: 0 };
+        const tecnicosItem = item.tecnicos?.length > 0 ? item.tecnicos : null;
+        
+        if (tecnicosItem && tecnicosItem.length > 0) {
+          // Dividir valor entre técnicos atribuídos
+          const valorPorTecnico = (item.valor_total || 0) / tecnicosItem.length;
+          tecnicosItem.forEach(tec => {
+            if (!servicosPorTecnico[tec.id]) {
+              servicosPorTecnico[tec.id] = { nome: tec.nome, valorBruto: 0 };
+            }
+            servicosPorTecnico[tec.id].valorBruto += valorPorTecnico;
+          });
+        } else {
+          // Sem técnico atribuído (geral)
+          if (!servicosPorTecnico['geral']) {
+            servicosPorTecnico['geral'] = { nome: 'Geral', valorBruto: 0 };
+          }
+          servicosPorTecnico['geral'].valorBruto += item.valor_total || 0;
         }
-        servicosPorTecnico[tecnicoId].valorBruto += item.valor_total || 0;
       });
 
       // Se não há distribuição por item, dividir igualmente entre técnicos responsáveis

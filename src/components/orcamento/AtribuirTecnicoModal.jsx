@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wrench, Check } from 'lucide-react';
+import { Wrench, Check, Users } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 
 export default function AtribuirTecnicoModal({ item, onConfirm, onClose }) {
-  const [tecnicoSelecionado, setTecnicoSelecionado] = useState(
-    item.tecnico_id ? { id: item.tecnico_id, nome: item.tecnico_nome } : null
+  const [tecnicosSelecionados, setTecnicosSelecionados] = useState(
+    item.tecnicos?.length > 0 ? item.tecnicos : []
   );
 
   const { data: tecnicos = [] } = useQuery({
@@ -17,8 +17,17 @@ export default function AtribuirTecnicoModal({ item, onConfirm, onClose }) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const toggleTecnico = (tecnico) => {
+    const existe = tecnicosSelecionados.find(t => t.id === tecnico.id);
+    if (existe) {
+      setTecnicosSelecionados(tecnicosSelecionados.filter(t => t.id !== tecnico.id));
+    } else {
+      setTecnicosSelecionados([...tecnicosSelecionados, { id: tecnico.id, nome: tecnico.full_name || tecnico.email }]);
+    }
+  };
+
   const handleConfirm = () => {
-    onConfirm(tecnicoSelecionado);
+    onConfirm(tecnicosSelecionados);
     onClose();
   };
 
@@ -27,8 +36,8 @@ export default function AtribuirTecnicoModal({ item, onConfirm, onClose }) {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-blue-500" />
-            Atribuir Técnico ao Serviço
+            <Users className="w-5 h-5 text-blue-500" />
+            Atribuir Técnicos ao Serviço
           </DialogTitle>
         </DialogHeader>
 
@@ -45,15 +54,37 @@ export default function AtribuirTecnicoModal({ item, onConfirm, onClose }) {
               Nenhum funcionário cadastrado. Convide funcionários no menu Usuários.
             </p>
           ) : (
-            <div className="space-y-2">
-              <p className="text-xs text-slate-500 font-medium uppercase">Selecione o técnico:</p>
+            <div className="space-y-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-700">
+                  <strong>Divisão de valor:</strong> Ao selecionar múltiplos técnicos, o valor será dividido igualmente entre eles.
+                </p>
+              </div>
+              
+              {tecnicosSelecionados.length > 0 && (
+                <div className="bg-slate-50 rounded-lg p-3 border">
+                  <p className="text-xs font-medium text-slate-600 mb-2">Técnicos selecionados ({tecnicosSelecionados.length}):</p>
+                  <div className="flex flex-wrap gap-1">
+                    {tecnicosSelecionados.map(t => (
+                      <Badge key={t.id} className="bg-blue-100 text-blue-700 border-blue-300">
+                        {t.nome}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Valor por técnico: R$ {tecnicosSelecionados.length > 0 ? ((item.valor_total || 0) / tecnicosSelecionados.length).toFixed(2) : '0.00'}
+                  </p>
+                </div>
+              )}
+
+              <p className="text-xs text-slate-500 font-medium uppercase">Selecione os técnicos:</p>
               <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
                 {tecnicos.map(t => {
-                  const isSelected = tecnicoSelecionado?.id === t.id;
+                  const isSelected = tecnicosSelecionados.find(sel => sel.id === t.id);
                   return (
                     <button
                       key={t.id}
-                      onClick={() => setTecnicoSelecionado({ id: t.id, nome: t.full_name || t.email })}
+                      onClick={() => toggleTecnico(t)}
                       className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${
                         isSelected
                           ? 'bg-blue-50 border-blue-300 text-blue-800'
@@ -69,12 +100,12 @@ export default function AtribuirTecnicoModal({ item, onConfirm, onClose }) {
                   );
                 })}
               </div>
-              {tecnicoSelecionado && (
+              {tecnicosSelecionados.length > 0 && (
                 <button
-                  onClick={() => setTecnicoSelecionado(null)}
+                  onClick={() => setTecnicosSelecionados([])}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-sm hover:bg-slate-100 transition-all"
                 >
-                  Remover atribuição (serviço geral)
+                  Limpar seleção
                 </button>
               )}
             </div>
