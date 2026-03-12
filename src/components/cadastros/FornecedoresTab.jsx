@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Truck, Phone, Mail, Edit, Trash2, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { motion } from 'framer-motion';
+import Paginacao from '@/components/ui/Paginacao';
 
 const CATEGORIAS = [
   { value: 'pecas', label: 'Peças' },
@@ -37,6 +38,8 @@ export default function FornecedoresTab() {
   const [editing, setEditing] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [form, setForm] = useState({ nome: '', razao_social: '', cnpj: '', telefone: '', email: '', contato: '', endereco: '', categoria: 'pecas', observacoes: '' });
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 20;
 
   const { data: fornecedores = [], isLoading } = useQuery({
     queryKey: ['fornecedores'],
@@ -60,6 +63,9 @@ export default function FornecedoresTab() {
   const filtered = fornecedores.filter(f =>
     !search || f.nome?.toLowerCase().includes(search.toLowerCase()) || f.cnpj?.includes(search) || f.telefone?.includes(search)
   );
+
+  const totalPaginas = Math.ceil(filtered.length / itensPorPagina);
+  const fornecedoresPaginados = filtered.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
 
   const openModal = (f = null) => {
     if (f) { setEditing(f); setForm({ nome: f.nome, razao_social: f.razao_social || '', cnpj: f.cnpj || '', telefone: f.telefone || '', email: f.email || '', contato: f.contato || '', endereco: f.endereco || '', categoria: f.categoria || 'pecas', observacoes: f.observacoes || '' }); }
@@ -95,7 +101,7 @@ export default function FornecedoresTab() {
         <Card className="py-10"><CardContent className="text-center"><Truck className="w-10 h-10 mx-auto mb-3 text-slate-300" /><p className="text-slate-500 mb-3">Nenhum fornecedor cadastrado</p><Button onClick={() => openModal()} className="bg-orange-500 hover:bg-orange-600"><Plus className="w-4 h-4 mr-1" />Cadastrar Fornecedor</Button></CardContent></Card>
       ) : (
         <div className="space-y-2">
-          {filtered.map((f, i) => (
+          {fornecedoresPaginados.map((f, i) => (
             <motion.div key={f.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
               <Card className="hover:shadow-md transition-all">
                 <CardContent className="p-4">
@@ -123,6 +129,16 @@ export default function FornecedoresTab() {
               </Card>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {totalPaginas > 1 && (
+        <div className="mt-6">
+          <Paginacao
+            paginaAtual={paginaAtual}
+            totalPaginas={totalPaginas}
+            onPaginaChange={setPaginaAtual}
+          />
         </div>
       )}
 

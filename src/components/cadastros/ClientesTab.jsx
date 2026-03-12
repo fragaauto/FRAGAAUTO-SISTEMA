@@ -13,6 +13,7 @@ import { Plus, Search, User, Building2, Phone, Mail, Edit, Trash2, Loader2, File
 import { toast } from "sonner";
 import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
 import { motion } from 'framer-motion';
+import Paginacao from '@/components/ui/Paginacao';
 
 export default function ClientesTab() {
   const queryClient = useQueryClient();
@@ -23,6 +24,8 @@ export default function ClientesTab() {
   const [editingCliente, setEditingCliente] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [showImportar, setShowImportar] = useState(false);
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 20;
 
   const [formData, setFormData] = useState({ nome: '', tipo_pessoa: 'fisica', telefone: '', email: '', cpf_cnpj: '', data_nascimento: '', endereco: '' });
 
@@ -56,6 +59,9 @@ export default function ClientesTab() {
     const matchBloqueado = filtroBloqueado === 'todos' || (filtroBloqueado === 'bloqueado' ? c.bloqueado : !c.bloqueado);
     return matchSearch && matchTipo && matchBloqueado;
   });
+
+  const totalPaginas = Math.ceil(filteredClientes.length / itensPorPagina);
+  const clientesPaginados = filteredClientes.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
 
   const openModal = (cliente = null) => {
     if (cliente) { setEditingCliente(cliente); setFormData({ nome: cliente.nome, tipo_pessoa: cliente.tipo_pessoa || 'fisica', telefone: cliente.telefone, email: cliente.email || '', cpf_cnpj: cliente.cpf_cnpj || '', data_nascimento: cliente.data_nascimento || '', endereco: cliente.endereco || '' }); }
@@ -116,7 +122,7 @@ export default function ClientesTab() {
         <Card className="py-10"><CardContent className="text-center"><User className="w-10 h-10 mx-auto mb-3 text-slate-300" /><p className="text-slate-500">Nenhum cliente encontrado</p></CardContent></Card>
       ) : (
         <div className="space-y-2">
-          {filteredClientes.map((cliente, index) => (
+          {clientesPaginados.map((cliente, index) => (
             <motion.div key={cliente.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.02 }}>
               <Card className="hover:shadow-md transition-all">
                 <CardContent className="p-4">
@@ -149,6 +155,16 @@ export default function ClientesTab() {
               </Card>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {totalPaginas > 1 && (
+        <div className="mt-6">
+          <Paginacao
+            paginaAtual={paginaAtual}
+            totalPaginas={totalPaginas}
+            onPaginaChange={setPaginaAtual}
+          />
         </div>
       )}
 

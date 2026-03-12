@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner";
 import { TODOS_MODULOS } from '@/components/modulos';
 import { motion } from 'framer-motion';
+import Paginacao from '@/components/ui/Paginacao';
 
 export default function FuncionariosTab() {
   const queryClient = useQueryClient();
@@ -29,6 +30,9 @@ export default function FuncionariosTab() {
   const [convidando, setConvidando] = useState(false);
   const [editUserModal, setEditUserModal] = useState(null);
   const [editUserFuncaoId, setEditUserFuncaoId] = useState('');
+  const [paginaAtualUsuarios, setPaginaAtualUsuarios] = useState(1);
+  const [paginaAtualFuncoes, setPaginaAtualFuncoes] = useState(1);
+  const itensPorPagina = 20;
 
   const [funcaoForm, setFuncaoForm] = useState({
     nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false,
@@ -122,6 +126,12 @@ export default function FuncionariosTab() {
 
   const filteredUsuarios = usuarios.filter(u => !search || u.full_name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()));
 
+  const totalPaginasUsuarios = Math.ceil(filteredUsuarios.length / itensPorPagina);
+  const usuariosPaginados = filteredUsuarios.slice((paginaAtualUsuarios - 1) * itensPorPagina, paginaAtualUsuarios * itensPorPagina);
+
+  const totalPaginasFuncoes = Math.ceil(funcoes.length / itensPorPagina);
+  const funcoesPaginadas = funcoes.slice((paginaAtualFuncoes - 1) * itensPorPagina, paginaAtualFuncoes * itensPorPagina);
+
   return (
     <>
       <div className="flex border-b mb-4">
@@ -149,7 +159,7 @@ export default function FuncionariosTab() {
             <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-orange-400" /></div>
           ) : (
             <div className="space-y-2">
-              {filteredUsuarios.map(u => {
+              {usuariosPaginados.map(u => {
                 const funcao = funcoes.find(f => f.id === u.funcao_id);
                 return (
                   <Card key={u.id} className="hover:shadow-sm transition-all">
@@ -176,6 +186,15 @@ export default function FuncionariosTab() {
               })}
             </div>
           )}
+          {totalPaginasUsuarios > 1 && (
+            <div className="mt-6">
+              <Paginacao
+                paginaAtual={paginaAtualUsuarios}
+                totalPaginas={totalPaginasUsuarios}
+                onPaginaChange={setPaginaAtualUsuarios}
+              />
+            </div>
+          )}
         </>
       )}
 
@@ -193,7 +212,7 @@ export default function FuncionariosTab() {
             <Card className="py-10"><CardContent className="text-center"><Settings className="w-10 h-10 mx-auto mb-3 text-slate-300" /><p className="text-slate-500 mb-3">Nenhuma função criada ainda</p><Button onClick={() => openFuncaoModal()} className="bg-orange-500 hover:bg-orange-600"><Plus className="w-4 h-4 mr-1" />Criar Função</Button></CardContent></Card>
           ) : (
             <div className="space-y-2">
-              {funcoes.map((f, i) => (
+              {funcoesPaginadas.map((f, i) => (
                 <motion.div key={f.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
                   <Card className="hover:shadow-sm transition-all">
                     <CardContent className="p-4">
@@ -219,6 +238,15 @@ export default function FuncionariosTab() {
                   </Card>
                 </motion.div>
               ))}
+            </div>
+          )}
+          {totalPaginasFuncoes > 1 && (
+            <div className="mt-6">
+              <Paginacao
+                paginaAtual={paginaAtualFuncoes}
+                totalPaginas={totalPaginasFuncoes}
+                onPaginaChange={setPaginaAtualFuncoes}
+              />
             </div>
           )}
         </>
