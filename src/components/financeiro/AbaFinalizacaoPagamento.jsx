@@ -243,6 +243,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         data_pagamento: new Date().toISOString(),
         usuario_pagamento: user?.email,
         tecnicos_responsaveis: tecnicosSelecionados,
+        tecnico: tecnicosSelecionados.map(t => t.nome).join(', '),
         status: 'concluido',
       });
     },

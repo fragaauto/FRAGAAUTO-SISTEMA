@@ -21,38 +21,75 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     const tecnicos = {};
 
     atendimentos.forEach(a => {
-      if (!a.tecnico) return;
-      
-      // Suporte a múltiplos técnicos (separados por vírgula)
-      const listaTecnicos = a.tecnico.split(',').map(t => t.trim()).filter(Boolean);
-      const numTecnicos = listaTecnicos.length || 1;
+      // Usar tecnicos_responsaveis (novo) ou fallback para campo tecnico (legado)
+      const listaTecnicos = a.tecnicos_responsaveis?.length > 0
+        ? a.tecnicos_responsaveis
+        : (a.tecnico ? a.tecnico.split(',').map(t => ({ nome: t.trim() })).filter(t => t.nome) : []);
 
-      const valorBruto = a.valor_final || a.subtotal || 0;
+      if (listaTecnicos.length === 0) return;
 
-      // Calcula taxa de pagamento (média ou pela forma principal)
+      // Buscar itens aprovados com técnico atribuído
+      const itensQueixa = (a.itens_queixa || []).filter(i => i.status_aprovacao === 'aprovado');
+      const itensOrcamento = (a.itens_orcamento || []).filter(i => i.status_aprovacao === 'aprovado');
+      const todosItens = [...itensQueixa, ...itensOrcamento];
+
+      // Calcular taxas de pagamento
       let taxaPagamento = 0;
-      if (a.formas_pagamento?.length > 0) {
+      const valorBrutoTotal = todosItens.reduce((s, i) => s + (i.valor_total || 0), 0) || a.valor_final || a.subtotal || 0;
+      if (a.formas_pagamento_lancamento?.length > 0) {
         let totalComTaxa = 0;
-        a.formas_pagamento.forEach(fp => {
+        a.formas_pagamento_lancamento.forEach(fp => {
           const taxa = taxasMap[fp.forma] || 0;
           totalComTaxa += (fp.valor || 0) * (taxa / 100);
         });
-        taxaPagamento = valorBruto > 0 ? (totalComTaxa / valorBruto) * 100 : 0;
+        taxaPagamento = valorBrutoTotal > 0 ? (totalComTaxa / valorBrutoTotal) * 100 : 0;
       }
 
-      const valorAposImpostos = valorBruto * (1 - totalImpostos / 100);
-      const valorLiquido = valorAposImpostos * (1 - taxaPagamento / 100);
-      const valorPorTecnico = valorLiquido / numTecnicos;
-
-      listaTecnicos.forEach(nomeTecnico => {
-        if (!tecnicos[nomeTecnico]) {
-          tecnicos[nomeTecnico] = { nome: nomeTecnico, qtdAtendimentos: 0, valorBrutoTotal: 0, valorLiquidoTotal: 0, atendimentosConcluidos: 0 };
+      // Agrupar serviços por técnico
+      const servicosPorTecnico = {};
+      todosItens.forEach(item => {
+        const tecnicoId = item.tecnico_id || 'geral';
+        const tecnicoNome = item.tecnico_nome || 'Geral';
+        if (!servicosPorTecnico[tecnicoId]) {
+          servicosPorTecnico[tecnicoId] = { nome: tecnicoNome, valorBruto: 0 };
         }
-        tecnicos[nomeTecnico].qtdAtendimentos++;
-        tecnicos[nomeTecnico].valorBrutoTotal += valorBruto / numTecnicos;
-        tecnicos[nomeTecnico].valorLiquidoTotal += valorPorTecnico;
-        if (a.status === 'concluido') tecnicos[nomeTecnico].atendimentosConcluidos++;
+        servicosPorTecnico[tecnicoId].valorBruto += item.valor_total || 0;
       });
+
+      // Se não há distribuição por item, dividir igualmente entre técnicos responsáveis
+      if (Object.keys(servicosPorTecnico).length === 0 || servicosPorTecnico['geral']) {
+        const valorPorTecnico = valorBrutoTotal / listaTecnicos.length;
+        listaTecnicos.forEach(t => {
+          const nome = t.nome;
+          const valorBruto = valorPorTecnico;
+          const valorAposImpostos = valorBruto * (1 - totalImpostos / 100);
+          const valorLiquido = valorAposImpostos * (1 - taxaPagamento / 100);
+
+          if (!tecnicos[nome]) {
+            tecnicos[nome] = { nome, qtdAtendimentos: 0, valorBrutoTotal: 0, valorLiquidoTotal: 0, atendimentosConcluidos: 0, servicos: [] };
+          }
+          tecnicos[nome].qtdAtendimentos++;
+          tecnicos[nome].valorBrutoTotal += valorBruto;
+          tecnicos[nome].valorLiquidoTotal += valorLiquido;
+          if (a.status === 'concluido') tecnicos[nome].atendimentosConcluidos++;
+        });
+      } else {
+        // Distribuir conforme atribuição dos serviços
+        Object.entries(servicosPorTecnico).forEach(([tecnicoId, dados]) => {
+          const nome = dados.nome;
+          const valorBruto = dados.valorBruto;
+          const valorAposImpostos = valorBruto * (1 - totalImpostos / 100);
+          const valorLiquido = valorAposImpostos * (1 - taxaPagamento / 100);
+
+          if (!tecnicos[nome]) {
+            tecnicos[nome] = { nome, qtdAtendimentos: 0, valorBrutoTotal: 0, valorLiquidoTotal: 0, atendimentosConcluidos: 0, servicos: [] };
+          }
+          tecnicos[nome].qtdAtendimentos++;
+          tecnicos[nome].valorBrutoTotal += valorBruto;
+          tecnicos[nome].valorLiquidoTotal += valorLiquido;
+          if (a.status === 'concluido') tecnicos[nome].atendimentosConcluidos++;
+        });
+      }
     });
 
     return Object.values(tecnicos).sort((a, b) => b.valorLiquidoTotal - a.valorLiquidoTotal);
