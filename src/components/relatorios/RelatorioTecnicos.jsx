@@ -381,7 +381,13 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
                               )}
                               {srv.data && (
                                 <p className="text-slate-400 mt-1">
-                                  {format(new Date(srv.data), 'dd/MM/yyyy')}
+                                  {(() => {
+                                    try {
+                                      return format(new Date(srv.data), 'dd/MM/yyyy');
+                                    } catch {
+                                      return '';
+                                    }
+                                  })()}
                                 </p>
                               )}
                             </div>
