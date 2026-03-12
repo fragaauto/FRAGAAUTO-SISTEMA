@@ -138,7 +138,41 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
 
   const addTecnico = (tecnico) => {
     if (!tecnicosSelecionados.find(t => t.id === tecnico.id)) {
-      setTecnicosSelecionados([...tecnicosSelecionados, { id: tecnico.id, nome: tecnico.full_name || tecnico.email }]);
+      const novoTecnico = { id: tecnico.id, nome: tecnico.full_name || tecnico.email };
+      const novosTecnicos = [...tecnicosSelecionados, novoTecnico];
+      setTecnicosSelecionados(novosTecnicos);
+      
+      // Atribuir automaticamente a todos os itens aprovados
+      const itensAtualizados = [...itensAprovadosQueixa, ...itensAprovadosOrcamento].map(item => {
+        const tecnicosAtuais = item.tecnicos || [];
+        if (!tecnicosAtuais.find(t => t.id === novoTecnico.id)) {
+          return {
+            ...item,
+            tecnicos: [...tecnicosAtuais, novoTecnico]
+          };
+        }
+        return item;
+      });
+      
+      // Atualizar o atendimento com os técnicos atribuídos aos itens
+      if (itensAtualizados.length > 0) {
+        const queixaAtualizada = (atendimento.itens_queixa || []).map(item => {
+          const itemAtualizado = itensAtualizados.find(i => i.produto_id === item.produto_id && i.nome === item.nome);
+          return itemAtualizado || item;
+        });
+        const orcamentoAtualizado = (atendimento.itens_orcamento || []).map(item => {
+          const itemAtualizado = itensAtualizados.find(i => i.produto_id === item.produto_id && i.nome === item.nome);
+          return itemAtualizado || item;
+        });
+        
+        base44.entities.Atendimento.update(atendimento.id, {
+          itens_queixa: queixaAtualizada,
+          itens_orcamento: orcamentoAtualizado
+        }).then(() => {
+          queryClient.invalidateQueries(['atendimento']);
+          toast.success(`Técnico ${novoTecnico.nome} atribuído a ${itensAtualizados.length} serviço(s)`);
+        });
+      }
     }
   };
 

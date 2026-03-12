@@ -1379,7 +1379,7 @@ export default function VerAtendimento() {
                 <Card className="border-orange-200">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-orange-700">Itens do Checklist</CardTitle>
-                    {isAdmin && !modoEdicaoOrcamento && (
+                    {isAdmin && !modoEdicaoOrcamento && !checklistAssinado && !pagamentoLancado && (
                       <Button
                         variant="outline"
                         size="sm"
