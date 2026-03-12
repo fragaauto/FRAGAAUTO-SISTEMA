@@ -148,11 +148,17 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
 
   const lancarCaixaMutation = useMutation({
     mutationFn: async () => {
-      if (tecnicosSelecionados.length === 0) throw new Error('Obrigatório informar ao menos um técnico responsável');
+      // Validar técnicos responsáveis apenas se configuração obrigar
+      const osAtribuicaoObrigatoria = config.os_atribuicao_servico_obrigatoria;
+      const osTecnicoObrigatorio = config.os_tecnico_obrigatorio;
+      
+      if (osTecnicoObrigatorio && tecnicosSelecionados.length === 0) {
+        throw new Error('Obrigatório informar ao menos um técnico responsável');
+      }
       if (Math.abs(diferenca) > 0.01) throw new Error(`Diferença de R$ ${Math.abs(diferenca).toFixed(2)} entre pagamentos e total`);
       
       // Validar atribuição de técnicos aos serviços se obrigatório
-      if (config.os_atribuicao_servico_obrigatoria) {
+      if (osAtribuicaoObrigatoria) {
         const servicosSemTecnico = [];
         [...itensAprovadosQueixa, ...itensAprovadosOrcamento].forEach(item => {
           if (!item.tecnicos || item.tecnicos.length === 0) {
@@ -399,12 +405,14 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       </Button>
 
       {/* Técnicos Responsáveis */}
-      <Card className={tecnicosSelecionados.length === 0 && !jaLancado ? 'border-red-300 bg-red-50' : ''}>
+      <Card className={config.os_tecnico_obrigatorio && tecnicosSelecionados.length === 0 && !jaLancado ? 'border-red-300 bg-red-50' : ''}>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
             <Wrench className="w-4 h-4 text-blue-500" />
             Técnicos Responsáveis
-            <Badge variant="outline" className="text-xs text-red-600 border-red-300">Obrigatório</Badge>
+            {config.os_tecnico_obrigatorio && (
+              <Badge variant="outline" className="text-xs text-red-600 border-red-300">Obrigatório</Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -442,7 +450,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
                   ))}
                 </div>
               )}
-              {tecnicosSelecionados.length === 0 && (
+              {config.os_tecnico_obrigatorio && tecnicosSelecionados.length === 0 && (
                 <p className="text-xs text-red-500 font-medium">⚠ Selecione ao menos um técnico para lançar no caixa</p>
               )}
             </>
@@ -722,7 +730,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
             disabled={
               lancarCaixaMutation.isPending || 
               Math.abs(diferenca) > 0.01 || 
-              tecnicosSelecionados.length === 0 ||
+              (config.os_tecnico_obrigatorio && tecnicosSelecionados.length === 0) ||
               (config.os_atribuicao_servico_obrigatoria && todosItensAprovados.some(item => !item.tecnicos || item.tecnicos.length === 0))
             }
             className="w-full h-14 text-base font-bold bg-green-600 hover:bg-green-700 disabled:opacity-50"
