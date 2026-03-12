@@ -106,30 +106,34 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Enviar via Evolution API se configurado
-      if (evolutionOk && config.lembrete_checklist_whatsapp) {
+      // Enviar para cada destinatário configurado
+      const destinatarios = lembrete.destinatarios && lembrete.destinatarios.length > 0 
+        ? lembrete.destinatarios 
+        : (config.lembrete_checklist_whatsapp ? [config.lembrete_checklist_whatsapp] : []);
+
+      if (destinatarios.length === 0) {
+        erros.push(`Lembrete "${lembrete.nome}": Nenhum destinatário configurado`);
+        continue;
+      }
+
+      if (!evolutionOk) {
+        erros.push(`Lembrete "${lembrete.nome}": Evolution API não configurada`);
+        continue;
+      }
+
+      for (const telefone of destinatarios) {
         try {
           await enviarViaEvolution(
             evolutionBase,
             config.evolution_api_key,
             config.evolution_instance,
-            config.lembrete_checklist_whatsapp,
+            telefone,
             mensagem
           );
           enviados++;
         } catch (e) {
-          erros.push(`Lembrete "${lembrete.nome}": ${e.message}`);
+          erros.push(`Lembrete "${lembrete.nome}" para ${telefone}: ${e.message}`);
         }
-      } else if (!evolutionOk) {
-        // Fallback: enviar via agente WhatsApp interno
-        const conversas = await base44.asServiceRole.agents.listConversations('atendimento_whatsapp');
-        for (const c of conversas) {
-          const diasDesde = (Date.now() - new Date(c.updated_date || c.created_date)) / (1000 * 60 * 60 * 24);
-          if (diasDesde > 30) continue;
-          const conversa = await base44.asServiceRole.agents.getConversation(c.id);
-          await base44.asServiceRole.agents.addMessage(conversa, { role: 'assistant', content: mensagem });
-        }
-        enviados++;
       }
 
       await base44.asServiceRole.entities.LembreteWhatsApp.update(lembrete.id, {

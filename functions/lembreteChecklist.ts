@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 Deno.serve(async (req) => {
   try {
@@ -41,10 +41,40 @@ Deno.serve(async (req) => {
 
     const mensagem = `🔔 *Lembrete de Checklist Pendente*\n\nOs seguintes atendimentos ainda não têm checklist preenchido:\n\n${lista}\n\nNão esqueça de registrar o checklist para cada veículo!`;
 
-    // Enviar via WhatsApp (link gerado para clique manual ou integração futura)
-    // Aqui registramos o lembrete como log e retornamos os dados para uso externo
-    console.log('Lembretes de checklist enviados para:', whatsappDest);
-    console.log('Atendimentos pendentes:', semChecklist.length);
+    // Enviar via Evolution API se configurado
+    const evolutionOk = config?.evolution_api_url && config?.evolution_api_key && config?.evolution_instance;
+    
+    if (evolutionOk) {
+      try {
+        let numero = whatsappDest.replace(/\D/g, '');
+        if (numero.length === 10 || numero.length === 11) {
+          numero = `55${numero}`;
+        }
+
+        const evolutionBase = config.evolution_api_url.replace(/\/$/, '');
+        const resp = await fetch(`${evolutionBase}/message/sendText/${config.evolution_instance}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': config.evolution_api_key,
+          },
+          body: JSON.stringify({ number: numero, text: mensagem }),
+        });
+
+        if (!resp.ok) {
+          const body = await resp.text();
+          throw new Error(`Evolution API erro ${resp.status}: ${body}`);
+        }
+
+        console.log('Lembrete enviado via Evolution API para:', whatsappDest);
+      } catch (e) {
+        console.error('Erro ao enviar via Evolution API:', e);
+        return Response.json({ error: e.message }, { status: 500 });
+      }
+    } else {
+      console.log('Evolution API não configurada. Configure em Configurações > Integrações.');
+      return Response.json({ error: 'Evolution API não configurada' }, { status: 400 });
+    }
 
     return Response.json({
       success: true,
