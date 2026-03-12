@@ -9,11 +9,13 @@ import { format } from 'date-fns';
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '' }) {
   const [filtroTecnico, setFiltroTecnico] = useState('todos');
   const [filtroProduto, setFiltroProduto] = useState('');
   const [tecnicoExpandido, setTecnicoExpandido] = useState(null);
+  const [incluirDetalhes, setIncluirDetalhes] = useState(false);
   const taxasMap = useMemo(() => {
     const map = {};
     (config.taxas_pagamento || []).forEach(t => { map[t.forma] = t.taxa_percentual || 0; });
@@ -206,6 +208,26 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     const linhas = ['Técnico;Atendimentos;Concluídos;Valor Bruto;Valor Líquido'];
     dadosTecnicos.forEach(t => {
       linhas.push([t.nome, t.qtdAtendimentos, t.atendimentosConcluidos, t.valorBrutoTotal.toFixed(2), t.valorLiquidoTotal.toFixed(2)].join(';'));
+      
+      if (incluirDetalhes && t.servicos && t.servicos.length > 0) {
+        linhas.push(';;OS;Placa;Cliente;Serviço;Qtd;Valor Técnico;Compartilhado;Data');
+        t.servicos.forEach(srv => {
+          const dataFormatada = srv.data ? (() => { try { return format(new Date(srv.data), 'dd/MM/yyyy'); } catch { return ''; } })() : '';
+          linhas.push([
+            '',
+            '',
+            srv.numeroOS || '',
+            srv.placa || '',
+            srv.cliente || '',
+            srv.servico || '',
+            srv.quantidade || '',
+            (srv.valorTecnico || 0).toFixed(2),
+            srv.compartilhadoCom || '',
+            dataFormatada
+          ].join(';'));
+        });
+        linhas.push('');
+      }
     });
     const blob = new Blob(['\ufeff' + linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `producao_tecnicos_${format(new Date(), 'yyyy-MM-dd')}.csv`; link.click();
@@ -218,19 +240,44 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     doc.setFontSize(9); doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
     let y = 32;
     if (totalImpostos > 0) { doc.text(`Impostos descontados: ${totalImpostos}%`, 14, y); y += 7; }
+    
     const headers = ['Técnico', 'Atendimentos', 'Concluídos', 'Valor Bruto', 'Valor Líquido'];
     const colW = [70, 28, 26, 32, 32];
     doc.setFillColor(249, 115, 22); doc.rect(14, y, 181, 7, 'F');
     doc.setTextColor(255,255,255); doc.setFontSize(8);
     let x = 14; headers.forEach((h, i) => { doc.text(h, x + 1, y + 5); x += colW[i]; });
     doc.setTextColor(0,0,0); y += 9;
+    
     dadosTecnicos.forEach((t, idx) => {
-      if (y > 275) { doc.addPage(); y = 14; }
+      if (y > 270) { doc.addPage(); y = 14; }
       if (idx % 2 === 0) { doc.setFillColor(248,250,252); doc.rect(14, y - 1, 181, 7, 'F'); }
       const row = [t.nome.substring(0,36), String(t.qtdAtendimentos), String(t.atendimentosConcluidos), `R$ ${t.valorBrutoTotal.toFixed(2)}`, `R$ ${t.valorLiquidoTotal.toFixed(2)}`];
       x = 14; row.forEach((v, i) => { doc.text(String(v), x + 1, y + 4); x += colW[i]; });
       y += 7;
+      
+      // Adicionar detalhes se solicitado
+      if (incluirDetalhes && t.servicos && t.servicos.length > 0) {
+        y += 3;
+        doc.setFontSize(7);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Detalhes dos serviços de ${t.nome}:`, 16, y);
+        y += 5;
+        
+        t.servicos.forEach((srv, srvIdx) => {
+          if (y > 275) { doc.addPage(); y = 14; }
+          const dataFormatada = srv.data ? (() => { try { return format(new Date(srv.data), 'dd/MM/yy'); } catch { return ''; } })() : '';
+          const compartilhado = srv.compartilhadoCom ? ` (c/ ${srv.compartilhadoCom.substring(0, 15)})` : '';
+          const linha = `  OS#${srv.numeroOS || ''} ${srv.placa || ''} - ${(srv.servico || '').substring(0, 30)} ${srv.quantidade > 1 ? 'x'+srv.quantidade : ''} R$ ${(srv.valorTecnico || 0).toFixed(2)}${compartilhado}`;
+          doc.text(linha, 16, y);
+          y += 4;
+        });
+        
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(8);
+        y += 3;
+      }
     });
+    
     doc.save(`producao_tecnicos_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
     toast.success('PDF gerado com sucesso!');
   };
@@ -290,9 +337,25 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={exportarExcel}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel / CSV</Button>
-        <Button variant="outline" size="sm" onClick={exportarPDF}><FileDown className="w-4 h-4 mr-2" />PDF</Button>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="incluir-detalhes"
+            checked={incluirDetalhes}
+            onCheckedChange={setIncluirDetalhes}
+          />
+          <Label htmlFor="incluir-detalhes" className="text-sm cursor-pointer">
+            Incluir detalhes dos serviços nos relatórios (Excel/PDF)
+          </Label>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={exportarExcel}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" />Excel / CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportarPDF}>
+            <FileDown className="w-4 h-4 mr-2" />PDF
+          </Button>
+        </div>
       </div>
       {totalImpostos > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
