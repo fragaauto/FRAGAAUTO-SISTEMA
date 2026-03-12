@@ -150,6 +150,22 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     mutationFn: async () => {
       if (tecnicosSelecionados.length === 0) throw new Error('Obrigatório informar ao menos um técnico responsável');
       if (Math.abs(diferenca) > 0.01) throw new Error(`Diferença de R$ ${Math.abs(diferenca).toFixed(2)} entre pagamentos e total`);
+      
+      // Validar atribuição de técnicos aos serviços se obrigatório
+      if (config.os_atribuicao_servico_obrigatoria) {
+        const servicosSemTecnico = [];
+        [...itensAprovadosQueixa, ...itensAprovadosOrcamento].forEach(item => {
+          if (!item.tecnicos || item.tecnicos.length === 0) {
+            servicosSemTecnico.push(item.nome);
+          }
+        });
+        
+        if (servicosSemTecnico.length > 0) {
+          throw new Error(
+            `Atribuição de técnicos obrigatória!\n\nServiços sem técnico atribuído:\n${servicosSemTecnico.map(s => `• ${s}`).join('\n')}\n\nAtribua técnicos a cada serviço antes de finalizar.`
+          );
+        }
+      }
 
       const isFaturado = pagamentos.some(p => p.forma === 'faturado');
       const statusPag = isFaturado ? 'faturado' : 'pago';
@@ -253,7 +269,14 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       onUpdate?.();
       navigate(createPageUrl('Atendimentos'));
     },
-    onError: (e) => toast.error(e.message || 'Erro ao lançar no caixa'),
+    onError: (e) => {
+      const msg = e.message || 'Erro ao lançar no caixa';
+      if (msg.includes('Atribuição de técnicos obrigatória')) {
+        toast.error(msg, { duration: 8000 });
+      } else {
+        toast.error(msg);
+      }
+    },
   });
 
   const estornarMutation = useMutation({
@@ -541,6 +564,38 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         </CardContent>
       </Card>
 
+      {/* Aviso de atribuição de técnicos obrigatória */}
+      {config.os_atribuicao_servico_obrigatoria && !jaLancado && (
+        <>
+          {(() => {
+            const servicosSemTecnico = todosItensAprovados.filter(item => !item.tecnicos || item.tecnicos.length === 0);
+            if (servicosSemTecnico.length > 0) {
+              return (
+                <Card className="border-red-300 bg-red-50">
+                  <CardContent className="pt-4 pb-3">
+                    <p className="text-sm text-red-800 font-bold flex items-center gap-2 mb-2">
+                      <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                      Atribuição de técnicos obrigatória!
+                    </p>
+                    <p className="text-xs text-red-700 mb-2">Os seguintes serviços precisam ter técnicos atribuídos:</p>
+                    <div className="space-y-1">
+                      {servicosSemTecnico.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs text-red-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                          <span className="font-medium">{item.nome}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-red-600 mt-2 italic">Atribua técnicos aos serviços na aba "Orçamento" antes de finalizar.</p>
+                  </CardContent>
+                </Card>
+              );
+            }
+            return null;
+          })()}
+        </>
+      )}
+
       {/* Aviso de itens autorizados */}
       {temDecisoes && (
         <Card className="border-blue-200 bg-blue-50">
@@ -552,7 +607,14 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
             <div className="mt-2 space-y-1">
               {todosItensAprovados.map((item, idx) => (
                 <div key={idx} className="flex justify-between text-xs text-blue-700">
-                  <span>{item.nome} {item.quantidade > 1 ? `x${item.quantidade}` : ''}</span>
+                  <span>
+                    {item.nome} {item.quantidade > 1 ? `x${item.quantidade}` : ''}
+                    {item.tecnicos && item.tecnicos.length > 0 && (
+                      <span className="ml-2 text-blue-500">
+                        ({item.tecnicos.map(t => t.nome).join(', ')})
+                      </span>
+                    )}
+                  </span>
                   <span>R$ {Number(item.valor_total).toFixed(2)}</span>
                 </div>
               ))}
@@ -654,18 +716,30 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
           </AlertDialog>
         </div>
       ) : (
-        <Button
-          onClick={() => lancarCaixaMutation.mutate()}
-          disabled={lancarCaixaMutation.isPending || Math.abs(diferenca) > 0.01 || tecnicosSelecionados.length === 0}
-          className="w-full h-14 text-base font-bold bg-green-600 hover:bg-green-700"
-        >
-          {lancarCaixaMutation.isPending ? (
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-          ) : (
-            <DollarSign className="w-5 h-5 mr-2" />
+        <>
+          <Button
+            onClick={() => lancarCaixaMutation.mutate()}
+            disabled={
+              lancarCaixaMutation.isPending || 
+              Math.abs(diferenca) > 0.01 || 
+              tecnicosSelecionados.length === 0 ||
+              (config.os_atribuicao_servico_obrigatoria && todosItensAprovados.some(item => !item.tecnicos || item.tecnicos.length === 0))
+            }
+            className="w-full h-14 text-base font-bold bg-green-600 hover:bg-green-700 disabled:opacity-50"
+          >
+            {lancarCaixaMutation.isPending ? (
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            ) : (
+              <DollarSign className="w-5 h-5 mr-2" />
+            )}
+            LANÇAR NO CAIXA
+          </Button>
+          {config.os_atribuicao_servico_obrigatoria && todosItensAprovados.some(item => !item.tecnicos || item.tecnicos.length === 0) && (
+            <p className="text-center text-xs text-red-600 font-medium -mt-2">
+              Atribua técnicos a todos os serviços antes de finalizar
+            </p>
           )}
-          LANÇAR NO CAIXA
-        </Button>
+        </>
       )}
     </div>
   );
