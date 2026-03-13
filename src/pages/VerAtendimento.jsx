@@ -1398,120 +1398,121 @@ export default function VerAtendimento() {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Itens do Orçamento (Checklist)</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {atendimento.itens_orcamento.map((item, idx) => (
-                    <div key={idx} className="space-y-2">
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="font-medium">{item.nome}</p>
-                            <p className="text-sm text-slate-500">
-                              {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Itens do Orçamento (Checklist)</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {atendimento.itens_orcamento.map((item, idx) => (
+                      <div key={idx} className="space-y-2">
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <p className="font-medium">{item.nome}</p>
+                              <p className="text-sm text-slate-500">
+                                {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
+                              </p>
+                            </div>
+                            <p className="font-bold text-orange-600">
+                              R$ {item.valor_total?.toFixed(2)}
                             </p>
                           </div>
-                          <p className="font-bold text-orange-600">
-                            R$ {item.valor_total?.toFixed(2)}
-                          </p>
+                          {!pagamentoLancado && (
+                            <ItemOrcamento
+                              item={item}
+                              onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
+                              onRemove={() => {}}
+                              showDeleteButton={false}
+                            />
+                          )}
+                          {item.tecnicos && item.tecnicos.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {item.tecnicos.map((tec, i) => (
+                                <Badge key={i} variant="outline" className="text-xs bg-orange-100 text-orange-700">
+                                  <Wrench className="w-3 h-3 mr-1" />
+                                  {tec.nome}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        {!pagamentoLancado && (
-                          <ItemOrcamento
-                            item={item}
-                            onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
-                            onRemove={() => {}}
-                            showDeleteButton={false}
-                          />
+                        {item.observacao_item && (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
+                            <p className="text-sm text-blue-700">{item.observacao_item}</p>
+                          </div>
                         )}
-                        {item.tecnicos && item.tecnicos.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {item.tecnicos.map((tec, i) => (
-                              <Badge key={i} variant="outline" className="text-xs bg-orange-100 text-orange-700">
-                                <Wrench className="w-3 h-3 mr-1" />
-                                {tec.nome}
-                              </Badge>
-                            ))}
+                        {item.vantagens && (
+                          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
+                            <p className="text-sm text-green-700">{item.vantagens}</p>
+                          </div>
+                        )}
+                        {item.desvantagens && (
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
+                            <p className="text-sm text-amber-700">{item.desvantagens}</p>
                           </div>
                         )}
                       </div>
-                      {item.observacao_item && (
-                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
-                          <p className="text-sm text-blue-700">{item.observacao_item}</p>
-                        </div>
-                      )}
-                      {item.vantagens && (
-                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
-                          <p className="text-sm text-green-700">{item.vantagens}</p>
-                        </div>
-                      )}
-                      {item.desvantagens && (
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                          <p className="text-xs font-semibold text-amber-800 mb-1">⚠️ Riscos de não realizar:</p>
-                          <p className="text-sm text-amber-700">{item.desvantagens}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+                    ))}
+                  </CardContent>
+                </Card>
 
-              {(atendimento.itens_orcamento?.length > 0) && atendimento.subtotal_checklist > 0 && (
-                <Card className="bg-orange-100 border-orange-300">
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-center text-lg font-bold text-orange-700">
-                      <span>Subtotal do Checklist:</span>
-                      <span>R$ {atendimento.subtotal_checklist?.toFixed(2) || '0.00'}</span>
+                {(atendimento.itens_orcamento?.length > 0) && atendimento.subtotal_checklist > 0 && (
+                  <Card className="bg-orange-100 border-orange-300">
+                    <CardContent className="pt-6">
+                      <div className="flex justify-between items-center text-lg font-bold text-orange-700">
+                        <span>Subtotal do Checklist:</span>
+                        <span>R$ {atendimento.subtotal_checklist?.toFixed(2) || '0.00'}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Card className="bg-slate-800 text-white">
+                  <CardContent className="pt-6 space-y-3">
+                    {atendimento.subtotal_queixa > 0 && (
+                      <div className="flex justify-between text-blue-300">
+                        <span>Subtotal da Queixa:</span>
+                        <span>R$ {atendimento.subtotal_queixa?.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {atendimento.subtotal_checklist > 0 && (
+                      <div className="flex justify-between text-orange-300">
+                        <span>Subtotal do Checklist:</span>
+                        <span>R$ {atendimento.subtotal_checklist?.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-white/20 pt-2">
+                      <span>Subtotal Total:</span>
+                      <span>R$ {atendimento.subtotal?.toFixed(2)}</span>
+                    </div>
+                    {atendimento.desconto > 0 && (
+                      <div className="flex justify-between text-green-400">
+                        <span>Desconto:</span>
+                        <span>- R$ {atendimento.desconto?.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-white/20 pt-3 flex justify-between text-xl font-bold">
+                      <span>TOTAL:</span>
+                      <span className="text-orange-400">R$ {atendimento.valor_final?.toFixed(2)}</span>
                     </div>
                   </CardContent>
                 </Card>
-              )}
 
-              <Card className="bg-slate-800 text-white">
-                <CardContent className="pt-6 space-y-3">
-                  {atendimento.subtotal_queixa > 0 && (
-                    <div className="flex justify-between text-blue-300">
-                      <span>Subtotal da Queixa:</span>
-                      <span>R$ {atendimento.subtotal_queixa?.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {atendimento.subtotal_checklist > 0 && (
-                    <div className="flex justify-between text-orange-300">
-                      <span>Subtotal do Checklist:</span>
-                      <span>R$ {atendimento.subtotal_checklist?.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between border-t border-white/20 pt-2">
-                    <span>Subtotal Total:</span>
-                    <span>R$ {atendimento.subtotal?.toFixed(2)}</span>
-                  </div>
-                  {atendimento.desconto > 0 && (
-                    <div className="flex justify-between text-green-400">
-                      <span>Desconto:</span>
-                      <span>- R$ {atendimento.desconto?.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="border-t border-white/20 pt-3 flex justify-between text-xl font-bold">
-                    <span>TOTAL:</span>
-                    <span className="text-orange-400">R$ {atendimento.valor_final?.toFixed(2)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {atendimento.observacoes && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Observações</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-slate-700 whitespace-pre-wrap">{atendimento.observacoes}</p>
-                  </CardContent>
-                </Card>
-              )}
-            </>
+                {atendimento.observacoes && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Observações</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-slate-700 whitespace-pre-wrap">{atendimento.observacoes}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
           </TabsContent>
 
