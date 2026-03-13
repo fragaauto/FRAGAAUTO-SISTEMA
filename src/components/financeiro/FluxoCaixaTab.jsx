@@ -43,6 +43,12 @@ export default function FluxoCaixaTab() {
     staleTime: 60 * 1000,
   });
 
+  const { data: atendimentos = [] } = useQuery({
+    queryKey: ['atendimentos-export'],
+    queryFn: () => base44.entities.Atendimento.list(),
+    staleTime: 60 * 1000,
+  });
+
   const dataInicio = subDays(new Date(), parseInt(periodo)).toISOString();
   const filtrados = lancamentos.filter(l => {
     const dentroPeriodo = l.data_lancamento >= dataInicio;
@@ -53,12 +59,6 @@ export default function FluxoCaixaTab() {
   const entradas = filtrados.filter(l => l.tipo === 'entrada').reduce((s, l) => s + (l.valor || 0), 0);
   const saidas = filtrados.filter(l => l.tipo === 'saida').reduce((s, l) => s + (l.valor || 0), 0);
   const saldo = entradas - saidas;
-
-  const { data: atendimentos = [] } = useQuery({
-    queryKey: ['atendimentos-export'],
-    queryFn: () => base44.entities.Atendimento.list(),
-    staleTime: 60 * 1000,
-  });
 
   const exportarPDF = async () => {
     setExportando(true);
@@ -125,87 +125,37 @@ export default function FluxoCaixaTab() {
   const exportarExcel = async () => {
     setExportando(true);
     try {
+      const periodoTexto = `01/${format(new Date(), 'MM/yyyy')} - ${format(new Date(), 'dd/MM/yyyy')}`;
+      
       const dados = filtrados
         .sort((a, b) => (b.data_lancamento || '') > (a.data_lancamento || '') ? 1 : -1)
         .map(l => {
           const atendimento = atendimentos.find(a => a.id === l.atendimento_id);
+          const historico = atendimento ? `Ref. a ordem de serviço nº ${atendimento.numero_os || atendimento.id.slice(0, 8)} | ${l.descricao || ''}` : l.descricao || '';
+          
           return {
-            'Data': l.data_lancamento ? format(new Date(l.data_lancamento), 'dd/MM/yyyy HH:mm') : '-',
-            'Cliente': atendimento?.cliente_nome || '-',
-            'Carro': atendimento?.modelo || '-',
-            'Placa': atendimento?.placa || '-',
-            'Detalhes': l.descricao || '-',
-            'Tipo': l.tipo === 'entrada' ? 'Entrada' : 'Saída',
-            'Valor': (l.valor || 0).toFixed(2),
-            'Forma de Pagamento': FORMAS_LABELS[l.forma_pagamento] || l.forma_pagamento || '-',
-            'Técnico': atendimento?.tecnico || '-',
-            'Categoria': l.categoria || '-',
-            'Observações': l.observacoes || '-'
+            'Data': l.data_lancamento ? format(new Date(l.data_lancamento), 'dd/MM/yyyy') : '',
+            'Cliente/Fornecedor': atendimento?.cliente_nome || '',
+            'CPF/CNPJ': atendimento?.cliente_cpf || '',
+            'Categoria': l.categoria || '',
+            'Histórico': historico,
+            'Tipo': l.tipo === 'entrada' ? 'C' : 'D',
+            'Valor': (l.valor || 0).toFixed(0),
+            'Banco': FORMAS_LABELS[l.forma_pagamento] || l.forma_pagamento || 'Caixa',
+            'Período': periodoTexto,
+            'Id': l.id || '',
+            'Técnico Responsável': atendimento?.tecnico || ''
           };
         });
       
-      // Adicionar linha de resumo
-      dados.push({
-        'Data': '',
-        'Cliente': '',
-        'Carro': '',
-        'Placa': '',
-        'Detalhes': 'TOTAIS',
-        'Tipo': '',
-        'Valor': '',
-        'Forma de Pagamento': '',
-        'Técnico': '',
-        'Categoria': '',
-        'Observações': ''
-      });
-      dados.push({
-        'Data': '',
-        'Cliente': '',
-        'Carro': '',
-        'Placa': '',
-        'Detalhes': 'Entradas',
-        'Tipo': '',
-        'Valor': entradas.toFixed(2),
-        'Forma de Pagamento': '',
-        'Técnico': '',
-        'Categoria': '',
-        'Observações': ''
-      });
-      dados.push({
-        'Data': '',
-        'Cliente': '',
-        'Carro': '',
-        'Placa': '',
-        'Detalhes': 'Saídas',
-        'Tipo': '',
-        'Valor': saidas.toFixed(2),
-        'Forma de Pagamento': '',
-        'Técnico': '',
-        'Categoria': '',
-        'Observações': ''
-      });
-      dados.push({
-        'Data': '',
-        'Cliente': '',
-        'Carro': '',
-        'Placa': '',
-        'Detalhes': 'SALDO',
-        'Tipo': '',
-        'Valor': saldo.toFixed(2),
-        'Forma de Pagamento': '',
-        'Técnico': '',
-        'Categoria': '',
-        'Observações': ''
-      });
+      const headers = Object.keys(dados[0]).join(';');
+      const rows = dados.map(d => Object.values(d).join(';')).join('\n');
+      const csv = '\ufeff' + headers + '\n' + rows;
       
-      const headers = Object.keys(dados[0]).join('\t');
-      const rows = dados.map(d => Object.values(d).join('\t')).join('\n');
-      const tsv = headers + '\n' + rows;
-      
-      const blob = new Blob([tsv], { type: 'text/tab-separated-values;charset=utf-8;' });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `extrato-fluxo-caixa-${format(new Date(), 'dd-MM-yyyy')}.xls`;
+      link.download = `extrato-fluxo-caixa-${format(new Date(), 'dd-MM-yyyy')}.csv`;
       link.click();
       
       toast.success('Excel exportado com sucesso!');
