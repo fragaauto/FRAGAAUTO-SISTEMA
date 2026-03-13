@@ -15,31 +15,39 @@ import {
 export default function ItemAprovacao({ item, onUpdate }) {
   const [observacao, setObservacao] = React.useState(item.observacao_cliente || '');
   const [statusServico, setStatusServico] = React.useState(item.status_servico || 'aguardando_autorizacao');
-  // Optimistic local state for instant UI feedback
   const [localStatus, setLocalStatus] = React.useState(item.status_aprovacao || 'pendente');
+  const [isUpdating, setIsUpdating] = React.useState(false);
 
-  // Sync when item changes externally
+  // Sync apenas se não estiver em processo de atualização
   React.useEffect(() => {
-    setLocalStatus(item.status_aprovacao || 'pendente');
-    setStatusServico(item.status_servico || 'aguardando_autorizacao');
-  }, [item.status_aprovacao, item.status_servico]);
+    if (!isUpdating) {
+      setLocalStatus(item.status_aprovacao || 'pendente');
+      setStatusServico(item.status_servico || 'aguardando_autorizacao');
+      setObservacao(item.observacao_cliente || '');
+    }
+  }, [item.status_aprovacao, item.status_servico, item.observacao_cliente, isUpdating]);
 
   const handleAprovacao = (status) => {
-    setLocalStatus(status); // instant feedback
+    setIsUpdating(true);
+    setLocalStatus(status);
     onUpdate({
       ...item,
       status_aprovacao: status,
       observacao_cliente: observacao,
       status_servico: statusServico
     });
+    // Reset após delay para permitir que a mutation complete
+    setTimeout(() => setIsUpdating(false), 1000);
   };
 
   const handleStatusServicoChange = (newStatus) => {
+    setIsUpdating(true);
     setStatusServico(newStatus);
     onUpdate({
       ...item,
       status_servico: newStatus
     });
+    setTimeout(() => setIsUpdating(false), 1000);
   };
 
   const getStatusBadge = (status) => {
