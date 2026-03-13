@@ -36,6 +36,7 @@ export default function FuncionariosTab() {
 
   const [funcaoForm, setFuncaoForm] = useState({
     nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false,
+    pode_ver_dashboards: true, pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false,
     percentual_comissao: 0, meta_mensal: 0, regra_premiacao: ''
   });
 
@@ -68,8 +69,8 @@ export default function FuncionariosTab() {
   });
 
   const openFuncaoModal = (f = null) => {
-    if (f) { setEditingFuncao(f); setFuncaoForm({ nome: f.nome, descricao: f.descricao || '', modulos_liberados: f.modulos_liberados || [], pode_ver_relatorio_proprio: f.pode_ver_relatorio_proprio || false, percentual_comissao: f.percentual_comissao || 0, meta_mensal: f.meta_mensal || 0, regra_premiacao: f.regra_premiacao || '' }); }
-    else { setEditingFuncao(null); setFuncaoForm({ nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false, percentual_comissao: 0, meta_mensal: 0, regra_premiacao: '' }); }
+    if (f) { setEditingFuncao(f); setFuncaoForm({ nome: f.nome, descricao: f.descricao || '', modulos_liberados: f.modulos_liberados || [], pode_ver_relatorio_proprio: f.pode_ver_relatorio_proprio || false, pode_ver_dashboards: f.pode_ver_dashboards !== false, pode_acessar_manual: f.pode_acessar_manual !== false, pode_acessar_configuracoes: f.pode_acessar_configuracoes || false, pode_acessar_usuarios: f.pode_acessar_usuarios || false, percentual_comissao: f.percentual_comissao || 0, meta_mensal: f.meta_mensal || 0, regra_premiacao: f.regra_premiacao || '' }); }
+    else { setEditingFuncao(null); setFuncaoForm({ nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false, pode_ver_dashboards: true, pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false, percentual_comissao: 0, meta_mensal: 0, regra_premiacao: '' }); }
     setShowFuncaoModal(true);
   };
   const closeFuncaoModal = () => { setShowFuncaoModal(false); setEditingFuncao(null); };
@@ -280,12 +281,42 @@ export default function FuncionariosTab() {
                 })}
               </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-              <div>
-                <Label>Pode ver próprio relatório de produção</Label>
-                <p className="text-xs text-slate-500">Permite que o funcionário veja seu próprio desempenho</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div>
+                  <Label>Pode ver Visão Geral e Dashboards</Label>
+                  <p className="text-xs text-slate-500">Exibe estatísticas na página inicial</p>
+                </div>
+                <Switch checked={funcaoForm.pode_ver_dashboards} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_ver_dashboards: v }))} />
               </div>
-              <Switch checked={funcaoForm.pode_ver_relatorio_proprio} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_ver_relatorio_proprio: v }))} />
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div>
+                  <Label>Pode ver próprio relatório de produção</Label>
+                  <p className="text-xs text-slate-500">Permite que veja seu próprio desempenho</p>
+                </div>
+                <Switch checked={funcaoForm.pode_ver_relatorio_proprio} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_ver_relatorio_proprio: v }))} />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div>
+                  <Label>Pode acessar Manual de Treinamento</Label>
+                  <p className="text-xs text-slate-500">Acesso ao manual de procedimentos</p>
+                </div>
+                <Switch checked={funcaoForm.pode_acessar_manual} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_acessar_manual: v }))} />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+                <div>
+                  <Label>Pode acessar Configurações</Label>
+                  <p className="text-xs text-slate-500">Acesso às configurações do sistema</p>
+                </div>
+                <Switch checked={funcaoForm.pode_acessar_configuracoes} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_acessar_configuracoes: v }))} />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                <div>
+                  <Label>Pode acessar Usuários</Label>
+                  <p className="text-xs text-slate-500">Gerenciar usuários e permissões</p>
+                </div>
+                <Switch checked={funcaoForm.pode_acessar_usuarios} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_acessar_usuarios: v }))} />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Comissão (%)</Label><Input type="number" value={funcaoForm.percentual_comissao} onChange={e => setFuncaoForm(p => ({ ...p, percentual_comissao: parseFloat(e.target.value) || 0 }))} placeholder="0" /></div>
