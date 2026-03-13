@@ -38,6 +38,7 @@ export default function FuncionariosTab() {
     nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false,
     pode_ver_dashboards: true, pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false,
     abas_atendimento: ['lista', 'novo'],
+    abas_os: ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'],
     percentual_comissao: 0, meta_mensal: 0, regra_premiacao: ''
   });
 
@@ -70,8 +71,8 @@ export default function FuncionariosTab() {
   });
 
   const openFuncaoModal = (f = null) => {
-    if (f) { setEditingFuncao(f); setFuncaoForm({ nome: f.nome, descricao: f.descricao || '', modulos_liberados: f.modulos_liberados || [], pode_ver_relatorio_proprio: f.pode_ver_relatorio_proprio || false, pode_ver_dashboards: f.pode_ver_dashboards !== false, pode_acessar_manual: f.pode_acessar_manual !== false, pode_acessar_configuracoes: f.pode_acessar_configuracoes || false, pode_acessar_usuarios: f.pode_acessar_usuarios || false, abas_atendimento: f.abas_atendimento || ['lista', 'novo'], percentual_comissao: f.percentual_comissao || 0, meta_mensal: f.meta_mensal || 0, regra_premiacao: f.regra_premiacao || '' }); }
-    else { setEditingFuncao(null); setFuncaoForm({ nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false, pode_ver_dashboards: true, pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false, abas_atendimento: ['lista', 'novo'], percentual_comissao: 0, meta_mensal: 0, regra_premiacao: '' }); }
+    if (f) { setEditingFuncao(f); setFuncaoForm({ nome: f.nome, descricao: f.descricao || '', modulos_liberados: f.modulos_liberados || [], pode_ver_relatorio_proprio: f.pode_ver_relatorio_proprio || false, pode_ver_dashboards: f.pode_ver_dashboards !== false, pode_acessar_manual: f.pode_acessar_manual !== false, pode_acessar_configuracoes: f.pode_acessar_configuracoes || false, pode_acessar_usuarios: f.pode_acessar_usuarios || false, abas_atendimento: f.abas_atendimento || ['lista', 'novo'], abas_os: f.abas_os || ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'], percentual_comissao: f.percentual_comissao || 0, meta_mensal: f.meta_mensal || 0, regra_premiacao: f.regra_premiacao || '' }); }
+    else { setEditingFuncao(null); setFuncaoForm({ nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false, pode_ver_dashboards: true, pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false, abas_atendimento: ['lista', 'novo'], abas_os: ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'], percentual_comissao: 0, meta_mensal: 0, regra_premiacao: '' }); }
     setShowFuncaoModal(true);
   };
   const closeFuncaoModal = () => { setShowFuncaoModal(false); setEditingFuncao(null); };
@@ -347,6 +348,42 @@ export default function FuncionariosTab() {
                     >
                       <span className={`text-sm font-medium ${ativo ? 'text-green-700' : 'text-slate-700'}`}>{aba.nome}</span>
                       <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${ativo ? 'bg-green-500 border-green-500' : 'border-slate-300'}`}>
+                        {ativo && <span className="text-white text-xs font-bold">✓</span>}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <Label className="mb-2 block">Abas Internas da OS</Label>
+              <p className="text-xs text-slate-500 mb-2">Abas visíveis ao editar um atendimento</p>
+              <div className="space-y-2">
+                {[
+                  { id: 'queixa', nome: 'Queixa' },
+                  { id: 'checklist', nome: 'Checklist' },
+                  { id: 'orcamento', nome: 'Orçamento' },
+                  { id: 'autorizacao', nome: 'Autorização' },
+                  { id: 'pagamento', nome: 'Pagamento' }
+                ].map(aba => {
+                  const ativo = (funcaoForm.abas_os || []).includes(aba.id);
+                  return (
+                    <button
+                      type="button"
+                      key={aba.id}
+                      onClick={() => {
+                        const current = funcaoForm.abas_os || [];
+                        setFuncaoForm(p => ({
+                          ...p,
+                          abas_os: ativo
+                            ? current.filter(a => a !== aba.id)
+                            : [...current, aba.id]
+                        }));
+                      }}
+                      className={`w-full flex items-center justify-between p-2 rounded-lg border text-left transition-all ${ativo ? 'bg-purple-50 border-purple-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
+                    >
+                      <span className={`text-sm font-medium ${ativo ? 'text-purple-700' : 'text-slate-700'}`}>{aba.nome}</span>
+                      <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${ativo ? 'bg-purple-500 border-purple-500' : 'border-slate-300'}`}>
                         {ativo && <span className="text-white text-xs font-bold">✓</span>}
                       </span>
                     </button>
