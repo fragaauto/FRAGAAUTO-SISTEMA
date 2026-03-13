@@ -511,7 +511,7 @@ export default function VerAtendimento() {
 
   // Determinar abas permitidas
   const funcao = user?.funcao_id ? funcoes.find(f => f.id === user.funcao_id) : null;
-  const abasPermitidas = isAdmin ? ['queixa', 'checklist', 'orcamento', 'aprovacao', 'pagamento'] : (funcao?.abas_os || ['queixa', 'checklist', 'orcamento', 'aprovacao', 'pagamento']);
+  const abasPermitidas = isAdmin ? ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'] : (funcao?.abas_os || ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento']);
   
   const podeVerQueixa = abasPermitidas.includes('queixa');
   const podeVerChecklist = abasPermitidas.includes('checklist');
@@ -691,7 +691,7 @@ export default function VerAtendimento() {
             {podeVerQueixa && <TabsTrigger value="queixa">Queixa</TabsTrigger>}
             {podeVerChecklist && <TabsTrigger value="checklist">Checklist</TabsTrigger>}
             {podeVerOrcamento && <TabsTrigger value="orcamento">Orçamento</TabsTrigger>}
-            {podeVerAutorizacao && <TabsTrigger value="aprovacao">Autorização</TabsTrigger>}
+            {podeVerAutorizacao && <TabsTrigger value="autorizacao">Autorização</TabsTrigger>}
             {podeVerPagamento && <TabsTrigger value="pagamento" className="text-green-700 font-semibold">💰 Pagamento</TabsTrigger>}
           </TabsList>
 
@@ -1538,7 +1538,7 @@ export default function VerAtendimento() {
             )}
           </TabsContent>}
 
-          {podeVerAutorizacao && <TabsContent value="aprovacao" className="space-y-4">
+          {podeVerAutorizacao && <TabsContent value="autorizacao" className="space-y-4">
             {atendimento.queixa_inicial && (
               <Card className="border-blue-200 bg-blue-50/50">
                 <CardHeader>
