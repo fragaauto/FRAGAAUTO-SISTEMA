@@ -21,7 +21,10 @@ const ROLE_LABELS = {
 export default function Usuarios() {
   const qc = useQueryClient();
   const [showConvidar, setShowConvidar] = useState(false);
+  const [tipoCadastro, setTipoCadastro] = useState('convite'); // 'convite' ou 'senha'
   const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [nomeCompleto, setNomeCompleto] = useState('');
   const [role, setRole] = useState('user');
   const [convidando, setConvidando] = useState(false);
   const [aprovando, setAprovando] = useState(null);
@@ -41,16 +44,40 @@ export default function Usuarios() {
 
   const handleConvidar = async () => {
     if (!email) return toast.error('Informe o e-mail');
+    
     setConvidando(true);
     try {
-      await base44.users.inviteUser(email, role);
-      toast.success(`Convite enviado para ${email}!`);
+      if (tipoCadastro === 'senha') {
+        // Cadastro direto com senha
+        if (!senha) return toast.error('Informe a senha');
+        if (senha.length < 6) return toast.error('A senha deve ter no mínimo 6 caracteres');
+        
+        const response = await base44.functions.invoke('cadastrarUsuarioComSenha', {
+          email,
+          password: senha,
+          full_name: nomeCompleto || email.split('@')[0],
+          role
+        });
+        
+        if (response.data.success) {
+          toast.success(`Usuário ${email} cadastrado com sucesso!`);
+        } else {
+          throw new Error(response.data.error);
+        }
+      } else {
+        // Convite por email
+        await base44.users.inviteUser(email, role);
+        toast.success(`Convite enviado para ${email}!`);
+      }
+      
       setEmail('');
+      setSenha('');
+      setNomeCompleto('');
       setRole('user');
       setShowConvidar(false);
       qc.invalidateQueries({ queryKey: ['usuarios'] });
     } catch (e) {
-      toast.error(e?.message || 'Erro ao enviar convite');
+      toast.error(e?.message || 'Erro ao processar solicitação');
     } finally {
       setConvidando(false);
     }
@@ -255,13 +282,43 @@ export default function Usuarios() {
       </div>
 
       <Dialog open={showConvidar} onOpenChange={setShowConvidar}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-orange-500" /> Convidar Usuário
+              <UserPlus className="w-5 h-5 text-orange-500" /> Adicionar Usuário
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label>Tipo de cadastro</Label>
+              <Select value={tipoCadastro} onValueChange={setTipoCadastro}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="senha">Cadastro direto com senha</SelectItem>
+                  <SelectItem value="convite">Enviar convite por email</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-slate-500 mt-1">
+                {tipoCadastro === 'senha' 
+                  ? 'Crie login e senha para o usuário acessar imediatamente'
+                  : 'O usuário receberá um email para criar sua conta'
+                }
+              </p>
+            </div>
+
+            {tipoCadastro === 'senha' && (
+              <div>
+                <Label>Nome completo</Label>
+                <Input
+                  value={nomeCompleto}
+                  onChange={e => setNomeCompleto(e.target.value)}
+                  placeholder="Nome do funcionário"
+                />
+              </div>
+            )}
+
             <div>
               <Label>E-mail *</Label>
               <Input
@@ -271,6 +328,22 @@ export default function Usuarios() {
                 placeholder="email@exemplo.com"
               />
             </div>
+
+            {tipoCadastro === 'senha' && (
+              <div>
+                <Label>Senha *</Label>
+                <Input
+                  type="password"
+                  value={senha}
+                  onChange={e => setSenha(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Informe ao usuário esta senha para o primeiro acesso
+                </p>
+              </div>
+            )}
+
             <div>
               <Label>Perfil de acesso</Label>
               <Select value={role} onValueChange={setRole}>
@@ -284,13 +357,14 @@ export default function Usuarios() {
               </Select>
               <p className="text-xs text-slate-500 mt-1">Admins têm acesso total ao sistema.</p>
             </div>
+
             <Button
               className="w-full bg-orange-500 hover:bg-orange-600"
               onClick={handleConvidar}
-              disabled={convidando || !email}
+              disabled={convidando || !email || (tipoCadastro === 'senha' && !senha)}
             >
               {convidando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
-              Enviar Convite
+              {tipoCadastro === 'senha' ? 'Cadastrar Usuário' : 'Enviar Convite'}
             </Button>
           </div>
         </DialogContent>
