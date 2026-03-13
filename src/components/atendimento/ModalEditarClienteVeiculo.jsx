@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Car, User, Save, Loader2, Wrench } from 'lucide-react';
+import { Textarea } from "@/components/ui/textarea";
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 
@@ -20,6 +21,7 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
     marca: atendimento.marca || '',
     ano: atendimento.ano || '',
     km_atual: atendimento.km_atual || '',
+    observacoes_veiculo: atendimento.observacoes_veiculo || '',
     tecnico: atendimento.tecnico || '',
   });
 
@@ -144,6 +146,15 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
                   className="h-11"
                 />
               </div>
+            </div>
+            <div>
+              <Label>Observações do Veículo</Label>
+              <Textarea
+                value={dados.observacoes_veiculo}
+                onChange={(e) => setDados(p => ({ ...p, observacoes_veiculo: e.target.value }))}
+                placeholder="Informações adicionais sobre o veículo..."
+                className="min-h-[80px]"
+              />
             </div>
           </TabsContent>
 
