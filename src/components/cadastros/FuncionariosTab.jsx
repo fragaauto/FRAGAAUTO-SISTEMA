@@ -25,10 +25,7 @@ export default function FuncionariosTab() {
   const [deleteFuncaoId, setDeleteFuncaoId] = useState(null);
   const [activeSection, setActiveSection] = useState('usuarios'); // 'usuarios' | 'funcoes'
   const [showConvidarModal, setShowConvidarModal] = useState(false);
-  const [tipoCadastro, setTipoCadastro] = useState('convite');
   const [convidandoEmail, setConvidandoEmail] = useState('');
-  const [convidandoSenha, setConvidandoSenha] = useState('');
-  const [convidandoNome, setConvidandoNome] = useState('');
   const [convidandoFuncaoId, setConvidandoFuncaoId] = useState('');
   const [convidando, setConvidando] = useState(false);
   const [editUserModal, setEditUserModal] = useState(null);
@@ -97,48 +94,16 @@ export default function FuncionariosTab() {
 
   const handleConvidar = async () => {
     if (!convidandoEmail) return toast.error('Informe o e-mail');
-    
     setConvidando(true);
     try {
-      if (tipoCadastro === 'senha') {
-        if (!convidandoSenha) return toast.error('Informe a senha');
-        if (convidandoSenha.length < 6) return toast.error('A senha deve ter no mínimo 6 caracteres');
-        
-        const response = await base44.functions.invoke('cadastrarUsuarioComSenha', {
-          email: convidandoEmail,
-          password: convidandoSenha,
-          full_name: convidandoNome || convidandoEmail.split('@')[0],
-          role: 'user'
-        });
-        
-        if (response.data.success) {
-          toast.success(`Funcionário ${convidandoEmail} cadastrado com sucesso!`);
-          
-          // Atualiza a função se foi selecionada
-          if (convidandoFuncaoId && response.data.usuario?.id) {
-            const funcao = funcoes.find(f => f.id === convidandoFuncaoId);
-            await base44.entities.User.update(response.data.usuario.id, {
-              funcao_id: convidandoFuncaoId,
-              funcao_nome: funcao?.nome || null,
-              modulos_liberados: funcao?.modulos_liberados || []
-            });
-          }
-        } else {
-          throw new Error(response.data.error);
-        }
-      } else {
-        await base44.users.inviteUser(convidandoEmail, 'user');
-        toast.success(`Convite enviado para ${convidandoEmail}!`);
-      }
-      
+      await base44.users.inviteUser(convidandoEmail, 'user');
+      toast.success(`Convite enviado para ${convidandoEmail}!`);
       setConvidandoEmail('');
-      setConvidandoSenha('');
-      setConvidandoNome('');
       setConvidandoFuncaoId('');
       setShowConvidarModal(false);
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });
     } catch (e) {
-      toast.error(e?.message || 'Erro ao processar solicitação');
+      toast.error(e?.message || 'Erro ao enviar convite');
     } finally {
       setConvidando(false);
     }
