@@ -160,6 +160,12 @@ export default function VerAtendimento() {
     staleTime: 10 * 60 * 1000
   });
 
+  const { data: funcoes = [] } = useQuery({
+    queryKey: ['funcoes'],
+    queryFn: () => base44.entities.FuncaoFuncionario.list(),
+    enabled: !!user && user?.role !== 'admin',
+  });
+
   const updateMutation = useMutation({
     mutationFn: (data) => {
       console.log('📤 [ATUALIZAR] Enviando para API:', Object.keys(data));
@@ -503,6 +509,16 @@ export default function VerAtendimento() {
   const queixaAssinada = !!atendimento.assinatura_cliente_queixa;
   const checklistAssinado = !!atendimento.assinatura_cliente_checklist;
 
+  // Determinar abas permitidas
+  const funcao = user?.funcao_id ? funcoes.find(f => f.id === user.funcao_id) : null;
+  const abasPermitidas = isAdmin ? ['queixa', 'checklist', 'orcamento', 'aprovacao', 'pagamento'] : (funcao?.abas_os || ['queixa', 'checklist', 'orcamento', 'aprovacao', 'pagamento']);
+  
+  const podeVerQueixa = abasPermitidas.includes('queixa');
+  const podeVerChecklist = abasPermitidas.includes('checklist');
+  const podeVerOrcamento = abasPermitidas.includes('orcamento');
+  const podeVerAutorizacao = abasPermitidas.includes('autorizacao');
+  const podeVerPagamento = abasPermitidas.includes('pagamento');
+
   // Totais aprovados/reprovados pelo cliente
   const todosItens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
   const totalAprovadoCliente = todosItens
@@ -672,11 +688,11 @@ export default function VerAtendimento() {
         <Tabs defaultValue="resumo">
           <TabsList className="mb-6 flex-wrap h-auto gap-1">
             <TabsTrigger value="resumo">Resumo</TabsTrigger>
-            <TabsTrigger value="queixa">Queixa</TabsTrigger>
-            <TabsTrigger value="checklist">Checklist</TabsTrigger>
-            <TabsTrigger value="orcamento">Orçamento</TabsTrigger>
-            <TabsTrigger value="aprovacao">Aprovação</TabsTrigger>
-            <TabsTrigger value="pagamento" className="text-green-700 font-semibold">💰 Pagamento</TabsTrigger>
+            {podeVerQueixa && <TabsTrigger value="queixa">Queixa</TabsTrigger>}
+            {podeVerChecklist && <TabsTrigger value="checklist">Checklist</TabsTrigger>}
+            {podeVerOrcamento && <TabsTrigger value="orcamento">Orçamento</TabsTrigger>}
+            {podeVerAutorizacao && <TabsTrigger value="aprovacao">Autorização</TabsTrigger>}
+            {podeVerPagamento && <TabsTrigger value="pagamento" className="text-green-700 font-semibold">💰 Pagamento</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="resumo" className="space-y-6">
@@ -879,7 +895,7 @@ export default function VerAtendimento() {
             )}
           </TabsContent>
 
-          <TabsContent value="queixa" className="space-y-4">
+          {podeVerQueixa && <TabsContent value="queixa" className="space-y-4">
             {!modoEdicaoQueixa && !atendimento.queixa_inicial && (!atendimento.itens_queixa || atendimento.itens_queixa.length === 0) && (
               <Card className="py-8">
                 <CardContent className="text-center text-slate-500">
@@ -1169,9 +1185,9 @@ export default function VerAtendimento() {
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
+          </TabsContent>}
 
-          <TabsContent value="checklist" className="space-y-4">
+          {podeVerChecklist && <TabsContent value="checklist" className="space-y-4">
             {atendimento.checklist?.length === 0 ? (
               <Card className="py-8">
                 <CardContent className="text-center text-slate-500">
@@ -1247,9 +1263,9 @@ export default function VerAtendimento() {
                 )}
               </>
             )}
-          </TabsContent>
+          </TabsContent>}
 
-          <TabsContent value="orcamento" className="space-y-4">
+          {podeVerOrcamento && <TabsContent value="orcamento" className="space-y-4">
             <AdicionarItemOrcamento
               atendimento={atendimento}
               produtos={produtos}
@@ -1514,9 +1530,9 @@ export default function VerAtendimento() {
                 )}
               </>
             )}
-          </TabsContent>
+          </TabsContent>}
 
-          <TabsContent value="aprovacao" className="space-y-4">
+          {podeVerAutorizacao && <TabsContent value="aprovacao" className="space-y-4">
             {atendimento.queixa_inicial && (
               <Card className="border-blue-200 bg-blue-50/50">
                 <CardHeader>
@@ -1795,14 +1811,14 @@ export default function VerAtendimento() {
                 </Card>
               </>
             )}
-          </TabsContent>
+          </TabsContent>}
 
-          <TabsContent value="pagamento">
+          {podeVerPagamento && <TabsContent value="pagamento">
             <AbaFinalizacaoPagamento
               atendimento={atendimento}
               onUpdate={() => queryClient.invalidateQueries(['atendimento', id])}
             />
-          </TabsContent>
+          </TabsContent>}
         </Tabs>
       </div>
 
