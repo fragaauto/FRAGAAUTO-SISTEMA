@@ -9,13 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2 } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { format, subDays, startOfDay } from 'date-fns';
 import FluxoCaixaChart from './FluxoCaixaChart';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const FORMAS_LABELS = {
   dinheiro: 'Dinheiro', pix: 'PIX', cartao_credito: 'Crédito',
@@ -27,6 +29,7 @@ export default function FluxoCaixaTab() {
   const [periodo, setPeriodo] = useState('30');
   const [filtroForma, setFiltroForma] = useState('todos');
   const [showNovo, setShowNovo] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.LancamentoFinanceiro.delete(id),
@@ -51,6 +54,168 @@ export default function FluxoCaixaTab() {
   const saidas = filtrados.filter(l => l.tipo === 'saida').reduce((s, l) => s + (l.valor || 0), 0);
   const saldo = entradas - saidas;
 
+  const { data: atendimentos = [] } = useQuery({
+    queryKey: ['atendimentos-export'],
+    queryFn: () => base44.entities.Atendimento.list(),
+    staleTime: 60 * 1000,
+  });
+
+  const exportarPDF = async () => {
+    setExportando(true);
+    try {
+      const doc = new jsPDF();
+      
+      // Título
+      doc.setFontSize(18);
+      doc.text('Extrato do Fluxo de Caixa', 14, 20);
+      
+      // Período
+      doc.setFontSize(10);
+      doc.text(`Período: Últimos ${periodo} dias`, 14, 28);
+      doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 33);
+      
+      // Preparar dados
+      const dados = filtrados
+        .sort((a, b) => (b.data_lancamento || '') > (a.data_lancamento || '') ? 1 : -1)
+        .map(l => {
+          const atendimento = atendimentos.find(a => a.id === l.atendimento_id);
+          return [
+            l.data_lancamento ? format(new Date(l.data_lancamento), 'dd/MM/yyyy') : '-',
+            atendimento?.cliente_nome || '-',
+            atendimento?.modelo || '-',
+            atendimento?.placa || '-',
+            l.descricao || '-',
+            `R$ ${(l.valor || 0).toFixed(2)}`,
+            FORMAS_LABELS[l.forma_pagamento] || l.forma_pagamento || '-',
+            atendimento?.tecnico || '-'
+          ];
+        });
+      
+      // Tabela
+      doc.autoTable({
+        startY: 38,
+        head: [['Data', 'Cliente', 'Carro', 'Placa', 'Detalhes', 'Valor', 'Forma', 'Técnico']],
+        body: dados,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [249, 115, 22], textColor: 255 },
+        columnStyles: {
+          5: { halign: 'right' }
+        },
+        margin: { left: 14, right: 14 }
+      });
+      
+      // Totais
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(10);
+      doc.text(`Total Entradas: R$ ${entradas.toFixed(2)}`, 14, finalY);
+      doc.text(`Total Saídas: R$ ${saidas.toFixed(2)}`, 14, finalY + 5);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Saldo: R$ ${saldo.toFixed(2)}`, 14, finalY + 12);
+      
+      doc.save(`extrato-fluxo-caixa-${format(new Date(), 'dd-MM-yyyy')}.pdf`);
+      toast.success('PDF exportado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao exportar PDF');
+    } finally {
+      setExportando(false);
+    }
+  };
+
+  const exportarExcel = async () => {
+    setExportando(true);
+    try {
+      const dados = filtrados
+        .sort((a, b) => (b.data_lancamento || '') > (a.data_lancamento || '') ? 1 : -1)
+        .map(l => {
+          const atendimento = atendimentos.find(a => a.id === l.atendimento_id);
+          return {
+            'Data': l.data_lancamento ? format(new Date(l.data_lancamento), 'dd/MM/yyyy HH:mm') : '-',
+            'Cliente': atendimento?.cliente_nome || '-',
+            'Carro': atendimento?.modelo || '-',
+            'Placa': atendimento?.placa || '-',
+            'Detalhes': l.descricao || '-',
+            'Tipo': l.tipo === 'entrada' ? 'Entrada' : 'Saída',
+            'Valor': (l.valor || 0).toFixed(2),
+            'Forma de Pagamento': FORMAS_LABELS[l.forma_pagamento] || l.forma_pagamento || '-',
+            'Técnico': atendimento?.tecnico || '-',
+            'Categoria': l.categoria || '-',
+            'Observações': l.observacoes || '-'
+          };
+        });
+      
+      // Adicionar linha de resumo
+      dados.push({
+        'Data': '',
+        'Cliente': '',
+        'Carro': '',
+        'Placa': '',
+        'Detalhes': 'TOTAIS',
+        'Tipo': '',
+        'Valor': '',
+        'Forma de Pagamento': '',
+        'Técnico': '',
+        'Categoria': '',
+        'Observações': ''
+      });
+      dados.push({
+        'Data': '',
+        'Cliente': '',
+        'Carro': '',
+        'Placa': '',
+        'Detalhes': 'Entradas',
+        'Tipo': '',
+        'Valor': entradas.toFixed(2),
+        'Forma de Pagamento': '',
+        'Técnico': '',
+        'Categoria': '',
+        'Observações': ''
+      });
+      dados.push({
+        'Data': '',
+        'Cliente': '',
+        'Carro': '',
+        'Placa': '',
+        'Detalhes': 'Saídas',
+        'Tipo': '',
+        'Valor': saidas.toFixed(2),
+        'Forma de Pagamento': '',
+        'Técnico': '',
+        'Categoria': '',
+        'Observações': ''
+      });
+      dados.push({
+        'Data': '',
+        'Cliente': '',
+        'Carro': '',
+        'Placa': '',
+        'Detalhes': 'SALDO',
+        'Tipo': '',
+        'Valor': saldo.toFixed(2),
+        'Forma de Pagamento': '',
+        'Técnico': '',
+        'Categoria': '',
+        'Observações': ''
+      });
+      
+      const headers = Object.keys(dados[0]).join('\t');
+      const rows = dados.map(d => Object.values(d).join('\t')).join('\n');
+      const tsv = headers + '\n' + rows;
+      
+      const blob = new Blob([tsv], { type: 'text/tab-separated-values;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `extrato-fluxo-caixa-${format(new Date(), 'dd-MM-yyyy')}.xls`;
+      link.click();
+      
+      toast.success('Excel exportado com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao exportar Excel');
+    } finally {
+      setExportando(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Filtros */}
@@ -71,9 +236,17 @@ export default function FluxoCaixaTab() {
             {Object.entries(FORMAS_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button onClick={() => setShowNovo(true)} variant="outline" className="ml-auto">
-          <Plus className="w-4 h-4 mr-1" /> Lançamento Manual
-        </Button>
+        <div className="ml-auto flex gap-2">
+          <Button onClick={exportarPDF} disabled={exportando || filtrados.length === 0} variant="outline" className="gap-1">
+            <Download className="w-4 h-4" /> PDF
+          </Button>
+          <Button onClick={exportarExcel} disabled={exportando || filtrados.length === 0} variant="outline" className="gap-1">
+            <FileSpreadsheet className="w-4 h-4" /> Excel
+          </Button>
+          <Button onClick={() => setShowNovo(true)} variant="outline">
+            <Plus className="w-4 h-4 mr-1" /> Lançamento Manual
+          </Button>
+        </div>
       </div>
 
       {/* KPIs */}
