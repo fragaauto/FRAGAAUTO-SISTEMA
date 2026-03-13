@@ -28,11 +28,21 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
   };
 
   const handleValorChange = (e) => {
-    const valor_unitario = parseFloat(e.target.value) || 0;
+    const value = e.target.value;
+    // Permitir vazio temporariamente
+    if (value === '') {
+      onUpdate({
+        ...item,
+        valor_unitario: '',
+        valor_total: 0
+      });
+      return;
+    }
+    const valor_unitario = parseFloat(value) || 0;
     onUpdate({
       ...item,
       valor_unitario,
-      valor_total: item.quantidade * valor_unitario
+      valor_total: (item.quantidade || 0) * valor_unitario
     });
   };
 
@@ -100,6 +110,12 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
             min="0"
             value={item.valor_unitario}
             onChange={handleValorChange}
+            onFocus={(e) => e.target.select()}
+            onBlur={(e) => {
+              if (e.target.value === '' || parseFloat(e.target.value) < 0) {
+                handleValorChange({ target: { value: '0' } });
+              }
+            }}
             className="w-28 h-10"
           />
         </div>
