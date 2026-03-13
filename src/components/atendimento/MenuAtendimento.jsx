@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 const ABAS_CONFIG = [
   { id: 'lista', nome: 'Lista de OS', path: 'Atendimentos', icon: FileText },
   { id: 'novo', nome: 'Nova OS', path: 'NovoAtendimento', icon: Plus },
-  { id: 'aprovacoes', nome: 'Aprovações Pendentes', path: 'Atendimentos?status=aguardando_aprovacao_checklist', icon: Clock },
+  { id: 'aprovacoes', nome: 'Aprovações Pendentes', path: 'Dashboard', icon: Clock },
   { id: 'reprovados', nome: 'Serviços Reprovados', path: 'ServicosReprovados', icon: XCircle },
   { id: 'vendas_diretas', nome: 'Vendas Diretas', path: 'Atendimentos?venda_direta=true', icon: ShoppingBag }
 ];
