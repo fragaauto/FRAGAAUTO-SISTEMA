@@ -70,6 +70,12 @@ export default function Layout({ children, currentPageName }) {
   });
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
 
+  const { data: funcoes = [] } = useQuery({
+    queryKey: ['funcoes'],
+    queryFn: () => base44.entities.FuncaoFuncionario.list(),
+    enabled: !!user && user.role !== 'admin',
+  });
+
   const isPaginaPublica = PAGINAS_PUBLICAS.includes(currentPageName);
 
   // Mostrar loading enquanto verifica auth
@@ -120,10 +126,18 @@ export default function Layout({ children, currentPageName }) {
     if (modulo?.essencial) return true;
     if (!modulosAtivos.includes(item.modulo)) return false;
 
-    // Verifica permissões do usuário
-    const modulosUsuario = user?.modulos_liberados || [];
-    if (modulosUsuario.length === 0) return true; // Se não tem restrição, libera
-    return modulosUsuario.includes(item.modulo);
+    // Determina módulos permitidos: primeiro do usuário, depois da função
+    let modulosPermitidos = user?.modulos_liberados || [];
+    
+    if (modulosPermitidos.length === 0 && user?.funcao_id) {
+      const funcao = funcoes.find(f => f.id === user.funcao_id);
+      modulosPermitidos = funcao?.modulos_liberados || [];
+    }
+
+    // Se não tem restrição nem na função nem no usuário, libera
+    if (modulosPermitidos.length === 0) return true;
+    
+    return modulosPermitidos.includes(item.modulo);
   });
 
   const NavLinks = ({ onNavigate }) => (

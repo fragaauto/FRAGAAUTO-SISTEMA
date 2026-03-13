@@ -34,6 +34,11 @@ export default function Usuarios() {
     queryFn: () => base44.entities.User.list(),
   });
 
+  const { data: funcoes = [] } = useQuery({
+    queryKey: ['funcoes'],
+    queryFn: () => base44.entities.FuncaoFuncionario.list(),
+  });
+
   const handleConvidar = async () => {
     if (!email) return toast.error('Informe o e-mail');
     setConvidando(true);
@@ -74,7 +79,16 @@ export default function Usuarios() {
 
   const handleEditarPermissoes = (u) => {
     setEditando(u);
-    setModulosSelecionados(u.modulos_liberados || []);
+    
+    // Se o usuário tem módulos definidos, usa eles
+    // Senão, carrega os módulos da função como base
+    let modulosBase = u.modulos_liberados || [];
+    if (modulosBase.length === 0 && u.funcao_id) {
+      const funcao = funcoes.find(f => f.id === u.funcao_id);
+      modulosBase = funcao?.modulos_liberados || [];
+    }
+    
+    setModulosSelecionados(modulosBase);
     setPodeVerDashboards(u.pode_ver_dashboards !== false);
   };
 
@@ -283,6 +297,19 @@ export default function Usuarios() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {editando?.funcao_id && (() => {
+              const funcao = funcoes.find(f => f.id === editando.funcao_id);
+              return funcao ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm font-medium text-blue-800">
+                    Cargo: {funcao.nome}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    As permissões abaixo sobrescrevem as do cargo. Deixe vazio para usar as do cargo.
+                  </p>
+                </div>
+              ) : null;
+            })()}
             <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
               <div className="flex items-center gap-2 mb-2">
                 <Checkbox
@@ -302,7 +329,10 @@ export default function Usuarios() {
             <div>
               <Label className="mb-2 block">Módulos permitidos</Label>
               <p className="text-xs text-slate-500 mb-3">
-                Deixe vazio para liberar todos. Selecione módulos específicos para restringir o acesso.
+                {editando?.funcao_id 
+                  ? 'Deixe vazio para usar as permissões do cargo. Selecione para sobrescrever.'
+                  : 'Deixe vazio para liberar todos. Selecione módulos específicos para restringir o acesso.'
+                }
               </p>
               <div className="space-y-2 border border-slate-200 rounded-lg p-3 bg-slate-50 max-h-64 overflow-y-auto">
                 {TODOS_MODULOS.map(modulo => (

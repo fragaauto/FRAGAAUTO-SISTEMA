@@ -75,6 +75,12 @@ export default function Home() {
   });
   const logoUrl = configs[0]?.logo_url;
 
+  const { data: funcoes = [] } = useQuery({
+    queryKey: ['funcoes'],
+    queryFn: () => base44.entities.FuncaoFuncionario.list(),
+    enabled: !!user && user?.role !== 'admin',
+  });
+
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list('-created_date', 500),
@@ -356,7 +362,22 @@ export default function Home() {
       </div>
 
       {/* Dashboard Stats */}
-      {(user?.role === 'admin' || user?.pode_ver_dashboards !== false) && (
+      {(() => {
+        if (user?.role === 'admin') return true;
+        
+        // Verifica permissão do usuário primeiro
+        if (user?.pode_ver_dashboards !== undefined) {
+          return user.pode_ver_dashboards;
+        }
+        
+        // Se não definido no usuário, verifica na função
+        if (user?.funcao_id) {
+          const funcao = funcoes.find(f => f.id === user.funcao_id);
+          return funcao?.pode_ver_relatorio_proprio !== false;
+        }
+        
+        return true; // Default: pode ver
+      })() && (
       <div className="bg-white border-t border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
