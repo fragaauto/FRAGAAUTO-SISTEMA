@@ -60,9 +60,11 @@ const FeatureCard = ({ icon: Icon, title, description, href, color, delay }) =>
 export default function Home() {
   const [periodo, setPeriodo] = useState('30');
   const [isLoggedIn, setIsLoggedIn] = React.useState(true);
+  const [user, setUser] = React.useState(null);
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(setIsLoggedIn).catch(() => setIsLoggedIn(false));
+    base44.auth.me().then(setUser).catch(() => setUser(null));
   }, []);
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
 
@@ -354,6 +356,7 @@ export default function Home() {
       </div>
 
       {/* Dashboard Stats */}
+      {(user?.role === 'admin' || user?.pode_ver_dashboards !== false) && (
       <div className="bg-white border-t border-slate-200">
         <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
@@ -493,6 +496,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      )}
     </div>);
 
 }

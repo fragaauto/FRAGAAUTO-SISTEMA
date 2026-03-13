@@ -96,14 +96,34 @@ export default function Layout({ children, currentPageName }) {
     return <AguardandoAprovacao user={user} />;
   }
 
-  // Filtra itens do menu conforme módulos ativos e role do usuário
+  // Filtra itens do menu conforme módulos ativos, permissões do usuário e role
   const itensFiltrados = NAV_ITEMS.filter(item => {
-    if (item.apenasAdmin && user?.role !== 'admin') return false;
+    // Admin tem acesso total
+    if (user?.role === 'admin') {
+      if (item.apenasAdmin) return true;
+      if (!item.modulo) return true;
+      if (!modulosAtivos || modulosAtivos.length === 0) return true;
+      const modulo = TODOS_MODULOS.find(m => m.id === item.modulo);
+      if (modulo?.essencial) return true;
+      return modulosAtivos.includes(item.modulo);
+    }
+
+    // Apenas admin pode acessar
+    if (item.apenasAdmin) return false;
+
+    // Itens sem módulo (Home, Configurações básicas)
     if (!item.modulo) return true;
+
+    // Verifica se módulo está ativo no sistema
     if (!modulosAtivos || modulosAtivos.length === 0) return true;
     const modulo = TODOS_MODULOS.find(m => m.id === item.modulo);
     if (modulo?.essencial) return true;
-    return modulosAtivos.includes(item.modulo);
+    if (!modulosAtivos.includes(item.modulo)) return false;
+
+    // Verifica permissões do usuário
+    const modulosUsuario = user?.modulos_liberados || [];
+    if (modulosUsuario.length === 0) return true; // Se não tem restrição, libera
+    return modulosUsuario.includes(item.modulo);
   });
 
   const NavLinks = ({ onNavigate }) => (

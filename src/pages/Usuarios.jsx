@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Users, UserPlus, Loader2, Mail, Shield, User, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Users, UserPlus, Loader2, Mail, Shield, User, CheckCircle, XCircle, Clock, Edit } from 'lucide-react';
+import { TODOS_MODULOS } from '@/components/modulos';
 
 const ROLE_LABELS = {
   admin: { label: 'Admin', color: 'bg-red-100 text-red-700' },
@@ -23,6 +25,9 @@ export default function Usuarios() {
   const [role, setRole] = useState('user');
   const [convidando, setConvidando] = useState(false);
   const [aprovando, setAprovando] = useState(null);
+  const [editando, setEditando] = useState(null);
+  const [modulosSelecionados, setModulosSelecionados] = useState([]);
+  const [podeVerDashboards, setPodeVerDashboards] = useState(true);
 
   const { data: usuarios = [], isLoading } = useQuery({
     queryKey: ['usuarios'],
@@ -66,6 +71,35 @@ export default function Usuarios() {
 
   const pendentes = usuarios.filter(u => u.role !== 'admin' && !u.aprovado);
   const ativos = usuarios.filter(u => u.role === 'admin' || u.aprovado);
+
+  const handleEditarPermissoes = (u) => {
+    setEditando(u);
+    setModulosSelecionados(u.modulos_liberados || []);
+    setPodeVerDashboards(u.pode_ver_dashboards !== false);
+  };
+
+  const handleSalvarPermissoes = async () => {
+    if (!editando) return;
+    try {
+      await base44.entities.User.update(editando.id, {
+        modulos_liberados: modulosSelecionados,
+        pode_ver_dashboards: podeVerDashboards
+      });
+      toast.success('Permissões atualizadas!');
+      setEditando(null);
+      qc.invalidateQueries({ queryKey: ['usuarios'] });
+    } catch (e) {
+      toast.error('Erro ao atualizar permissões');
+    }
+  };
+
+  const toggleModulo = (moduloId) => {
+    setModulosSelecionados(prev =>
+      prev.includes(moduloId)
+        ? prev.filter(m => m !== moduloId)
+        : [...prev, moduloId]
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -168,15 +202,26 @@ export default function Usuarios() {
                         {ROLE_LABELS[u.role]?.label || u.role || 'Usuário'}
                       </Badge>
                       {u.role !== 'admin' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 border-red-300 hover:bg-red-50 text-xs"
-                          onClick={() => handleAprovar(u, false)}
-                          disabled={aprovando === u.id}
-                        >
-                          Revogar
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-orange-600 border-orange-300 hover:bg-orange-50 text-xs"
+                            onClick={() => handleEditarPermissoes(u)}
+                          >
+                            <Edit className="w-3 h-3 mr-1" />
+                            Permissões
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 border-red-300 hover:bg-red-50 text-xs"
+                            onClick={() => handleAprovar(u, false)}
+                            disabled={aprovando === u.id}
+                          >
+                            Revogar
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -225,6 +270,71 @@ export default function Usuarios() {
               {convidando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
               Enviar Convite
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editando} onOpenChange={() => setEditando(null)}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-orange-500" />
+              Permissões de {editando?.full_name || editando?.email}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
+              <div className="flex items-center gap-2 mb-2">
+                <Checkbox
+                  checked={podeVerDashboards}
+                  onCheckedChange={setPodeVerDashboards}
+                  id="dashboards"
+                />
+                <Label htmlFor="dashboards" className="cursor-pointer font-medium">
+                  Pode ver Visão Geral e Dashboards
+                </Label>
+              </div>
+              <p className="text-xs text-slate-500 ml-6">
+                Exibe estatísticas e gráficos na página inicial
+              </p>
+            </div>
+
+            <div>
+              <Label className="mb-2 block">Módulos permitidos</Label>
+              <p className="text-xs text-slate-500 mb-3">
+                Deixe vazio para liberar todos. Selecione módulos específicos para restringir o acesso.
+              </p>
+              <div className="space-y-2 border border-slate-200 rounded-lg p-3 bg-slate-50 max-h-64 overflow-y-auto">
+                {TODOS_MODULOS.map(modulo => (
+                  <div key={modulo.id} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={modulosSelecionados.includes(modulo.id)}
+                      onCheckedChange={() => toggleModulo(modulo.id)}
+                      id={modulo.id}
+                    />
+                    <Label htmlFor={modulo.id} className="cursor-pointer text-sm">
+                      {modulo.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setEditando(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-orange-500 hover:bg-orange-600"
+                onClick={handleSalvarPermissoes}
+              >
+                Salvar Permissões
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
