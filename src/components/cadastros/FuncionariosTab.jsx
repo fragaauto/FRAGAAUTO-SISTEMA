@@ -23,7 +23,7 @@ export default function FuncionariosTab() {
   const [showFuncaoModal, setShowFuncaoModal] = useState(false);
   const [editingFuncao, setEditingFuncao] = useState(null);
   const [deleteFuncaoId, setDeleteFuncaoId] = useState(null);
-  const [activeSection, setActiveSection] = useState('usuarios'); // 'usuarios' | 'funcoes'
+  const [activeSection, setActiveSection] = useState('funcionarios'); // 'funcionarios' | 'usuarios' | 'funcoes'
   const [showConvidarModal, setShowConvidarModal] = useState(false);
   const [convidandoEmail, setConvidandoEmail] = useState('');
   const [convidandoFuncaoId, setConvidandoFuncaoId] = useState('');
@@ -32,7 +32,15 @@ export default function FuncionariosTab() {
   const [editUserFuncaoId, setEditUserFuncaoId] = useState('');
   const [paginaAtualUsuarios, setPaginaAtualUsuarios] = useState(1);
   const [paginaAtualFuncoes, setPaginaAtualFuncoes] = useState(1);
+  const [paginaAtualFuncionarios, setPaginaAtualFuncionarios] = useState(1);
   const itensPorPagina = 20;
+  const [showFuncionarioModal, setShowFuncionarioModal] = useState(false);
+  const [editingFuncionario, setEditingFuncionario] = useState(null);
+  const [funcionarioForm, setFuncionarioForm] = useState({
+    nome_completo: '', cpf: '', telefone: '', email: '', data_nascimento: '', endereco: '',
+    funcao_id: '', data_admissao: '', status: 'ativo', login_usuario: '', senha_hash: '', observacoes: ''
+  });
+  const [senhaVisivel, setSenhaVisivel] = useState('');
 
   const [funcaoForm, setFuncaoForm] = useState({
     nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false,
@@ -52,6 +60,11 @@ export default function FuncionariosTab() {
     queryFn: () => base44.entities.User.list(),
   });
 
+  const { data: funcionarios = [], isLoading: loadingFuncionarios } = useQuery({
+    queryKey: ['funcionarios'],
+    queryFn: () => base44.entities.Funcionario.list('-created_date'),
+  });
+
   const createFuncaoMutation = useMutation({
     mutationFn: (data) => base44.entities.FuncaoFuncionario.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['funcoes_funcionario'] }); toast.success('Função criada!'); closeFuncaoModal(); }
@@ -68,6 +81,19 @@ export default function FuncionariosTab() {
   const updateUserMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['usuarios'] }); toast.success('Usuário atualizado!'); setEditUserModal(null); }
+  });
+
+  const createFuncionarioMutation = useMutation({
+    mutationFn: (data) => base44.entities.Funcionario.create(data),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['funcionarios'] }); toast.success('Funcionário cadastrado!'); closeFuncionarioModal(); }
+  });
+  const updateFuncionarioMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Funcionario.update(id, data),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['funcionarios'] }); toast.success('Funcionário atualizado!'); closeFuncionarioModal(); }
+  });
+  const deleteFuncionarioMutation = useMutation({
+    mutationFn: (id) => base44.entities.Funcionario.delete(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['funcionarios'] }); toast.success('Funcionário excluído!'); }
   });
 
   const openFuncaoModal = (f = null) => {
@@ -127,7 +153,43 @@ export default function FuncionariosTab() {
     });
   };
 
+  const openFuncionarioModal = (f = null) => {
+    if (f) {
+      setEditingFuncionario(f);
+      setFuncionarioForm({
+        nome_completo: f.nome_completo || '', cpf: f.cpf || '', telefone: f.telefone || '', email: f.email || '',
+        data_nascimento: f.data_nascimento || '', endereco: f.endereco || '', funcao_id: f.funcao_id || '',
+        data_admissao: f.data_admissao || '', status: f.status || 'ativo', login_usuario: f.login_usuario || '',
+        senha_hash: '', observacoes: f.observacoes || ''
+      });
+      setSenhaVisivel('');
+    } else {
+      setEditingFuncionario(null);
+      setFuncionarioForm({
+        nome_completo: '', cpf: '', telefone: '', email: '', data_nascimento: '', endereco: '',
+        funcao_id: '', data_admissao: new Date().toISOString().split('T')[0], status: 'ativo',
+        login_usuario: '', senha_hash: '', observacoes: ''
+      });
+      setSenhaVisivel('');
+    }
+    setShowFuncionarioModal(true);
+  };
+  const closeFuncionarioModal = () => { setShowFuncionarioModal(false); setEditingFuncionario(null); setSenhaVisivel(''); };
+
+  const handleSaveFuncionario = () => {
+    if (!funcionarioForm.nome_completo) return toast.error('Informe o nome completo');
+    const funcao = funcoes.find(f => f.id === funcionarioForm.funcao_id);
+    const dataToSave = {
+      ...funcionarioForm,
+      funcao_nome: funcao?.nome || null,
+      senha_hash: senhaVisivel || funcionarioForm.senha_hash
+    };
+    if (editingFuncionario) updateFuncionarioMutation.mutate({ id: editingFuncionario.id, data: dataToSave });
+    else createFuncionarioMutation.mutate(dataToSave);
+  };
+
   const filteredUsuarios = usuarios.filter(u => !search || u.full_name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()));
+  const filteredFuncionarios = funcionarios.filter(f => !search || f.nome_completo?.toLowerCase().includes(search.toLowerCase()) || f.cpf?.includes(search) || f.email?.toLowerCase().includes(search.toLowerCase()));
 
   const totalPaginasUsuarios = Math.ceil(filteredUsuarios.length / itensPorPagina);
   const usuariosPaginados = filteredUsuarios.slice((paginaAtualUsuarios - 1) * itensPorPagina, paginaAtualUsuarios * itensPorPagina);
@@ -135,16 +197,102 @@ export default function FuncionariosTab() {
   const totalPaginasFuncoes = Math.ceil(funcoes.length / itensPorPagina);
   const funcoesPaginadas = funcoes.slice((paginaAtualFuncoes - 1) * itensPorPagina, paginaAtualFuncoes * itensPorPagina);
 
+  const totalPaginasFuncionarios = Math.ceil(filteredFuncionarios.length / itensPorPagina);
+  const funcionariosPaginados = filteredFuncionarios.slice((paginaAtualFuncionarios - 1) * itensPorPagina, paginaAtualFuncionarios * itensPorPagina);
+
   return (
     <>
-      <div className="flex border-b mb-4">
-        <button onClick={() => setActiveSection('usuarios')} className={`px-4 py-2 text-sm font-medium border-b-2 transition-all ${activeSection === 'usuarios' ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
-          Funcionários/Usuários
+      <div className="flex border-b mb-4 overflow-x-auto">
+        <button onClick={() => setActiveSection('funcionarios')} className={`px-4 py-2 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${activeSection === 'funcionarios' ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+          📋 Funcionários
         </button>
-        <button onClick={() => setActiveSection('funcoes')} className={`px-4 py-2 text-sm font-medium border-b-2 transition-all ${activeSection === 'funcoes' ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
-          Funções/Cargos
+        <button onClick={() => setActiveSection('usuarios')} className={`px-4 py-2 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${activeSection === 'usuarios' ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+          👤 Usuários (Login)
+        </button>
+        <button onClick={() => setActiveSection('funcoes')} className={`px-4 py-2 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${activeSection === 'funcoes' ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+          ⚙️ Funções/Cargos
         </button>
       </div>
+
+      {activeSection === 'funcionarios' && (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-slate-500 text-sm">{funcionarios.length} funcionários cadastrados</p>
+            <Button onClick={() => openFuncionarioModal()} className="bg-orange-500 hover:bg-orange-600" size="sm">
+              <Plus className="w-4 h-4 mr-1" />Novo Funcionário
+            </Button>
+          </div>
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input placeholder="Buscar por nome, CPF ou email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          {loadingFuncionarios ? (
+            <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-orange-400" /></div>
+          ) : funcionarios.length === 0 ? (
+            <Card className="py-10">
+              <CardContent className="text-center">
+                <UserCog className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                <p className="text-slate-500 mb-3">Nenhum funcionário cadastrado</p>
+                <Button onClick={() => openFuncionarioModal()} className="bg-orange-500 hover:bg-orange-600">
+                  <Plus className="w-4 h-4 mr-1" />Cadastrar Primeiro Funcionário
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {funcionariosPaginados.map(f => {
+                const funcao = funcoes.find(fn => fn.id === f.funcao_id);
+                const statusColors = { ativo: 'bg-green-100 text-green-700', inativo: 'bg-red-100 text-red-700', ferias: 'bg-blue-100 text-blue-700', afastado: 'bg-yellow-100 text-yellow-700' };
+                return (
+                  <Card key={f.id} className="hover:shadow-sm transition-all">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <UserCog className="w-5 h-5 text-orange-600" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-semibold text-slate-800">{f.nome_completo}</p>
+                              <Badge className={statusColors[f.status] || 'bg-slate-100 text-slate-700'}>{f.status}</Badge>
+                              {funcao && <Badge className="bg-blue-100 text-blue-700 text-xs">{funcao.nome}</Badge>}
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                              {f.cpf && <span>CPF: {f.cpf}</span>}
+                              {f.telefone && <span>Tel: {f.telefone}</span>}
+                              {f.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{f.email}</span>}
+                            </div>
+                            {f.login_usuario && (
+                              <p className="text-xs text-blue-600 mt-1">🔑 Login: {f.login_usuario}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => openFuncionarioModal(f)}><Edit className="w-4 h-4" /></Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader><AlertDialogTitle>Excluir funcionário?</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => deleteFuncionarioMutation.mutate(f.id)} className="bg-red-500 hover:bg-red-600">Excluir</AlertDialogAction></AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+          {totalPaginasFuncionarios > 1 && (
+            <div className="mt-6">
+              <Paginacao paginaAtual={paginaAtualFuncionarios} totalPaginas={totalPaginasFuncionarios} onPaginaChange={setPaginaAtualFuncionarios} />
+            </div>
+          )}
+        </>
+      )}
 
       {activeSection === 'usuarios' && (
         <>
@@ -475,6 +623,66 @@ export default function FuncionariosTab() {
           <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => deleteFuncaoMutation.mutate(deleteFuncaoId)} className="bg-red-500 hover:bg-red-600">Excluir</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal Cadastrar/Editar Funcionário */}
+      <Dialog open={showFuncionarioModal} onOpenChange={setShowFuncionarioModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>{editingFuncionario ? 'Editar Funcionário' : 'Novo Funcionário'}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2"><Label>Nome Completo *</Label><Input value={funcionarioForm.nome_completo} onChange={e => setFuncionarioForm(p => ({ ...p, nome_completo: e.target.value }))} placeholder="Nome completo" /></div>
+              <div><Label>CPF</Label><Input value={funcionarioForm.cpf} onChange={e => setFuncionarioForm(p => ({ ...p, cpf: e.target.value }))} placeholder="000.000.000-00" /></div>
+              <div><Label>Telefone</Label><Input value={funcionarioForm.telefone} onChange={e => setFuncionarioForm(p => ({ ...p, telefone: e.target.value }))} placeholder="(00) 00000-0000" /></div>
+              <div><Label>E-mail</Label><Input type="email" value={funcionarioForm.email} onChange={e => setFuncionarioForm(p => ({ ...p, email: e.target.value }))} placeholder="email@exemplo.com" /></div>
+              <div><Label>Data de Nascimento</Label><Input type="date" value={funcionarioForm.data_nascimento} onChange={e => setFuncionarioForm(p => ({ ...p, data_nascimento: e.target.value }))} /></div>
+              <div className="col-span-2"><Label>Endereço</Label><Input value={funcionarioForm.endereco} onChange={e => setFuncionarioForm(p => ({ ...p, endereco: e.target.value }))} placeholder="Endereço completo" /></div>
+            </div>
+            <div className="border-t pt-4">
+              <h3 className="font-semibold text-slate-700 mb-3">Dados Profissionais</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Função/Cargo</Label>
+                  <Select value={funcionarioForm.funcao_id} onValueChange={v => setFuncionarioForm(p => ({ ...p, funcao_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Selecione a função" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={null}>Sem função</SelectItem>
+                      {funcoes.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Data de Admissão</Label><Input type="date" value={funcionarioForm.data_admissao} onChange={e => setFuncionarioForm(p => ({ ...p, data_admissao: e.target.value }))} /></div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={funcionarioForm.status} onValueChange={v => setFuncionarioForm(p => ({ ...p, status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ativo">Ativo</SelectItem>
+                      <SelectItem value="inativo">Inativo</SelectItem>
+                      <SelectItem value="ferias">Férias</SelectItem>
+                      <SelectItem value="afastado">Afastado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <div className="border-t pt-4">
+              <h3 className="font-semibold text-slate-700 mb-2">Acesso ao Sistema (Opcional)</h3>
+              <p className="text-xs text-slate-500 mb-3">Crie um login e senha para que o funcionário acesse o sistema internamente</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Nome de Usuário (Login)</Label><Input value={funcionarioForm.login_usuario} onChange={e => setFuncionarioForm(p => ({ ...p, login_usuario: e.target.value }))} placeholder="usuario123" /></div>
+                <div><Label>Senha</Label><Input type="text" value={senhaVisivel} onChange={e => setSenhaVisivel(e.target.value)} placeholder={editingFuncionario ? "Deixe vazio para não alterar" : "Digite a senha"} /></div>
+              </div>
+            </div>
+            <div><Label>Observações</Label><Textarea value={funcionarioForm.observacoes} onChange={e => setFuncionarioForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Anotações gerais sobre o funcionário..." rows={3} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeFuncionarioModal}>Cancelar</Button>
+            <Button onClick={handleSaveFuncionario} disabled={createFuncionarioMutation.isPending || updateFuncionarioMutation.isPending} className="bg-orange-500 hover:bg-orange-600">
+              {(createFuncionarioMutation.isPending || updateFuncionarioMutation.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
