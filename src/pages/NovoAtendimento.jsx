@@ -75,6 +75,7 @@ export default function NovoAtendimento() {
     marca: '',
     ano: '',
     km_atual: '',
+    observacoes_veiculo: '',
     data_entrada: new Date().toISOString(),
     queixa_inicial: '',
     itens_queixa: [],
@@ -348,6 +349,12 @@ export default function NovoAtendimento() {
         setActiveTab('dados');
         return;
       }
+      
+      if (config.os_observacoes_veiculo_obrigatorio && !formData.observacoes_veiculo) {
+        toast.error('❌ Observações do veículo são obrigatórias');
+        setActiveTab('dados');
+        return;
+      }
     }
 
     if (config.os_tecnico_obrigatorio && !formData.tecnico) {
@@ -377,6 +384,7 @@ export default function NovoAtendimento() {
       marca: formData.marca || '',
       ano: formData.ano || '',
       km_atual: formData.km_atual || '',
+      observacoes_veiculo: formData.observacoes_veiculo || '',
       data_entrada: formData.data_entrada,
       queixa_inicial: formData.queixa_inicial || '',
       itens_queixa: formData.itens_queixa || [],
@@ -652,6 +660,15 @@ export default function NovoAtendimento() {
                         className="h-12"
                       />
                     </div>
+                  </div>
+                  <div>
+                    <Label>Observações do Veículo {config.os_observacoes_veiculo_obrigatorio && <span className="text-red-500">*</span>}</Label>
+                    <Textarea
+                      placeholder="Informações adicionais sobre o veículo (avarias, condição geral, etc.)"
+                      value={formData.observacoes_veiculo}
+                      onChange={(e) => handleInputChange('observacoes_veiculo', e.target.value)}
+                      className="min-h-[80px]"
+                    />
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
