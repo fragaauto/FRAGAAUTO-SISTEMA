@@ -1459,18 +1459,18 @@ export default function VerAtendimento() {
                 </CardContent>
               </Card>
 
-                {(atendimento.itens_orcamento?.length > 0) && atendimento.subtotal_checklist > 0 && (
-                  <Card className="bg-orange-100 border-orange-300">
-                    <CardContent className="pt-6">
-                      <div className="flex justify-between items-center text-lg font-bold text-orange-700">
-                        <span>Subtotal do Checklist:</span>
-                        <span>R$ {atendimento.subtotal_checklist?.toFixed(2) || '0.00'}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+              {(atendimento.itens_orcamento?.length > 0) && atendimento.subtotal_checklist > 0 && (
+                <Card className="bg-orange-100 border-orange-300">
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-center text-lg font-bold text-orange-700">
+                      <span>Subtotal do Checklist:</span>
+                      <span>R$ {atendimento.subtotal_checklist?.toFixed(2) || '0.00'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-                <Card className="bg-slate-800 text-white">
+              <Card className="bg-slate-800 text-white">
                   <CardContent className="pt-6 space-y-3">
                     {atendimento.subtotal_queixa > 0 && (
                       <div className="flex justify-between text-blue-300">
