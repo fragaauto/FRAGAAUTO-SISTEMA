@@ -21,19 +21,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'A senha deve ter no mínimo 6 caracteres' }, { status: 400 });
     }
 
-    // Cadastra o usuário usando o serviço de auth
-    const novoUsuario = await base44.asServiceRole.auth.createUser({
+    // Cria o usuário diretamente na tabela User
+    const novoUsuario = await base44.asServiceRole.entities.User.create({
       email,
-      password,
       full_name: full_name || email.split('@')[0],
       role: role || 'user',
-      aprovado: true, // Admin cadastrando já aprova automaticamente
+      aprovado: true,
+      // A senha será definida quando o usuário fizer primeiro login
+      senha_temporaria: password
     });
 
     return Response.json({ 
       success: true, 
       usuario: novoUsuario,
-      message: 'Usuário cadastrado com sucesso'
+      message: 'Usuário cadastrado com sucesso. Informe ao usuário que deve fazer login com o email e a senha fornecida.'
     });
 
   } catch (error) {
