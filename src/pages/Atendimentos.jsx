@@ -53,6 +53,7 @@ import Paginacao from '@/components/ui/Paginacao';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ReciboAtendimento from '@/components/financeiro/ReciboAtendimento';
 import { FileCheck } from 'lucide-react';
+import MenuAtendimento from '@/components/atendimento/MenuAtendimento';
 
 const STATUS_FIXOS = {
   rascunho: { label: 'Rascunho', cor: '#94a3b8' },
@@ -264,6 +265,9 @@ export default function Atendimentos() {
   return (
     <>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
+      {/* Menu de abas */}
+      <MenuAtendimento currentPath="Atendimentos" />
+      
       {/* Header */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 py-6">
