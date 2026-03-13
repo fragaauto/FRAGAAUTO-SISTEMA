@@ -49,11 +49,16 @@ export default function Usuarios() {
   const handleAprovar = async (u, aprovar) => {
     setAprovando(u.id);
     try {
-      await base44.entities.User.update(u.id, { aprovado: aprovar });
-      toast.success(aprovar ? `${u.full_name || u.email} aprovado!` : `${u.full_name || u.email} reprovado.`);
+      if (aprovar) {
+        await base44.entities.User.update(u.id, { aprovado: true });
+        toast.success(`${u.full_name || u.email} aprovado!`);
+      } else {
+        await base44.entities.User.delete(u.id);
+        toast.success(`${u.full_name || u.email} removido do sistema.`);
+      }
       qc.invalidateQueries({ queryKey: ['usuarios'] });
     } catch (e) {
-      toast.error('Erro ao atualizar usuário');
+      toast.error(e?.message || 'Erro ao processar solicitação');
     } finally {
       setAprovando(null);
     }
