@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
 
     // Buscar lembretes ativos
     const lembretes = await base44.asServiceRole.entities.LembreteWhatsApp.list();
-    const ativos = lembretes.filter(l => l.ativo);
+    const ativos = (lembretes || []).filter(l => l.ativo);
 
     let enviados = 0;
     const erros = [];
