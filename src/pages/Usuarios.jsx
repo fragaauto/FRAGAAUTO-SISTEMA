@@ -209,6 +209,14 @@ export default function Usuarios() {
                       <p className="text-sm text-slate-500 flex items-center gap-1 truncate">
                         <Mail className="w-3 h-3" /> {u.email}
                       </p>
+                      {u.funcao_id && (() => {
+                        const funcao = funcoes.find(f => f.id === u.funcao_id);
+                        return funcao ? (
+                          <p className="text-xs text-slate-400 truncate">
+                            Cargo: {funcao.nome}
+                          </p>
+                        ) : null;
+                      })()}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className={ROLE_LABELS[u.role]?.color || 'bg-slate-100 text-slate-600'}>
