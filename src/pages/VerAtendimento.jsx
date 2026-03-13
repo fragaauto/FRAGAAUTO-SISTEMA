@@ -1471,47 +1471,47 @@ export default function VerAtendimento() {
               )}
 
               <Card className="bg-slate-800 text-white">
-                  <CardContent className="pt-6 space-y-3">
-                    {atendimento.subtotal_queixa > 0 && (
-                      <div className="flex justify-between text-blue-300">
-                        <span>Subtotal da Queixa:</span>
-                        <span>R$ {atendimento.subtotal_queixa?.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {atendimento.subtotal_checklist > 0 && (
-                      <div className="flex justify-between text-orange-300">
-                        <span>Subtotal do Checklist:</span>
-                        <span>R$ {atendimento.subtotal_checklist?.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between border-t border-white/20 pt-2">
-                      <span>Subtotal Total:</span>
-                      <span>R$ {atendimento.subtotal?.toFixed(2)}</span>
+                <CardContent className="pt-6 space-y-3">
+                  {atendimento.subtotal_queixa > 0 && (
+                    <div className="flex justify-between text-blue-300">
+                      <span>Subtotal da Queixa:</span>
+                      <span>R$ {atendimento.subtotal_queixa?.toFixed(2)}</span>
                     </div>
-                    {atendimento.desconto > 0 && (
-                      <div className="flex justify-between text-green-400">
-                        <span>Desconto:</span>
-                        <span>- R$ {atendimento.desconto?.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="border-t border-white/20 pt-3 flex justify-between text-xl font-bold">
-                      <span>TOTAL:</span>
-                      <span className="text-orange-400">R$ {atendimento.valor_final?.toFixed(2)}</span>
+                  )}
+                  {atendimento.subtotal_checklist > 0 && (
+                    <div className="flex justify-between text-orange-300">
+                      <span>Subtotal do Checklist:</span>
+                      <span>R$ {atendimento.subtotal_checklist?.toFixed(2)}</span>
                     </div>
+                  )}
+                  <div className="flex justify-between border-t border-white/20 pt-2">
+                    <span>Subtotal Total:</span>
+                    <span>R$ {atendimento.subtotal?.toFixed(2)}</span>
+                  </div>
+                  {atendimento.desconto > 0 && (
+                    <div className="flex justify-between text-green-400">
+                      <span>Desconto:</span>
+                      <span>- R$ {atendimento.desconto?.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-white/20 pt-3 flex justify-between text-xl font-bold">
+                    <span>TOTAL:</span>
+                    <span className="text-orange-400">R$ {atendimento.valor_final?.toFixed(2)}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {atendimento.observacoes && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Observações</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-700 whitespace-pre-wrap">{atendimento.observacoes}</p>
                   </CardContent>
                 </Card>
-
-                {atendimento.observacoes && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Observações</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-slate-700 whitespace-pre-wrap">{atendimento.observacoes}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </>
+              )}
+            </>
             )}
           </TabsContent>
 
