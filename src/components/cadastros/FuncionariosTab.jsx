@@ -666,12 +666,20 @@ export default function FuncionariosTab() {
               </div>
             </div>
             <div className="border-t pt-4">
-              <h3 className="font-semibold text-slate-700 mb-2">Acesso ao Sistema (Opcional)</h3>
-              <p className="text-xs text-slate-500 mb-3">Crie um login e senha para que o funcionário acesse o sistema internamente</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div><Label>Nome de Usuário (Login)</Label><Input value={funcionarioForm.login_usuario} onChange={e => setFuncionarioForm(p => ({ ...p, login_usuario: e.target.value }))} placeholder="usuario123" /></div>
-                <div><Label>Senha</Label><Input type="text" value={senhaVisivel} onChange={e => setSenhaVisivel(e.target.value)} placeholder={editingFuncionario ? "Deixe vazio para não alterar" : "Digite a senha"} /></div>
+              <h3 className="font-semibold text-slate-700 mb-2">Dados de Login (Opcional - Apenas Referência)</h3>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 flex gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-700">
+                  <p className="font-semibold mb-1">⚠️ Login não funcional neste cadastro</p>
+                  <p>Funcionários cadastrados aqui podem ser atribuídos a serviços e aparecer nos relatórios, mas <strong>não podem fazer login no sistema</strong>.</p>
+                  <p className="mt-1">Para acesso ao sistema, convide-os na aba "Usuários (Login)" através do email.</p>
+                </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label>Usuário (apenas registro)</Label><Input value={funcionarioForm.login_usuario} onChange={e => setFuncionarioForm(p => ({ ...p, login_usuario: e.target.value }))} placeholder="usuario123" /></div>
+                <div><Label>Senha (apenas registro)</Label><Input type="text" value={senhaVisivel} onChange={e => setSenhaVisivel(e.target.value)} placeholder={editingFuncionario ? "Deixe vazio para não alterar" : "Digite a senha"} /></div>
+              </div>
+              <p className="text-xs text-slate-400 mt-2">💡 Estes campos são apenas para registro interno (ex: credenciais de acesso a outros sistemas).</p>
             </div>
             <div><Label>Observações</Label><Textarea value={funcionarioForm.observacoes} onChange={e => setFuncionarioForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Anotações gerais sobre o funcionário..." rows={3} /></div>
           </div>
