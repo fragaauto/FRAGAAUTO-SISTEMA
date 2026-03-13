@@ -151,7 +151,7 @@ export default function FuncionariosTab() {
           <div className="flex items-center justify-between mb-4">
             <p className="text-slate-500 text-sm">{usuarios.length} usuários</p>
             <Button onClick={() => setShowConvidarModal(true)} className="bg-orange-500 hover:bg-orange-600" size="sm">
-              <UserPlus className="w-4 h-4 mr-1" />Cadastrar Funcionário
+              <UserPlus className="w-4 h-4 mr-1" />Convidar Funcionário
             </Button>
           </div>
           <div className="relative mb-4">
@@ -406,60 +406,14 @@ export default function FuncionariosTab() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Cadastrar/Convidar */}
+      {/* Modal Convidar */}
       <Dialog open={showConvidarModal} onOpenChange={setShowConvidarModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><UserPlus className="w-5 h-5 text-orange-500" />Cadastrar Funcionário</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><UserPlus className="w-5 h-5 text-orange-500" />Convidar Funcionário</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Tipo de cadastro</Label>
-              <Select value={tipoCadastro} onValueChange={setTipoCadastro}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="senha">Cadastro direto com senha</SelectItem>
-                  <SelectItem value="convite">Enviar convite por email</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-500 mt-1">
-                {tipoCadastro === 'senha' 
-                  ? 'Crie login e senha para acesso imediato'
-                  : 'O funcionário receberá email para criar sua conta'
-                }
-              </p>
-            </div>
-
-            {tipoCadastro === 'senha' && (
-              <div>
-                <Label>Nome completo</Label>
-                <Input
-                  value={convidandoNome}
-                  onChange={e => setConvidandoNome(e.target.value)}
-                  placeholder="Nome do funcionário"
-                />
-              </div>
-            )}
-
             <div><Label>E-mail *</Label><Input type="email" value={convidandoEmail} onChange={e => setConvidandoEmail(e.target.value)} placeholder="email@exemplo.com" /></div>
-
-            {tipoCadastro === 'senha' && (
-              <div>
-                <Label>Senha *</Label>
-                <Input
-                  type="password"
-                  value={convidandoSenha}
-                  onChange={e => setConvidandoSenha(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  Informe esta senha ao funcionário para o primeiro acesso
-                </p>
-              </div>
-            )}
-
             <div>
-              <Label>Função/Cargo</Label>
+              <Label>Função</Label>
               <Select value={convidandoFuncaoId} onValueChange={setConvidandoFuncaoId}>
                 <SelectTrigger><SelectValue placeholder="Selecione a função" /></SelectTrigger>
                 <SelectContent>
@@ -468,10 +422,12 @@ export default function FuncionariosTab() {
                 </SelectContent>
               </Select>
             </div>
-
-            <Button className="w-full bg-orange-500 hover:bg-orange-600" onClick={handleConvidar} disabled={convidando || !convidandoEmail || (tipoCadastro === 'senha' && !convidandoSenha)}>
-              {convidando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
-              {tipoCadastro === 'senha' ? 'Cadastrar Funcionário' : 'Enviar Convite'}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700">O funcionário receberá um e-mail de convite. Após aceitar, você poderá editar os módulos de acesso.</p>
+            </div>
+            <Button className="w-full bg-orange-500 hover:bg-orange-600" onClick={handleConvidar} disabled={convidando || !convidandoEmail}>
+              {convidando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}Enviar Convite
             </Button>
           </div>
         </DialogContent>
