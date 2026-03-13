@@ -739,6 +739,12 @@ export default function VerAtendimento() {
                     </p>
                   </div>
                 </div>
+                {atendimento.observacoes_veiculo && (
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-sm text-slate-500 mb-1">Observações do Veículo</p>
+                    <p className="text-slate-700 whitespace-pre-wrap">{atendimento.observacoes_veiculo}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

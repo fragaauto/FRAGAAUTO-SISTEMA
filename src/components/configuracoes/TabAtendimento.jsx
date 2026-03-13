@@ -76,6 +76,7 @@ export default function TabAtendimento({ formData, onChange, onSave, isSaving })
             { key: 'os_placa_obrigatorio', label: 'Placa do Veículo' },
             { key: 'os_modelo_obrigatorio', label: 'Modelo do Veículo' },
             { key: 'os_km_obrigatorio', label: 'KM Atual' },
+            { key: 'os_observacoes_veiculo_obrigatorio', label: 'Observações do Veículo' },
             { key: 'os_queixa_obrigatorio', label: 'Queixa Inicial' },
             { key: 'os_tecnico_obrigatorio', label: 'Técnico Responsável' },
             { key: 'os_atribuicao_servico_obrigatoria', label: 'Atribuir técnico a cada serviço' },
