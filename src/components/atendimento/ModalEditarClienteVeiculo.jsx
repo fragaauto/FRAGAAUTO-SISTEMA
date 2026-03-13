@@ -31,6 +31,18 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
     staleTime: 10 * 60 * 1000
   });
 
+  const { data: funcionarios = [] } = useQuery({
+    queryKey: ['funcionarios_modal'],
+    queryFn: () => base44.entities.Funcionario.list(),
+    staleTime: 10 * 60 * 1000
+  });
+
+  // Mesclar usuários e funcionários ativos
+  const todosUsuarios = [
+    ...usuarios.filter(u => u.full_name).map(u => ({ nome: u.full_name })),
+    ...funcionarios.filter(f => f.status === 'ativo').map(f => ({ nome: f.nome_completo }))
+  ];
+
   const handleSave = () => {
     onSave({
       ...dados,
@@ -167,8 +179,8 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={null}>Sem técnico definido</SelectItem>
-                  {usuarios.filter(u => u.full_name).map(u => (
-                    <SelectItem key={u.id} value={u.full_name}>{u.full_name}</SelectItem>
+                  {todosUsuarios.map((u, idx) => (
+                    <SelectItem key={idx} value={u.nome}>{u.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
