@@ -11,18 +11,30 @@ export default function AtribuirTecnicoModal({ item, onConfirm, onClose }) {
     item.tecnicos?.length > 0 ? item.tecnicos : []
   );
 
-  const { data: tecnicos = [] } = useQuery({
-    queryKey: ['tecnicos'],
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios'],
     queryFn: () => base44.entities.User.list(),
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: funcionarios = [] } = useQuery({
+    queryKey: ['funcionarios_atribuicao'],
+    queryFn: () => base44.entities.Funcionario.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Mesclar usuários e funcionários ativos
+  const tecnicos = [
+    ...usuarios.map(u => ({ id: u.id, nome: u.full_name || u.email, tipo: 'usuario' })),
+    ...funcionarios.filter(f => f.status === 'ativo').map(f => ({ id: f.id, nome: f.nome_completo, tipo: 'funcionario' }))
+  ];
 
   const toggleTecnico = (tecnico) => {
     const existe = tecnicosSelecionados.find(t => t.id === tecnico.id);
     if (existe) {
       setTecnicosSelecionados(tecnicosSelecionados.filter(t => t.id !== tecnico.id));
     } else {
-      setTecnicosSelecionados([...tecnicosSelecionados, { id: tecnico.id, nome: tecnico.full_name || tecnico.email }]);
+      setTecnicosSelecionados([...tecnicosSelecionados, { id: tecnico.id, nome: tecnico.nome }]);
     }
   };
 
@@ -93,7 +105,7 @@ export default function AtribuirTecnicoModal({ item, onConfirm, onClose }) {
                     >
                       <div className="flex items-center gap-2">
                         <Wrench className={`w-4 h-4 ${isSelected ? 'text-blue-500' : 'text-slate-400'}`} />
-                        <span className="text-sm font-medium">{t.full_name || t.email}</span>
+                        <span className="text-sm font-medium">{t.nome}</span>
                       </div>
                       {isSelected && <Check className="w-5 h-5 text-blue-600" />}
                     </button>
