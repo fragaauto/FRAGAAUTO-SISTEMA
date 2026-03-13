@@ -28,8 +28,10 @@ import {
   CreditCard,
   UserPlus,
   Wrench,
-  AlertTriangle
+  AlertTriangle,
+  ShoppingCart
 } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -65,6 +67,7 @@ export default function NovoAtendimento() {
   const nomeInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
+    venda_direta: false,
     cliente_nome: '',
     cliente_telefone: '',
     placa: '',
@@ -338,10 +341,13 @@ export default function NovoAtendimento() {
   const handleSave = () => {
     console.log('💾 [SALVAR] Iniciando salvamento...');
     
-    if (!formData.placa || !formData.modelo) {
-      toast.error('❌ Preencha placa e modelo do veículo');
-      setActiveTab('dados');
-      return;
+    // Validar campos obrigatórios apenas se NÃO for venda direta
+    if (!formData.venda_direta) {
+      if (!formData.placa || !formData.modelo) {
+        toast.error('❌ Preencha placa e modelo do veículo');
+        setActiveTab('dados');
+        return;
+      }
     }
 
     if (config.os_tecnico_obrigatorio && !formData.tecnico) {
@@ -361,12 +367,13 @@ export default function NovoAtendimento() {
 
     const dataToSave = {
       numero_os: novoNumeroOs,
+      venda_direta: formData.venda_direta || false,
       cliente_nome: formData.cliente_nome || '',
       cliente_telefone: formData.cliente_telefone || '',
       cliente_cpf: formData.cliente_cpf || '',
       cliente_endereco: formData.cliente_endereco || '',
-      placa: formData.placa.toUpperCase(),
-      modelo: formData.modelo,
+      placa: formData.placa ? formData.placa.toUpperCase() : '',
+      modelo: formData.modelo || '',
       marca: formData.marca || '',
       ano: formData.ano || '',
       km_atual: formData.km_atual || '',
@@ -591,14 +598,40 @@ export default function NovoAtendimento() {
               exit={{ opacity: 0, x: 20 }}
               className="space-y-6"
             >
+              {/* Checkbox Venda Direta */}
+              <Card className={formData.venda_direta ? 'border-green-300 bg-green-50' : ''}>
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="venda_direta"
+                      checked={formData.venda_direta}
+                      onCheckedChange={(checked) => handleInputChange('venda_direta', checked)}
+                    />
+                    <div className="flex-1">
+                      <label
+                        htmlFor="venda_direta"
+                        className="text-sm font-semibold text-slate-700 cursor-pointer flex items-center gap-2"
+                      >
+                        <ShoppingCart className="w-4 h-4 text-green-600" />
+                        Venda Direta (sem veículo)
+                      </label>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Marque esta opção para vendas diretas de produtos sem necessidade de dados de cliente ou veículo
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Vehicle */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Car className="w-5 h-5 text-orange-500" />
-                    Dados do Veículo
-                  </CardTitle>
-                </CardHeader>
+              {!formData.venda_direta && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Car className="w-5 h-5 text-orange-500" />
+                      Dados do Veículo
+                    </CardTitle>
+                  </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -651,8 +684,10 @@ export default function NovoAtendimento() {
                   </div>
                 </CardContent>
               </Card>
+              )}
 
               {/* Client */}
+              {!formData.venda_direta && (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -781,6 +816,7 @@ export default function NovoAtendimento() {
                   </div>
                 </CardContent>
               </Card>
+              )}
 
               {/* Técnico Responsável */}
               <Card>
