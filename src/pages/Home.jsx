@@ -373,7 +373,7 @@ export default function Home() {
         // Se não definido no usuário, verifica na função
         if (user?.funcao_id) {
           const funcao = funcoes.find(f => f.id === user.funcao_id);
-          return funcao?.pode_ver_relatorio_proprio !== false;
+          return funcao?.pode_ver_dashboards !== false;
         }
         
         return true; // Default: pode ver

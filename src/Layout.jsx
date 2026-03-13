@@ -117,7 +117,15 @@ export default function Layout({ children, currentPageName }) {
     // Apenas admin pode acessar
     if (item.apenasAdmin) return false;
 
-    // Itens sem módulo (Home, Configurações básicas)
+    // Obter função do usuário
+    const funcao = user?.funcao_id ? funcoes.find(f => f.id === user.funcao_id) : null;
+
+    // Controles especiais de páginas específicas pela função
+    if (item.path === 'ManualTreinamento' && funcao?.pode_acessar_manual === false) return false;
+    if (item.path === 'Configuracoes' && funcao?.pode_acessar_configuracoes === false) return false;
+    if (item.path === 'Usuarios' && funcao?.pode_acessar_usuarios === false) return false;
+
+    // Itens sem módulo (Home e outras páginas gerais)
     if (!item.modulo) return true;
 
     // Verifica se módulo está ativo no sistema
@@ -129,9 +137,8 @@ export default function Layout({ children, currentPageName }) {
     // Determina módulos permitidos: primeiro do usuário, depois da função
     let modulosPermitidos = user?.modulos_liberados || [];
     
-    if (modulosPermitidos.length === 0 && user?.funcao_id) {
-      const funcao = funcoes.find(f => f.id === user.funcao_id);
-      modulosPermitidos = funcao?.modulos_liberados || [];
+    if (modulosPermitidos.length === 0 && funcao) {
+      modulosPermitidos = funcao.modulos_liberados || [];
     }
 
     // Se não tem restrição nem na função nem no usuário, libera
