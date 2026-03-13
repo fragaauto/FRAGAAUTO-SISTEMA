@@ -94,11 +94,14 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const [obsExterna, setObsExterna] = useState(atendimento.obs_externa || '');
   const [descontoTipo, setDescontoTipo] = useState('valor');
   const [descontoValor, setDescontoValor] = useState(atendimento.desconto_pagamento || 0);
-  const [pagamentos, setPagamentos] = useState(
-    atendimento.formas_pagamento_lancamento?.length > 0
-      ? atendimento.formas_pagamento_lancamento
-      : [{ forma: 'pix', valor: valorBase > 0 ? valorBase : (atendimento.valor_final || 0) }]
-  );
+  const [pagamentos, setPagamentos] = useState(() => {
+    if (atendimento.formas_pagamento_lancamento?.length > 0) {
+      return atendimento.formas_pagamento_lancamento;
+    }
+    // Calcular valor inicial considerando desconto já aplicado
+    const valorInicial = valorBase - (atendimento.desconto_pagamento || 0);
+    return [{ forma: 'pix', valor: Math.max(0, valorInicial) }];
+  });
 
   const desconto = descontoTipo === 'percentual'
     ? (valorBase * descontoValor) / 100
@@ -125,6 +128,16 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     novo[i] = { ...novo[i], [field]: field === 'valor' ? parseFloat(val) || 0 : val };
     setPagamentos(novo);
   };
+
+  // Atualizar valores de pagamento quando desconto mudar
+  React.useEffect(() => {
+    if (pagamentos.length === 1 && !jaLancado) {
+      const valorAtualizado = Math.max(0, totalComDesconto);
+      if (Math.abs(pagamentos[0].valor - valorAtualizado) > 0.01) {
+        setPagamentos([{ ...pagamentos[0], valor: valorAtualizado }]);
+      }
+    }
+  }, [totalComDesconto]);
 
   const salvarObsMutation = useMutation({
     mutationFn: () => base44.entities.Atendimento.update(atendimento.id, {

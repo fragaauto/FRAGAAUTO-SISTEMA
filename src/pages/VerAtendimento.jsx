@@ -1394,44 +1394,18 @@ export default function VerAtendimento() {
             {atendimento.itens_orcamento?.length === 0 ? (
               <Card className="py-8">
                 <CardContent className="text-center text-slate-500">
-                  Nenhum item no orçamento
+                  Nenhum item no orçamento do checklist
                 </CardContent>
               </Card>
             ) : (
-              <>
-            {atendimento.queixa_inicial && (
-              <Card className="border-blue-200 bg-blue-50/50">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-blue-700 flex items-center gap-2">
-                    <MessageCircle className="w-5 h-5" />
-                    Queixa Inicial do Cliente
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-slate-700 whitespace-pre-wrap">{atendimento.queixa_inicial}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {atendimento.itens_queixa?.length > 0 && (
-              <Card className="border-blue-200">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-blue-700">Orçamento da Queixa Inicial</CardTitle>
-                  {isAdmin && !pagamentoLancado && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(createPageUrl(`EditarQueixa?id=${atendimento.id}`))}
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Editar Itens
-                    </Button>
-                  )}
+                  <CardTitle>Itens do Orçamento (Checklist)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {atendimento.itens_queixa.map((item, idx) => (
+                  {atendimento.itens_orcamento.map((item, idx) => (
                     <div key={idx} className="space-y-2">
-                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="flex items-center justify-between mb-2">
                           <div>
                             <p className="font-medium">{item.nome}</p>
@@ -1439,18 +1413,14 @@ export default function VerAtendimento() {
                               {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
                             </p>
                           </div>
-                          <p className="font-bold text-blue-600">
+                          <p className="font-bold text-orange-600">
                             R$ {item.valor_total?.toFixed(2)}
                           </p>
                         </div>
                         {!pagamentoLancado && (
                           <ItemOrcamento
                             item={item}
-                            onUpdate={(updated) => {
-                              const novosItens = [...atendimento.itens_queixa];
-                              novosItens[idx] = updated;
-                              updateMutation.mutate({ itens_queixa: novosItens });
-                            }}
+                            onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
                             onRemove={() => {}}
                             showDeleteButton={false}
                           />
@@ -1458,7 +1428,7 @@ export default function VerAtendimento() {
                         {item.tecnicos && item.tecnicos.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
                             {item.tecnicos.map((tec, i) => (
-                              <Badge key={i} variant="outline" className="text-xs bg-blue-100 text-blue-700">
+                              <Badge key={i} variant="outline" className="text-xs bg-orange-100 text-orange-700">
                                 <Wrench className="w-3 h-3 mr-1" />
                                 {tec.nome}
                               </Badge>
@@ -1486,15 +1456,8 @@ export default function VerAtendimento() {
                       )}
                     </div>
                   ))}
-                  <div className="p-3 bg-blue-100 border-t-2 border-blue-400 rounded-lg">
-                    <div className="flex justify-between items-center text-lg font-bold text-blue-700">
-                      <span>Subtotal da Queixa:</span>
-                      <span>R$ {atendimento.subtotal_queixa?.toFixed(2) || '0.00'}</span>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
-            )}
 
                 {(atendimento.itens_orcamento?.length > 0) && atendimento.subtotal_checklist > 0 && (
                   <Card className="bg-orange-100 border-orange-300">
