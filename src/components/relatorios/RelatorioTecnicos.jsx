@@ -16,6 +16,9 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
   const [filtroProduto, setFiltroProduto] = useState('');
   const [tecnicoExpandido, setTecnicoExpandido] = useState(null);
   const [incluirDetalhes, setIncluirDetalhes] = useState(false);
+  
+  // Nota: O relatório captura os nomes dos técnicos diretamente dos atendimentos (a.tecnicos_responsaveis ou itens_*.tecnicos)
+  // Não é necessário buscar listas de usuarios/funcionarios aqui, pois os dados já estão salvos no atendimento
   const taxasMap = useMemo(() => {
     const map = {};
     (config.taxas_pagamento || []).forEach(t => { map[t.forma] = t.taxa_percentual || 0; });
