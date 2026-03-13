@@ -28,7 +28,8 @@ import {
   XCircle,
   DollarSign,
   TrendingUp,
-  Calendar } from
+  Calendar,
+  LogOut } from
 'lucide-react';
 import { motion } from 'framer-motion';
 import AgendaHoje from '../components/agenda/AgendaHoje';
@@ -267,6 +268,17 @@ export default function Home() {
                   >
                     <Shield className="w-5 h-5 mr-2" />
                     Fazer Login
+                  </Button>
+                )}
+                {isLoggedIn && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="bg-slate-50 text-slate-950 px-6 text-base font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border shadow-sm hover:text-accent-foreground border-white/30 hover:bg-white/10 h-12"
+                    onClick={() => base44.auth.logout()}
+                  >
+                    <LogOut className="w-5 h-5 mr-2" />
+                    Sair
                   </Button>
                 )}
                 <Link to={createPageUrl('NovoAtendimento')}>

@@ -14,7 +14,8 @@ import {
   Sparkles,
   Calendar,
   Shield,
-  Loader2
+  Loader2,
+  LogOut
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -126,6 +127,16 @@ export default function Layout({ children, currentPageName }) {
           </Link>
         );
       })}
+      <button
+        onClick={() => {
+          base44.auth.logout();
+          if (onNavigate) onNavigate();
+        }}
+        className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-600 hover:bg-red-50 hover:text-red-600 w-full"
+      >
+        <LogOut className="w-5 h-5" />
+        Sair
+      </button>
     </div>
   );
 
