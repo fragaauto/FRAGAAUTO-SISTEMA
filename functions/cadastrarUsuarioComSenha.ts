@@ -21,20 +21,31 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'A senha deve ter no mínimo 6 caracteres' }, { status: 400 });
     }
 
-    // Cria o usuário diretamente na tabela User
-    const novoUsuario = await base44.asServiceRole.entities.User.create({
-      email,
+    // Primeiro, envia o convite para criar a conta
+    await base44.asServiceRole.users.inviteUser(email, role || 'user');
+    
+    // Aguarda um pouco para o usuário ser criado
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Busca o usuário criado
+    const usuarios = await base44.asServiceRole.entities.User.filter({ email });
+    
+    if (usuarios.length === 0) {
+      throw new Error('Usuário não foi criado corretamente');
+    }
+    
+    const novoUsuario = usuarios[0];
+    
+    // Atualiza com o nome completo e aprova
+    await base44.asServiceRole.entities.User.update(novoUsuario.id, {
       full_name: full_name || email.split('@')[0],
-      role: role || 'user',
-      aprovado: true,
-      // A senha será definida quando o usuário fizer primeiro login
-      senha_temporaria: password
+      aprovado: true
     });
 
     return Response.json({ 
       success: true, 
-      usuario: novoUsuario,
-      message: 'Usuário cadastrado com sucesso. Informe ao usuário que deve fazer login com o email e a senha fornecida.'
+      usuario: { ...novoUsuario, full_name: full_name || email.split('@')[0] },
+      message: `Usuário cadastrado. Login: ${email} / Senha: definir no primeiro acesso via link do email`
     });
 
   } catch (error) {
