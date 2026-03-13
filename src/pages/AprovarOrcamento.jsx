@@ -151,10 +151,11 @@ export default function AprovarOrcamento() {
       // Se clicar na mesma decisão, voltar para pendente
       const decisaoFinal = decisaoAtual === novaDecisao ? 'pendente' : novaDecisao;
       
-      return {
+      const novasDecisoes = {
         ...prev,
         [key]: { ...prev[key], decisao: decisaoFinal }
       };
+      return novasDecisoes;
     });
   };
 
@@ -632,27 +633,17 @@ export default function AprovarOrcamento() {
 
                   <div className="flex gap-2">
                     <Button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleDecisao(key, 'aprovado');
-                      }}
+                      onClick={() => toggleDecisao(key, 'aprovado')}
                       variant={decisao === 'aprovado' ? 'default' : 'outline'}
-                      className={`flex-1 ${decisao === 'aprovado' ? 'bg-green-600 hover:bg-green-700 text-white' : 'hover:bg-green-50'}`}
+                      className={`flex-1 ${decisao === 'aprovado' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                       Aprovado
                     </Button>
                     <Button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleDecisao(key, 'reprovado');
-                      }}
+                      onClick={() => toggleDecisao(key, 'reprovado')}
                       variant={decisao === 'reprovado' ? 'default' : 'outline'}
-                      className={`flex-1 ${decisao === 'reprovado' ? 'bg-red-600 hover:bg-red-700 text-white' : 'hover:bg-red-50'}`}
+                      className={`flex-1 ${decisao === 'reprovado' ? 'bg-red-600 hover:bg-red-700' : ''}`}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
                       Recusado
@@ -662,9 +653,9 @@ export default function AprovarOrcamento() {
                   ))}
                   </CardContent>
                   </Card>
-                   )}
+                  )}
 
-                   {/* Itens do Checklist */}
+                  {/* Itens do Checklist */}
         {itensChecklist.length > 0 && (
           <Card>
             <CardHeader>
@@ -720,27 +711,17 @@ export default function AprovarOrcamento() {
 
                   <div className="flex gap-2">
                     <Button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleDecisao(key, 'aprovado');
-                      }}
+                      onClick={() => toggleDecisao(key, 'aprovado')}
                       variant={decisao === 'aprovado' ? 'default' : 'outline'}
-                      className={`flex-1 ${decisao === 'aprovado' ? 'bg-green-600 hover:bg-green-700 text-white' : 'hover:bg-green-50'}`}
+                      className={`flex-1 ${decisao === 'aprovado' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                       Aprovado
                     </Button>
                     <Button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleDecisao(key, 'reprovado');
-                      }}
+                      onClick={() => toggleDecisao(key, 'reprovado')}
                       variant={decisao === 'reprovado' ? 'default' : 'outline'}
-                      className={`flex-1 ${decisao === 'reprovado' ? 'bg-red-600 hover:bg-red-700 text-white' : 'hover:bg-red-50'}`}
+                      className={`flex-1 ${decisao === 'reprovado' ? 'bg-red-600 hover:bg-red-700' : ''}`}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
                       Recusado
@@ -750,7 +731,7 @@ export default function AprovarOrcamento() {
                   ))}
                   </CardContent>
                   </Card>
-                   )}
+                  )}
 
                   {/* Totais - Fixo no topo quando scrollar */}
         <div className="sticky top-0 z-30">
