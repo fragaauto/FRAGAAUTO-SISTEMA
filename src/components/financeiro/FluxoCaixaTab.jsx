@@ -395,13 +395,16 @@ export default function FluxoCaixaTab() {
 }
 
 function NovoLancamentoModal({ open, onClose, onSaved }) {
-  const [form, setForm] = useState({ tipo: 'entrada', descricao: '', valor: '', forma_pagamento: 'dinheiro', categoria: '', observacoes: '' });
+  const hoje = new Date().toISOString().split('T')[0];
+  const [form, setForm] = useState({ tipo: 'entrada', descricao: '', valor: '', forma_pagamento: 'dinheiro', categoria: '', observacoes: '', data: hoje });
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
     if (!form.descricao || !form.valor) return toast.error('Preencha descrição e valor');
+    if (!form.data) return toast.error('Selecione a data do lançamento');
     setSaving(true);
-    await base44.entities.LancamentoFinanceiro.create({ ...form, valor: parseFloat(form.valor), data_lancamento: new Date().toISOString() });
+    const dataLancamento = new Date(form.data + 'T12:00:00').toISOString();
+    await base44.entities.LancamentoFinanceiro.create({ ...form, valor: parseFloat(form.valor), data_lancamento: dataLancamento });
     setSaving(false);
     onSaved();
   };
@@ -425,6 +428,10 @@ function NovoLancamentoModal({ open, onClose, onSaved }) {
                 <SelectContent>{Object.entries(FORMAS_LABELS).map(([v,l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+          </div>
+          <div>
+            <Label>Data do Lançamento *</Label>
+            <Input type="date" value={form.data} onChange={e => setForm(p=>({...p, data: e.target.value}))} />
           </div>
           <Button onClick={save} disabled={saving} className="w-full">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Salvar
