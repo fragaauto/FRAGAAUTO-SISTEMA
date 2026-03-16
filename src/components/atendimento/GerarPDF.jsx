@@ -140,9 +140,11 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
                         ? 'background:#fef2f2;color:#991b1b;border:1px solid #fca5a5'
                         : 'background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1';
                     const statusLabel = aprovacao === 'aprovado' ? '✓ APROVADO' : aprovacao === 'reprovado' ? '✗ REPROVADO' : '— PENDENTE';
+                    const tecnicosItem = item.tecnicos?.length > 0 ? item.tecnicos.map(t => t.nome).join(', ') : '';
                     return `
                     <tr>
                       <td>${item.nome}
+                        ${tecnicosItem ? `<div style="margin-top:4px;font-size:11px;color:#7c3aed">🔧 Técnico(s): ${tecnicosItem}</div>` : ''}
                         ${item.observacao_item ? `<div style="margin-top:6px;padding:8px;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:4px"><strong style="font-size:11px;color:#1e40af">📝 Observações:</strong><p style="font-size:11px;color:#1e3a8a;margin:4px 0 0">${item.observacao_item}</p></div>` : ''}
                         ${item.vantagens ? `<div style="margin-top:6px;padding:8px;background:#f0fdf4;border-left:3px solid #22c55e;border-radius:4px"><strong style="font-size:11px;color:#166534">✓ Benefícios:</strong><p style="font-size:11px;color:#15803d;margin:4px 0 0">${item.vantagens}</p></div>` : ''}
                         ${item.desvantagens ? `<div style="margin-top:6px;padding:8px;background:#fef2f2;border-left:3px solid #f59e0b;border-radius:4px"><strong style="font-size:11px;color:#92400e">⚠️ Riscos:</strong><p style="font-size:11px;color:#78350f;margin:4px 0 0">${item.desvantagens}</p></div>` : ''}
