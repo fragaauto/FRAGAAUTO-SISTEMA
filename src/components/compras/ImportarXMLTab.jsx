@@ -44,6 +44,59 @@ function parseNFe(xmlStr) {
   return { fornecedor, numero_nf: nNF, data_emissao: dhEmi, itens, valor_total: vNF };
 }
 
+function VincularProdutoModal({ itemNFe, produtos, onVincular, onClose }) {
+  const [busca, setBusca] = useState('');
+  const filtrados = busca.length > 1
+    ? produtos.filter(p =>
+        p.nome?.toLowerCase().includes(busca.toLowerCase()) ||
+        p.codigo?.toLowerCase().includes(busca.toLowerCase())
+      ).slice(0, 10)
+    : produtos.slice(0, 10);
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Link className="w-4 h-4 text-blue-500" />
+            Vincular produto ao cadastro
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="bg-slate-50 rounded-lg p-3 text-sm">
+            <p className="text-slate-500 text-xs mb-0.5">Produto na NF-e:</p>
+            <p className="font-semibold">{itemNFe.nome}</p>
+            <p className="text-slate-400 text-xs">Cód: {itemNFe.codigo} · Custo: R$ {itemNFe.custo_unitario.toFixed(2)}</p>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            <input
+              autoFocus
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              placeholder="Buscar produto cadastrado..."
+              className="w-full pl-9 h-9 border border-slate-200 rounded-md text-sm px-3 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+          </div>
+          <div className="max-h-64 overflow-y-auto space-y-1">
+            {filtrados.map(p => (
+              <button key={p.id} onClick={() => onVincular(p)}
+                className="w-full text-left px-3 py-2.5 rounded-lg border hover:bg-blue-50 hover:border-blue-300 transition-all text-sm flex justify-between items-center">
+                <div>
+                  <p className="font-medium">{p.nome}</p>
+                  <p className="text-xs text-slate-400">Cód: {p.codigo} · Estoque: {p.estoque_atual || 0} · Custo atual: R$ {(p.custo || 0).toFixed(2)}</p>
+                </div>
+                <Link className="w-4 h-4 text-blue-400 flex-shrink-0 ml-2" />
+              </button>
+            ))}
+            {filtrados.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Nenhum produto encontrado</p>}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function ImportarXMLTab() {
   const qc = useQueryClient();
   const fileRef = useRef();
@@ -51,6 +104,7 @@ export default function ImportarXMLTab() {
   const [itensConfig, setItensConfig] = useState([]); // configuração de cada item: vincular produto, margem, etc.
   const [processando, setProcessando] = useState(false);
   const [concluido, setConcluido] = useState(false);
+  const [vinculandoIdx, setVinculandoIdx] = useState(null); // índice do item sendo vinculado
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos-estoque'],
