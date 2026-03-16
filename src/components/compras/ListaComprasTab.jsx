@@ -262,6 +262,36 @@ function EditarListaModal({ lista, produtos, onClose, onSaved }) {
   );
 }
 
+function imprimirLista(lista) {
+  const todosItens = [
+    ...(lista.itens || []).map(i => ({ nome: i.produto_nome, qtd: i.quantidade, obs: i.obs, tipo: 'estoque' })),
+    ...(lista.itens_livres || []).map(i => ({ nome: i.nome, qtd: i.quantidade, obs: i.obs, tipo: 'livre' })),
+  ];
+  const linhas = todosItens.map(i =>
+    `<tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${i.nome}${i.tipo === 'livre' ? ' <span style="font-size:10px;color:#f97316">*</span>' : ''}</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;">${i.qtd}</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:12px;">${i.obs || ''}</td></tr>`
+  ).join('');
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${lista.nome}</title>
+  <style>body{font-family:Arial,sans-serif;padding:24px;color:#1e293b}h2{margin-bottom:4px}p{margin:0 0 16px;color:#64748b;font-size:13px}table{width:100%;border-collapse:collapse}th{background:#1e40af;color:white;padding:8px;text-align:left;font-size:13px}tr:nth-child(even){background:#f8fafc}.footer{margin-top:16px;font-size:11px;color:#94a3b8}@media print{button{display:none}}</style></head>
+  <body><h2>${lista.nome}</h2><p>${lista.observacoes || ''} — ${todosItens.length} itens — gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
+  <table><thead><tr><th>Produto</th><th style="width:60px;text-align:center">Qtd</th><th>Observação</th></tr></thead><tbody>${linhas}</tbody></table>
+  <p class="footer">* Produto não cadastrado no sistema</p>
+  <script>window.onload=()=>window.print()</script></body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) return toast.error('Permita pop-ups para imprimir');
+  w.document.write(html);
+  w.document.close();
+}
+
+function compartilharLista(lista) {
+  const todosItens = [
+    ...(lista.itens || []).map(i => `▪ ${i.produto_nome} — x${i.quantidade}${i.obs ? ` (${i.obs})` : ''}`),
+    ...(lista.itens_livres || []).map(i => `▪ ${i.nome} — x${i.quantidade}${i.obs ? ` (${i.obs})` : ''}`),
+  ];
+  const texto = `📋 *Lista de Compras: ${lista.nome}*\n${lista.observacoes ? `_${lista.observacoes}_\n` : ''}\n${todosItens.join('\n')}\n\n_${todosItens.length} itens — ${format(new Date(), 'dd/MM/yyyy')}_`;
+  const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+  window.open(url, '_blank');
+}
+
 function ListaCard({ lista, produtos, onUpdate }) {
   const [expanded, setExpanded] = useState(false);
   const [editando, setEditando] = useState(false);
