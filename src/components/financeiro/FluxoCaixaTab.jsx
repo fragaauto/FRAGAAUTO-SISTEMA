@@ -9,12 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet, CalendarRange } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { format, subDays, startOfDay } from 'date-fns';
+import { format, subDays, startOfDay, parseISO } from 'date-fns';
 import FluxoCaixaChart from './FluxoCaixaChart';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -30,6 +30,8 @@ export default function FluxoCaixaTab() {
   const [filtroForma, setFiltroForma] = useState('todos');
   const [showNovo, setShowNovo] = useState(false);
   const [exportando, setExportando] = useState(false);
+  const [dataInicioPers, setDataInicioPers] = useState('');
+  const [dataFimPers, setDataFimPers] = useState('');
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.LancamentoFinanceiro.delete(id),
@@ -49,9 +51,18 @@ export default function FluxoCaixaTab() {
     staleTime: 60 * 1000,
   });
 
-  const dataInicio = subDays(new Date(), parseInt(periodo)).toISOString();
+  const dataInicio = periodo === 'custom'
+    ? (dataInicioPers ? new Date(dataInicioPers + 'T00:00:00').toISOString() : null)
+    : subDays(new Date(), parseInt(periodo)).toISOString();
+  const dataFim = periodo === 'custom'
+    ? (dataFimPers ? new Date(dataFimPers + 'T23:59:59').toISOString() : null)
+    : null;
+
   const filtrados = lancamentos.filter(l => {
-    const dentroPeriodo = l.data_lancamento >= dataInicio;
+    const data = l.data_lancamento || '';
+    const dentroPeriodo = periodo === 'custom'
+      ? (!dataInicio || data >= dataInicio) && (!dataFim || data <= dataFim)
+      : data >= dataInicio;
     const matchForma = filtroForma === 'todos' || l.forma_pagamento === filtroForma;
     return dentroPeriodo && matchForma;
   });
@@ -71,7 +82,10 @@ export default function FluxoCaixaTab() {
       
       // Período
       doc.setFontSize(10);
-      doc.text(`Período: Últimos ${periodo} dias`, 14, 28);
+      const labelPeriodoDoc = periodo === 'custom'
+        ? `${dataInicioPers || '?'} até ${dataFimPers || '?'}`
+        : `Últimos ${periodo} dias`;
+      doc.text(`Período: ${labelPeriodoDoc}`, 14, 28);
       doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 33);
       
       // Preparar dados
@@ -171,14 +185,34 @@ export default function FluxoCaixaTab() {
       {/* Filtros */}
       <div className="flex gap-2 flex-wrap">
         <Select value={periodo} onValueChange={setPeriodo}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="7">Últimos 7 dias</SelectItem>
             <SelectItem value="15">Últimos 15 dias</SelectItem>
             <SelectItem value="30">Últimos 30 dias</SelectItem>
             <SelectItem value="90">Últimos 90 dias</SelectItem>
+            <SelectItem value="custom">📅 Período personalizado</SelectItem>
           </SelectContent>
         </Select>
+
+        {periodo === 'custom' && (
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              value={dataInicioPers}
+              onChange={e => setDataInicioPers(e.target.value)}
+              className="w-36 h-9 text-sm"
+            />
+            <span className="text-slate-400 text-sm">até</span>
+            <Input
+              type="date"
+              value={dataFimPers}
+              onChange={e => setDataFimPers(e.target.value)}
+              className="w-36 h-9 text-sm"
+            />
+          </div>
+        )}
+
         <Select value={filtroForma} onValueChange={setFiltroForma}>
           <SelectTrigger className="w-36"><SelectValue placeholder="Forma" /></SelectTrigger>
           <SelectContent>
