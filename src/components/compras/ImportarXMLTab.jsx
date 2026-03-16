@@ -152,6 +152,30 @@ export default function ImportarXMLTab() {
     reader.readAsText(file, 'UTF-8');
   };
 
+  const vincularProduto = (idx, produtoCadastrado) => {
+    setItensConfig(prev => {
+      const arr = [...prev];
+      arr[idx] = {
+        ...arr[idx],
+        produto_id: produtoCadastrado.id,
+        produto_match: produtoCadastrado,
+        acao: 'atualizar',
+        preco_venda: parseFloat((arr[idx].custo_unitario * (1 + arr[idx].margem_percentual / 100)).toFixed(2)),
+      };
+      return arr;
+    });
+    setVinculandoIdx(null);
+    toast.success(`Vinculado a "${produtoCadastrado.nome}"!`);
+  };
+
+  const desvincularProduto = (idx) => {
+    setItensConfig(prev => {
+      const arr = [...prev];
+      arr[idx] = { ...arr[idx], produto_id: null, produto_match: null, acao: 'criar' };
+      return arr;
+    });
+  };
+
   const updateConfig = (idx, field, val) => {
     setItensConfig(prev => {
       const arr = [...prev];
