@@ -46,7 +46,14 @@ export default function ReciboAtendimento({ atendimento, config }) {
   const formas = atendimento.formas_pagamento_lancamento || [];
   const formaUnica = atendimento.forma_pagamento_lancamento;
   const obsCliente = atendimento.obs_externa || '';
-  const tecnicosResp = atendimento.tecnicos_responsaveis || [];
+  // Consolida técnicos de todas as fontes: aba pagamento, itens da queixa e itens do orçamento
+  const tecnicosMap = new Map();
+  (atendimento.tecnicos_responsaveis || []).forEach(t => t?.id && tecnicosMap.set(t.id, t.nome));
+  [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])].forEach(item => {
+    (item.tecnicos || []).forEach(t => t?.id && tecnicosMap.set(t.id, t.nome));
+  });
+  if (atendimento.tecnico && tecnicosMap.size === 0) tecnicosMap.set('legado', atendimento.tecnico);
+  const tecnicosResp = Array.from(tecnicosMap.entries()).map(([id, nome]) => ({ id, nome }));
 
   const dataServico = atendimento.data_pagamento || atendimento.data_entrada || atendimento.created_date;
   const osNum = atendimento.numero_os ? `OS #${String(atendimento.numero_os).padStart(6, '0')}` : '';
