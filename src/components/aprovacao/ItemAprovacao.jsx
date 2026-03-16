@@ -42,13 +42,14 @@ export default function ItemAprovacao({ item, onUpdate }) {
   };
 
   const handleStatusServicoChange = (newStatus) => {
+    if (isUpdating) return;
     setIsUpdating(true);
     setStatusServico(newStatus);
     onUpdate({
       ...item,
       status_servico: newStatus
     });
-    setTimeout(() => setIsUpdating(false), 1000);
+    setTimeout(() => setIsUpdating(false), 1500);
   };
 
   const getStatusBadge = (status) => {
