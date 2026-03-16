@@ -232,7 +232,7 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
               </div>
             ` : ''}
             <div class="signatures">
-              <div class="signature"><div class="signature-line"><p>Técnico Responsável</p><small>${atendimento.tecnico || 'Fraga Auto Portas'}</small></div></div>
+              <div class="signature"><div class="signature-line"><p>Técnico Responsável</p><small>${tecnicosLabel}</small></div></div>
               <div class="signature"><div class="signature-line"><p>Cliente</p><small>${atendimento.cliente_nome || ''}</small></div></div>
             </div>
             <p style="text-align:center;color:#94a3b8;font-size:11px;margin-top:20px">Orçamento válido por 7 dias • Fraga Auto Portas © ${new Date().getFullYear()}</p>
