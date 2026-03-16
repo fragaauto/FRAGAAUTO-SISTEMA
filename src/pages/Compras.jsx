@@ -252,6 +252,40 @@ export default function Compras() {
         )}
       </div>
 
+      {/* Modal Adicionar produto a lista existente */}
+      <Dialog open={!!adicionandoALista} onOpenChange={() => setAdicionandoALista(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-blue-600" />
+              Adicionar à Lista
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm font-medium text-slate-800">{adicionandoALista?.nome}</p>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Lista de destino</label>
+              <Select value={listaDestinoId} onValueChange={setListaDestinoId}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione uma lista" /></SelectTrigger>
+                <SelectContent>
+                  {listasAbertas.map(l => <SelectItem key={l.id} value={l.id}>{l.nome} ({(l.itens?.length || 0) + (l.itens_livres?.length || 0)} itens)</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Quantidade</label>
+              <Input type="number" min={1} value={qtdAdicionar} onChange={e => setQtdAdicionar(parseInt(e.target.value) || 1)} className="mt-1 w-24" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdicionandoALista(null)}>Cancelar</Button>
+            <Button onClick={salvarItemNaLista} disabled={salvandoItemLista} className="bg-blue-600 hover:bg-blue-700">
+              {salvandoItemLista ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Modal Gerar Lista de Compras */}
       <Dialog open={showGerarLista} onOpenChange={setShowGerarLista}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
