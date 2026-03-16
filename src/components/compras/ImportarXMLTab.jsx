@@ -227,10 +227,31 @@ export default function ImportarXMLTab() {
             ? ((prod.custo * estoqueAtual) + (item.custo_unitario * item.quantidade)) / novoEstoque
             : item.custo_unitario;
 
+          // Atualiza fornecedores: adiciona/atualiza entrada do fornecedor da NF
+          const fornecedoresAtuais = prod?.fornecedores || [];
+          const fornecedorExistenteIdx = fornecedoresAtuais.findIndex(
+            f => f.fornecedor_nome?.toLowerCase() === nfeData.fornecedor?.toLowerCase()
+          );
+          const novoFornecedor = {
+            fornecedor_nome: nfeData.fornecedor,
+            codigo_fornecedor: item.codigo,
+            preco_compra: item.custo_unitario,
+            principal: fornecedorExistenteIdx === -1 && fornecedoresAtuais.length === 0,
+          };
+          let fornecedoresAtualizados;
+          if (fornecedorExistenteIdx >= 0) {
+            fornecedoresAtualizados = fornecedoresAtuais.map((f, i) =>
+              i === fornecedorExistenteIdx ? { ...f, ...novoFornecedor } : f
+            );
+          } else {
+            fornecedoresAtualizados = [...fornecedoresAtuais, novoFornecedor];
+          }
+
           await base44.entities.Produto.update(item.produto_id, {
             custo: parseFloat(custoMedio.toFixed(4)),
             valor: item.preco_venda,
             estoque_atual: novoEstoque,
+            fornecedores: fornecedoresAtualizados,
           });
           await base44.entities.MovimentoEstoque.create({
             produto_id: item.produto_id,
