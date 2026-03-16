@@ -325,6 +325,12 @@ function ListaCard({ lista, produtos, onUpdate }) {
               {lista.observacoes && <p className="text-xs text-slate-400 mt-0.5">{lista.observacoes}</p>}
             </div>
             <div className="flex items-center gap-2 ml-2">
+              <button onClick={() => imprimirLista(lista)} className="text-slate-400 hover:text-slate-700" title="Imprimir / Salvar PDF">
+                <Printer className="w-4 h-4" />
+              </button>
+              <button onClick={() => compartilharLista(lista)} className="text-green-500 hover:text-green-700" title="Compartilhar no WhatsApp">
+                <Share2 className="w-4 h-4" />
+              </button>
               {lista.status !== 'concluida' && (
                 <button onClick={() => setEditando(true)} className="text-blue-400 hover:text-blue-600" title="Editar lista">
                   <Edit className="w-4 h-4" />
