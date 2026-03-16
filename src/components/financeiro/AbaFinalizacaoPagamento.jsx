@@ -335,23 +335,10 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const estornarMutation = useMutation({
     mutationFn: async () => {
       // Estornar lançamentos financeiros do atendimento
+      // Deletar lançamentos financeiros do atendimento (sem gerar saída de estorno)
       const lancamentos = await base44.entities.LancamentoFinanceiro.filter({ atendimento_id: atendimento.id });
       for (const lanc of lancamentos) {
-        if (!lanc.estornado) {
-          await base44.entities.LancamentoFinanceiro.update(lanc.id, { estornado: true });
-          // Criar lançamento de estorno
-          await base44.entities.LancamentoFinanceiro.create({
-            tipo: 'saida',
-            descricao: `ESTORNO - ${lanc.descricao}`,
-            valor: lanc.valor,
-            forma_pagamento: lanc.forma_pagamento,
-            atendimento_id: atendimento.id,
-            usuario: user?.email,
-            data_lancamento: new Date().toISOString(),
-            categoria: 'estorno',
-            estornado: false,
-          });
-        }
+        await base44.entities.LancamentoFinanceiro.delete(lanc.id);
       }
 
       // Estornar movimentos de estoque e devolver ao saldo do produto

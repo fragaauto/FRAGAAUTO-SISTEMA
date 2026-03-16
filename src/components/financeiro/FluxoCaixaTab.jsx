@@ -32,12 +32,45 @@ export default function FluxoCaixaTab() {
   const [exportando, setExportando] = useState(false);
   const [dataInicioPers, setDataInicioPers] = useState('');
   const [dataFimPers, setDataFimPers] = useState('');
+  const [selecionados, setSelecionados] = useState(new Set());
+  const [deletandoMultiplos, setDeletandoMultiplos] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.LancamentoFinanceiro.delete(id),
     onSuccess: () => { toast.success('Movimentação excluída'); qc.invalidateQueries(['lancamentos-todos']); },
     onError: () => toast.error('Erro ao excluir'),
   });
+
+  const deletarSelecionados = async () => {
+    if (selecionados.size === 0) return;
+    setDeletandoMultiplos(true);
+    try {
+      await Promise.all([...selecionados].map(id => base44.entities.LancamentoFinanceiro.delete(id)));
+      toast.success(`${selecionados.size} lançamento(s) excluído(s)`);
+      setSelecionados(new Set());
+      qc.invalidateQueries(['lancamentos-todos']);
+    } catch {
+      toast.error('Erro ao excluir lançamentos');
+    } finally {
+      setDeletandoMultiplos(false);
+    }
+  };
+
+  const toggleSelecionado = (id) => {
+    setSelecionados(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleTodos = () => {
+    if (selecionados.size === filtrados.length) {
+      setSelecionados(new Set());
+    } else {
+      setSelecionados(new Set(filtrados.map(l => l.id)));
+    }
+  };
 
   const { data: lancamentos = [], isLoading } = useQuery({
     queryKey: ['lancamentos-todos'],
@@ -264,13 +297,55 @@ export default function FluxoCaixaTab() {
 
       {/* Lista */}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-slate-700">Movimentações ({filtrados.length})</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={filtrados.length > 0 && selecionados.size === filtrados.length}
+              onChange={toggleTodos}
+              className="w-4 h-4 rounded cursor-pointer"
+            />
+            <h3 className="text-sm font-semibold text-slate-700">Movimentações ({filtrados.length})</h3>
+          </div>
+          {selecionados.size > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="destructive" disabled={deletandoMultiplos} className="gap-1">
+                  {deletandoMultiplos ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  Excluir {selecionados.size} selecionado(s)
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir {selecionados.size} lançamento(s)?</AlertDialogTitle>
+                  <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={deletarSelecionados} className="bg-red-600 hover:bg-red-700">Excluir</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
         ) : (
           [...filtrados].sort((a, b) => (b.data_lancamento || '') > (a.data_lancamento || '') ? 1 : -1).map(l => (
-            <div key={l.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
+            <div
+              key={l.id}
+              className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors ${selecionados.has(l.id) ? 'bg-blue-50 border-blue-300' : 'bg-white border-slate-100'}`}
+              onClick={() => toggleSelecionado(l.id)}
+            >
               <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selecionados.has(l.id)}
+                  onChange={() => toggleSelecionado(l.id)}
+                  onClick={e => e.stopPropagation()}
+                  className="w-4 h-4 rounded cursor-pointer flex-shrink-0"
+                />
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${l.tipo === 'entrada' ? 'bg-green-100' : 'bg-red-100'}`}>
                   {l.tipo === 'entrada'
                     ? <ArrowUpCircle className="w-4 h-4 text-green-600" />
@@ -283,7 +358,7 @@ export default function FluxoCaixaTab() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                 <p className={`font-bold text-sm ${l.tipo === 'entrada' ? 'text-green-600' : 'text-red-500'}`}>
                   {l.tipo === 'entrada' ? '+' : '-'} R$ {(l.valor || 0).toFixed(2)}
                 </p>
