@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, XCircle, AlertCircle, Clock, Settings } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, Clock, Settings, Loader2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
