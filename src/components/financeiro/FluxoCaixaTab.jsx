@@ -276,23 +276,36 @@ export default function FluxoCaixaTab() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card className="bg-slate-50 border border-slate-200">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-1 mb-1">
+              <CalendarRange className="w-4 h-4 text-slate-500" />
+              <span className="text-xs text-slate-500">Saldo Anterior</span>
+            </div>
+            <p className={`font-bold ${saldoAnterior >= 0 ? 'text-slate-700' : 'text-orange-600'}`}>R$ {saldoAnterior.toFixed(2)}</p>
+            <p className="text-xs text-slate-400 mt-0.5">antes do período</p>
+          </CardContent>
+        </Card>
         <Card className="bg-green-50 border-0">
           <CardContent className="p-3">
             <div className="flex items-center gap-1 mb-1"><ArrowUpCircle className="w-4 h-4 text-green-600" /><span className="text-xs text-slate-500">Entradas</span></div>
             <p className="font-bold text-green-700">R$ {entradas.toFixed(2)}</p>
+            <p className="text-xs text-slate-400 mt-0.5">no período</p>
           </CardContent>
         </Card>
         <Card className="bg-red-50 border-0">
           <CardContent className="p-3">
             <div className="flex items-center gap-1 mb-1"><ArrowDownCircle className="w-4 h-4 text-red-500" /><span className="text-xs text-slate-500">Saídas</span></div>
             <p className="font-bold text-red-600">R$ {saidas.toFixed(2)}</p>
+            <p className="text-xs text-slate-400 mt-0.5">no período</p>
           </CardContent>
         </Card>
-        <Card className={`${saldo >= 0 ? 'bg-blue-50' : 'bg-orange-50'} border-0`}>
+        <Card className={`${saldoFinal >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'} border`}>
           <CardContent className="p-3">
-            <div className="flex items-center gap-1 mb-1"><span className="text-xs text-slate-500">Saldo</span></div>
-            <p className={`font-bold ${saldo >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>R$ {saldo.toFixed(2)}</p>
+            <div className="flex items-center gap-1 mb-1"><span className="text-xs text-slate-500 font-semibold">Saldo Final</span></div>
+            <p className={`font-bold text-lg ${saldoFinal >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>R$ {saldoFinal.toFixed(2)}</p>
+            <p className="text-xs text-slate-400 mt-0.5">anterior + entradas - saídas</p>
           </CardContent>
         </Card>
       </div>
