@@ -48,6 +48,36 @@ export default function Compras() {
   const [nomeLista, setNomeLista] = useState('');
   const [salvandoLista, setSalvandoLista] = useState(false);
 
+  const { data: listasAbertas = [] } = useQuery({
+    queryKey: ['listas-compras'],
+    queryFn: () => base44.entities.ListaCompras.filter({ status: 'aberta' }),
+    staleTime: 30 * 1000,
+  });
+
+  const [adicionandoALista, setAdicionandoALista] = useState(null); // produto sendo adicionado
+  const [listaDestinoId, setListaDestinoId] = useState('');
+  const [qtdAdicionar, setQtdAdicionar] = useState(1);
+  const [salvandoItemLista, setSalvandoItemLista] = useState(false);
+
+  const salvarItemNaLista = async () => {
+    if (!listaDestinoId) return toast.error('Selecione uma lista');
+    const lista = listasAbertas.find(l => l.id === listaDestinoId);
+    if (!lista) return;
+    const prod = adicionandoALista;
+    const jaExiste = (lista.itens || []).find(i => i.produto_id === prod.id);
+    const novosItens = jaExiste
+      ? (lista.itens || []).map(i => i.produto_id === prod.id ? { ...i, quantidade: (i.quantidade || 0) + qtdAdicionar } : i)
+      : [...(lista.itens || []), { produto_id: prod.id, produto_nome: prod.nome, codigo: prod.codigo, quantidade: qtdAdicionar, obs: `Estoque: ${prod.estoque_atual || 0}` }];
+    setSalvandoItemLista(true);
+    await base44.entities.ListaCompras.update(lista.id, { itens: novosItens });
+    setSalvandoItemLista(false);
+    toast.success(`"${prod.nome}" adicionado à lista!`);
+    qc.invalidateQueries(['listas-compras']);
+    setAdicionandoALista(null);
+    setListaDestinoId('');
+    setQtdAdicionar(1);
+  };
+
   const abrirGerarLista = () => {
     const itens = estoqueBaixo.map(p => {
       const qtdFalta = Math.max(0, (p.estoque_desejado || p.estoque_minimo || 0) - (p.estoque_atual || 0));
