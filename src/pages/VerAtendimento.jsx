@@ -406,10 +406,11 @@ export default function VerAtendimento() {
   };
 
   const handleUpdateItemChecklist = (index, updatedItem) => {
+    // Cancela timeout anterior para evitar múltiplas chamadas simultâneas
+    if (pendingChecklistRef.current) clearTimeout(pendingChecklistRef.current);
     const novosItens = [...(atendimento.itens_orcamento || [])];
     novosItens[index] = updatedItem;
     
-    // Recalcular totais
     const subtotal = novosItens.reduce((acc, item) => acc + (item.valor_total || 0), 0);
     const valor_final = subtotal - (atendimento.desconto || 0);
     
@@ -420,12 +421,14 @@ export default function VerAtendimento() {
       descricao: `Item "${updatedItem.nome}" editado - status: ${updatedItem.status_aprovacao}`
     };
     
-    updateMutation.mutate({ 
-      itens_orcamento: novosItens,
-      subtotal,
-      valor_final,
-      historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
-    });
+    pendingChecklistRef.current = setTimeout(() => {
+      updateMutation.mutate({ 
+        itens_orcamento: novosItens,
+        subtotal,
+        valor_final,
+        historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
+      });
+    }, 300);
   };
 
   const reabrirQueixa = () => {
