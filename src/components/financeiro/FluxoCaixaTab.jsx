@@ -395,6 +395,13 @@ export default function FluxoCaixaTab() {
       </div>
 
       <NovoLancamentoModal open={showNovo} onClose={() => setShowNovo(false)} onSaved={() => { setShowNovo(false); qc.invalidateQueries(['lancamentos-todos']); }} />
+      {editando && (
+        <EditarLancamentoModal
+          lancamento={editando}
+          onClose={() => setEditando(null)}
+          onSaved={() => { setEditando(null); qc.invalidateQueries(['lancamentos-todos']); }}
+        />
+      )}
     </div>
   );
 }
