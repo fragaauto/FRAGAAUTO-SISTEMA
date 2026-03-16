@@ -227,12 +227,20 @@ export default function Compras() {
                           <p className="font-semibold text-slate-800">{prod.nome}</p>
                           <p className="text-sm text-slate-500">{prod.codigo} · {prod.categoria}</p>
                         </div>
-                        <div className="text-right space-y-0.5">
-                          <p className={`font-bold text-lg ${(prod.estoque_atual || 0) <= 0 ? 'text-red-600' : 'text-orange-600'}`}>
-                            {prod.estoque_atual || 0}
-                          </p>
-                          <p className="text-xs text-slate-500">mín: {prod.estoque_minimo || 0}{prod.estoque_desejado ? ` · desejado: ${prod.estoque_desejado}` : ''}</p>
-                          {qtdFalta > 0 && <p className="text-xs text-blue-600 font-semibold">comprar: {qtdFalta}</p>}
+                        <div className="flex items-center gap-3">
+                          <div className="text-right space-y-0.5">
+                            <p className={`font-bold text-lg ${(prod.estoque_atual || 0) <= 0 ? 'text-red-600' : 'text-orange-600'}`}>
+                              {prod.estoque_atual || 0}
+                            </p>
+                            <p className="text-xs text-slate-500">mín: {prod.estoque_minimo || 0}{prod.estoque_desejado ? ` · desejado: ${prod.estoque_desejado}` : ''}</p>
+                            {qtdFalta > 0 && <p className="text-xs text-blue-600 font-semibold">comprar: {qtdFalta}</p>}
+                          </div>
+                          {listasAbertas.length > 0 && (
+                            <Button size="sm" variant="outline" className="gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 whitespace-nowrap"
+                              onClick={() => { setAdicionandoALista(prod); setQtdAdicionar(qtdFalta > 0 ? qtdFalta : 1); setListaDestinoId(listasAbertas[0]?.id || ''); }}>
+                              <Plus className="w-3.5 h-3.5" /> Adicionar à lista
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
