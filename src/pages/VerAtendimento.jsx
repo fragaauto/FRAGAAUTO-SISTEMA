@@ -193,10 +193,18 @@ export default function VerAtendimento() {
     else setShowAssinaturaChecklist(false);
   };
 
+  const pendingQueixaRef = React.useRef(null);
+  const pendingChecklistRef = React.useRef(null);
+
   const handleUpdateItemQueixa = (index, updatedItem) => {
+    // Cancela timeout anterior para evitar múltiplas chamadas simultâneas
+    if (pendingQueixaRef.current) clearTimeout(pendingQueixaRef.current);
+    // Atualiza o array localmente primeiro
     const novosItens = [...(atendimento.itens_queixa || [])];
     novosItens[index] = updatedItem;
-    updateMutation.mutate({ itens_queixa: novosItens });
+    pendingQueixaRef.current = setTimeout(() => {
+      updateMutation.mutate({ itens_queixa: novosItens });
+    }, 300);
   };
 
   const iniciarEdicaoQueixa = () => {
