@@ -15,6 +15,16 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
     const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     const defeitosEncontrados = atendimento.checklist?.filter(item => item.status === 'com_defeito') || [];
 
+    // Consolida técnicos de todas as fontes
+    const tecnicosMap = new Map();
+    (atendimento.tecnicos_responsaveis || []).forEach(t => t?.id && tecnicosMap.set(t.id, t.nome));
+    [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])].forEach(item => {
+      (item.tecnicos || []).forEach(t => t?.id && tecnicosMap.set(t.id, t.nome));
+    });
+    if (atendimento.tecnico && tecnicosMap.size === 0) tecnicosMap.set('legado', atendimento.tecnico);
+    const todosTecnicos = Array.from(tecnicosMap.values());
+    const tecnicosLabel = todosTecnicos.length > 0 ? todosTecnicos.join(', ') : (atendimento.tecnico || 'Fraga Auto Portas');
+
     const produtosNaQueixa = new Set(
       atendimento.itens_queixa?.map(item => item.produto_id) || []
     );
