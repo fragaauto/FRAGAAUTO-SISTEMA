@@ -35,6 +35,7 @@ export default function FluxoCaixaTab() {
   const [dataFimPers, setDataFimPers] = useState('');
   const [selecionados, setSelecionados] = useState(new Set());
   const [deletandoMultiplos, setDeletandoMultiplos] = useState(false);
+  const [editando, setEditando] = useState(null); // lançamento sendo editado
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.LancamentoFinanceiro.delete(id),
