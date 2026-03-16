@@ -406,6 +406,58 @@ export default function FluxoCaixaTab() {
   );
 }
 
+function EditarLancamentoModal({ lancamento, onClose, onSaved }) {
+  const dataAtual = lancamento.data_lancamento
+    ? new Date(lancamento.data_lancamento).toISOString().split('T')[0]
+    : new Date().toISOString().split('T')[0];
+  const [data, setData] = useState(dataAtual);
+  const [observacoes, setObservacoes] = useState(lancamento.observacoes || '');
+  const [descricao, setDescricao] = useState(lancamento.descricao || '');
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!data) return toast.error('Selecione a data');
+    setSaving(true);
+    const dataLancamento = new Date(data + 'T12:00:00').toISOString();
+    await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+      data_lancamento: dataLancamento,
+      observacoes,
+      descricao,
+    });
+    setSaving(false);
+    toast.success('Lançamento atualizado!');
+    onSaved();
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Editar Lançamento</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Descrição</Label>
+            <Input value={descricao} onChange={e => setDescricao(e.target.value)} />
+          </div>
+          <div>
+            <Label>Data do Lançamento *</Label>
+            <Input type="date" value={data} onChange={e => setData(e.target.value)} />
+          </div>
+          <div>
+            <Label>Observações</Label>
+            <Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} placeholder="Observações sobre este lançamento..." rows={3} />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={onClose}>Cancelar</Button>
+            <Button onClick={save} disabled={saving} className="flex-1">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Salvar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function NovoLancamentoModal({ open, onClose, onSaved }) {
   const hoje = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ tipo: 'entrada', descricao: '', valor: '', forma_pagamento: 'dinheiro', categoria: '', observacoes: '', data: hoje });
