@@ -448,6 +448,16 @@ export default function ImportarXMLTab() {
             ))}
           </div>
 
+          {/* Modal vincular produto */}
+          {vinculandoIdx !== null && (
+            <VincularProdutoModal
+              itemNFe={itensConfig[vinculandoIdx]}
+              produtos={produtos}
+              onVincular={(prod) => vincularProduto(vinculandoIdx, prod)}
+              onClose={() => setVinculandoIdx(null)}
+            />
+          )}
+
           {/* Resumo e botão processar */}
           {!concluido ? (
             <Card className="bg-slate-800 text-white">
