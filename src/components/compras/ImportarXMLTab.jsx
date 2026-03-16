@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Upload, FileText, Check, AlertTriangle, Loader2, Plus, RefreshCw, Package, DollarSign, X } from 'lucide-react';
+import { Upload, FileText, Check, AlertTriangle, Loader2, Plus, RefreshCw, Package, DollarSign, X, Link, Search } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Parse XML de NF-e no browser
 function parseNFe(xmlStr) {
