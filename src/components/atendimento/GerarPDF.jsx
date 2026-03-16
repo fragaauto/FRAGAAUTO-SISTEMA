@@ -224,6 +224,8 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
 
           ${atendimento.observacoes ? `<div style="background:#f8fafc;border-radius:8px;padding:15px;margin-bottom:20px"><h3 style="color:#1e293b;margin-bottom:10px;font-size:16px">OBSERVAÇÕES</h3><p style="color:#64748b;font-size:14px;line-height:1.6;white-space:pre-wrap">${atendimento.observacoes}</p></div>` : ''}
 
+          ${todosTecnicos.length > 0 ? `<div style="background:#f5f3ff;border-radius:8px;padding:15px;margin-bottom:20px;border-left:4px solid #7c3aed"><h3 style="color:#5b21b6;margin-bottom:8px;font-size:14px">🔧 TÉCNICO(S) RESPONSÁVEL(IS)</h3><p style="color:#4c1d95;font-size:14px;font-weight:600">${todosTecnicos.join(' • ')}</p></div>` : ''}
+
           <div style="border-top:2px solid #e2e8f0;padding-top:20px;margin-top:30px">
             <p style="text-align:center;color:#64748b;font-size:12px;margin-bottom:30px">Este é um pré-orçamento e os valores podem sofrer alterações após diagnóstico completo.</p>
             ${atendimento.assinatura_cliente_queixa || atendimento.assinatura_cliente_checklist ? `
