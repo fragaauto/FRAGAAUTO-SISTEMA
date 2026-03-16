@@ -132,13 +132,11 @@ export default function VerAtendimento() {
     queryKey: ['atendimento', id],
     queryFn: async () => {
       if (!id) return null;
-      const list = await base44.entities.Atendimento.list();
-      const found = list.find(a => a.id === id);
-      return found || null;
+      return await base44.entities.Atendimento.get(id);
     },
     enabled: !!id,
-    staleTime: 2 * 60 * 1000,
-    retry: false,
+    staleTime: 30 * 1000,
+    retry: 1,
     refetchOnWindowFocus: false
   });
 
