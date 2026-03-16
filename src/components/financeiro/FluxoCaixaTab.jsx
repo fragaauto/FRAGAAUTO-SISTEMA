@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet, CalendarRange } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet, CalendarRange, Pencil } from 'lucide-react';
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
