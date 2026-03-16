@@ -106,6 +106,13 @@ export default function FluxoCaixaTab() {
   const saidas = filtrados.filter(l => l.tipo === 'saida').reduce((s, l) => s + (l.valor || 0), 0);
   const saldo = entradas - saidas;
 
+  // Saldo anterior: todos os lançamentos ANTES do início do período filtrado
+  const anteriores = dataInicio
+    ? lancamentos.filter(l => (l.data_lancamento || '') < dataInicio)
+    : [];
+  const saldoAnterior = anteriores.reduce((s, l) => s + (l.tipo === 'entrada' ? (l.valor || 0) : -(l.valor || 0)), 0);
+  const saldoFinal = saldoAnterior + saldo;
+
   const exportarPDF = async () => {
     setExportando(true);
     try {
