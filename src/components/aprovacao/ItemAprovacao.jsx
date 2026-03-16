@@ -168,17 +168,19 @@ export default function ItemAprovacao({ item, onUpdate }) {
             <div className="flex gap-2">
               <Button
                 onClick={() => handleAprovacao('aprovado')}
+                disabled={isUpdating}
                 className="flex-1 bg-green-500 hover:bg-green-600"
               >
-                <CheckCircle2 className="w-4 h-4 mr-2" />
+                {isUpdating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
                 Aprovar
               </Button>
               <Button
                 onClick={() => handleAprovacao('reprovado')}
+                disabled={isUpdating}
                 variant="outline"
                 className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
               >
-                <XCircle className="w-4 h-4 mr-2" />
+                {isUpdating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
                 Reprovar
               </Button>
             </div>
