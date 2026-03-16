@@ -360,10 +360,13 @@ export default function FluxoCaixaTab() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                 <p className={`font-bold text-sm ${l.tipo === 'entrada' ? 'text-green-600' : 'text-red-500'}`}>
                   {l.tipo === 'entrada' ? '+' : '-'} R$ {(l.valor || 0).toFixed(2)}
                 </p>
+                <Button size="icon" variant="ghost" className="w-7 h-7 text-slate-400 hover:text-blue-500" onClick={() => setEditando(l)}>
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button size="icon" variant="ghost" className="w-7 h-7 text-slate-400 hover:text-red-500">
