@@ -28,6 +28,7 @@ export default function ItemAprovacao({ item, onUpdate }) {
   }, [item.status_aprovacao, item.status_servico, item.observacao_cliente, isUpdating]);
 
   const handleAprovacao = (status) => {
+    if (isUpdating) return; // Previne múltiplos cliques
     setIsUpdating(true);
     setLocalStatus(status);
     onUpdate({
@@ -36,8 +37,8 @@ export default function ItemAprovacao({ item, onUpdate }) {
       observacao_cliente: observacao,
       status_servico: statusServico
     });
-    // Reset após delay para permitir que a mutation complete
-    setTimeout(() => setIsUpdating(false), 1000);
+    // Reset após delay suficiente para debounce (300ms) + chamada API (~1s)
+    setTimeout(() => setIsUpdating(false), 1500);
   };
 
   const handleStatusServicoChange = (newStatus) => {
