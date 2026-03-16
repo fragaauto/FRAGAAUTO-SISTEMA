@@ -379,8 +379,16 @@ export default function ImportarXMLTab() {
                         <span>Custo unit: <strong>R$ {item.custo_unitario.toFixed(2)}</strong></span>
                         <span>Total: <strong>R$ {item.valor_total.toFixed(2)}</strong></span>
                       </div>
-                      {item.produto_match && (
-                        <p className="text-xs text-green-600 mt-0.5">✓ Vinculado: {item.produto_match.nome} (estoque atual: {item.produto_match.estoque_atual || 0})</p>
+                      {item.produto_match ? (
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs text-green-600">✓ Vinculado: <strong>{item.produto_match.nome}</strong> (estoque: {item.produto_match.estoque_atual || 0})</p>
+                          <button onClick={() => desvincularProduto(idx)} className="text-xs text-red-400 hover:text-red-600 underline">desvincular</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setVinculandoIdx(idx)}
+                          className="mt-1 flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 border border-dashed border-blue-300 rounded px-2 py-0.5 w-fit hover:bg-blue-50 transition-all">
+                          <Link className="w-3 h-3" /> Vincular a produto cadastrado
+                        </button>
                       )}
                     </div>
 
