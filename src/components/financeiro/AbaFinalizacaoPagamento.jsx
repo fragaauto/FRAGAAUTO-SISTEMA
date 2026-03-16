@@ -67,12 +67,22 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     return p?.taxa_percentual || 0;
   };
 
-  // Buscar técnicos cadastrados (todos os usuários registrados no menu Cadastros)
-  const { data: tecnicos = [] } = useQuery({
-    queryKey: ['tecnicos'],
+  // Buscar técnicos: usuários com login + funcionários cadastrados manualmente
+  const { data: usuariosTec = [] } = useQuery({
+    queryKey: ['tecnicos_usuarios'],
     queryFn: () => base44.entities.User.list(),
     staleTime: 5 * 60 * 1000,
   });
+  const { data: funcionariosTec = [] } = useQuery({
+    queryKey: ['tecnicos_funcionarios'],
+    queryFn: () => base44.entities.Funcionario.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+  // Mesclar ambas as listas
+  const tecnicos = [
+    ...usuariosTec.filter(u => u.full_name).map(u => ({ id: u.id, full_name: u.full_name, email: u.email })),
+    ...funcionariosTec.filter(f => f.status === 'ativo').map(f => ({ id: f.id, full_name: f.nome_completo, email: null })),
+  ];
 
   // Somente itens aprovados pelo cliente vão para o pagamento
   const itensAprovadosQueixa = (atendimento.itens_queixa || []).filter(i => i.status_aprovacao === 'aprovado');
