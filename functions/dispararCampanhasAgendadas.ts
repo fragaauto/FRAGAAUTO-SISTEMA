@@ -34,11 +34,12 @@ async function enviarMensagemEvolution(baseUrl, apiKey, instance, telefone, mens
 
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
-// Lote máximo por execução para não exceder timeout
-const LOTE_TAMANHO = 10;
+// Lote máximo por execução para não exceder timeout do worker (~180s)
+// Com 5 contatos e intervalo de 8-12s: máximo ~60s por execução, seguro
+const LOTE_TAMANHO = 5;
 // Intervalo entre envios (segundos)
-const INTERVALO_MIN = 15;
-const INTERVALO_MAX = 25;
+const INTERVALO_MIN = 8;
+const INTERVALO_MAX = 12;
 
 Deno.serve(async (req) => {
   try {
