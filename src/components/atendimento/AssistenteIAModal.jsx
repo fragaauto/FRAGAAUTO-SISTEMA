@@ -55,11 +55,17 @@ INSTRUÇÕES:
 2. Para cada problema/defeito mencionado, encontre o item correspondente no checklist
 3. Para serviços como "Reparo", "Mão de obra", "Reforma", use SEMPRE o produto "Mão de obra" do catálogo e adicione os detalhes nas observações
 4. Para peças específicas mencionadas, procure produtos correspondentes no catálogo
-5. Se um produto não existe no catálogo, indique no campo "produtos_nao_encontrados"
 
-IMPORTANTE:
+BUSCA FLEXÍVEL DE PRODUTOS (MUITO IMPORTANTE):
+- NÃO exija correspondência exata de nome. Faça busca por PALAVRAS-CHAVE.
+- Exemplo: "motor do vidro" → busque produtos cujo nome contenha "motor", "vidro", "elétrico" etc.
+- Exemplo: "fechadura" → busque produtos com "fecha", "trava", "porta" no nome ou descrição.
+- Exemplo: "borracha" → retorne TODOS os produtos que contenham "borracha" no nome ou descrição.
+- Se mencionar uma palavra genérica como "vedação", "mola", "parafuso", retorne TODOS os produtos do catálogo que contenham essas palavras.
+- Prefira INCLUIR produtos parecidos a deixar o campo vazio. Escolha o produto mais próximo pelo nome ou categoria.
+- Só coloque em "produtos_nao_encontrados" se absolutamente nenhuma palavra-chave do produto mencioando coincidir com qualquer produto do catálogo.
 - Serviços gerais = produto "Mão de obra" + detalhes nas observações
-- Peças específicas = produto correspondente do catálogo`;
+- Peças específicas = produto mais próximo do catálogo por palavras-chave`;
 
     const schema = {
       type: "object",
