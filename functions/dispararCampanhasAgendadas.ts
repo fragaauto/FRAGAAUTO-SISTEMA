@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
       return agora >= dataAgenda;
     });
 
-    // Busca campanhas em andamento (enviando) que ainda têm contatos pendentes
+    // Busca campanhas em andamento (enviando) que ainda têm contatos pendentes (e não foram canceladas)
     const emAndamento = campanhas.filter(c => c.status === 'enviando');
 
     // Todas as campanhas que precisam de processamento
