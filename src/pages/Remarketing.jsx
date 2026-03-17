@@ -93,6 +93,23 @@ export default function Remarketing() {
     }
   });
 
+  const cancelarCampanhaMutation = useMutation({
+    mutationFn: (campanha) => {
+      // Marca todos os contatos pendentes como cancelado e muda status
+      const listaAtualizada = (campanha.listaContatos || []).map(c =>
+        c.status === 'pendente' ? { ...c, status: 'cancelado' } : c
+      );
+      return base44.entities.Campanha.update(campanha.id, {
+        status: 'cancelada',
+        listaContatos: listaAtualizada
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['campanhas']);
+      toast.success('Campanha cancelada');
+    }
+  });
+
   // Sincronizar fila: identifica atendimentos com reprovados não na fila ainda
   const sincronizarFila = async () => {
     setSincronizando(true);
