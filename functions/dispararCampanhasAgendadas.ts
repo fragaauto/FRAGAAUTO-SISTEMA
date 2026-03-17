@@ -79,8 +79,15 @@ Deno.serve(async (req) => {
     const resultados = [];
 
     for (const campanha of paraProcessar) {
+      // Re-busca a campanha para checar se foi cancelada entre o início e agora
+      const campanhaAtual = await base44.asServiceRole.entities.Campanha.get(campanha.id);
+      if (!campanhaAtual || campanhaAtual.status === 'cancelada' || campanhaAtual.status === 'finalizada') {
+        resultados.push({ campanha: campanha.nomeCampanha, mensagem: `Ignorada (status: ${campanhaAtual?.status})` });
+        continue;
+      }
+
       // Marca como enviando se ainda estava agendada
-      if (campanha.status === 'agendada') {
+      if (campanhaAtual.status === 'agendada') {
         await base44.asServiceRole.entities.Campanha.update(campanha.id, { status: 'enviando' });
       }
 
