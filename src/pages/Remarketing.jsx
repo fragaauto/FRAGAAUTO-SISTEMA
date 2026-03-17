@@ -432,6 +432,21 @@ export default function Remarketing() {
                           <Button size="sm" variant="ghost" onClick={() => { setCampanhaSelecionada(c); setCampanhaModalOpen(true); }}>
                             <Edit2 className="w-3 h-3" />
                           </Button>
+                          {(c.status === 'agendada' || c.status === 'enviando') && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-orange-500"
+                              title="Cancelar campanha"
+                              onClick={() => {
+                                if (confirm(`Cancelar a campanha "${c.nomeCampanha}"? Os envios pendentes serão interrompidos.`)) {
+                                  cancelarCampanhaMutation.mutate(c);
+                                }
+                              }}
+                            >
+                              <XCircle className="w-3 h-3" />
+                            </Button>
+                          )}
                           <Button size="sm" variant="ghost" className="text-red-500" onClick={() => deleteCampanhaMutation.mutate(c.id)}>
                             <Trash2 className="w-3 h-3" />
                           </Button>
