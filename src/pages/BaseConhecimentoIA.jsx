@@ -74,10 +74,28 @@ export default function BaseConhecimentoIA() {
     setShowModal(true);
   };
 
+  const sincronizarParaGoogleDocs = async (titulo, conteudo, fonte_url) => {
+    if (!fonte_url || !conteudo) return;
+    try {
+      const res = await base44.functions.invoke('escreverNoGoogleDocs', { docs_url: fonte_url, titulo, conteudo });
+      if (res.data?.error) throw new Error(res.data.error);
+      toast.success('Conteúdo enviado ao Google Docs!');
+    } catch (e) {
+      toast.warning(`Salvo localmente, mas erro ao sincronizar com Google Docs: ${e.message}`);
+    }
+  };
+
   const handleSave = () => {
     if (!form.titulo) return toast.error('Informe o título');
-    if (editing) updateMutation.mutate({ id: editing.id, data: form });
-    else createMutation.mutate(form);
+    if (editing) {
+      updateMutation.mutate({ id: editing.id, data: form }, {
+        onSuccess: () => sincronizarParaGoogleDocs(form.titulo, form.conteudo, form.fonte_url)
+      });
+    } else {
+      createMutation.mutate(form, {
+        onSuccess: () => sincronizarParaGoogleDocs(form.titulo, form.conteudo, form.fonte_url)
+      });
+    }
   };
 
   if (user?.role !== 'admin') {
