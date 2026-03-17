@@ -26,19 +26,24 @@ async function enviarMensagemEvolution(baseUrl, apiKey, instance, telefone, mens
   });
 
   if (!resp.ok) {
-    const body = await resp.text();
-    throw new Error(`Evolution API erro ${resp.status}: ${body}`);
+    const bodyText = await resp.text();
+    throw new Error(`Evolution API erro ${resp.status}: ${bodyText}`);
   }
   return await resp.json();
 }
 
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
+// Lote máximo por execução para não exceder timeout
+const LOTE_TAMANHO = 10;
+// Intervalo entre envios (segundos)
+const INTERVALO_MIN = 15;
+const INTERVALO_MAX = 25;
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Buscar configurações
     const configs = await base44.asServiceRole.entities.Configuracao.list();
     const config = configs[0];
 
@@ -49,40 +54,68 @@ Deno.serve(async (req) => {
 
     const evolutionBase = config.evolution_api_url.replace(/\/$/, '');
 
-    // Buscar campanhas agendadas
     const agora = new Date();
     const campanhas = await base44.asServiceRole.entities.Campanha.list();
-    const agendadas = campanhas.filter(c => {
+
+    // Busca campanhas agendadas (ainda não iniciadas) cujo horário já chegou
+    const paraIniciar = campanhas.filter(c => {
       if (c.status !== 'agendada') return false;
       if (!c.dataAgendada) return false;
       const dataAgenda = new Date(c.dataAgendada);
-      // Disparar se a data agendada já passou (com margem de 5 min)
-      const diff = agora - dataAgenda;
-      return diff >= 0 && diff <= 5 * 60 * 1000;
+      return agora >= dataAgenda;
     });
 
-    if (agendadas.length === 0) {
+    // Busca campanhas em andamento (enviando) que ainda têm contatos pendentes
+    const emAndamento = campanhas.filter(c => c.status === 'enviando');
+
+    // Todas as campanhas que precisam de processamento
+    const paraProcessar = [...paraIniciar, ...emAndamento];
+
+    if (paraProcessar.length === 0) {
       return Response.json({ message: 'Nenhuma campanha para disparar neste momento' });
     }
 
-    let totalEnviados = 0;
+    let totalEnviadosNestaChamada = 0;
     const resultados = [];
 
-    for (const campanha of agendadas) {
-      // Atualizar status para "enviando"
-      await base44.asServiceRole.entities.Campanha.update(campanha.id, { status: 'enviando' });
+    for (const campanha of paraProcessar) {
+      // Marca como enviando se ainda estava agendada
+      if (campanha.status === 'agendada') {
+        await base44.asServiceRole.entities.Campanha.update(campanha.id, { status: 'enviando' });
+      }
 
       const contatos = campanha.listaContatos || [];
-      let sucessos = 0;
-      let erros = 0;
+      const pendentes = contatos.filter(c => c.status === 'pendente');
 
-      for (const contato of contatos) {
-        if (contato.status !== 'pendente') continue;
+      if (pendentes.length === 0) {
+        // Todos já foram enviados — finaliza
+        await base44.asServiceRole.entities.Campanha.update(campanha.id, {
+          status: 'finalizada',
+          totalEnviados: contatos.filter(c => c.status === 'enviado').length
+        });
+        resultados.push({ campanha: campanha.nomeCampanha, mensagem: 'Finalizada (sem pendentes)' });
+        continue;
+      }
 
+      // Processa apenas LOTE_TAMANHO contatos nesta execução
+      const lote = pendentes.slice(0, LOTE_TAMANHO);
+      let sucessosLote = 0;
+      let errosLote = 0;
+
+      // Copia lista atual para modificar
+      let listaAtual = [...contatos];
+
+      for (let i = 0; i < lote.length; i++) {
+        const contato = lote[i];
         const tel = (contato.telefone || '').replace(/\D/g, '');
-        if (!tel) continue;
+        if (!tel) {
+          listaAtual = listaAtual.map(c =>
+            c.clienteId === contato.clienteId ? { ...c, status: 'erro' } : c
+          );
+          errosLote++;
+          continue;
+        }
 
-        // Personalizar mensagem
         const msg = (campanha.mensagemBase || '')
           .replace('{nome}', contato.clienteNome || 'Cliente')
           .replace('{veiculo}', contato.veiculo || '')
@@ -99,41 +132,64 @@ Deno.serve(async (req) => {
             campanha.midiaUrl || null,
             campanha.midiaTipo || null
           );
-          sucessos++;
-          // Atualizar status do contato
-          const novaLista = campanha.listaContatos.map(c => 
+          sucessosLote++;
+          listaAtual = listaAtual.map(c =>
             c.clienteId === contato.clienteId ? { ...c, status: 'enviado' } : c
           );
-          await base44.asServiceRole.entities.Campanha.update(campanha.id, { listaContatos: novaLista });
         } catch (e) {
-          erros++;
-          console.error(`Erro ao enviar para ${contato.clienteNome}:`, e);
+          errosLote++;
+          console.error(`Erro ao enviar para ${contato.clienteNome}:`, e.message);
+          listaAtual = listaAtual.map(c =>
+            c.clienteId === contato.clienteId ? { ...c, status: 'erro' } : c
+          );
         }
 
-        // Intervalo entre envios (15-25s)
-        const intervalo = 15 + Math.floor(Math.random() * 11);
-        await sleep(intervalo * 1000);
+        totalEnviadosNestaChamada++;
+
+        // Intervalo entre envios (exceto no último do lote)
+        if (i < lote.length - 1) {
+          const intervalo = INTERVALO_MIN + Math.floor(Math.random() * (INTERVALO_MAX - INTERVALO_MIN + 1));
+          await sleep(intervalo * 1000);
+        }
       }
 
-      totalEnviados += sucessos;
+      // Salva progresso
+      const aindaPendentes = listaAtual.filter(c => c.status === 'pendente').length;
+      const totalEnviados = listaAtual.filter(c => c.status === 'enviado').length;
 
-      // Atualizar campanha como finalizada
-      await base44.asServiceRole.entities.Campanha.update(campanha.id, {
-        status: 'finalizada',
-        totalEnviados: sucessos
-      });
-
-      resultados.push({
-        campanha: campanha.nomeCampanha,
-        enviados: sucessos,
-        erros
-      });
+      if (aindaPendentes === 0) {
+        // Concluído!
+        await base44.asServiceRole.entities.Campanha.update(campanha.id, {
+          listaContatos: listaAtual,
+          status: 'finalizada',
+          totalEnviados
+        });
+        resultados.push({
+          campanha: campanha.nomeCampanha,
+          enviados: sucessosLote,
+          erros: errosLote,
+          status: 'finalizada'
+        });
+      } else {
+        // Ainda tem pendentes — salva progresso e continua na próxima execução
+        await base44.asServiceRole.entities.Campanha.update(campanha.id, {
+          listaContatos: listaAtual,
+          totalEnviados
+        });
+        resultados.push({
+          campanha: campanha.nomeCampanha,
+          enviadosNesteLote: sucessosLote,
+          errosNesteLote: errosLote,
+          aindaPendentes,
+          status: 'em_andamento'
+        });
+      }
     }
 
     return Response.json({
       success: true,
-      campanhas: agendadas.length,
-      totalEnviados,
+      campanhasProcessadas: paraProcessar.length,
+      totalEnviadosNestaChamada,
       resultados
     });
 
