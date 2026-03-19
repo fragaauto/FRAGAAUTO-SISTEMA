@@ -86,6 +86,37 @@ export default function FluxoCaixaTab() {
     staleTime: 60 * 1000,
   });
 
+  const { data: funcionarios = [] } = useQuery({
+    queryKey: ['funcionarios-export'],
+    queryFn: () => base44.entities.Funcionario.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios-export'],
+    queryFn: () => base44.entities.User.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Resolve nome do técnico buscando em funcionários manuais + usuários convidados
+  const resolverTecnico = (atendimento) => {
+    if (!atendimento) return '-';
+    const tecnicos = atendimento.tecnicos_responsaveis || [];
+    if (tecnicos.length > 0) {
+      return tecnicos.map(t => {
+        // Tenta encontrar em funcionários manuais pelo id ou nome
+        const func = funcionarios.find(f => f.id === t.id || f.nome_completo === t.nome);
+        if (func) return func.nome_completo;
+        // Tenta encontrar em usuários convidados
+        const user = usuarios.find(u => u.id === t.id || u.full_name === t.nome);
+        if (user) return user.full_name;
+        return t.nome || '-';
+      }).filter(Boolean).join(', ');
+    }
+    // Fallback: campo legado tecnico
+    return atendimento.tecnico || '-';
+  };
+
   const dataInicio = periodo === 'custom'
     ? (dataInicioPers ? new Date(dataInicioPers + 'T00:00:00').toISOString() : null)
     : subDays(new Date(), parseInt(periodo)).toISOString();
