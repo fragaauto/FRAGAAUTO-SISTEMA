@@ -174,21 +174,21 @@ export default function FluxoCaixaTab() {
             l.descricao || '-',
             `R$ ${(l.valor || 0).toFixed(2)}`,
             FORMAS_LABELS[l.forma_pagamento] || l.forma_pagamento || '-',
-            atendimento?.tecnico || '-'
+            resolverTecnico(atendimento)
           ];
         });
       
       // Tabela
       doc.autoTable({
         startY: 38,
-        head: [['Data', 'Cliente', 'Carro', 'Placa', 'Detalhes', 'Valor', 'Forma', 'Técnico']],
+        head: [['Data', 'Cliente', 'Modelo', 'Placa', 'Detalhes', 'Valor', 'Forma', 'Técnico']],
         body: dados,
-        styles: { fontSize: 8, cellPadding: 2 },
+        styles: { fontSize: 7.5, cellPadding: 2 },
         headStyles: { fillColor: [249, 115, 22], textColor: 255 },
         columnStyles: {
           5: { halign: 'right' }
         },
-        margin: { left: 14, right: 14 }
+        margin: { left: 10, right: 10 }
       });
       
       // Totais
