@@ -223,15 +223,17 @@ export default function FluxoCaixaTab() {
           return {
             'Data': l.data_lancamento ? format(new Date(l.data_lancamento), 'dd/MM/yyyy') : '',
             'Cliente/Fornecedor': atendimento?.cliente_nome || '',
+            'Modelo': atendimento?.modelo || '',
+            'Placa': atendimento?.placa || '',
             'CPF/CNPJ': atendimento?.cliente_cpf || '',
             'Categoria': l.categoria || '',
             'Histórico': historico,
             'Tipo': l.tipo === 'entrada' ? 'C' : 'D',
-            'Valor': (l.valor || 0).toFixed(0),
+            'Valor': (l.valor || 0).toFixed(2),
             'Banco': FORMAS_LABELS[l.forma_pagamento] || l.forma_pagamento || 'Caixa',
             'Período': periodoTexto,
             'Id': l.id || '',
-            'Técnico Responsável': atendimento?.tecnico || ''
+            'Técnico Responsável': resolverTecnico(atendimento)
           };
         });
       
