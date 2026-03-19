@@ -223,8 +223,6 @@ export default function FluxoCaixaTab() {
           return {
             'Data': l.data_lancamento ? format(new Date(l.data_lancamento), 'dd/MM/yyyy') : '',
             'Cliente/Fornecedor': atendimento?.cliente_nome || '',
-            'Modelo': atendimento?.modelo || '',
-            'Placa': atendimento?.placa || '',
             'CPF/CNPJ': atendimento?.cliente_cpf || '',
             'Categoria': l.categoria || '',
             'Histórico': historico,
@@ -233,6 +231,8 @@ export default function FluxoCaixaTab() {
             'Banco': FORMAS_LABELS[l.forma_pagamento] || l.forma_pagamento || 'Caixa',
             'Período': periodoTexto,
             'Id': l.id || '',
+            'CARRO': atendimento?.modelo || '',
+            'PLACA': atendimento?.placa || '',
             'Técnico Responsável': resolverTecnico(atendimento)
           };
         });
