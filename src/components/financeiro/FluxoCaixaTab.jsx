@@ -98,23 +98,22 @@ export default function FluxoCaixaTab() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Resolve nome do técnico buscando em funcionários manuais + usuários convidados
+  // Resolve nomes dos técnicos buscando em funcionários manuais + usuários convidados
   const resolverTecnico = (atendimento) => {
-    if (!atendimento) return '-';
+    if (!atendimento) return '';
     const tecnicos = atendimento.tecnicos_responsaveis || [];
     if (tecnicos.length > 0) {
-      return tecnicos.map(t => {
-        // Tenta encontrar em funcionários manuais pelo id ou nome
+      const nomes = tecnicos.map(t => {
         const func = funcionarios.find(f => f.id === t.id || f.nome_completo === t.nome);
         if (func) return func.nome_completo;
-        // Tenta encontrar em usuários convidados
         const user = usuarios.find(u => u.id === t.id || u.full_name === t.nome);
         if (user) return user.full_name;
-        return t.nome || '-';
-      }).filter(Boolean).join(', ');
+        return t.nome || '';
+      }).filter(Boolean);
+      return nomes.join(' / ');
     }
     // Fallback: campo legado tecnico
-    return atendimento.tecnico || '-';
+    return atendimento.tecnico || '';
   };
 
   const dataInicio = periodo === 'custom'
