@@ -390,7 +390,7 @@ export default function NovoAtendimento() {
       itens_queixa: formData.itens_queixa || [],
       checklist: checklistArray,
       pre_diagnostico: formData.pre_diagnostico || '',
-      itens_orcamento: formData.itens_orcamento || [],
+      itens_orcamento: (formData.itens_orcamento || []).filter(i => i.origem !== 'queixa'),
       subtotal_queixa: formData.subtotal_queixa || 0,
       subtotal_checklist: formData.subtotal_checklist || 0,
       subtotal: formData.subtotal || 0,
