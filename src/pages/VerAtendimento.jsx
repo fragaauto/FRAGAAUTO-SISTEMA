@@ -322,7 +322,7 @@ export default function VerAtendimento() {
       valor_total: Number(produto.valor) || 0,
       vantagens: produto.vantagens || '',
       desvantagens: produto.desvantagens || '',
-      status_aprovacao: 'pendente',
+      status_aprovacao: 'aprovado',
       status_servico: 'aguardando_autorizacao',
       observacao_item: ''
     };

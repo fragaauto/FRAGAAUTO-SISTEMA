@@ -109,7 +109,8 @@ export default function EditarQueixa() {
       valor_unitario: Number(produto.valor) || 0,
       observacao_item: '',
       vantagens: produto.vantagens || '',
-      desvantagens: produto.desvantagens || ''
+      desvantagens: produto.desvantagens || '',
+      status_aprovacao: 'aprovado'
     };
 
     setItensQueixa([...itensQueixa, novoItem]);
@@ -156,7 +157,7 @@ export default function EditarQueixa() {
       const itensComTotal = itensQueixa.map(item => ({
         ...item,
         valor_total: item.quantidade * item.valor_unitario,
-        status_aprovacao: item.status_aprovacao || 'pendente',
+        status_aprovacao: item.status_aprovacao || 'aprovado',
         status_servico: item.status_servico || 'aguardando_autorizacao',
         observacao_cliente: item.observacao_cliente || null
       }));

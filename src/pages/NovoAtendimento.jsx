@@ -305,7 +305,7 @@ export default function NovoAtendimento() {
       valor_total: produto.valor,
       vantagens: produto.vantagens || '',
       desvantagens: produto.desvantagens || '',
-      status_aprovacao: 'pendente'
+      status_aprovacao: activeTab === 'queixa' ? 'aprovado' : 'pendente'
     };
     
     if (activeTab === 'queixa') {
@@ -443,10 +443,10 @@ export default function NovoAtendimento() {
         valor_total: result.valor,
         vantagens: result.vantagens || '',
         desvantagens: result.desvantagens || '',
-        status_aprovacao: 'pendente'
-      };
-      
-      if (activeTab === 'queixa') {
+        status_aprovacao: activeTab === 'queixa' ? 'aprovado' : 'pendente'
+        };
+
+        if (activeTab === 'queixa') {
         setFormData(prev => ({
           ...prev,
           itens_queixa: [...prev.itens_queixa, newItem]
