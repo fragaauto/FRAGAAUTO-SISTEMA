@@ -54,11 +54,79 @@ export default function Financeiro() {
 
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
 
+  const { data: lancamentos = [] } = useQuery({
+    queryKey: ['lancamentos'],
+    queryFn: () => base44.entities.LancamentoFinanceiro.list('-data_lancamento', 1000),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: contasReceber = [] } = useQuery({
+    queryKey: ['contas_receber'],
+    queryFn: () => base44.entities.ContaReceber.list('-created_date', 500),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: contasPagar = [] } = useQuery({
+    queryKey: ['contas_pagar'],
+    queryFn: () => base44.entities.ContaPagar.list('-created_date', 500),
+    staleTime: 2 * 60 * 1000,
+  });
+
   if (!paginaPermitida(modulosAtivos, 'Financeiro')) {
     return <ModuloBloqueado nomeModulo="Financeiro" />;
   }
 
   const hoje = new Date();
+
+  // Calcular filtros de data
+  let inicioFiltro, fimFiltro;
+  if (periodo === 'hoje') {
+    inicioFiltro = startOfDay(hoje);
+    fimFiltro = endOfDay(hoje);
+  } else if (periodo === 'mes') {
+    inicioFiltro = startOfMonth(hoje);
+    fimFiltro = endOfMonth(hoje);
+  } else if (periodo === '7') {
+    inicioFiltro = startOfDay(subDays(hoje, 7));
+    fimFiltro = endOfDay(hoje);
+  } else if (periodo === '30') {
+    inicioFiltro = startOfDay(subDays(hoje, 30));
+    fimFiltro = endOfDay(hoje);
+  } else if (periodo === '90') {
+    inicioFiltro = startOfDay(subDays(hoje, 90));
+    fimFiltro = endOfDay(hoje);
+  } else if (periodo === 'personalizado' && dataInicio && dataFim) {
+    inicioFiltro = startOfDay(new Date(dataInicio + 'T00:00:00'));
+    fimFiltro = endOfDay(new Date(dataFim + 'T23:59:59'));
+  } else {
+    inicioFiltro = startOfMonth(hoje);
+    fimFiltro = endOfMonth(hoje);
+  }
+
+  const lancNaoEstornados = lancamentos.filter(l => !l.estornado);
+
+  // Lançamentos do período
+  const lancPeriodo = lancNaoEstornados.filter(l => {
+    const data = new Date(l.data_lancamento || l.created_date);
+    return data >= inicioFiltro && data <= fimFiltro;
+  });
+
+  // Lançamentos anteriores ao período (para saldo anterior)
+  const lancAnteriores = lancNaoEstornados.filter(l => {
+    const data = new Date(l.data_lancamento || l.created_date);
+    return data < inicioFiltro;
+  });
+
+  const entradas = lancPeriodo.filter(l => l.tipo === 'entrada').reduce((s, l) => s + (l.valor || 0), 0);
+  const saidas = lancPeriodo.filter(l => l.tipo === 'saida').reduce((s, l) => s + (l.valor || 0), 0);
+  const saldoAnterior = lancAnteriores.reduce((s, l) => l.tipo === 'entrada' ? s + (l.valor || 0) : s - (l.valor || 0), 0);
+  const saldoAtual = saldoAnterior + entradas - saidas;
+
+  const recebPendente = contasReceber.filter(c => c.status === 'pendente' || c.status === 'parcial').reduce((s, c) => s + ((c.valor_total || 0) - (c.valor_pago || 0)), 0);
+  const pagarPendente = contasPagar.filter(c => c.status === 'pendente').reduce((s, c) => s + (c.valor || 0), 0);
+  const contasVencidas = contasPagar.filter(c => c.status === 'pendente' && new Date(c.data_vencimento) < hoje).length;
+
+  const ticketMedio = lancPeriodo.filter(l => l.tipo === 'entrada' && l.atendimento_id).length > 0
     ? entradas / lancPeriodo.filter(l => l.tipo === 'entrada' && l.atendimento_id).length
     : 0;
 
