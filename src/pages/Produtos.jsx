@@ -74,44 +74,8 @@ export default function Produtos() {
     staleTime: 5 * 60 * 1000,
   });
   const modulosAtivos = cfgs[0]?.modulos_ativos ?? null;
-  if (!paginaPermitida(modulosAtivos, 'Produtos')) {
-    return <ModuloBloqueado nomeModulo="Estoque & Produtos" />;
-  }
-  
+
   const [search, setSearch] = useState('');
-  const [categoriaFilter, setCategoriaFilter] = useState('all');
-  const [ordenacao, setOrdenacao] = useState('nome_asc');
-  const [pagina, setPagina] = useState(1);
-  const POR_PAGINA = 20;
-  const [showModal, setShowModal] = useState(false);
-  const [editingProduto, setEditingProduto] = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
-  const [isImporting, setIsImporting] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [showDeleteMultiple, setShowDeleteMultiple] = useState(false);
-  const [deleteProgress, setDeleteProgress] = useState(0);
-  const [deleteStats, setDeleteStats] = useState({
-    total: 0,
-    processed: 0,
-    success: 0,
-    errors: 0,
-    errorDetails: []
-  });
-  const [importProgress, setImportProgress] = useState(0);
-  const [importStats, setImportStats] = useState({
-    total: 0,
-    processed: 0,
-    success: 0,
-    updated: 0,
-    errors: 0,
-    errorDetails: []
-  });
-  const [preValidation, setPreValidation] = useState(null);
-  const [showValidationModal, setShowValidationModal] = useState(false);
-  const [pendingImport, setPendingImport] = useState(null);
-  const [showAvisos, setShowAvisos] = useState(false);
-  
-  const [formData, setFormData] = useState({
     codigo: '',
     nome: '',
     categoria: '',
@@ -130,6 +94,10 @@ export default function Produtos() {
     localizacao_estoque: '',
     fornecedores: []
   });
+
+  if (!paginaPermitida(modulosAtivos, 'Produtos')) {
+    return <ModuloBloqueado nomeModulo="Estoque & Produtos" />;
+  }
 
   const { data: produtos = [], isLoading } = useQuery({
     queryKey: ['produtos'],

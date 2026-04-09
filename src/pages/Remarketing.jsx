@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
@@ -22,6 +23,7 @@ import CampanhaModal from '../components/remarketing/CampanhaModal';
 import EnvioEmMassaModal from '../components/remarketing/EnvioEmMassaModal';
 import ModuloBloqueado from '@/components/ModuloBloqueado';
 import { paginaPermitida } from '@/components/modulos';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const STATUS_CONFIG = {
   pendente: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
@@ -41,6 +43,7 @@ export default function Remarketing() {
   const [sincronizando, setSincronizando] = useState(false);
   const [selecionados, setSelecionados] = useState([]);
   const [envioEmMassaOpen, setEnvioEmMassaOpen] = useState(false);
+  const [msgFollowup, setMsgFollowup] = useState(null);
 
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos-remarketing'],
@@ -73,12 +76,12 @@ export default function Remarketing() {
   });
 
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
+  const config = configs[0] || {};
+  const diasMinimos = config.dias_minimos_reenvio || 30;
+
   if (!paginaPermitida(modulosAtivos, 'Remarketing')) {
     return <ModuloBloqueado nomeModulo="Marketing Direto" />;
   }
-
-  const config = configs[0] || {};
-  const diasMinimos = config.dias_minimos_reenvio || 30;
 
   const updateFilaMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.RemarketingFila.update(id, data),
@@ -276,8 +279,9 @@ export default function Remarketing() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full sm:w-auto">
+          <TabsList className="w-full sm:w-auto flex-wrap h-auto gap-1">
             <TabsTrigger value="fila">Vendas Perdidas ({stats.pendentes})</TabsTrigger>
+            <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
             <TabsTrigger value="campanhas">Campanhas ({campanhas.length})</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
@@ -386,6 +390,56 @@ export default function Remarketing() {
                 </Card>
               ))
             )}
+          </TabsContent>
+
+          {/* ORÇAMENTOS NÃO CONVERTIDOS */}
+          <TabsContent value="orcamentos" className="space-y-4 mt-4">
+            {(() => {
+              const orcamentosPendentes = atendimentos.filter(a => {
+                if (a.status_pagamento) return false;
+                const todos = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
+                return todos.length > 0 && (a.status === 'queixa_pendente' || a.status === 'queixa_aprovada' || a.status === 'em_diagnostico' || a.status === 'aguardando_aprovacao_checklist' || a.status === 'checklist_aprovado');
+              });
+              if (orcamentosPendentes.length === 0) return (
+                <Card><CardContent className="py-12 text-center text-slate-500">Nenhum orçamento pendente de conversão.</CardContent></Card>
+              );
+              return orcamentosPendentes.map(at => {
+                const telefone = at.cliente_telefone?.replace(/\D/g, '');
+                const valor = at.valor_final || 0;
+                const dias = Math.floor((Date.now() - new Date(at.created_date)) / (1000 * 60 * 60 * 24));
+                const msg4h = `Olá! Vi que você fez um orçamento com a gente. Posso te ajudar a agendar o serviço?`;
+                const msg24h = `Passando para saber se deseja dar andamento no seu orçamento. Qualquer dúvida estou por aqui!`;
+                return (
+                  <Card key={at.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="pt-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-bold text-slate-800">{at.cliente_nome || 'Sem nome'}</p>
+                            <Badge className={dias <= 1 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}>
+                              {dias === 0 ? 'Hoje' : `${dias}d atrás`}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-slate-500">{at.placa} — {at.modelo}</p>
+                          <p className="text-sm text-slate-500">{at.cliente_telefone}</p>
+                          <p className="font-bold text-orange-600 mt-1">R$ {valor.toFixed(2)}</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Button size="sm" className="bg-green-600 hover:bg-green-700" disabled={!telefone}
+                            onClick={() => setMsgFollowup({ telefone, texto: msg4h, label: 'Follow-up 4h' })}>
+                            <MessageCircle className="w-3 h-3 mr-1" /> 4h
+                          </Button>
+                          <Button size="sm" variant="outline" disabled={!telefone}
+                            onClick={() => setMsgFollowup({ telefone, texto: msg24h, label: 'Follow-up 24h' })}>
+                            <MessageCircle className="w-3 h-3 mr-1" /> 24h
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              });
+            })()}
           </TabsContent>
 
           {/* CAMPANHAS */}
@@ -526,6 +580,33 @@ export default function Remarketing() {
             setMensagemModalItem(null);
           }}
         />
+      )}
+
+      {/* Modal follow-up orçamento */}
+      {msgFollowup && (
+        <Dialog open={!!msgFollowup} onOpenChange={() => setMsgFollowup(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{msgFollowup.label}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Textarea
+                value={msgFollowup.texto}
+                onChange={e => setMsgFollowup(prev => ({ ...prev, texto: e.target.value }))}
+                className="min-h-[100px]"
+              />
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  window.open(`https://wa.me/55${msgFollowup.telefone}?text=${encodeURIComponent(msgFollowup.texto)}`, '_blank');
+                  setMsgFollowup(null);
+                }}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" /> Abrir WhatsApp
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {campanhModalOpen && (

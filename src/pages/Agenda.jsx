@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Calendar, Clock, User, Car, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
+import { Calendar, Clock, User, Car, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Loader2, RefreshCw, MessageCircle, ArrowRight } from 'lucide-react';
 import { format, addDays, subDays, startOfDay, endOfDay, isToday, isTomorrow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -29,6 +31,7 @@ const STATUS_LABELS = {
   em_andamento: 'Em Andamento',
   concluido: 'Concluído',
   cancelado: 'Cancelado',
+  convertido_atendimento: 'Convertido em OS',
 };
 
 const EMPTY_FORM = {
@@ -138,10 +141,13 @@ function AgendamentoModal({ open, onClose, agendamento, onSaved }) {
 
 export default function Agenda() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [dataBase, setDataBase] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
   const [editando, setEditando] = useState(null);
   const [sincronizando, setSincronizando] = useState(false);
+  const [confirmandoPresenca, setConfirmandoPresenca] = useState(null);
+  const [msgConfirmacao, setMsgConfirmacao] = useState('');
 
   const { data: agendamentos = [], isLoading } = useQuery({
     queryKey: ['agendamentos'],
@@ -178,6 +184,46 @@ export default function Agenda() {
     setEditando(null);
     qc.invalidateQueries(['agendamentos']);
     toast.success('Agendamento salvo!');
+  };
+
+  const { data: todosAtendimentos = [] } = useQuery({
+    queryKey: ['atendimentos-count'],
+    queryFn: () => base44.entities.Atendimento.list(),
+    staleTime: 60 * 1000
+  });
+
+  const converterEmAtendimento = async (ag) => {
+    const maxOs = todosAtendimentos.reduce((max, a) => Math.max(max, a.numero_os || 0), 0);
+    const novoNumeroOs = maxOs + 1;
+    const result = await base44.entities.Atendimento.create({
+      numero_os: novoNumeroOs,
+      cliente_nome: ag.cliente_nome || '',
+      cliente_telefone: ag.cliente_telefone || '',
+      placa: ag.placa || '',
+      modelo: ag.modelo || '',
+      tecnico: ag.tecnico || '',
+      observacoes: ag.observacoes || '',
+      data_entrada: new Date().toISOString(),
+      status: 'queixa_pendente',
+      historico_edicoes: [{ data: new Date().toISOString(), usuario: 'Sistema', campo_editado: 'criacao', descricao: `Convertido do agendamento: ${ag.titulo}` }]
+    });
+    await base44.entities.Agendamento.update(ag.id, { status: 'convertido_atendimento' });
+    qc.invalidateQueries(['agendamentos']);
+    toast.success('Atendimento criado com sucesso!');
+    navigate(createPageUrl(`VerAtendimento?id=${result.id}`));
+  };
+
+  const abrirConfirmacaoPresenca = (ag) => {
+    const horario = ag.data_hora ? new Date(ag.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+    setMsgConfirmacao(`Olá ${ag.cliente_nome || ''}! Seu agendamento está marcado para hoje às ${horario}. Você vai conseguir vir mesmo?`);
+    setConfirmandoPresenca(ag);
+  };
+
+  const enviarConfirmacaoPresenca = () => {
+    const telefone = confirmandoPresenca?.cliente_telefone?.replace(/\D/g, '');
+    if (!telefone) { toast.error('Cliente sem telefone'); return; }
+    window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msgConfirmacao)}`, '_blank');
+    setConfirmandoPresenca(null);
   };
 
   const sincronizarSheets = async () => {
@@ -293,6 +339,12 @@ export default function Agenda() {
                               {ag.tecnico && <p className="text-xs opacity-70 mt-0.5">Téc: {ag.tecnico}</p>}
                             </div>
                             <div className="flex flex-col gap-1">
+                              <button onClick={() => abrirConfirmacaoPresenca(ag)} className="opacity-60 hover:opacity-100" title="Confirmar presença">
+                                <MessageCircle className="w-3.5 h-3.5 text-green-600" />
+                              </button>
+                              <button onClick={() => converterEmAtendimento(ag)} className="opacity-60 hover:opacity-100" title="Converter em atendimento">
+                                <ArrowRight className="w-3.5 h-3.5 text-blue-600" />
+                              </button>
                               <button onClick={() => { setEditando(ag); setShowModal(true); }} className="opacity-60 hover:opacity-100">
                                 <Edit className="w-3.5 h-3.5" />
                               </button>
@@ -347,6 +399,26 @@ export default function Agenda() {
           onSaved={onSaved}
         />
       )}
+
+      {/* Modal confirmação de presença */}
+      <Dialog open={!!confirmandoPresenca} onOpenChange={() => setConfirmandoPresenca(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Presença via WhatsApp</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600">Edite a mensagem antes de enviar:</p>
+            <Textarea
+              value={msgConfirmacao}
+              onChange={e => setMsgConfirmacao(e.target.value)}
+              className="min-h-[100px]"
+            />
+            <Button onClick={enviarConfirmacaoPresenca} className="w-full bg-green-600 hover:bg-green-700">
+              <MessageCircle className="w-4 h-4 mr-2" /> Abrir WhatsApp
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

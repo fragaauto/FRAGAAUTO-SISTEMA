@@ -24,12 +24,14 @@ export default function Relatorios() {
     queryFn: () => base44.entities.Configuracao.list(),
     staleTime: 5 * 60 * 1000,
   });
-  const modulosAtivos = configs[0]?.modulos_ativos ?? null;
-  if (!paginaPermitida(modulosAtivos, 'Relatorios')) return <ModuloBloqueado nomeModulo="Relatórios" />;
 
-  const config = configs[0] || {};
   const [periodo, setPeriodo] = useState('30');
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
+
+  const modulosAtivos = configs[0]?.modulos_ativos ?? null;
+  const config = configs[0] || {};
+
+  if (!paginaPermitida(modulosAtivos, 'Relatorios')) return <ModuloBloqueado nomeModulo="Relatórios" />;
 
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],

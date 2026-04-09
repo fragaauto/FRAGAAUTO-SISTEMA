@@ -46,75 +46,19 @@ export default function Financeiro() {
     queryFn: () => base44.entities.Configuracao.list(),
     staleTime: 5 * 60 * 1000,
   });
-  const modulosAtivos = configs[0]?.modulos_ativos ?? null;
-  if (!paginaPermitida(modulosAtivos, 'Financeiro')) {
-    return <ModuloBloqueado nomeModulo="Financeiro" />;
-  }
 
   const [tab, setTab] = useState('dashboard');
   const [periodo, setPeriodo] = useState('mes');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
 
+  const modulosAtivos = configs[0]?.modulos_ativos ?? null;
+
+  if (!paginaPermitida(modulosAtivos, 'Financeiro')) {
+    return <ModuloBloqueado nomeModulo="Financeiro" />;
+  }
+
   const hoje = new Date();
-
-  const { data: lancamentos = [] } = useQuery({
-    queryKey: ['lancamentos-financeiro'],
-    queryFn: () => base44.entities.LancamentoFinanceiro.filter({ estornado: false }),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber'],
-    queryFn: () => base44.entities.ContaReceber.list('-created_date', 200),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contas-pagar'],
-    queryFn: () => base44.entities.ContaPagar.list('-created_date', 200),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // Calcular intervalo de datas do filtro selecionado
-  const { inicioFiltro, fimFiltro } = useMemo(() => {
-    if (periodo === 'personalizado' && dataInicio && dataFim) {
-      return {
-        inicioFiltro: startOfDay(new Date(dataInicio)),
-        fimFiltro: endOfDay(new Date(dataFim)),
-      };
-    }
-    if (periodo === 'hoje') return { inicioFiltro: startOfDay(hoje), fimFiltro: endOfDay(hoje) };
-    if (periodo === 'mes') return { inicioFiltro: startOfMonth(hoje), fimFiltro: endOfMonth(hoje) };
-    if (periodo === '7') return { inicioFiltro: startOfDay(subDays(hoje, 6)), fimFiltro: endOfDay(hoje) };
-    if (periodo === '30') return { inicioFiltro: startOfDay(subDays(hoje, 29)), fimFiltro: endOfDay(hoje) };
-    if (periodo === '90') return { inicioFiltro: startOfDay(subDays(hoje, 89)), fimFiltro: endOfDay(hoje) };
-    return { inicioFiltro: startOfMonth(hoje), fimFiltro: endOfMonth(hoje) };
-  }, [periodo, dataInicio, dataFim]);
-
-  // Lançamentos do período selecionado
-  const lancPeriodo = useMemo(() => lancamentos.filter(l => {
-    if (!l.data_lancamento) return false;
-    const d = new Date(l.data_lancamento);
-    return d >= inicioFiltro && d <= fimFiltro;
-  }), [lancamentos, inicioFiltro, fimFiltro]);
-
-  // Lançamentos ANTES do período = saldo anterior
-  const saldoAnterior = useMemo(() => {
-    return lancamentos
-      .filter(l => l.data_lancamento && new Date(l.data_lancamento) < inicioFiltro)
-      .reduce((s, l) => s + (l.tipo === 'entrada' ? (l.valor || 0) : -(l.valor || 0)), 0);
-  }, [lancamentos, inicioFiltro]);
-
-  const entradas = lancPeriodo.filter(l => l.tipo === 'entrada').reduce((s, l) => s + (l.valor || 0), 0);
-  const saidas = lancPeriodo.filter(l => l.tipo === 'saida').reduce((s, l) => s + (l.valor || 0), 0);
-  const saldoAtual = saldoAnterior + entradas - saidas;
-
-  const recebPendente = contasReceber.filter(c => c.status === 'pendente' || c.status === 'vencido').reduce((s, c) => s + (c.valor_total || 0), 0);
-  const pagarPendente = contasPagar.filter(c => c.status === 'pendente' || c.status === 'vencido').reduce((s, c) => s + (c.valor || 0), 0);
-  const contasVencidas = contasReceber.filter(c => c.status === 'vencido').length + contasPagar.filter(c => c.status === 'vencido').length;
-
-  const ticketMedio = lancPeriodo.filter(l => l.tipo === 'entrada' && l.atendimento_id).length > 0
     ? entradas / lancPeriodo.filter(l => l.tipo === 'entrada' && l.atendimento_id).length
     : 0;
 

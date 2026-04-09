@@ -14,6 +14,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '' }) {
   const [filtroTecnico, setFiltroTecnico] = useState('todos');
   const [filtroProduto, setFiltroProduto] = useState('');
+  const [filtroDataInicio, setFiltroDataInicio] = useState('');
+  const [filtroDataFim, setFiltroDataFim] = useState('');
   const [tecnicoExpandido, setTecnicoExpandido] = useState(null);
   const [incluirDetalhes, setIncluirDetalhes] = useState(false);
   
@@ -29,9 +31,25 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     return (config.impostos || []).filter(i => i.ativo).reduce((sum, i) => sum + (i.percentual || 0), 0);
   }, [config]);
 
+  const atendimentosFiltradosPorData = useMemo(() => {
+    if (!filtroDataInicio && !filtroDataFim) return atendimentos;
+    return atendimentos.filter(a => {
+      const dataAtendimento = new Date(a.data_entrada || a.created_date);
+      if (filtroDataInicio) {
+        const inicio = new Date(filtroDataInicio + 'T00:00:00');
+        if (dataAtendimento < inicio) return false;
+      }
+      if (filtroDataFim) {
+        const fim = new Date(filtroDataFim + 'T23:59:59');
+        if (dataAtendimento > fim) return false;
+      }
+      return true;
+    });
+  }, [atendimentos, filtroDataInicio, filtroDataFim]);
+
   const dadosTecnicos = useMemo(() => {
     const tecnicos = {};
-    const atendimentosFiltrados = atendimentos.filter(a => {
+    const atendimentosFiltrados = atendimentosFiltradosPorData.filter(a => {
       if (filtroProduto) {
         const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
         const temProduto = todosItens.some(item => 
@@ -172,12 +190,12 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     }
     
     return todosTecnicos;
-  }, [atendimentos, taxasMap, totalImpostos, filtroTecnico, filtroProduto]);
+  }, [atendimentosFiltradosPorData, taxasMap, totalImpostos, filtroTecnico, filtroProduto]);
 
   // Lista de todos os técnicos para o filtro
   const listaTecnicos = useMemo(() => {
     const nomes = new Set();
-    atendimentos.forEach(a => {
+    atendimentosFiltradosPorData.forEach(a => {
       const lista = a.tecnicos_responsaveis?.length > 0
         ? a.tecnicos_responsaveis
         : (a.tecnico ? a.tecnico.split(',').map(t => ({ nome: t.trim() })) : []);
@@ -296,6 +314,16 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <Label className="text-xs">Data Início</Label>
+              <Input type="date" value={filtroDataInicio} onChange={e => setFiltroDataInicio(e.target.value)} className="h-9" />
+            </div>
+            <div>
+              <Label className="text-xs">Data Fim</Label>
+              <Input type="date" value={filtroDataFim} onChange={e => setFiltroDataFim(e.target.value)} className="h-9" />
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Técnico</Label>

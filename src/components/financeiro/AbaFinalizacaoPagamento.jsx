@@ -102,6 +102,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const [tecnicosSelecionados, setTecnicosSelecionados] = useState(atendimento.tecnicos_responsaveis || []);
   const [obsInterna, setObsInterna] = useState(atendimento.obs_interna || '');
   const [obsExterna, setObsExterna] = useState(atendimento.obs_externa || '');
+  const [custoPecasExternas, setCustoPecasExternas] = useState(atendimento.custo_pecas_externas || 0);
   const [descontoTipo, setDescontoTipo] = useState('valor');
   const [descontoValor, setDescontoValor] = useState(atendimento.desconto_pagamento || 0);
   const [pagamentos, setPagamentos] = useState(() => {
@@ -232,6 +233,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
 
       const isFaturado = pagamentos.some(p => p.forma === 'faturado');
       const statusPag = isFaturado ? 'faturado' : 'pago';
+      const custoExterno = parseFloat(custoPecasExternas) || 0;
 
       // Baixar estoque dos produtos aprovados
       const itens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
@@ -277,10 +279,11 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         const valorLiquido = valorBruto * (1 - taxa / 100);
         const parcelas = pag.forma === 'cartao_credito' ? (parcelasSelecionadas[i] || 1) : null;
 
+        const valorLiquidoFinal = Math.max(0, valorLiquido - (custoExterno / pagamentos.length));
         await base44.entities.LancamentoFinanceiro.create({
           tipo: 'entrada',
           descricao: `Atendimento ${atendimento.placa} - ${atendimento.cliente_nome || ''}${parcelas > 1 ? ` (${parcelas}x)` : ''}`,
-          valor: valorLiquido,
+          valor: valorLiquidoFinal,
           valor_bruto: valorBruto,
           taxa_percentual: taxa,
           forma_pagamento: pag.forma,
@@ -311,11 +314,26 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         });
       }
 
+      // Registrar saída das peças externas se houver
+      if (custoExterno > 0) {
+        await base44.entities.LancamentoFinanceiro.create({
+          tipo: 'saida',
+          descricao: `Custo peças externas — Atendimento ${atendimento.placa}`,
+          valor: custoExterno,
+          forma_pagamento: 'dinheiro',
+          atendimento_id: atendimento.id,
+          usuario: user?.email,
+          data_lancamento: new Date().toISOString(),
+          categoria: 'pecas_externas',
+        });
+      }
+
       // Atualizar atendimento
       await base44.entities.Atendimento.update(atendimento.id, {
         status_pagamento: statusPag,
         formas_pagamento_lancamento: pagamentos,
         desconto_pagamento: desconto,
+        custo_pecas_externas: custoExterno,
         valor_final_pago: totalComDesconto,
         obs_interna: obsInterna,
         obs_externa: obsExterna,
@@ -501,6 +519,42 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Custo Peças Externas - INTERNO */}
+      {!jaLancado && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-yellow-800 flex items-center gap-2">
+              🔒 Custo com Peças Externas
+              <Badge variant="outline" className="text-xs text-yellow-700 border-yellow-400">Interno — não aparece ao cliente</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={custoPecasExternas}
+              onChange={e => setCustoPecasExternas(parseFloat(e.target.value) || 0)}
+              placeholder="0.00"
+              className="bg-white"
+            />
+            {custoPecasExternas > 0 && (
+              <p className="text-xs text-yellow-700">
+                Entrada no caixa será reduzida em R$ {parseFloat(custoPecasExternas).toFixed(2)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {jaLancado && atendimento.custo_pecas_externas > 0 && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-3 pb-3">
+            <p className="text-xs text-yellow-800 font-medium">🔒 Custo peças externas (interno): R$ {atendimento.custo_pecas_externas?.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Desconto */}
       <Card>
