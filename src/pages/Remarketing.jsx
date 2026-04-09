@@ -79,10 +79,6 @@ export default function Remarketing() {
   const config = configs[0] || {};
   const diasMinimos = config.dias_minimos_reenvio || 30;
 
-  if (!paginaPermitida(modulosAtivos, 'Remarketing')) {
-    return <ModuloBloqueado nomeModulo="Marketing Direto" />;
-  }
-
   const updateFilaMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.RemarketingFila.update(id, data),
     onSuccess: () => queryClient.invalidateQueries(['remarketing-fila'])
@@ -98,7 +94,6 @@ export default function Remarketing() {
 
   const cancelarCampanhaMutation = useMutation({
     mutationFn: (campanha) => {
-      // Marca todos os contatos pendentes como cancelado e muda status
       const listaAtualizada = (campanha.listaContatos || []).map(c =>
         c.status === 'pendente' ? { ...c, status: 'cancelado' } : c
       );
@@ -118,7 +113,6 @@ export default function Remarketing() {
     setSincronizando(true);
     try {
       const atendimentosComReprovados = atendimentos.filter(at => {
-        const statusValidos = ['concluido', 'cancelado', 'checklist_aprovado', 'checklist_reprovado'];
         const todos = [...(at.itens_queixa || []), ...(at.itens_orcamento || [])];
         return todos.some(i => i.status_aprovacao === 'reprovado') && at.cliente_telefone;
       });
@@ -172,7 +166,6 @@ export default function Remarketing() {
     toast.success('Marcado como convertido!');
   };
 
-  // Clientes bloqueados não aparecem na fila nem em campanhas
   const clientesBloqueadosIds = new Set(clientes.filter(c => c.bloqueado).map(c => c.id));
   const clientesBloqueadosTelefones = new Set(clientes.filter(c => c.bloqueado).map(c => c.telefone).filter(Boolean));
 
@@ -204,6 +197,10 @@ export default function Remarketing() {
       cancelado: filaRaw.filter(f => f.status === 'cancelado'),
     };
   }, [filaRaw]);
+
+  if (!paginaPermitida(modulosAtivos, 'Remarketing')) {
+    return <ModuloBloqueado nomeModulo="Marketing Direto" />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">

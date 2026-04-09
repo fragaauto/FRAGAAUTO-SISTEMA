@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Função utilitária para enviar mensagem via Evolution API
 async function enviarViaEvolution(url, apiKey, instance, telefone, mensagem) {

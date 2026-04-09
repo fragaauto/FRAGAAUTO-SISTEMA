@@ -218,6 +218,8 @@ export default function Produtos() {
     }
   });
 
+  const POR_PAGINA = 20;
+
   const filteredProdutos = produtos
     .filter(p => {
       const matchSearch = p.nome?.toLowerCase().includes(search.toLowerCase()) || 

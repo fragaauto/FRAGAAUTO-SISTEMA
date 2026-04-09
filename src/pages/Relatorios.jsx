@@ -31,8 +31,6 @@ export default function Relatorios() {
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
   const config = configs[0] || {};
 
-  if (!paginaPermitida(modulosAtivos, 'Relatorios')) return <ModuloBloqueado nomeModulo="Relatórios" />;
-
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list('-created_date', 500),
@@ -66,7 +64,6 @@ export default function Relatorios() {
     const rankingServicos = {};
 
     atendimentosFiltrados.forEach(a => {
-      // Só considerar atendimentos concluídos e pagos nos valores de aprovado
       const atendimentoConcluido = a.status === 'concluido' && a.status_pagamento && a.status_pagamento !== 'pendente';
       
       const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
@@ -79,7 +76,6 @@ export default function Relatorios() {
           if (item.status_aprovacao === 'reprovado') {
             rankingServicos[item.nome].qtd_reprovado++;
           }
-          // Só contar como aprovado se o atendimento foi concluído e pago
           if (item.status_aprovacao === 'aprovado' && atendimentoConcluido) {
             servicosAprovados++;
             valorTotalAprovado += item.valor_total || 0;
@@ -97,6 +93,8 @@ export default function Relatorios() {
 
     return { totalOrcamentos: atendimentosFiltrados.length, servicosAprovados, servicosReprovados, valorTotalAprovado, valorTotalReprovado, detalhesServicos, atendimentosFiltrados, rankingServicos: rankingArray };
   }, [atendimentos, periodo, dataEspecifica]);
+
+  if (!paginaPermitida(modulosAtivos, 'Relatorios')) return <ModuloBloqueado nomeModulo="Relatórios" />;
 
   const labelPeriodo = periodo === 'especifica'
     ? (dataEspecifica.from ? (dataEspecifica.to ? `${format(dataEspecifica.from, 'dd/MM/yyyy')} - ${format(dataEspecifica.to, 'dd/MM/yyyy')}` : format(dataEspecifica.from, 'dd/MM/yyyy')) : 'Data específica')
