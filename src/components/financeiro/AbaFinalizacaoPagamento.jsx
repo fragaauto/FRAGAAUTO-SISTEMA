@@ -102,7 +102,11 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const [tecnicosSelecionados, setTecnicosSelecionados] = useState(atendimento.tecnicos_responsaveis || []);
   const [obsInterna, setObsInterna] = useState(atendimento.obs_interna || '');
   const [obsExterna, setObsExterna] = useState(atendimento.obs_externa || '');
+  const [usouPecasExternas, setUsouPecasExternas] = useState(
+    atendimento.custo_pecas_externas != null ? (atendimento.custo_pecas_externas > 0 ? 'sim' : 'nao') : null
+  );
   const [custoPecasExternas, setCustoPecasExternas] = useState(atendimento.custo_pecas_externas || 0);
+  const [descricaoPecasExternas, setDescricaoPecasExternas] = useState(atendimento.descricao_pecas_externas || '');
   const [descontoTipo, setDescontoTipo] = useState('valor');
   const [descontoValor, setDescontoValor] = useState(atendimento.desconto_pagamento || 0);
   const [pagamentos, setPagamentos] = useState(() => {
@@ -213,6 +217,12 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       if (osTecnicoObrigatorio && tecnicosSelecionados.length === 0) {
         throw new Error('Obrigatório informar ao menos um técnico responsável');
       }
+      if (usouPecasExternas === null) {
+        throw new Error('Informe se houve gasto com peça externa antes de finalizar');
+      }
+      if (usouPecasExternas === 'sim' && (!custoPecasExternas || custoPecasExternas <= 0)) {
+        throw new Error('Informe o valor da peça externa');
+      }
       if (Math.abs(diferenca) > 0.01) throw new Error(`Diferença de R$ ${Math.abs(diferenca).toFixed(2)} entre pagamentos e total`);
       
       // Validar atribuição de técnicos aos serviços se obrigatório
@@ -318,7 +328,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       if (custoExterno > 0) {
         await base44.entities.LancamentoFinanceiro.create({
           tipo: 'saida',
-          descricao: `Custo peças externas — Atendimento ${atendimento.placa}`,
+          descricao: `Custo peças externas — ${descricaoPecasExternas || atendimento.placa}`,
           valor: custoExterno,
           forma_pagamento: 'dinheiro',
           atendimento_id: atendimento.id,
@@ -334,6 +344,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         formas_pagamento_lancamento: pagamentos,
         desconto_pagamento: desconto,
         custo_pecas_externas: custoExterno,
+        descricao_pecas_externas: descricaoPecasExternas || null,
         valor_final_pago: totalComDesconto,
         obs_interna: obsInterna,
         obs_externa: obsExterna,
@@ -522,36 +533,92 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
 
       {/* Custo Peças Externas - INTERNO */}
       {!jaLancado && (
-        <Card className="border-yellow-200 bg-yellow-50">
+        <Card className={`border-yellow-200 bg-yellow-50 ${usouPecasExternas === null ? 'ring-2 ring-yellow-400' : ''}`}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-yellow-800 flex items-center gap-2">
-              🔒 Custo com Peças Externas
+              🔒 Peças Externas
               <Badge variant="outline" className="text-xs text-yellow-700 border-yellow-400">Interno — não aparece ao cliente</Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1">
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={custoPecasExternas}
-              onChange={e => setCustoPecasExternas(parseFloat(e.target.value) || 0)}
-              placeholder="0.00"
-              className="bg-white"
-            />
-            {custoPecasExternas > 0 && (
-              <p className="text-xs text-yellow-700">
-                Entrada no caixa será reduzida em R$ {parseFloat(custoPecasExternas).toFixed(2)}
+          <CardContent className="space-y-3">
+            {/* Pergunta obrigatória */}
+            <div>
+              <p className="text-sm font-medium text-yellow-900 mb-2">
+                Foi gasto peça externa? <span className="text-red-500">*</span>
               </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setUsouPecasExternas('sim'); }}
+                  className={`flex-1 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
+                    usouPecasExternas === 'sim'
+                      ? 'bg-yellow-500 border-yellow-500 text-white'
+                      : 'border-yellow-300 text-yellow-800 hover:bg-yellow-100'
+                  }`}
+                >
+                  ✅ Sim
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setUsouPecasExternas('nao'); setCustoPecasExternas(0); setDescricaoPecasExternas(''); }}
+                  className={`flex-1 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
+                    usouPecasExternas === 'nao'
+                      ? 'bg-slate-500 border-slate-500 text-white'
+                      : 'border-yellow-300 text-yellow-800 hover:bg-yellow-100'
+                  }`}
+                >
+                  ❌ Não
+                </button>
+              </div>
+              {usouPecasExternas === null && (
+                <p className="text-xs text-red-600 font-medium mt-1">⚠ Obrigatório informar antes de finalizar</p>
+              )}
+            </div>
+
+            {/* Campos detalhes — só aparece se SIM */}
+            {usouPecasExternas === 'sim' && (
+              <div className="space-y-2 pt-1 border-t border-yellow-200">
+                <div>
+                  <Label className="text-xs text-yellow-800 font-medium">Descrição da peça <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={descricaoPecasExternas}
+                    onChange={e => setDescricaoPecasExternas(e.target.value)}
+                    placeholder="Ex: Correia dentada Fiat Uno 1.0..."
+                    className="bg-white mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-yellow-800 font-medium">Valor gasto <span className="text-red-500">*</span></Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={custoPecasExternas}
+                    onChange={e => setCustoPecasExternas(parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                    className="bg-white mt-1"
+                  />
+                </div>
+                {custoPecasExternas > 0 && (
+                  <p className="text-xs text-yellow-700">
+                    Entrada no caixa será reduzida em R$ {parseFloat(custoPecasExternas).toFixed(2)}
+                  </p>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
       )}
 
-      {jaLancado && atendimento.custo_pecas_externas > 0 && (
+      {jaLancado && (atendimento.custo_pecas_externas > 0 || atendimento.descricao_pecas_externas) && (
         <Card className="border-yellow-200 bg-yellow-50">
-          <CardContent className="pt-3 pb-3">
-            <p className="text-xs text-yellow-800 font-medium">🔒 Custo peças externas (interno): R$ {atendimento.custo_pecas_externas?.toFixed(2)}</p>
+          <CardContent className="pt-3 pb-3 space-y-1">
+            {atendimento.descricao_pecas_externas && (
+              <p className="text-xs text-yellow-800 font-medium">🔒 Peça externa: {atendimento.descricao_pecas_externas}</p>
+            )}
+            {atendimento.custo_pecas_externas > 0 && (
+              <p className="text-xs text-yellow-800 font-medium">💰 Custo: R$ {atendimento.custo_pecas_externas?.toFixed(2)}</p>
+            )}
           </CardContent>
         </Card>
       )}
@@ -828,6 +895,8 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
             disabled={
               lancarCaixaMutation.isPending || 
               Math.abs(diferenca) > 0.01 || 
+              usouPecasExternas === null ||
+              (usouPecasExternas === 'sim' && (!custoPecasExternas || custoPecasExternas <= 0)) ||
               (config.os_tecnico_obrigatorio && tecnicosSelecionados.length === 0) ||
               (config.os_atribuicao_servico_obrigatoria && todosItensAprovados.some(item => !item.tecnicos || item.tecnicos.length === 0))
             }
