@@ -279,8 +279,10 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       }
 
       // Lançamentos no caixa com valor líquido (descontando taxa da maquininha)
+      // Faturado NÃO entra no fluxo de caixa — vai apenas para Contas a Receber
       for (let i = 0; i < pagamentos.length; i++) {
         const pag = pagamentos[i];
+        if (pag.forma === 'faturado') continue;
         const valorBruto = parseFloat(pag.valor) || 0;
         let taxa = getTaxaForma(pag.forma);
         if (pag.forma === 'cartao_credito' && parcelasSelecionadas[i] > 1) {
