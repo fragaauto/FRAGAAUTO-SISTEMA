@@ -43,7 +43,8 @@ import {
   Upload,
   Loader2,
   FileSpreadsheet,
-  AlertTriangle
+  AlertTriangle,
+  Copy
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ModuloBloqueado from '@/components/ModuloBloqueado';
@@ -217,6 +218,17 @@ export default function Produtos() {
       toast.success(`${result.length} produtos importados!`);
     }
   });
+
+  const duplicarProduto = (produto) => {
+    const { id, created_date, updated_date, created_by, ...dados } = produto;
+    const novoCodigo = `${produto.codigo || 'PROD'}_COPIA_${Date.now().toString().slice(-4)}`;
+    createMutation.mutate({
+      ...dados,
+      codigo: novoCodigo,
+      nome: `${produto.nome} (Cópia)`,
+      estoque_atual: 0,
+    });
+  };
 
   const POR_PAGINA = 20;
 
@@ -1304,21 +1316,33 @@ export default function Produtos() {
                           R$ {produto.valor?.toFixed(2)}
                         </p>
                         <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openModal(produto)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteId(produto.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                         <Button
+                           variant="ghost"
+                           size="icon"
+                           onClick={() => openModal(produto)}
+                           title="Editar"
+                         >
+                           <Edit className="w-4 h-4" />
+                         </Button>
+                         <Button
+                           variant="ghost"
+                           size="icon"
+                           onClick={() => duplicarProduto(produto)}
+                           className="text-blue-500 hover:text-blue-700"
+                           title="Duplicar"
+                           disabled={createMutation.isPending}
+                         >
+                           <Copy className="w-4 h-4" />
+                         </Button>
+                         <Button
+                           variant="ghost"
+                           size="icon"
+                           onClick={() => setDeleteId(produto.id)}
+                           className="text-red-500 hover:text-red-700"
+                           title="Excluir"
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </Button>
                         </div>
                       </div>
                     </div>
