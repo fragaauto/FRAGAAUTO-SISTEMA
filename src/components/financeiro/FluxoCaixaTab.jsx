@@ -410,6 +410,12 @@ export default function FluxoCaixaTab() {
                   <p className="text-xs text-slate-400">
                     {l.data_lancamento ? format(new Date(l.data_lancamento), 'dd/MM HH:mm') : '-'} · {FORMAS_LABELS[l.forma_pagamento] || l.forma_pagamento}
                   </p>
+                  {l.desconto_peca_externa > 0 && (
+                    <p className="text-xs text-yellow-700 font-medium mt-0.5">
+                      🔩 Desconto peça: - R$ {l.desconto_peca_externa.toFixed(2)}
+                      {l.descricao_peca_externa ? ` (${l.descricao_peca_externa})` : ''}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>

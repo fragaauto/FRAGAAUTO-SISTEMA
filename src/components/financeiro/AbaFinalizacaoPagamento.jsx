@@ -290,6 +290,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         const parcelas = pag.forma === 'cartao_credito' ? (parcelasSelecionadas[i] || 1) : null;
 
         const valorLiquidoFinal = Math.max(0, valorLiquido - (custoExterno / pagamentos.length));
+        const descontoPecaEsseLancamento = custoExterno > 0 ? parseFloat((custoExterno / pagamentos.length).toFixed(2)) : 0;
         await base44.entities.LancamentoFinanceiro.create({
           tipo: 'entrada',
           descricao: `Atendimento ${atendimento.placa} - ${atendimento.cliente_nome || ''}${parcelas > 1 ? ` (${parcelas}x)` : ''}`,
@@ -302,6 +303,8 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
           usuario: user?.email,
           data_lancamento: new Date().toISOString(),
           categoria: 'servico',
+          desconto_peca_externa: descontoPecaEsseLancamento > 0 ? descontoPecaEsseLancamento : null,
+          descricao_peca_externa: descontoPecaEsseLancamento > 0 ? (descricaoPecasExternas || null) : null,
         });
       }
 
@@ -324,19 +327,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         });
       }
 
-      // Registrar saída das peças externas se houver
-      if (custoExterno > 0) {
-        await base44.entities.LancamentoFinanceiro.create({
-          tipo: 'saida',
-          descricao: `Custo peças externas — ${descricaoPecasExternas || atendimento.placa}`,
-          valor: custoExterno,
-          forma_pagamento: 'dinheiro',
-          atendimento_id: atendimento.id,
-          usuario: user?.email,
-          data_lancamento: new Date().toISOString(),
-          categoria: 'pecas_externas',
-        });
-      }
+      // Peças externas já estão descontadas diretamente no valor da entrada — não gera lançamento de saída separado
 
       // Atualizar atendimento
       await base44.entities.Atendimento.update(atendimento.id, {
