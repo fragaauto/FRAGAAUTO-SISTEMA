@@ -1369,44 +1369,19 @@ export default function VerAtendimento() {
                 <CardContent className="space-y-3">
                   {atendimento.itens_queixa.map((item, idx) => (
                     <div key={idx} className="space-y-2">
-                      {!pagamentoLancado ? (
-                        <ItemOrcamento
-                          item={item}
-                          onUpdate={(updated) => handleUpdateItemQueixa(idx, updated)}
-                          onRemove={() => {
-                            const novosItens = atendimento.itens_queixa.filter((_, i) => i !== idx);
-                            const subtotal_queixa = novosItens.reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
-                            const subtotal_checklist = (atendimento.itens_orcamento || []).reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
-                            const subtotal = subtotal_queixa + subtotal_checklist;
-                            const valor_final = subtotal - (Number(atendimento.desconto) || 0);
-                            updateMutation.mutate({ itens_queixa: novosItens, subtotal_queixa, subtotal, valor_final });
-                          }}
-                        />
-                      ) : (
-                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <p className="font-medium">{item.nome}</p>
-                              <p className="text-sm text-slate-500">
-                                {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
-                              </p>
-                            </div>
-                            <p className="font-bold text-blue-600">
-                              R$ {item.valor_total?.toFixed(2)}
-                            </p>
-                          </div>
-                          {item.tecnicos && item.tecnicos.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {item.tecnicos.map((tec, i) => (
-                                <Badge key={i} variant="outline" className="text-xs bg-blue-100 text-blue-700">
-                                  <Wrench className="w-3 h-3 mr-1" />
-                                  {tec.nome}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <ItemOrcamento
+                        item={item}
+                        readOnly={pagamentoLancado}
+                        onUpdate={(updated) => handleUpdateItemQueixa(idx, updated)}
+                        onRemove={() => {
+                          const novosItens = atendimento.itens_queixa.filter((_, i) => i !== idx);
+                          const subtotal_queixa = novosItens.reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
+                          const subtotal_checklist = (atendimento.itens_orcamento || []).reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
+                          const subtotal = subtotal_queixa + subtotal_checklist;
+                          const valor_final = subtotal - (Number(atendimento.desconto) || 0);
+                          updateMutation.mutate({ itens_queixa: novosItens, subtotal_queixa, subtotal, valor_final });
+                        }}
+                      />
                       {item.observacao_item && (
                         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                           <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
@@ -1452,44 +1427,19 @@ export default function VerAtendimento() {
                   <CardContent className="space-y-3">
                     {atendimento.itens_orcamento.map((item, idx) => (
                       <div key={idx} className="space-y-2">
-                        {!pagamentoLancado ? (
-                          <ItemOrcamento
-                            item={item}
-                            onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
-                            onRemove={() => {
-                              const novosItens = atendimento.itens_orcamento.filter((_, i) => i !== idx);
-                              const subtotal_queixa = (atendimento.itens_queixa || []).reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
-                              const subtotal_checklist = novosItens.reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
-                              const subtotal = subtotal_queixa + subtotal_checklist;
-                              const valor_final = subtotal - (Number(atendimento.desconto) || 0);
-                              updateMutation.mutate({ itens_orcamento: novosItens, subtotal_checklist, subtotal, valor_final });
-                            }}
-                          />
-                        ) : (
-                          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                            <div className="flex items-center justify-between mb-2">
-                              <div>
-                                <p className="font-medium">{item.nome}</p>
-                                <p className="text-sm text-slate-500">
-                                  {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
-                                </p>
-                              </div>
-                              <p className="font-bold text-orange-600">
-                                R$ {item.valor_total?.toFixed(2)}
-                              </p>
-                            </div>
-                            {item.tecnicos && item.tecnicos.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-1">
-                                {item.tecnicos.map((tec, i) => (
-                                  <Badge key={i} variant="outline" className="text-xs bg-orange-100 text-orange-700">
-                                    <Wrench className="w-3 h-3 mr-1" />
-                                    {tec.nome}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        <ItemOrcamento
+                          item={item}
+                          readOnly={pagamentoLancado}
+                          onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
+                          onRemove={() => {
+                            const novosItens = atendimento.itens_orcamento.filter((_, i) => i !== idx);
+                            const subtotal_queixa = (atendimento.itens_queixa || []).reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
+                            const subtotal_checklist = novosItens.reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
+                            const subtotal = subtotal_queixa + subtotal_checklist;
+                            const valor_final = subtotal - (Number(atendimento.desconto) || 0);
+                            updateMutation.mutate({ itens_orcamento: novosItens, subtotal_checklist, subtotal, valor_final });
+                          }}
+                        />
                         {item.observacao_item && (
                           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                             <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>

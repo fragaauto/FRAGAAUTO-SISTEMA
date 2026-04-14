@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Wrench } from 'lucide-react';
 import AtribuirTecnicoModal from './AtribuirTecnicoModal';
 
-export default function ItemOrcamento({ item, onUpdate, onRemove }) {
+export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = false }) {
   const [mostrarModalTecnico, setMostrarModalTecnico] = useState(false);
   const handleQuantidadeChange = (e) => {
     const value = e.target.value;
@@ -83,6 +83,13 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
           </Button>
         </div>
         
+        {readOnly ? (
+          <div className="flex items-center gap-4 flex-wrap text-sm text-slate-600">
+            <span><span className="text-slate-400">Qtd:</span> {item.quantidade}</span>
+            <span><span className="text-slate-400">Unit.:</span> R$ {item.valor_unitario?.toFixed(2)}</span>
+            <span className="font-semibold text-green-700">Total: R$ {item.valor_total?.toFixed(2)}</span>
+          </div>
+        ) : (
         <div className="flex items-center gap-2 flex-wrap">
         <div className="flex flex-col">
           <span className="text-xs text-slate-500 mb-1">Qtd</span>
@@ -137,6 +144,7 @@ export default function ItemOrcamento({ item, onUpdate, onRemove }) {
             <Trash2 className="w-5 h-5" />
           </Button>
         </div>
+        )}
       </div>
 
       {mostrarModalTecnico && (
