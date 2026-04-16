@@ -122,6 +122,7 @@ export default function Atendimentos() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
+  const [produtoFilter, setProdutoFilter] = useState('');
   const [selecionados, setSelecionados] = useState([]);
   const [statusEmMassa, setStatusEmMassa] = useState('');
   const [pagina, setPagina] = useState(1);
@@ -132,6 +133,12 @@ export default function Atendimentos() {
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list('-created_date'),
     staleTime: 2 * 60 * 1000
+  });
+
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list('nome', 3000),
+    staleTime: 5 * 60 * 1000
   });
 
   const { data: configs = [] } = useQuery({
@@ -174,7 +181,16 @@ export default function Atendimentos() {
     const matchDataInicio = !dataInicio || dataAtendimento >= new Date(dataInicio + 'T00:00:00');
     const matchDataFim = !dataFim || dataAtendimento <= new Date(dataFim + 'T23:59:59');
 
-    return matchSearch && matchStatus && matchDataInicio && matchDataFim;
+    let matchProduto = true;
+    if (produtoFilter) {
+      const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
+      matchProduto = todosItens.some(item =>
+        item.produto_id === produtoFilter ||
+        item.nome?.toLowerCase().includes(produtoFilter.toLowerCase())
+      );
+    }
+
+    return matchSearch && matchStatus && matchDataInicio && matchDataFim && matchProduto;
   });
 
   const totalPaginas = Math.ceil(filteredAtendimentos.length / POR_PAGINA);
@@ -317,6 +333,25 @@ export default function Atendimentos() {
           </Select>
         </div>
 
+        {/* Filtro por produto/serviço */}
+        <div className="mt-3">
+          <Select value={produtoFilter} onValueChange={(v) => { setProdutoFilter(v === 'all' ? '' : v); setPagina(1); }}>
+            <SelectTrigger className="w-full h-10 text-sm">
+              <Tag className="w-4 h-4 mr-2 flex-shrink-0 text-slate-400" />
+              <SelectValue placeholder="Filtrar por produto/serviço..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os produtos/serviços</SelectItem>
+              {produtos.map(p => (
+                <SelectItem key={p.id} value={p.id}>
+                  <span className="font-mono text-xs text-slate-500 mr-2">{p.codigo}</span>
+                  {p.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Filtro por data */}
         <div className="flex gap-3 mt-3">
           <div className="flex items-center gap-2 flex-1">
@@ -338,9 +373,9 @@ export default function Atendimentos() {
               className="h-10 text-sm"
             />
           </div>
-          {(dataInicio || dataFim) && (
-            <Button variant="ghost" size="sm" className="h-10 text-slate-500 px-2" onClick={() => { setDataInicio(''); setDataFim(''); }}>
-              Limpar
+          {(dataInicio || dataFim || produtoFilter) && (
+            <Button variant="ghost" size="sm" className="h-10 text-slate-500 px-2" onClick={() => { setDataInicio(''); setDataFim(''); setProdutoFilter(''); }}>
+              Limpar tudo
             </Button>
           )}
         </div>
