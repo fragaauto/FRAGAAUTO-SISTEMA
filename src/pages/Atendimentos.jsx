@@ -135,11 +135,7 @@ export default function Atendimentos() {
     staleTime: 2 * 60 * 1000
   });
 
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('nome', 3000),
-    staleTime: 5 * 60 * 1000
-  });
+
 
   const { data: configs = [] } = useQuery({
     queryKey: ['configuracoes'],
@@ -334,22 +330,14 @@ export default function Atendimentos() {
         </div>
 
         {/* Filtro por produto/serviço */}
-        <div className="mt-3">
-          <Select value={produtoFilter} onValueChange={(v) => { setProdutoFilter(v === 'all' ? '' : v); setPagina(1); }}>
-            <SelectTrigger className="w-full h-10 text-sm">
-              <Tag className="w-4 h-4 mr-2 flex-shrink-0 text-slate-400" />
-              <SelectValue placeholder="Filtrar por produto/serviço..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os produtos/serviços</SelectItem>
-              {produtos.map(p => (
-                <SelectItem key={p.id} value={p.id}>
-                  <span className="font-mono text-xs text-slate-500 mr-2">{p.codigo}</span>
-                  {p.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="relative mt-3">
+          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder="Filtrar por produto/serviço..."
+            value={produtoFilter}
+            onChange={(e) => { setProdutoFilter(e.target.value); setPagina(1); }}
+            className="pl-10 h-10 text-sm"
+          />
         </div>
 
         {/* Filtro por data */}
