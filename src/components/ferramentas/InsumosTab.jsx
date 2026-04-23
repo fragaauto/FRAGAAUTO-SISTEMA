@@ -34,7 +34,7 @@ export default function InsumosTab() {
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ nome: '', unidade: 'unidade', quantidade_estoque: 0, quantidade_minima: 0 });
+  const [form, setForm] = useState({ codigo: '', nome: '', unidade: 'unidade', quantidade_estoque: 0, quantidade_minima: 0 });
   const [importModal, setImportModal] = useState(false);
   const [importPreview, setImportPreview] = useState([]);
   const [importErrors, setImportErrors] = useState([]);
@@ -56,18 +56,18 @@ export default function InsumosTab() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['insumos'] }),
   });
 
-  const openNew = () => { setForm({ nome: '', unidade: 'unidade', quantidade_estoque: 0, quantidade_minima: 0 }); setEditId(null); setModal(true); };
-  const openEdit = (i) => { setForm({ ...i }); setEditId(i.id); setModal(true); };
+  const openNew = () => { setForm({ codigo: '', nome: '', unidade: 'unidade', quantidade_estoque: 0, quantidade_minima: 0 }); setEditId(null); setModal(true); };
+  const openEdit = (i) => { setForm({ codigo: i.codigo || '', nome: i.nome, unidade: i.unidade, quantidade_estoque: i.quantidade_estoque, quantidade_minima: i.quantidade_minima }); setEditId(i.id); setModal(true); };
 
   // --- Download modelo ---
   const downloadModelo = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['nome', 'unidade', 'quantidade_estoque', 'quantidade_minima'],
-      ['Óleo 5W30', 'litro', 10, 2],
-      ['Luva Nitrílica', 'unidade', 100, 20],
-      ['Removedor', 'ml', 5000, 1000],
+      ['codigo', 'nome', 'unidade', 'quantidade_estoque', 'quantidade_minima'],
+      ['INS001', 'Óleo 5W30', 'litro', 10, 2],
+      ['INS002', 'Luva Nitrílica', 'unidade', 100, 20],
+      ['INS003', 'Removedor', 'ml', 5000, 1000],
     ]);
-    ws['!cols'] = [{ wch: 25 }, { wch: 10 }, { wch: 20 }, { wch: 18 }];
+    ws['!cols'] = [{ wch: 10 }, { wch: 25 }, { wch: 10 }, { wch: 20 }, { wch: 18 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Insumos');
     XLSX.writeFile(wb, 'modelo_insumos.xlsx');
@@ -85,12 +85,14 @@ export default function InsumosTab() {
       const errors = [];
       const preview = rows.map((row, i) => {
         const lineNum = i + 2;
+        const codigo = String(row.codigo || '').trim();
         const nome = String(row.nome || '').trim();
         const unidade = String(row.unidade || 'unidade').trim().toLowerCase();
         const qtdEstoque = Number(row.quantidade_estoque);
         const qtdMinima = Number(row.quantidade_minima);
         const rowErrors = [];
 
+        if (!codigo) rowErrors.push('código obrigatório');
         if (!nome) rowErrors.push('nome obrigatório');
         if (!VALID_UNIDADES.includes(unidade)) rowErrors.push(`unidade inválida "${unidade}" (use: ${VALID_UNIDADES.join(', ')})`);
         if (isNaN(qtdEstoque) || qtdEstoque < 0) rowErrors.push('quantidade_estoque deve ser um número >= 0');
@@ -99,6 +101,7 @@ export default function InsumosTab() {
         rowErrors.forEach(err => errors.push(`Linha ${lineNum}: ${err}`));
 
         return {
+          codigo,
           nome,
           unidade: VALID_UNIDADES.includes(unidade) ? unidade : 'unidade',
           quantidade_estoque: isNaN(qtdEstoque) ? 0 : Math.max(0, qtdEstoque),
@@ -129,7 +132,7 @@ export default function InsumosTab() {
       const row = validRows[idx];
       const { _line, _errors, ...data } = row;
       try {
-        const existing = insumos.find(i => i.nome.toLowerCase() === data.nome.toLowerCase());
+        const existing = insumos.find(i => i.codigo && i.codigo === data.codigo);
         if (existing) {
           const novaQtd = importMode === 'soma'
             ? existing.quantidade_estoque + data.quantidade_estoque
@@ -178,6 +181,7 @@ export default function InsumosTab() {
               <div key={i.id} className={`bg-white border rounded-xl p-4 flex items-center gap-3 ${baixo ? 'border-red-200' : 'border-slate-200'}`}>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
+                    {i.codigo && <span className="font-mono text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{i.codigo}</span>}
                     <span className="font-semibold text-slate-800">{i.nome}</span>
                     {baixo && <span className="flex items-center gap-1 text-red-600 text-xs font-medium"><AlertTriangle className="w-3.5 h-3.5" /> Estoque baixo</span>}
                   </div>
@@ -201,7 +205,10 @@ export default function InsumosTab() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>{editId ? 'Editar' : 'Novo'} Insumo</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label>Nome *</Label><Input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Código *</Label><Input value={form.codigo} onChange={e => setForm(p => ({ ...p, codigo: e.target.value }))} placeholder="Ex: INS001" /></div>
+              <div><Label>Nome *</Label><Input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} /></div>
+            </div>
             <div>
               <Label>Unidade</Label>
               <Select value={form.unidade} onValueChange={v => setForm(p => ({ ...p, unidade: v }))}>
@@ -213,7 +220,7 @@ export default function InsumosTab() {
               <div><Label>Qtd. Estoque</Label><Input type="number" min="0" value={form.quantidade_estoque} onChange={e => setForm(p => ({ ...p, quantidade_estoque: Math.max(0, Number(e.target.value)) }))} /></div>
               <div><Label>Qtd. Mínima</Label><Input type="number" min="0" value={form.quantidade_minima} onChange={e => setForm(p => ({ ...p, quantidade_minima: Math.max(0, Number(e.target.value)) }))} /></div>
             </div>
-            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" onClick={() => saveMutation.mutate(form)} disabled={!form.nome || saveMutation.isPending}>
+            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" onClick={() => saveMutation.mutate(form)} disabled={!form.codigo || !form.nome || saveMutation.isPending}>
               {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
@@ -283,7 +290,7 @@ export default function InsumosTab() {
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="border-b bg-white">
-                          {['', 'Nome', 'Unidade', 'Estoque', 'Mínimo'].map(h => (
+                          {['', 'Código', 'Nome', 'Unidade', 'Estoque', 'Mínimo'].map(h => (
                             <th key={h} className="px-3 py-1.5 text-left text-slate-500">{h}</th>
                           ))}
                         </tr>
@@ -296,6 +303,7 @@ export default function InsumosTab() {
                                 ? <XCircle className="w-3.5 h-3.5 text-red-400" />
                                 : <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />}
                             </td>
+                            <td className="px-3 py-1.5 font-mono">{r.codigo || <span className="text-red-400 italic">vazio</span>}</td>
                             <td className="px-3 py-1.5">{r.nome || <span className="text-red-400 italic">vazio</span>}</td>
                             <td className="px-3 py-1.5">{r.unidade}</td>
                             <td className="px-3 py-1.5">{r.quantidade_estoque}</td>

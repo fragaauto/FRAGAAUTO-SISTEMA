@@ -28,6 +28,16 @@
       ],
       "default": "Ferramenta"
     },
+    "quantidade_total": {
+      "type": "number",
+      "default": 1,
+      "description": "Quantidade total de unidades deste item"
+    },
+    "quantidade_disponivel": {
+      "type": "number",
+      "default": 1,
+      "description": "Quantidade dispon\u00edvel (n\u00e3o retirada)"
+    },
     "status": {
       "type": "string",
       "enum": [

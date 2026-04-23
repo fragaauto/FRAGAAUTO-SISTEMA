@@ -18,7 +18,7 @@ const STATUS_COLORS = {
   'Perdido': 'bg-red-100 text-red-700 border-red-200',
 };
 
-const EMPTY = { codigo: '', nome: '', categoria: 'Manual', tipo: 'Ferramenta', status: 'Disponível', localizacao: '', observacoes: '' };
+const EMPTY = { codigo: '', nome: '', categoria: 'Manual', tipo: 'Ferramenta', quantidade_total: 1, quantidade_disponivel: 1, status: 'Disponível', localizacao: '', observacoes: '' };
 
 const VALID_CATEGORIAS = ['Manual', 'Elétrica', 'Medição', 'Outros'];
 const VALID_TIPOS = ['Ferramenta', 'Insumo'];
@@ -93,11 +93,12 @@ export default function FerramentasTab() {
   // --- Download modelo ---
   const downloadModelo = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['codigo', 'nome', 'categoria', 'tipo', 'status', 'localizacao', 'observacoes'],
-      ['F001', 'Chave de Fenda', 'Manual', 'Ferramenta', 'Disponível', 'Prateleira A1', ''],
-      ['F002', 'Furadeira', 'Elétrica', 'Ferramenta', 'Disponível', 'Armário 2', ''],
+      ['codigo', 'nome', 'categoria', 'tipo', 'quantidade_total', 'quantidade_disponivel', 'status', 'localizacao', 'observacoes'],
+      ['F001', 'Chave de Fenda', 'Manual', 'Ferramenta', 5, 5, 'Disponível', 'Prateleira A1', ''],
+      ['F002', 'Furadeira', 'Elétrica', 'Ferramenta', 2, 1, 'Em uso', 'Armário 2', 'Uma em uso pelo João'],
+      ['F003', 'Trena 5m', 'Medição', 'Ferramenta', 3, 3, 'Disponível', 'Gaveta 3', ''],
     ]);
-    ws['!cols'] = [{ wch: 10 }, { wch: 25 }, { wch: 15 }, { wch: 12 }, { wch: 14 }, { wch: 18 }, { wch: 30 }];
+    ws['!cols'] = [{ wch: 10 }, { wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 20 }, { wch: 14 }, { wch: 18 }, { wch: 30 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Ferramentas');
     XLSX.writeFile(wb, 'modelo_ferramentas.xlsx');
@@ -116,11 +117,15 @@ export default function FerramentasTab() {
       const errors = [];
       const preview = rows.map((row, i) => {
         const lineNum = i + 2;
+        const qtdTotal = Number(row.quantidade_total);
+        const qtdDisp = Number(row.quantidade_disponivel);
         const r = {
           codigo: String(row.codigo || '').trim(),
           nome: String(row.nome || '').trim(),
           categoria: String(row.categoria || 'Manual').trim(),
           tipo: String(row.tipo || 'Ferramenta').trim(),
+          quantidade_total: isNaN(qtdTotal) ? 1 : Math.max(1, qtdTotal),
+          quantidade_disponivel: isNaN(qtdDisp) ? (isNaN(qtdTotal) ? 1 : Math.max(1, qtdTotal)) : Math.max(0, qtdDisp),
           status: String(row.status || 'Disponível').trim(),
           localizacao: String(row.localizacao || '').trim(),
           observacoes: String(row.observacoes || '').trim(),
@@ -132,6 +137,7 @@ export default function FerramentasTab() {
         if (!VALID_CATEGORIAS.includes(r.categoria)) r._errors.push(`categoria inválida "${r.categoria}" (use: ${VALID_CATEGORIAS.join(', ')})`);
         if (!VALID_TIPOS.includes(r.tipo)) r._errors.push(`tipo inválido "${r.tipo}" (use: ${VALID_TIPOS.join(', ')})`);
         if (!VALID_STATUS.includes(r.status)) r._errors.push(`status inválido "${r.status}" (use: ${VALID_STATUS.join(', ')})`);
+        if (r.quantidade_disponivel > r.quantidade_total) r._errors.push('quantidade_disponivel não pode ser maior que quantidade_total');
 
         if (r._errors.length > 0) {
           r._errors.forEach(err => errors.push(`Linha ${lineNum}: ${err}`));
@@ -222,6 +228,11 @@ export default function FerramentasTab() {
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     <Badge className={`text-xs border ${STATUS_COLORS[f.status] || ''}`}>{f.status}</Badge>
                     <Badge variant="outline" className="text-xs">{f.categoria}</Badge>
+                    {(f.quantidade_total != null) && (
+                      <Badge variant="outline" className={`text-xs ${(f.quantidade_disponivel ?? f.quantidade_total) < f.quantidade_total ? 'border-amber-300 text-amber-700 bg-amber-50' : 'border-green-200 text-green-700 bg-green-50'}`}>
+                        {f.quantidade_disponivel ?? f.quantidade_total}/{f.quantidade_total} disponível
+                      </Badge>
+                    )}
                     {f.localizacao && <span className="text-xs text-slate-500">{f.localizacao}</span>}
                     {f.responsavel_atual_nome && <span className="text-xs text-slate-500">👤 {f.responsavel_atual_nome}</span>}
                   </div>
@@ -270,6 +281,19 @@ export default function FerramentasTab() {
                 </Select>
               </div>
               <div><Label>Localização</Label><Input value={form.localizacao} onChange={e => setForm(p => ({ ...p, localizacao: e.target.value }))} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Qtd. Total</Label>
+                <Input type="number" min="1" value={form.quantidade_total ?? 1} onChange={e => {
+                  const total = Math.max(1, Number(e.target.value));
+                  setForm(p => ({ ...p, quantidade_total: total, quantidade_disponivel: Math.min(p.quantidade_disponivel ?? 1, total) }));
+                }} />
+              </div>
+              <div>
+                <Label>Qtd. Disponível</Label>
+                <Input type="number" min="0" max={form.quantidade_total ?? 1} value={form.quantidade_disponivel ?? 1} onChange={e => setForm(p => ({ ...p, quantidade_disponivel: Math.min(Math.max(0, Number(e.target.value)), p.quantidade_total ?? 1) }))} />
+              </div>
             </div>
             <div><Label>Observações</Label><Textarea value={form.observacoes} onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))} rows={2} /></div>
             <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" onClick={handleSave} disabled={saveMutation.isPending}>
@@ -342,7 +366,7 @@ export default function FerramentasTab() {
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="border-b bg-white">
-                          {['', 'Código', 'Nome', 'Categoria', 'Tipo', 'Status'].map(h => (
+                          {['', 'Código', 'Nome', 'Categoria', 'Qtd Total', 'Qtd Disp.', 'Status'].map(h => (
                             <th key={h} className="px-3 py-1.5 text-left text-slate-500">{h}</th>
                           ))}
                         </tr>
@@ -358,7 +382,8 @@ export default function FerramentasTab() {
                             <td className="px-3 py-1.5 font-mono">{r.codigo || <span className="text-red-400 italic">vazio</span>}</td>
                             <td className="px-3 py-1.5">{r.nome || <span className="text-red-400 italic">vazio</span>}</td>
                             <td className="px-3 py-1.5">{r.categoria}</td>
-                            <td className="px-3 py-1.5">{r.tipo}</td>
+                            <td className="px-3 py-1.5">{r.quantidade_total}</td>
+                            <td className="px-3 py-1.5">{r.quantidade_disponivel}</td>
                             <td className="px-3 py-1.5">{r.status}</td>
                           </tr>
                         ))}

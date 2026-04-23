@@ -2,6 +2,10 @@
   "name": "Insumo",
   "type": "object",
   "properties": {
+    "codigo": {
+      "type": "string",
+      "description": "C\u00f3digo \u00fanico do insumo"
+    },
     "nome": {
       "type": "string"
     },
@@ -26,6 +30,7 @@
     }
   },
   "required": [
+    "codigo",
     "nome",
     "unidade"
   ]
