@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as XLSX from 'xlsx';
@@ -116,13 +116,17 @@ export default function Produtos() {
     fornecedores: []
   });
 
-  const { data: produtos = [], isLoading } = useQuery({
-    queryKey: ['produtos', unidadeAtual?.id],
-    queryFn: () => unidadeAtual
-      ? base44.entities.Produto.filter({ unidade_id: unidadeAtual.id }, '', 3000)
-      : base44.entities.Produto.list('', 3000),
+  const { data: produtosBrutos = [], isLoading } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list('', 3000),
     staleTime: 5 * 60 * 1000
   });
+
+  // Filtra localmente: inclui registros da unidade atual + legados sem unidade_id
+  const produtos = useMemo(() => {
+    if (!unidadeAtual) return produtosBrutos;
+    return produtosBrutos.filter(p => !p.unidade_id || p.unidade_id === unidadeAtual.id);
+  }, [produtosBrutos, unidadeAtual]);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Produto.create(data),

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -131,13 +131,17 @@ export default function Atendimentos() {
   const [reciboAtendimento, setReciboAtendimento] = useState(null);
   const POR_PAGINA = 20;
 
-  const { data: atendimentos = [], isLoading } = useQuery({
-    queryKey: ['atendimentos', unidadeAtual?.id],
-    queryFn: () => unidadeAtual
-      ? base44.entities.Atendimento.filter({ unidade_id: unidadeAtual.id }, '-created_date')
-      : base44.entities.Atendimento.list('-created_date'),
+  const { data: atendimentosBrutos = [], isLoading } = useQuery({
+    queryKey: ['atendimentos'],
+    queryFn: () => base44.entities.Atendimento.list('-created_date'),
     staleTime: 2 * 60 * 1000
   });
+
+  // Filtra localmente: mostra registros da unidade atual + registros legados sem unidade_id
+  const atendimentos = useMemo(() => {
+    if (!unidadeAtual) return atendimentosBrutos;
+    return atendimentosBrutos.filter(a => !a.unidade_id || a.unidade_id === unidadeAtual.id);
+  }, [atendimentosBrutos, unidadeAtual]);
 
 
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -31,13 +31,17 @@ export default function ClientesTab() {
 
   const [formData, setFormData] = useState({ nome: '', tipo_pessoa: 'fisica', telefone: '', email: '', cpf_cnpj: '', data_nascimento: '', endereco: '' });
 
-  const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ['clientes', unidadeAtual?.id],
-    queryFn: () => unidadeAtual
-      ? base44.entities.Cliente.filter({ unidade_id: unidadeAtual.id }, '-created_date')
-      : base44.entities.Cliente.list('-created_date'),
+  const { data: clientesBrutos = [], isLoading } = useQuery({
+    queryKey: ['clientes'],
+    queryFn: () => base44.entities.Cliente.list('-created_date'),
     staleTime: 5 * 60 * 1000
   });
+
+  // Filtra localmente: inclui registros da unidade atual + legados sem unidade_id
+  const clientes = useMemo(() => {
+    if (!unidadeAtual) return clientesBrutos;
+    return clientesBrutos.filter(c => !c.unidade_id || c.unidade_id === unidadeAtual.id);
+  }, [clientesBrutos, unidadeAtual]);
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
