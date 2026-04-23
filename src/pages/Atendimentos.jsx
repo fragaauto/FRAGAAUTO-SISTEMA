@@ -137,10 +137,15 @@ export default function Atendimentos() {
     staleTime: 2 * 60 * 1000
   });
 
-  // Filtra localmente: mostra registros da unidade atual + registros legados sem unidade_id
+  const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
+
+  // Filtra localmente: registros da unidade atual + legados (sem unidade_id) apenas no Auto Portas
   const atendimentos = useMemo(() => {
     if (!unidadeAtual) return atendimentosBrutos;
-    return atendimentosBrutos.filter(a => !a.unidade_id || a.unidade_id === unidadeAtual.id);
+    return atendimentosBrutos.filter(a => {
+      if (a.unidade_id) return a.unidade_id === unidadeAtual.id;
+      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
+    });
   }, [atendimentosBrutos, unidadeAtual]);
 
 

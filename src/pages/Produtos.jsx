@@ -122,10 +122,15 @@ export default function Produtos() {
     staleTime: 5 * 60 * 1000
   });
 
-  // Filtra localmente: inclui registros da unidade atual + legados sem unidade_id
+  const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
+
+  // Filtra localmente: registros da unidade atual + legados (sem unidade_id) apenas no Auto Portas
   const produtos = useMemo(() => {
     if (!unidadeAtual) return produtosBrutos;
-    return produtosBrutos.filter(p => !p.unidade_id || p.unidade_id === unidadeAtual.id);
+    return produtosBrutos.filter(p => {
+      if (p.unidade_id) return p.unidade_id === unidadeAtual.id;
+      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
+    });
   }, [produtosBrutos, unidadeAtual]);
 
   const createMutation = useMutation({
