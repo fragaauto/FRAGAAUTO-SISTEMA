@@ -3,12 +3,31 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Pencil, Trash2, AlertTriangle, Upload } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, AlertTriangle, Upload, Download, CheckCircle2, XCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
+
+const VALID_UNIDADES = ['ml', 'litro', 'unidade', 'kg', 'g'];
+
+function ProgressBar({ value, total }) {
+  const pct = total === 0 ? 0 : Math.round((value / total) * 100);
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs text-slate-500">
+        <span>Processando {value} de {total}...</span>
+        <span>{pct}%</span>
+      </div>
+      <div className="w-full bg-slate-100 rounded-full h-2.5">
+        <div
+          className="bg-orange-500 h-2.5 rounded-full transition-all duration-200"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function InsumosTab() {
   const qc = useQueryClient();
@@ -18,9 +37,11 @@ export default function InsumosTab() {
   const [form, setForm] = useState({ nome: '', unidade: 'unidade', quantidade_estoque: 0, quantidade_minima: 0 });
   const [importModal, setImportModal] = useState(false);
   const [importPreview, setImportPreview] = useState([]);
+  const [importErrors, setImportErrors] = useState([]);
   const [importMode, setImportMode] = useState('soma');
   const [importReport, setImportReport] = useState(null);
   const [importLoading, setImportLoading] = useState(false);
+  const [importProgress, setImportProgress] = useState({ done: 0, total: 0 });
   const fileRef = useRef();
 
   const { data: insumos = [], isLoading } = useQuery({ queryKey: ['insumos'], queryFn: () => base44.entities.Insumo.list() });
@@ -38,6 +59,21 @@ export default function InsumosTab() {
   const openNew = () => { setForm({ nome: '', unidade: 'unidade', quantidade_estoque: 0, quantidade_minima: 0 }); setEditId(null); setModal(true); };
   const openEdit = (i) => { setForm({ ...i }); setEditId(i.id); setModal(true); };
 
+  // --- Download modelo ---
+  const downloadModelo = () => {
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['nome', 'unidade', 'quantidade_estoque', 'quantidade_minima'],
+      ['Óleo 5W30', 'litro', 10, 2],
+      ['Luva Nitrílica', 'unidade', 100, 20],
+      ['Removedor', 'ml', 5000, 1000],
+    ]);
+    ws['!cols'] = [{ wch: 25 }, { wch: 10 }, { wch: 20 }, { wch: 18 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Insumos');
+    XLSX.writeFile(wb, 'modelo_insumos.xlsx');
+  };
+
+  // --- File parse ---
   const handleFile = (e) => {
     const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
@@ -45,39 +81,80 @@ export default function InsumosTab() {
       const wb = XLSX.read(ev.target.result, { type: 'binary' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      const preview = rows.map(row => ({
-        nome: String(row.nome || '').trim(),
-        unidade: row.unidade || 'unidade',
-        quantidade_estoque: Math.max(0, Number(row.quantidade_estoque) || 0),
-        quantidade_minima: Math.max(0, Number(row.quantidade_minima) || 0),
-      })).filter(r => r.nome);
+
+      const errors = [];
+      const preview = rows.map((row, i) => {
+        const lineNum = i + 2;
+        const nome = String(row.nome || '').trim();
+        const unidade = String(row.unidade || 'unidade').trim().toLowerCase();
+        const qtdEstoque = Number(row.quantidade_estoque);
+        const qtdMinima = Number(row.quantidade_minima);
+        const rowErrors = [];
+
+        if (!nome) rowErrors.push('nome obrigatório');
+        if (!VALID_UNIDADES.includes(unidade)) rowErrors.push(`unidade inválida "${unidade}" (use: ${VALID_UNIDADES.join(', ')})`);
+        if (isNaN(qtdEstoque) || qtdEstoque < 0) rowErrors.push('quantidade_estoque deve ser um número >= 0');
+        if (isNaN(qtdMinima) || qtdMinima < 0) rowErrors.push('quantidade_minima deve ser um número >= 0');
+
+        rowErrors.forEach(err => errors.push(`Linha ${lineNum}: ${err}`));
+
+        return {
+          nome,
+          unidade: VALID_UNIDADES.includes(unidade) ? unidade : 'unidade',
+          quantidade_estoque: isNaN(qtdEstoque) ? 0 : Math.max(0, qtdEstoque),
+          quantidade_minima: isNaN(qtdMinima) ? 0 : Math.max(0, qtdMinima),
+          _line: lineNum,
+          _errors: rowErrors,
+        };
+      });
+
       setImportPreview(preview);
+      setImportErrors(errors);
       setImportReport(null);
+      setImportProgress({ done: 0, total: 0 });
     };
     reader.readAsBinaryString(file);
   };
 
+  // --- Import execute ---
   const doImport = async () => {
+    const validRows = importPreview.filter(r => r._errors.length === 0);
     setImportLoading(true);
-    let imported = 0, updated = 0, errors = 0;
-    for (const row of importPreview) {
-      if (!row.nome) { errors++; continue; }
-      const existing = insumos.find(i => i.nome.toLowerCase() === row.nome.toLowerCase());
-      if (existing) {
-        const novaQtd = importMode === 'soma' ? existing.quantidade_estoque + row.quantidade_estoque : row.quantidade_estoque;
-        await base44.entities.Insumo.update(existing.id, { ...row, quantidade_estoque: novaQtd });
-        updated++;
-      } else {
-        await base44.entities.Insumo.create(row);
-        imported++;
+    setImportProgress({ done: 0, total: validRows.length });
+
+    let imported = 0, updated = 0;
+    const rowErrors = [];
+
+    for (let idx = 0; idx < validRows.length; idx++) {
+      const row = validRows[idx];
+      const { _line, _errors, ...data } = row;
+      try {
+        const existing = insumos.find(i => i.nome.toLowerCase() === data.nome.toLowerCase());
+        if (existing) {
+          const novaQtd = importMode === 'soma'
+            ? existing.quantidade_estoque + data.quantidade_estoque
+            : data.quantidade_estoque;
+          await base44.entities.Insumo.update(existing.id, { ...data, quantidade_estoque: novaQtd });
+          updated++;
+        } else {
+          await base44.entities.Insumo.create(data);
+          imported++;
+        }
+      } catch (err) {
+        rowErrors.push(`Linha ${_line} (${data.nome}): ${err?.message || 'erro desconhecido'}`);
       }
+      setImportProgress({ done: idx + 1, total: validRows.length });
     }
+
     qc.invalidateQueries({ queryKey: ['insumos'] });
     setImportLoading(false);
-    setImportReport({ imported, updated, errors });
+    setImportReport({ imported, updated, rowErrors, skippedByError: importPreview.length - validRows.length });
     setImportPreview([]);
+    setImportErrors([]);
     if (fileRef.current) fileRef.current.value = '';
   };
+
+  const resetImport = () => { setImportPreview([]); setImportErrors([]); setImportReport(null); setImportProgress({ done: 0, total: 0 }); };
 
   const filtered = insumos.filter(i => !search || i.nome?.toLowerCase().includes(search.toLowerCase()));
 
@@ -119,6 +196,7 @@ export default function InsumosTab() {
         </div>
       }
 
+      {/* Form Modal */}
       <Dialog open={modal} onOpenChange={setModal}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>{editId ? 'Editar' : 'Novo'} Insumo</DialogTitle></DialogHeader>
@@ -128,9 +206,7 @@ export default function InsumosTab() {
               <Label>Unidade</Label>
               <Select value={form.unidade} onValueChange={v => setForm(p => ({ ...p, unidade: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {['ml', 'litro', 'unidade', 'kg', 'g'].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{VALID_UNIDADES.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -144,13 +220,47 @@ export default function InsumosTab() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={importModal} onOpenChange={(o) => { if (!o) { setImportPreview([]); setImportReport(null); } setImportModal(o); }}>
+      {/* Import Modal */}
+      <Dialog open={importModal} onOpenChange={(o) => { if (!o) resetImport(); setImportModal(o); }}>
         <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Importar Insumos</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-slate-500">Colunas: <b>nome, unidade, quantidade_estoque, quantidade_minima</b></p>
-            <input ref={fileRef} type="file" accept=".xlsx,.csv" onChange={handleFile} className="block w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100 cursor-pointer" />
 
+            {/* Download modelo */}
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-slate-700">Modelo de planilha</p>
+                <p className="text-xs text-slate-400 mt-0.5">Baixe, preencha e faça upload do arquivo</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={downloadModelo}>
+                <Download className="w-4 h-4 mr-1.5" /> Baixar Modelo
+              </Button>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">Selecionar arquivo (.xlsx ou .csv)</Label>
+              <input ref={fileRef} type="file" accept=".xlsx,.csv" onChange={handleFile}
+                className="mt-1.5 block w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100 cursor-pointer" />
+            </div>
+
+            {/* Erros de validação */}
+            {importErrors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-red-700 font-medium text-sm">
+                  <AlertTriangle className="w-4 h-4" /> {importErrors.length} erro(s) encontrado(s) na planilha
+                </div>
+                <div className="max-h-40 overflow-y-auto space-y-1">
+                  {importErrors.map((e, i) => (
+                    <div key={i} className="flex items-start gap-1.5 text-xs text-red-600">
+                      <XCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" /> {e}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-red-500 mt-1">Corrija os erros na planilha e faça o upload novamente.</p>
+              </div>
+            )}
+
+            {/* Preview */}
             {importPreview.length > 0 && (
               <>
                 <div className="flex items-center gap-3">
@@ -163,15 +273,30 @@ export default function InsumosTab() {
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">{importPreview.length} registro(s)</div>
+                  <div className="bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600 flex items-center justify-between">
+                    <span>{importPreview.length} registro(s) detectado(s)</span>
+                    {importErrors.length > 0 && <span className="text-red-500">{importErrors.length} com erro serão ignorados</span>}
+                  </div>
                   <div className="overflow-x-auto max-h-48">
                     <table className="w-full text-xs">
-                      <thead><tr className="border-b">{['Nome','Unidade','Estoque','Mínimo'].map(h => <th key={h} className="px-3 py-1.5 text-left text-slate-500">{h}</th>)}</tr></thead>
+                      <thead>
+                        <tr className="border-b bg-white">
+                          {['', 'Nome', 'Unidade', 'Estoque', 'Mínimo'].map(h => (
+                            <th key={h} className="px-3 py-1.5 text-left text-slate-500">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
                       <tbody>
-                        {importPreview.slice(0, 20).map((r, i) => (
-                          <tr key={i} className="border-b last:border-0">
-                            <td className="px-3 py-1.5">{r.nome}</td>
+                        {importPreview.slice(0, 30).map((r, i) => (
+                          <tr key={i} className={`border-b last:border-0 ${r._errors.length > 0 ? 'bg-red-50' : ''}`}>
+                            <td className="px-2 py-1.5">
+                              {r._errors.length > 0
+                                ? <XCircle className="w-3.5 h-3.5 text-red-400" />
+                                : <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />}
+                            </td>
+                            <td className="px-3 py-1.5">{r.nome || <span className="text-red-400 italic">vazio</span>}</td>
                             <td className="px-3 py-1.5">{r.unidade}</td>
                             <td className="px-3 py-1.5">{r.quantidade_estoque}</td>
                             <td className="px-3 py-1.5">{r.quantidade_minima}</td>
@@ -181,17 +306,54 @@ export default function InsumosTab() {
                     </table>
                   </div>
                 </div>
-                <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" onClick={doImport} disabled={importLoading}>
-                  {importLoading ? 'Importando...' : 'Confirmar Importação'}
+
+                {/* Barra de progresso */}
+                {importLoading && (
+                  <ProgressBar value={importProgress.done} total={importProgress.total} />
+                )}
+
+                <Button
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                  onClick={doImport}
+                  disabled={importLoading || importPreview.filter(r => r._errors.length === 0).length === 0}
+                >
+                  {importLoading
+                    ? `Importando... (${importProgress.done}/${importProgress.total})`
+                    : `Importar ${importPreview.filter(r => r._errors.length === 0).length} registro(s) válido(s)`}
                 </Button>
               </>
             )}
+
+            {/* Relatório final */}
             {importReport && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm space-y-1">
-                <div className="font-semibold text-green-700">Importação concluída!</div>
-                <div>✅ Criados: <b>{importReport.imported}</b></div>
-                <div>🔄 Atualizados: <b>{importReport.updated}</b></div>
-                {importReport.errors > 0 && <div>❌ Erros: <b>{importReport.errors}</b></div>}
+              <div className="rounded-lg border overflow-hidden">
+                <div className="bg-green-500 px-4 py-2.5 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                  <span className="font-semibold text-white text-sm">Importação concluída!</span>
+                </div>
+                <div className="p-4 space-y-2 bg-white text-sm">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <CheckCircle2 className="w-4 h-4" /> <span><b>{importReport.imported}</b> insumo(s) criado(s)</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-blue-700">
+                    <CheckCircle2 className="w-4 h-4" /> <span><b>{importReport.updated}</b> insumo(s) atualizado(s)</span>
+                  </div>
+                  {importReport.skippedByError > 0 && (
+                    <div className="flex items-center gap-2 text-amber-600">
+                      <AlertTriangle className="w-4 h-4" /> <span><b>{importReport.skippedByError}</b> ignorado(s) por erro na planilha</span>
+                    </div>
+                  )}
+                  {importReport.rowErrors.length > 0 && (
+                    <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
+                      <div className="text-red-700 font-medium text-xs flex items-center gap-1">
+                        <XCircle className="w-3.5 h-3.5" /> Erros durante importação:
+                      </div>
+                      {importReport.rowErrors.map((e, i) => (
+                        <div key={i} className="text-xs text-red-600">{e}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
