@@ -1,0 +1,93 @@
+{
+  "name": "Campanha",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade a que esta campanha pertence"
+    },
+    "nomeCampanha": {
+      "type": "string"
+    },
+    "mensagemBase": {
+      "type": "string"
+    },
+    "listaContatos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "clienteId": {
+            "type": "string"
+          },
+          "clienteNome": {
+            "type": "string"
+          },
+          "telefone": {
+            "type": "string"
+          },
+          "veiculo": {
+            "type": "string"
+          },
+          "ultimoServico": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pendente",
+              "enviado",
+              "erro",
+              "cancelado"
+            ],
+            "default": "pendente"
+          }
+        }
+      }
+    },
+    "dataAgendada": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "rascunho",
+        "agendada",
+        "enviando",
+        "finalizada",
+        "cancelada"
+      ],
+      "default": "rascunho"
+    },
+    "totalEnviados": {
+      "type": "number",
+      "default": 0
+    },
+    "totalRespondidos": {
+      "type": "number",
+      "default": 0
+    },
+    "totalConvertidos": {
+      "type": "number",
+      "default": 0
+    },
+    "filtros": {
+      "type": "object",
+      "properties": {
+        "tipoServico": {
+          "type": "string"
+        },
+        "diasSemVisita": {
+          "type": "number"
+        },
+        "statusAtendimento": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "nomeCampanha"
+  ]
+}

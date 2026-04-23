@@ -2,6 +2,10 @@
   "name": "KitFerramentas",
   "type": "object",
   "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade a que este kit pertence"
+    },
     "codigo": {
       "type": "string"
     },

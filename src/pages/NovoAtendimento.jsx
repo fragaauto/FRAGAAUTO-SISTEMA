@@ -47,10 +47,12 @@ import ModalCadastroProduto from '../components/produtos/ModalCadastroProduto';
 import BuscarClienteModal from '../components/atendimento/BuscarClienteModal';
 import ModalCadastrarCliente from '../components/atendimento/ModalCadastrarCliente';
 import ChecklistAssistente from '../components/checklist/ChecklistAssistente';
+import { useUnidade } from '@/lib/UnidadeContext';
 
 export default function NovoAtendimento() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { unidadeAtual } = useUnidade();
   
   const [activeTab, setActiveTab] = useState('dados');
   const [openSections, setOpenSections] = useState({});
@@ -373,6 +375,7 @@ export default function NovoAtendimento() {
     const novoNumeroOs = maxOs + 1;
 
     const dataToSave = {
+      unidade_id: unidadeAtual?.id || null,
       numero_os: novoNumeroOs,
       venda_direta: formData.venda_direta || false,
       cliente_nome: formData.cliente_nome || '',

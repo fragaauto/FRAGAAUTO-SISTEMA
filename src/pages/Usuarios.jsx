@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Users, UserPlus, Loader2, Mail, Shield, User, CheckCircle, XCircle, Clock, Edit } from 'lucide-react';
+import { Users, UserPlus, Loader2, Mail, Shield, User, CheckCircle, XCircle, Clock, Edit, Building2 } from 'lucide-react';
 import { TODOS_MODULOS } from '@/components/modulos';
+import { useUnidade } from '@/lib/UnidadeContext';
 
 const ROLE_LABELS = {
   admin: { label: 'Admin', color: 'bg-red-100 text-red-700' },
@@ -20,12 +21,15 @@ const ROLE_LABELS = {
 
 export default function Usuarios() {
   const qc = useQueryClient();
+  const { unidades } = useUnidade();
   const [showConvidar, setShowConvidar] = useState(false);
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('user');
+  const [unidadeConvite, setUnidadeConvite] = useState('');
   const [convidando, setConvidando] = useState(false);
   const [aprovando, setAprovando] = useState(null);
   const [editando, setEditando] = useState(null);
+  const [editandoUnidadeId, setEditandoUnidadeId] = useState('');
   const [modulosSelecionados, setModulosSelecionados] = useState([]);
   const [podeVerDashboards, setPodeVerDashboards] = useState(true);
 
@@ -79,9 +83,8 @@ export default function Usuarios() {
 
   const handleEditarPermissoes = (u) => {
     setEditando(u);
+    setEditandoUnidadeId(u.unidade_id || '');
     
-    // Se o usuário tem módulos definidos, usa eles
-    // Senão, carrega os módulos da função como base
     let modulosBase = u.modulos_liberados || [];
     if (modulosBase.length === 0 && u.funcao_id) {
       const funcao = funcoes.find(f => f.id === u.funcao_id);
@@ -97,7 +100,8 @@ export default function Usuarios() {
     try {
       await base44.entities.User.update(editando.id, {
         modulos_liberados: modulosSelecionados,
-        pode_ver_dashboards: podeVerDashboards
+        pode_ver_dashboards: podeVerDashboards,
+        unidade_id: editandoUnidadeId || null,
       });
       toast.success('Permissões atualizadas!');
       setEditando(null);
@@ -217,6 +221,14 @@ export default function Usuarios() {
                           </p>
                         ) : null;
                       })()}
+                      {u.unidade_id && (() => {
+                        const uni = unidades.find(un => un.id === u.unidade_id);
+                        return uni ? (
+                          <p className="text-xs text-orange-500 flex items-center gap-1 truncate">
+                            <Building2 className="w-3 h-3" /> {uni.nome}
+                          </p>
+                        ) : null;
+                      })()}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className={ROLE_LABELS[u.role]?.color || 'bg-slate-100 text-slate-600'}>
@@ -284,6 +296,21 @@ export default function Usuarios() {
               </Select>
               <p className="text-xs text-slate-500 mt-1">Admins têm acesso total ao sistema.</p>
             </div>
+            {role === 'user' && (
+              <div>
+                <Label>Unidade</Label>
+                <Select value={unidadeConvite} onValueChange={setUnidadeConvite}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar unidade..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unidades.map(u => (
+                      <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button
               className="w-full bg-orange-500 hover:bg-orange-600"
               onClick={handleConvidar}
@@ -305,7 +332,23 @@ export default function Usuarios() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {editando?.funcao_id && (() => {
+            <div>
+              <Label className="mb-1 block">Unidade</Label>
+              <Select value={editandoUnidadeId} onValueChange={setEditandoUnidadeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sem restrição de unidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>Sem restrição</SelectItem>
+                  {unidades.map(u => (
+                    <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-slate-500 mt-1">Define qual unidade este usuário pode acessar.</p>
+            </div>
+
+          {editando?.funcao_id && (() => {
               const funcao = funcoes.find(f => f.id === editando.funcao_id);
               return funcao ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">

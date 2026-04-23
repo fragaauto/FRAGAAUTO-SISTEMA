@@ -2,6 +2,10 @@
   "name": "Ferramenta",
   "type": "object",
   "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade a que esta ferramenta pertence"
+    },
     "codigo": {
       "type": "string",
       "description": "C\u00f3digo \u00fanico da ferramenta"

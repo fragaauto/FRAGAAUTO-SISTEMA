@@ -1,0 +1,413 @@
+{
+  "name": "Atendimento",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade respons\u00e1vel por este atendimento"
+    },
+    "numero_os": {
+      "type": "number",
+      "description": "N\u00famero sequencial \u00fanico da OS (somente num\u00e9rico)"
+    },
+    "venda_direta": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se true, \u00e9 uma venda direta sem dados obrigat\u00f3rios de cliente/ve\u00edculo"
+    },
+    "cliente_id": {
+      "type": "string",
+      "description": "ID do cliente"
+    },
+    "cliente_nome": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "cliente_telefone": {
+      "type": "string",
+      "description": "Telefone do cliente"
+    },
+    "cliente_cpf": {
+      "type": "string",
+      "description": "CPF ou CNPJ do cliente"
+    },
+    "cliente_endereco": {
+      "type": "string",
+      "description": "Endere\u00e7o do cliente"
+    },
+    "veiculo_id": {
+      "type": "string",
+      "description": "ID do ve\u00edculo"
+    },
+    "placa": {
+      "type": "string",
+      "description": "Placa do ve\u00edculo"
+    },
+    "modelo": {
+      "type": "string",
+      "description": "Modelo do ve\u00edculo"
+    },
+    "marca": {
+      "type": "string",
+      "description": "Marca do ve\u00edculo"
+    },
+    "ano": {
+      "type": "string",
+      "description": "Ano do ve\u00edculo"
+    },
+    "data_entrada": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de entrada"
+    },
+    "km_atual": {
+      "type": "string",
+      "description": "Quilometragem atual"
+    },
+    "observacoes_veiculo": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre o ve\u00edculo"
+    },
+    "queixa_inicial": {
+      "type": "string",
+      "description": "Queixa inicial do cliente"
+    },
+    "itens_queixa": {
+      "type": "array",
+      "description": "Itens do or\u00e7amento da queixa inicial",
+      "items": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "string"
+          },
+          "codigo_produto": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "quantidade": {
+            "type": "number"
+          },
+          "valor_unitario": {
+            "type": "number"
+          },
+          "valor_total": {
+            "type": "number"
+          },
+          "vantagens": {
+            "type": "string"
+          },
+          "desvantagens": {
+            "type": "string"
+          },
+          "status_aprovacao": {
+            "type": "string",
+            "enum": [
+              "pendente",
+              "aprovado",
+              "reprovado"
+            ]
+          },
+          "status_servico": {
+            "type": "string",
+            "enum": [
+              "aguardando_autorizacao",
+              "autorizado",
+              "em_andamento"
+            ],
+            "default": "aguardando_autorizacao"
+          },
+          "observacao_cliente": {
+            "type": "string"
+          },
+          "observacao_item": {
+            "type": "string"
+          },
+          "tecnicos": {
+            "type": "array",
+            "description": "Lista de t\u00e9cnicos respons\u00e1veis por este servi\u00e7o",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "nome": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "queixa_aprovada": {
+      "type": "boolean",
+      "description": "Se a queixa foi aprovada pelo cliente"
+    },
+    "data_aprovacao_queixa": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de aprova\u00e7\u00e3o da queixa"
+    },
+    "checklist": {
+      "type": "array",
+      "description": "Itens do checklist",
+      "items": {
+        "type": "object",
+        "properties": {
+          "item_id": {
+            "type": "string"
+          },
+          "item": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "comentario": {
+            "type": "string"
+          },
+          "incluir_orcamento": {
+            "type": "boolean"
+          },
+          "produtos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "quantidade": {
+                  "type": "number"
+                },
+                "valor_customizado": {
+                  "type": "number"
+                },
+                "observacao": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "pre_diagnostico": {
+      "type": "string"
+    },
+    "itens_orcamento": {
+      "type": "array",
+      "description": "Itens selecionados para or\u00e7amento do checklist",
+      "items": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "string"
+          },
+          "codigo_produto": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "quantidade": {
+            "type": "number"
+          },
+          "valor_unitario": {
+            "type": "number"
+          },
+          "valor_total": {
+            "type": "number"
+          },
+          "vantagens": {
+            "type": "string"
+          },
+          "desvantagens": {
+            "type": "string"
+          },
+          "status_aprovacao": {
+            "type": "string",
+            "enum": [
+              "pendente",
+              "aprovado",
+              "reprovado"
+            ]
+          },
+          "status_servico": {
+            "type": "string",
+            "enum": [
+              "aguardando_autorizacao",
+              "autorizado",
+              "em_andamento"
+            ],
+            "default": "aguardando_autorizacao"
+          },
+          "observacao_cliente": {
+            "type": "string"
+          },
+          "observacao_item": {
+            "type": "string"
+          },
+          "tecnicos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "nome": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "subtotal_queixa": {
+      "type": "number"
+    },
+    "subtotal_checklist": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "desconto": {
+      "type": "number"
+    },
+    "valor_final": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "rascunho",
+        "queixa_pendente",
+        "queixa_aprovada",
+        "queixa_reprovada",
+        "em_diagnostico",
+        "aguardando_aprovacao_checklist",
+        "checklist_aprovado",
+        "checklist_reprovado",
+        "em_execucao",
+        "concluido",
+        "cancelado"
+      ],
+      "default": "rascunho"
+    },
+    "assinatura_cliente_queixa": {
+      "type": "string"
+    },
+    "assinatura_cliente_checklist": {
+      "type": "string"
+    },
+    "data_aprovacao_checklist": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "tecnico": {
+      "type": "string",
+      "description": "Nome do t\u00e9cnico respons\u00e1vel (campo legado)"
+    },
+    "tecnicos_responsaveis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "obs_interna": {
+      "type": "string"
+    },
+    "obs_externa": {
+      "type": "string"
+    },
+    "obs_interna_usuario": {
+      "type": "string"
+    },
+    "obs_interna_data": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status_pagamento": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "parcial",
+        "pago",
+        "faturado"
+      ]
+    },
+    "formas_pagamento_lancamento": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "forma": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "desconto_pagamento": {
+      "type": "number"
+    },
+    "valor_final_pago": {
+      "type": "number"
+    },
+    "data_pagamento": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "usuario_pagamento": {
+      "type": "string"
+    },
+    "historico_edicoes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usuario": {
+            "type": "string"
+          },
+          "campo_editado": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [],
+  "rls": {
+    "read": {}
+  }
+}

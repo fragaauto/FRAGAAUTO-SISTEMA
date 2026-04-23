@@ -2,6 +2,10 @@
   "name": "ConsumoInsumo",
   "type": "object",
   "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade a que este consumo pertence"
+    },
     "insumo_id": {
       "type": "string"
     },

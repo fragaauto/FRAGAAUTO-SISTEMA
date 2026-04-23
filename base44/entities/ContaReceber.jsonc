@@ -1,0 +1,101 @@
+{
+  "name": "ContaReceber",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade a que esta conta pertence"
+    },
+    "cliente_id": {
+      "type": "string"
+    },
+    "cliente_nome": {
+      "type": "string"
+    },
+    "cliente_telefone": {
+      "type": "string"
+    },
+    "atendimento_id": {
+      "type": "string"
+    },
+    "atendimento_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "descricao": {
+      "type": "string"
+    },
+    "valor_total": {
+      "type": "number"
+    },
+    "valor_pago": {
+      "type": "number",
+      "default": 0
+    },
+    "desconto": {
+      "type": "number",
+      "default": 0
+    },
+    "data_vencimento": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data_pagamento": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "forma_pagamento": {
+      "type": "string",
+      "enum": [
+        "dinheiro",
+        "pix",
+        "cartao_credito",
+        "cartao_debito",
+        "transferencia",
+        "boleto",
+        "faturado"
+      ]
+    },
+    "formas_pagamento": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "forma": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "pago",
+        "parcial",
+        "vencido",
+        "cancelado"
+      ],
+      "default": "pendente"
+    },
+    "fatura_consolidada": {
+      "type": "boolean",
+      "default": false
+    },
+    "usuario_lancamento": {
+      "type": "string"
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "cliente_nome",
+    "valor_total"
+  ]
+}

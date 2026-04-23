@@ -1,0 +1,102 @@
+{
+  "name": "RemarketingFila",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade a que esta entrada pertence"
+    },
+    "clienteId": {
+      "type": "string"
+    },
+    "clienteNome": {
+      "type": "string"
+    },
+    "clienteTelefone": {
+      "type": "string"
+    },
+    "atendimentoId": {
+      "type": "string"
+    },
+    "placa": {
+      "type": "string"
+    },
+    "modelo": {
+      "type": "string"
+    },
+    "servicosPendentes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "valor_total": {
+            "type": "number"
+          },
+          "quantidade": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "valorTotalPendentes": {
+      "type": "number"
+    },
+    "dataUltimoEnvio": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dataProximoEnvio": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "tentativas": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "enviado",
+        "respondido",
+        "convertido",
+        "cancelado"
+      ],
+      "default": "pendente"
+    },
+    "logEnvios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "mensagem": {
+            "type": "string"
+          },
+          "erro": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "naoDesejaMensagem": {
+      "type": "boolean",
+      "default": false
+    },
+    "respostaCliente": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "clienteNome",
+    "atendimentoId"
+  ]
+}

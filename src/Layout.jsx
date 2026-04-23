@@ -24,6 +24,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { TODOS_MODULOS } from '@/components/modulos';
 import AguardandoAprovacao from '@/components/AguardandoAprovacao';
+import SeletorUnidade from '@/components/SeletorUnidade';
 
 // Todos os itens de navegação com módulo associado
 const NAV_ITEMS = [
@@ -204,40 +205,43 @@ export default function Layout({ children, currentPageName }) {
           <span className="font-bold text-slate-800">Fraga Auto</span>
         </Link>
         
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="w-6 h-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-0">
-            <div className="p-4 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextElementSibling.style.display = 'flex';
-                }} />
-                <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center" style={{display: 'none'}}>
-                  <Wrench className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-800">Fraga Auto Portas</p>
-                  <p className="text-xs text-slate-500">Sistema de Gestão</p>
+        <div className="flex items-center gap-2">
+          <SeletorUnidade />
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="w-6 h-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-0">
+              <div className="p-4 border-b border-slate-200">
+                <div className="flex items-center gap-2">
+                  <img src="/logo.png" alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling.style.display = 'flex';
+                  }} />
+                  <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center" style={{display: 'none'}}>
+                    <Wrench className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800">Fraga Auto Portas</p>
+                    <p className="text-xs text-slate-500">Sistema de Gestão</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="p-4">
-              <NavLinks onNavigate={() => setOpen(false)} />
-            </div>
-          </SheetContent>
-        </Sheet>
+              <div className="p-4">
+                <NavLinks onNavigate={() => setOpen(false)} />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col bg-white border-r border-slate-200 h-screen">
-          <div className="p-6 border-b border-slate-200 flex-shrink-0">
-            <Link to={createPageUrl('Home')} className="flex items-center gap-3">
+          <div className="p-4 border-b border-slate-200 flex-shrink-0">
+            <Link to={createPageUrl('Home')} className="flex items-center gap-3 mb-3">
               <img src="/logo.png" alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextElementSibling.style.display = 'flex';
@@ -250,6 +254,7 @@ export default function Layout({ children, currentPageName }) {
                 <p className="text-xs text-slate-500">Sistema de Gestão</p>
               </div>
             </Link>
+            <SeletorUnidade />
           </div>
           <div className="flex-1 p-4 overflow-y-auto" style={{overflowY: 'auto', scrollbarWidth: 'thin'}}>
             <NavLinks />

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useUnidade } from '@/lib/UnidadeContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -118,6 +119,7 @@ function StatusSelect({ value, onChange, statusPersonalizados, onClick }) {
 export default function Atendimentos() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { unidadeAtual, filtroUnidade } = useUnidade();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dataInicio, setDataInicio] = useState('');
@@ -130,8 +132,10 @@ export default function Atendimentos() {
   const POR_PAGINA = 20;
 
   const { data: atendimentos = [], isLoading } = useQuery({
-    queryKey: ['atendimentos'],
-    queryFn: () => base44.entities.Atendimento.list('-created_date'),
+    queryKey: ['atendimentos', unidadeAtual?.id],
+    queryFn: () => unidadeAtual
+      ? base44.entities.Atendimento.filter({ unidade_id: unidadeAtual.id }, '-created_date')
+      : base44.entities.Atendimento.list('-created_date'),
     staleTime: 2 * 60 * 1000
   });
 

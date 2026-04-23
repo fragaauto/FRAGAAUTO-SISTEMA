@@ -1,0 +1,123 @@
+{
+  "name": "Produto",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade a que este produto pertence"
+    },
+    "codigo": {
+      "type": "string",
+      "description": "C\u00f3digo \u00fanico do produto"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome do produto ou servi\u00e7o"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": [
+        "eletrica",
+        "portas",
+        "acessorios",
+        "estetica",
+        "seguranca",
+        "vidros",
+        "limpeza",
+        "outros"
+      ],
+      "description": "Categoria do produto"
+    },
+    "unidade": {
+      "type": "string",
+      "enum": [
+        "unidade",
+        "par",
+        "jogo",
+        "kit"
+      ],
+      "default": "unidade",
+      "description": "Unidade de medida do produto"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor unit\u00e1rio de venda"
+    },
+    "custo": {
+      "type": "number",
+      "description": "Custo unit\u00e1rio (custo m\u00e9dio)"
+    },
+    "descricao": {
+      "type": "string"
+    },
+    "vantagens": {
+      "type": "string"
+    },
+    "desvantagens": {
+      "type": "string"
+    },
+    "aplicacao_universal": {
+      "type": "boolean",
+      "default": false
+    },
+    "modelos_compativeis": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    },
+    "controla_estoque": {
+      "type": "boolean",
+      "default": false
+    },
+    "estoque_atual": {
+      "type": "number",
+      "default": 0
+    },
+    "estoque_minimo": {
+      "type": "number",
+      "default": 0
+    },
+    "estoque_desejado": {
+      "type": "number",
+      "default": 0
+    },
+    "localizacao_estoque": {
+      "type": "string"
+    },
+    "fornecedores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fornecedor_id": {
+            "type": "string"
+          },
+          "fornecedor_nome": {
+            "type": "string"
+          },
+          "codigo_fornecedor": {
+            "type": "string"
+          },
+          "preco_compra": {
+            "type": "number"
+          },
+          "principal": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "codigo",
+    "nome",
+    "categoria",
+    "valor"
+  ]
+}
