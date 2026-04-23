@@ -1,0 +1,32 @@
+{
+  "name": "Insumo",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string"
+    },
+    "unidade": {
+      "type": "string",
+      "enum": [
+        "ml",
+        "litro",
+        "unidade",
+        "kg",
+        "g"
+      ],
+      "default": "unidade"
+    },
+    "quantidade_estoque": {
+      "type": "number",
+      "default": 0
+    },
+    "quantidade_minima": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "nome",
+    "unidade"
+  ]
+}

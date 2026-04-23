@@ -1,0 +1,62 @@
+{
+  "name": "MovimentacaoFerramenta",
+  "type": "object",
+  "properties": {
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Retirada",
+        "Devolu\u00e7\u00e3o"
+      ]
+    },
+    "item_tipo": {
+      "type": "string",
+      "enum": [
+        "Ferramenta",
+        "Kit"
+      ]
+    },
+    "ferramenta_id": {
+      "type": "string"
+    },
+    "ferramenta_nome": {
+      "type": "string"
+    },
+    "kit_id": {
+      "type": "string"
+    },
+    "kit_nome": {
+      "type": "string"
+    },
+    "responsavel_id": {
+      "type": "string"
+    },
+    "responsavel_nome": {
+      "type": "string"
+    },
+    "data_hora": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Aberto",
+        "Finalizado"
+      ],
+      "default": "Aberto"
+    },
+    "assinatura": {
+      "type": "string",
+      "description": "Assinatura digital base64"
+    },
+    "observacao": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tipo",
+    "item_tipo",
+    "responsavel_nome"
+  ]
+}

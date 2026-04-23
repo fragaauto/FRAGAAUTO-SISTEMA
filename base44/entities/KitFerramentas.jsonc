@@ -1,0 +1,50 @@
+{
+  "name": "KitFerramentas",
+  "type": "object",
+  "properties": {
+    "codigo": {
+      "type": "string"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "ferramentas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ferramenta_id": {
+            "type": "string"
+          },
+          "ferramenta_nome": {
+            "type": "string"
+          },
+          "ferramenta_codigo": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "responsavel_atual_id": {
+      "type": "string"
+    },
+    "responsavel_atual_nome": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Dispon\u00edvel",
+        "Em uso"
+      ],
+      "default": "Dispon\u00edvel"
+    },
+    "data_retirada": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

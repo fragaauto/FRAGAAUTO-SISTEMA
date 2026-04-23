@@ -1,0 +1,36 @@
+{
+  "name": "ConsumoInsumo",
+  "type": "object",
+  "properties": {
+    "insumo_id": {
+      "type": "string"
+    },
+    "insumo_nome": {
+      "type": "string"
+    },
+    "quantidade": {
+      "type": "number"
+    },
+    "responsavel_id": {
+      "type": "string"
+    },
+    "responsavel_nome": {
+      "type": "string"
+    },
+    "atendimento_id": {
+      "type": "string"
+    },
+    "atendimento_numero": {
+      "type": "string"
+    },
+    "data": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "insumo_id",
+    "quantidade",
+    "responsavel_nome"
+  ]
+}

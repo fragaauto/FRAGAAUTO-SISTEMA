@@ -44,6 +44,7 @@ const NAV_ITEMS = [
   { name: 'Gerenciar Plano', icon: Shield, path: 'GerenciarPlano', modulo: null, apenasAdmin: true },
   { name: 'Base de Conhecimento IA', icon: Sparkles, path: 'BaseConhecimentoIA', modulo: null, apenasAdmin: true },
   { name: 'Manual de Treinamento', icon: FileText, path: 'ManualTreinamento', modulo: null },
+  { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas', modulo: null },
 ];
 
 
