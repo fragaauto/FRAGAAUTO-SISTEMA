@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useUnidade } from '@/lib/UnidadeContext';
+
+const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -74,11 +77,21 @@ export default function FluxoCaixaTab() {
     }
   };
 
-  const { data: lancamentos = [], isLoading } = useQuery({
+  const { unidadeAtual } = useUnidade();
+
+  const { data: lancamentosBrutos = [], isLoading } = useQuery({
     queryKey: ['lancamentos-todos'],
     queryFn: () => base44.entities.LancamentoFinanceiro.filter({ estornado: false }),
     staleTime: 60 * 1000,
   });
+
+  const lancamentos = useMemo(() => {
+    if (!unidadeAtual) return lancamentosBrutos;
+    return lancamentosBrutos.filter(l => {
+      if (l.unidade_id) return l.unidade_id === unidadeAtual.id;
+      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
+    });
+  }, [lancamentosBrutos, unidadeAtual]);
 
   const { data: atendimentos = [] } = useQuery({
     queryKey: ['atendimentos-export'],

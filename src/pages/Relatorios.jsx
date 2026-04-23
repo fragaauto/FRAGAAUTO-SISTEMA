@@ -17,6 +17,7 @@ import ModuloBloqueado from '@/components/ModuloBloqueado';
 import { paginaPermitida } from '@/components/modulos';
 import RelatorioTecnicos from '@/components/relatorios/RelatorioTecnicos';
 import RelatorioRanking from '@/components/relatorios/RelatorioRanking';
+import { useUnidade } from '@/lib/UnidadeContext';
 
 export default function Relatorios() {
   const { data: configs = [] } = useQuery({
@@ -31,11 +32,22 @@ export default function Relatorios() {
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
   const config = configs[0] || {};
 
-  const { data: atendimentos = [] } = useQuery({
+  const { unidadeAtual } = useUnidade();
+  const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
+
+  const { data: atendimentosBrutos = [] } = useQuery({
     queryKey: ['atendimentos'],
     queryFn: () => base44.entities.Atendimento.list('-created_date', 500),
     staleTime: 2 * 60 * 1000
   });
+
+  const atendimentos = useMemo(() => {
+    if (!unidadeAtual) return atendimentosBrutos;
+    return atendimentosBrutos.filter(a => {
+      if (a.unidade_id) return a.unidade_id === unidadeAtual.id;
+      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
+    });
+  }, [atendimentosBrutos, unidadeAtual]);
 
   const dadosRelatorio = useMemo(() => {
     const now = new Date();

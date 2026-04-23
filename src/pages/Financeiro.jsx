@@ -22,6 +22,7 @@ import ContasPagarTab from '@/components/financeiro/ContasPagarTab.jsx';
 import FluxoCaixaTab from '@/components/financeiro/FluxoCaixaTab.jsx';
 import ModuloBloqueado from '@/components/ModuloBloqueado';
 import { paginaPermitida } from '@/components/modulos';
+import { useUnidade } from '@/lib/UnidadeContext';
 
 const TABS = [
   { id: 'dashboard', label: '📊 Dashboard' },
@@ -40,7 +41,18 @@ const PERIODOS = [
   { value: 'personalizado', label: 'Período personalizado' },
 ];
 
+const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
+
+function filtrarPorUnidade(lista, unidadeAtual) {
+  if (!unidadeAtual) return lista;
+  return lista.filter(item => {
+    if (item.unidade_id) return item.unidade_id === unidadeAtual.id;
+    return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
+  });
+}
+
 export default function Financeiro() {
+  const { unidadeAtual } = useUnidade();
   const { data: configs = [] } = useQuery({
     queryKey: ['configuracoes'],
     queryFn: () => base44.entities.Configuracao.list(),
@@ -54,23 +66,26 @@ export default function Financeiro() {
 
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
 
-  const { data: lancamentos = [] } = useQuery({
+  const { data: lancamentosBrutos = [] } = useQuery({
     queryKey: ['lancamentos'],
     queryFn: () => base44.entities.LancamentoFinanceiro.list('-data_lancamento', 1000),
     staleTime: 2 * 60 * 1000,
   });
+  const lancamentos = filtrarPorUnidade(lancamentosBrutos, unidadeAtual);
 
-  const { data: contasReceber = [] } = useQuery({
+  const { data: contasReceberBrutos = [] } = useQuery({
     queryKey: ['contas_receber'],
     queryFn: () => base44.entities.ContaReceber.list('-created_date', 500),
     staleTime: 2 * 60 * 1000,
   });
+  const contasReceber = filtrarPorUnidade(contasReceberBrutos, unidadeAtual);
 
-  const { data: contasPagar = [] } = useQuery({
+  const { data: contasPagarBrutos = [] } = useQuery({
     queryKey: ['contas_pagar'],
     queryFn: () => base44.entities.ContaPagar.list('-created_date', 500),
     staleTime: 2 * 60 * 1000,
   });
+  const contasPagar = filtrarPorUnidade(contasPagarBrutos, unidadeAtual);
 
   if (!paginaPermitida(modulosAtivos, 'Financeiro')) {
     return <ModuloBloqueado nomeModulo="Financeiro" />;

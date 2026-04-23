@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useUnidade } from '@/lib/UnidadeContext';
+
+const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -24,15 +27,24 @@ const CATEGORIAS = ['aluguel','energia','agua','internet','folha_pagamento','man
 
 export default function ContasPagarTab() {
   const qc = useQueryClient();
+  const { unidadeAtual } = useUnidade();
   const [search, setSearch] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('todos');
   const [showNova, setShowNova] = useState(false);
   const [selecionada, setSelecionada] = useState(null);
 
-  const { data: contas = [], isLoading } = useQuery({
+  const { data: contasBrutos = [], isLoading } = useQuery({
     queryKey: ['contas-pagar'],
     queryFn: () => base44.entities.ContaPagar.list('-created_date', 300),
   });
+
+  const contas = useMemo(() => {
+    if (!unidadeAtual) return contasBrutos;
+    return contasBrutos.filter(c => {
+      if (c.unidade_id) return c.unidade_id === unidadeAtual.id;
+      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
+    });
+  }, [contasBrutos, unidadeAtual]);
 
   const pagarMutation = useMutation({
     mutationFn: async (conta) => {

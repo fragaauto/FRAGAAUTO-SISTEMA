@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useUnidade } from '@/lib/UnidadeContext';
+
+const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -149,12 +152,22 @@ export default function Agenda() {
   const [confirmandoPresenca, setConfirmandoPresenca] = useState(null);
   const [msgConfirmacao, setMsgConfirmacao] = useState('');
 
-  const { data: agendamentos = [], isLoading } = useQuery({
+  const { unidadeAtual } = useUnidade();
+
+  const { data: agendamentosBrutos = [], isLoading } = useQuery({
     queryKey: ['agendamentos'],
     queryFn: () => base44.entities.Agendamento.list('data_hora'),
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
   });
+
+  const agendamentos = useMemo(() => {
+    if (!unidadeAtual) return agendamentosBrutos;
+    return agendamentosBrutos.filter(a => {
+      if (a.unidade_id) return a.unidade_id === unidadeAtual.id;
+      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
+    });
+  }, [agendamentosBrutos, unidadeAtual]);
 
   // Real-time
   React.useEffect(() => {
