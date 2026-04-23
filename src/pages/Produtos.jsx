@@ -51,6 +51,7 @@ import ModuloBloqueado from '@/components/ModuloBloqueado';
 import { paginaPermitida } from '@/components/modulos';
 import Paginacao from '@/components/ui/Paginacao';
 import FormularioProduto from '../components/produtos/FormularioProduto';
+import { useUnidade } from '@/lib/UnidadeContext';
 
 const CATEGORIAS = [
   { value: 'eletrica', label: 'Elétrica', color: 'bg-yellow-100 text-yellow-800' },
@@ -68,6 +69,7 @@ const getCategoriaColor = (cat) => CATEGORIAS.find(c => c.value === cat)?.color 
 export default function Produtos() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef(null);
+  const { unidadeAtual } = useUnidade();
 
   const { data: cfgs = [] } = useQuery({
     queryKey: ['configuracoes'],
@@ -115,8 +117,10 @@ export default function Produtos() {
   });
 
   const { data: produtos = [], isLoading } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('', 3000),
+    queryKey: ['produtos', unidadeAtual?.id],
+    queryFn: () => unidadeAtual
+      ? base44.entities.Produto.filter({ unidade_id: unidadeAtual.id }, '', 3000)
+      : base44.entities.Produto.list('', 3000),
     staleTime: 5 * 60 * 1000
   });
 
@@ -377,7 +381,8 @@ export default function Produtos() {
 
     const data = {
       ...formData,
-      valor: parseFloat(formData.valor)
+      valor: parseFloat(formData.valor),
+      ...(!editingProduto && { unidade_id: unidadeAtual?.id || null })
     };
 
     if (editingProduto) {

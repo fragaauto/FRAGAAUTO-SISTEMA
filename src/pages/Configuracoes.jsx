@@ -3,7 +3,9 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
-import { Building2, DollarSign, ClipboardCheck, TrendingUp, Plug, Package } from 'lucide-react';
+import { Building2, DollarSign, ClipboardCheck, TrendingUp, Plug, Package, Layers } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import TabEmpresa from '@/components/configuracoes/TabEmpresa';
 import TabFinanceiro from '@/components/configuracoes/TabFinanceiro';
 import TabAtendimento from '@/components/configuracoes/TabAtendimento';
@@ -143,6 +145,16 @@ export default function Configuracoes() {
             <Package className="w-4 h-4" />Módulos
           </TabsTrigger>
         </TabsList>
+
+        <div className="mb-4">
+          <Link
+            to={createPageUrl('GerenciarUnidades')}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors text-sm font-medium"
+          >
+            <Layers className="w-4 h-4" />
+            Gerenciar Unidades (Auto Portas / Lava Jato)
+          </Link>
+        </div>
 
         <TabsContent value="empresa">
           <TabEmpresa {...commonProps} />

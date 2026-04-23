@@ -14,9 +14,11 @@ import { toast } from "sonner";
 import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
 import { motion } from 'framer-motion';
 import Paginacao from '@/components/ui/Paginacao';
+import { useUnidade } from '@/lib/UnidadeContext';
 
 export default function ClientesTab() {
   const queryClient = useQueryClient();
+  const { unidadeAtual } = useUnidade();
   const [search, setSearch] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [filtroBloqueado, setFiltroBloqueado] = useState('todos');
@@ -30,8 +32,10 @@ export default function ClientesTab() {
   const [formData, setFormData] = useState({ nome: '', tipo_pessoa: 'fisica', telefone: '', email: '', cpf_cnpj: '', data_nascimento: '', endereco: '' });
 
   const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list('-created_date'),
+    queryKey: ['clientes', unidadeAtual?.id],
+    queryFn: () => unidadeAtual
+      ? base44.entities.Cliente.filter({ unidade_id: unidadeAtual.id }, '-created_date')
+      : base44.entities.Cliente.list('-created_date'),
     staleTime: 5 * 60 * 1000
   });
 
@@ -40,7 +44,7 @@ export default function ClientesTab() {
       // Gera código sequencial automático
       const todos = await base44.entities.Cliente.list();
       const maxCodigo = todos.reduce((max, c) => Math.max(max, c.codigo || 0), 0);
-      return base44.entities.Cliente.create({ ...data, codigo: maxCodigo + 1 });
+      return base44.entities.Cliente.create({ ...data, codigo: maxCodigo + 1, unidade_id: unidadeAtual?.id || null });
     },
     onSuccess: () => { queryClient.invalidateQueries(['clientes']); toast.success('Cliente cadastrado!'); closeModal(); }
   });
