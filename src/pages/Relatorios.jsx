@@ -3,9 +3,10 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { FileSpreadsheet, Calendar, CheckCircle, XCircle, DollarSign, FileText, Users, TrendingUp, Package, FileDown } from 'lucide-react';
+import { FileSpreadsheet, Calendar, CheckCircle, XCircle, DollarSign, FileText, Users, TrendingUp, Package, FileDown, Search, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import RelatorioProdutos from '@/components/relatorios/RelatorioProdutos';
@@ -28,6 +29,9 @@ export default function Relatorios() {
 
   const [periodo, setPeriodo] = useState('30');
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
+  const [filtroCliente, setFiltroCliente] = useState('');
+  const [filtroVeiculo, setFiltroVeiculo] = useState('');
+  const [filtroProduto, setFiltroProduto] = useState('');
 
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
   const config = configs[0] || {};
@@ -49,6 +53,14 @@ export default function Relatorios() {
     });
   }, [atendimentosBrutos, unidadeAtual]);
 
+  const temFiltroAtivo = filtroCliente || filtroVeiculo || filtroProduto;
+
+  const limparFiltros = () => {
+    setFiltroCliente('');
+    setFiltroVeiculo('');
+    setFiltroProduto('');
+  };
+
   const dadosRelatorio = useMemo(() => {
     const now = new Date();
 
@@ -56,19 +68,47 @@ export default function Relatorios() {
       const dataAtendimento = new Date(a.created_date);
       dataAtendimento.setHours(0, 0, 0, 0);
 
+      // Filtro de período
       if (periodo === 'especifica') {
         if (!dataEspecifica.from) return true;
         const from = new Date(dataEspecifica.from); from.setHours(0, 0, 0, 0);
         if (dataEspecifica.to) {
           const to = new Date(dataEspecifica.to); to.setHours(23, 59, 59, 999);
-          return dataAtendimento >= from && dataAtendimento <= to;
+          if (!(dataAtendimento >= from && dataAtendimento <= to)) return false;
+        } else {
+          if (dataAtendimento.toDateString() !== from.toDateString()) return false;
         }
-        return dataAtendimento.toDateString() === from.toDateString();
+      } else {
+        const diasFiltro = parseInt(periodo);
+        if (diasFiltro !== 0) {
+          const diff = Math.floor((now - dataAtendimento) / (1000 * 60 * 60 * 24));
+          if (diff > diasFiltro) return false;
+        }
       }
-      const diasFiltro = parseInt(periodo);
-      if (diasFiltro === 0) return true;
-      const diff = Math.floor((now - dataAtendimento) / (1000 * 60 * 60 * 24));
-      return diff <= diasFiltro;
+
+      // Filtro de cliente
+      if (filtroCliente) {
+        const nomeCliente = (a.cliente_nome || '').toLowerCase();
+        if (!nomeCliente.includes(filtroCliente.toLowerCase())) return false;
+      }
+
+      // Filtro de veículo (placa ou modelo)
+      if (filtroVeiculo) {
+        const placa = (a.placa || '').toLowerCase();
+        const modelo = (a.modelo || '').toLowerCase();
+        const busca = filtroVeiculo.toLowerCase();
+        if (!placa.includes(busca) && !modelo.includes(busca)) return false;
+      }
+
+      // Filtro de produto/serviço — verifica se algum item bate
+      if (filtroProduto) {
+        const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
+        const busca = filtroProduto.toLowerCase();
+        const temProduto = todosItens.some(item => (item.nome || '').toLowerCase().includes(busca));
+        if (!temProduto) return false;
+      }
+
+      return true;
     });
 
     let servicosAprovados = 0, servicosReprovados = 0, valorTotalAprovado = 0, valorTotalReprovado = 0;
@@ -198,6 +238,64 @@ export default function Relatorios() {
               )}
               {/* export buttons shown per tab */}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Painel de filtros adicionais */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <div className="relative">
+              <Input
+                placeholder="Filtrar por cliente..."
+                value={filtroCliente}
+                onChange={e => setFiltroCliente(e.target.value)}
+                className="w-48 h-8 text-sm pl-3"
+              />
+              {filtroCliente && (
+                <button onClick={() => setFiltroCliente('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Input
+                placeholder="Placa ou modelo..."
+                value={filtroVeiculo}
+                onChange={e => setFiltroVeiculo(e.target.value)}
+                className="w-44 h-8 text-sm pl-3"
+              />
+              {filtroVeiculo && (
+                <button onClick={() => setFiltroVeiculo('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <Input
+                placeholder="Produto ou serviço..."
+                value={filtroProduto}
+                onChange={e => setFiltroProduto(e.target.value)}
+                className="w-48 h-8 text-sm pl-3"
+              />
+              {filtroProduto && (
+                <button onClick={() => setFiltroProduto('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+            {temFiltroAtivo && (
+              <Button variant="ghost" size="sm" onClick={limparFiltros} className="h-8 text-xs text-slate-500 hover:text-red-600">
+                <X className="w-3 h-3 mr-1" /> Limpar filtros
+              </Button>
+            )}
+            {temFiltroAtivo && (
+              <span className="text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded-full border border-orange-200">
+                {dadosRelatorio.atendimentosFiltrados.length} atendimento(s) encontrado(s)
+              </span>
+            )}
           </div>
         </div>
       </div>
