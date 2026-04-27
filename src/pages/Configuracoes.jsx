@@ -12,6 +12,7 @@ import TabAtendimento from '@/components/configuracoes/TabAtendimento';
 import TabMarketing from '@/components/configuracoes/TabMarketing';
 import TabIntegracoes from '@/components/configuracoes/TabIntegracoes';
 import { TODOS_MODULOS } from '@/components/modulos';
+import { useUnidade } from '@/lib/UnidadeContext';
 
 const DEFAULT_FORMAS = [
   { nome: 'Dinheiro', ativa: true },
@@ -76,6 +77,7 @@ const DEFAULT_FORM = {
 
 export default function Configuracoes() {
   const queryClient = useQueryClient();
+  const { unidadeAtual, unidades, setUnidadeAtual, isAdmin } = useUnidade();
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [configId, setConfigId] = useState(null);
 
@@ -84,22 +86,37 @@ export default function Configuracoes() {
     queryFn: () => base44.entities.Configuracao.list(),
   });
 
+  // Filtra a config da unidade atual (ou legado sem unidade_id para retrocompat.)
   useEffect(() => {
-    if (configs.length > 0) {
-      const c = configs[0];
+    if (!configs.length) return;
+    let c = null;
+    if (unidadeAtual) {
+      c = configs.find(x => x.unidade_id === unidadeAtual.id);
+      // fallback: se não existe config para esta unidade, tenta a sem unidade_id
+      if (!c) c = configs.find(x => !x.unidade_id);
+    } else {
+      c = configs[0];
+    }
+    if (c) {
       setConfigId(c.id);
       setFormData({
         ...DEFAULT_FORM,
         ...c,
         formas_pagamento: c.formas_pagamento?.length ? c.formas_pagamento : DEFAULT_FORMAS,
       });
+    } else {
+      setConfigId(null);
+      setFormData(DEFAULT_FORM);
     }
-  }, [configs]);
+  }, [configs, unidadeAtual]);
 
   const saveMutation = useMutation({
-    mutationFn: (data) => configId
-      ? base44.entities.Configuracao.update(configId, data)
-      : base44.entities.Configuracao.create(data),
+    mutationFn: (data) => {
+      const payload = { ...data, unidade_id: unidadeAtual?.id || data.unidade_id };
+      return configId
+        ? base44.entities.Configuracao.update(configId, payload)
+        : base44.entities.Configuracao.create(payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['configuracoes']);
       toast.success('Configurações salvas!');
@@ -122,9 +139,40 @@ export default function Configuracoes() {
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Configurações</h1>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <h1 className="text-2xl font-bold text-slate-800">Configurações</h1>
+        {isAdmin && unidades.length > 1 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-slate-500">Configurando:</span>
+            {unidades.map(u => (
+              <button
+                key={u.id}
+                onClick={() => setUnidadeAtual(u)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                  unidadeAtual?.id === u.id
+                    ? 'bg-orange-500 text-white border-orange-500'
+                    : 'bg-white text-slate-700 border-slate-300 hover:border-orange-400'
+                }`}
+              >
+                {u.nome}
+              </button>
+            ))}
+          </div>
+        )}
+        {!isAdmin && unidadeAtual && (
+          <span className="text-sm text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">
+            Unidade: <strong>{unidadeAtual.nome}</strong>
+          </span>
+        )}
+      </div>
+      {unidadeAtual && (
+        <div className="mb-4 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-700">
+          ⚙️ Editando configurações de: <strong>{unidadeAtual.nome}</strong>
+          {!configId && <span className="ml-2 text-orange-500">(nova configuração será criada ao salvar)</span>}
+        </div>
+      )}
 
-      <Tabs defaultValue="empresa">
+      <Tabs defaultValue="empresa" key={unidadeAtual?.id}>
         <TabsList className="flex flex-wrap h-auto gap-1 mb-6">
           <TabsTrigger value="empresa" className="flex items-center gap-1.5">
             <Building2 className="w-4 h-4" />Empresa

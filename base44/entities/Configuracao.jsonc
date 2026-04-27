@@ -1,0 +1,293 @@
+{
+  "name": "Configuracao",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade a que esta configura\u00e7\u00e3o pertence"
+    },
+    "nome_empresa": {
+      "type": "string"
+    },
+    "endereco": {
+      "type": "string"
+    },
+    "telefone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "cnpj": {
+      "type": "string"
+    },
+    "site": {
+      "type": "string"
+    },
+    "instagram": {
+      "type": "string"
+    },
+    "whatsapp_atendimento": {
+      "type": "string"
+    },
+    "mensagem_link_cliente": {
+      "type": "string"
+    },
+    "mensagem_remarketing": {
+      "type": "string"
+    },
+    "formas_pagamento": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "ativa": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "taxas_pagamento": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "forma": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "taxa_percentual": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "parcelas_credito": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "parcelas": {
+            "type": "number"
+          },
+          "taxa_percentual": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "impostos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "percentual": {
+            "type": "number"
+          },
+          "ativo": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "condicoes_especiais": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tipo_gatilho": {
+            "type": "string",
+            "enum": [
+              "valor",
+              "itens"
+            ],
+            "default": "valor"
+          },
+          "valor_minimo": {
+            "type": "number"
+          },
+          "itens_minimos": {
+            "type": "number"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "desconto",
+              "parcelamento",
+              "brinde"
+            ]
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "valor_desconto_percentual": {
+            "type": "number"
+          },
+          "parcelas_sem_juros": {
+            "type": "number"
+          },
+          "ativa": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "status_atendimento_personalizados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "valor": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "cor": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cliente_nome_obrigatorio": {
+      "type": "boolean",
+      "default": true
+    },
+    "cliente_telefone_obrigatorio": {
+      "type": "boolean",
+      "default": true
+    },
+    "cliente_cpf_obrigatorio": {
+      "type": "boolean",
+      "default": false
+    },
+    "cliente_nascimento_obrigatorio": {
+      "type": "boolean",
+      "default": false
+    },
+    "cliente_endereco_obrigatorio": {
+      "type": "boolean",
+      "default": false
+    },
+    "os_placa_obrigatorio": {
+      "type": "boolean",
+      "default": true
+    },
+    "os_modelo_obrigatorio": {
+      "type": "boolean",
+      "default": true
+    },
+    "os_km_obrigatorio": {
+      "type": "boolean",
+      "default": false
+    },
+    "os_observacoes_veiculo_obrigatorio": {
+      "type": "boolean",
+      "default": false
+    },
+    "os_queixa_obrigatorio": {
+      "type": "boolean",
+      "default": false
+    },
+    "os_tecnico_obrigatorio": {
+      "type": "boolean",
+      "default": false
+    },
+    "os_atribuicao_servico_obrigatoria": {
+      "type": "boolean",
+      "default": false
+    },
+    "dias_minimos_reenvio": {
+      "type": "number"
+    },
+    "dias_validade_oferta": {
+      "type": "number"
+    },
+    "oferta_padrao_remarketing": {
+      "type": "string"
+    },
+    "condicao_pagamento_remarketing": {
+      "type": "string"
+    },
+    "lembrete_checklist_ativo": {
+      "type": "boolean",
+      "default": false
+    },
+    "lembrete_checklist_intervalo": {
+      "type": "number",
+      "default": 30
+    },
+    "lembrete_checklist_whatsapp": {
+      "type": "string"
+    },
+    "agenda_google_sheets_id": {
+      "type": "string"
+    },
+    "agenda_google_sheets_aba": {
+      "type": "string"
+    },
+    "agenda_google_calendar_id": {
+      "type": "string"
+    },
+    "agenda_google_api_key": {
+      "type": "string"
+    },
+    "agenda_sheets_col_data": {
+      "type": "string"
+    },
+    "agenda_sheets_col_hora": {
+      "type": "string"
+    },
+    "agenda_sheets_col_cliente": {
+      "type": "string"
+    },
+    "agenda_sheets_col_servico": {
+      "type": "string"
+    },
+    "agenda_sheets_col_placa": {
+      "type": "string"
+    },
+    "agenda_sheets_col_obs": {
+      "type": "string"
+    },
+    "evolution_api_url": {
+      "type": "string"
+    },
+    "evolution_api_key": {
+      "type": "string"
+    },
+    "evolution_instance": {
+      "type": "string"
+    },
+    "modulos_ativos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "atendimentos",
+        "financeiro",
+        "estoque",
+        "clientes",
+        "agenda",
+        "remarketing",
+        "relatorios",
+        "checklist"
+      ]
+    }
+  },
+  "required": [
+    "nome_empresa"
+  ]
+}
