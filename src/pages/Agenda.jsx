@@ -242,7 +242,7 @@ export default function Agenda() {
   const sincronizarSheets = async () => {
     setSincronizando(true);
     try {
-      const res = await base44.functions.invoke('sincronizarAgenda', {});
+      const res = await base44.functions.invoke('sincronizarAgenda', { unidade_id: unidadeAtual?.id || null });
       const msg = res.data?.message || 'Sincronizado!';
       toast.success(msg);
       qc.invalidateQueries(['agendamentos']);

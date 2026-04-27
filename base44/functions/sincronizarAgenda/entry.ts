@@ -1,11 +1,21 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const body = await req.json().catch(() => ({}));
+    const unidade_id = body.unidade_id || null;
 
     const configs = await base44.asServiceRole.entities.Configuracao.list();
-    const config = configs[0];
+
+    // Busca a config da unidade enviada, ou fallback para a sem unidade_id
+    let config = null;
+    if (unidade_id) {
+      config = configs.find(c => c.unidade_id === unidade_id);
+    }
+    if (!config) {
+      config = configs.find(c => !c.unidade_id) || configs[0];
+    }
 
     if (!config) {
       return Response.json({ error: 'Configuração não encontrada' }, { status: 400 });
@@ -29,7 +39,6 @@ Deno.serve(async (req) => {
 
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('googlesheets');
 
-    // Colocar o nome da aba entre aspas simples para suportar espaços e caracteres especiais
     const range = `'${abaName}'!A:Z`;
     const sheetsUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`;
     const sheetsRes = await fetch(sheetsUrl, {
@@ -50,7 +59,11 @@ Deno.serve(async (req) => {
 
     const dataRows = rows.slice(1);
 
-    const agendamentosExistentes = await base44.asServiceRole.entities.Agendamento.list();
+    // Busca agendamentos já existentes filtrados pela unidade
+    const agendamentosExistentes = unidade_id
+      ? await base44.asServiceRole.entities.Agendamento.filter({ unidade_id })
+      : await base44.asServiceRole.entities.Agendamento.list();
+
     const existentesSet = new Set(
       agendamentosExistentes
         .filter(a => a.data_hora && a.cliente_nome)
@@ -104,6 +117,7 @@ Deno.serve(async (req) => {
         data_hora: dataHoraISO,
         observacoes: obs || null,
         status: 'agendado',
+        unidade_id: unidade_id || null,
       });
 
       existentesSet.add(chave);
