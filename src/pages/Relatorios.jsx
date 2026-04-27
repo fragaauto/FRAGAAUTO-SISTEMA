@@ -29,6 +29,13 @@ export default function Relatorios() {
 
   const [periodo, setPeriodo] = useState('30');
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
+
+  // Estados dos inputs (ainda não aplicados)
+  const [inputCliente, setInputCliente] = useState('');
+  const [inputVeiculo, setInputVeiculo] = useState('');
+  const [inputProduto, setInputProduto] = useState('');
+
+  // Estados aplicados (usados no filtro real)
   const [filtroCliente, setFiltroCliente] = useState('');
   const [filtroVeiculo, setFiltroVeiculo] = useState('');
   const [filtroProduto, setFiltroProduto] = useState('');
@@ -55,7 +62,16 @@ export default function Relatorios() {
 
   const temFiltroAtivo = filtroCliente || filtroVeiculo || filtroProduto;
 
+  const aplicarFiltros = () => {
+    setFiltroCliente(inputCliente.trim());
+    setFiltroVeiculo(inputVeiculo.trim());
+    setFiltroProduto(inputProduto.trim());
+  };
+
   const limparFiltros = () => {
+    setInputCliente('');
+    setInputVeiculo('');
+    setInputProduto('');
     setFiltroCliente('');
     setFiltroVeiculo('');
     setFiltroProduto('');
@@ -86,25 +102,25 @@ export default function Relatorios() {
         }
       }
 
-      // Filtro de cliente
+      // Filtro de cliente (contém, sem distinção maiúsculas)
       if (filtroCliente) {
-        const nomeCliente = (a.cliente_nome || '').toLowerCase();
-        if (!nomeCliente.includes(filtroCliente.toLowerCase())) return false;
+        const nome = String(a.cliente_nome || '').toLowerCase();
+        if (!nome.includes(filtroCliente.toLowerCase())) return false;
       }
 
-      // Filtro de veículo (placa ou modelo)
+      // Filtro de veículo — placa ou modelo (contém)
       if (filtroVeiculo) {
-        const placa = (a.placa || '').toLowerCase();
-        const modelo = (a.modelo || '').toLowerCase();
+        const placa = String(a.placa || '').toLowerCase();
+        const modelo = String(a.modelo || '').toLowerCase();
         const busca = filtroVeiculo.toLowerCase();
         if (!placa.includes(busca) && !modelo.includes(busca)) return false;
       }
 
-      // Filtro de produto/serviço — verifica se algum item bate
+      // Filtro de produto/serviço — verifica se algum item contém o texto
       if (filtroProduto) {
         const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
         const busca = filtroProduto.toLowerCase();
-        const temProduto = todosItens.some(item => (item.nome || '').toLowerCase().includes(busca));
+        const temProduto = todosItens.some(item => String(item.nome || '').toLowerCase().includes(busca));
         if (!temProduto) return false;
       }
 
@@ -144,7 +160,7 @@ export default function Relatorios() {
     const rankingArray = Object.values(rankingServicos).sort((a, b) => b.qtd_aprovado - a.qtd_aprovado);
 
     return { totalOrcamentos: atendimentosFiltrados.length, servicosAprovados, servicosReprovados, valorTotalAprovado, valorTotalReprovado, detalhesServicos, atendimentosFiltrados, rankingServicos: rankingArray };
-  }, [atendimentos, periodo, dataEspecifica]);
+  }, [atendimentos, periodo, dataEspecifica, filtroCliente, filtroVeiculo, filtroProduto]);
 
   if (!paginaPermitida(modulosAtivos, 'Relatorios')) return <ModuloBloqueado nomeModulo="Relatórios" />;
 
@@ -243,56 +259,41 @@ export default function Relatorios() {
       </div>
 
       {/* Painel de filtros adicionais */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-slate-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex flex-wrap items-center gap-3">
-            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
-            <div className="relative">
-              <Input
-                placeholder="Filtrar por cliente..."
-                value={filtroCliente}
-                onChange={e => setFiltroCliente(e.target.value)}
-                className="w-48 h-8 text-sm pl-3"
-              />
-              {filtroCliente && (
-                <button onClick={() => setFiltroCliente('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-            <div className="relative">
-              <Input
-                placeholder="Placa ou modelo..."
-                value={filtroVeiculo}
-                onChange={e => setFiltroVeiculo(e.target.value)}
-                className="w-44 h-8 text-sm pl-3"
-              />
-              {filtroVeiculo && (
-                <button onClick={() => setFiltroVeiculo('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-            <div className="relative">
-              <Input
-                placeholder="Produto ou serviço..."
-                value={filtroProduto}
-                onChange={e => setFiltroProduto(e.target.value)}
-                className="w-48 h-8 text-sm pl-3"
-              />
-              {filtroProduto && (
-                <button onClick={() => setFiltroProduto('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
+            <Search className="w-4 h-4 text-slate-500 flex-shrink-0" />
+            <Input
+              placeholder="Nome do cliente..."
+              value={inputCliente}
+              onChange={e => setInputCliente(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && aplicarFiltros()}
+              className="w-44 h-9 text-sm"
+            />
+            <Input
+              placeholder="Placa ou modelo..."
+              value={inputVeiculo}
+              onChange={e => setInputVeiculo(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && aplicarFiltros()}
+              className="w-40 h-9 text-sm"
+            />
+            <Input
+              placeholder="Produto ou serviço..."
+              value={inputProduto}
+              onChange={e => setInputProduto(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && aplicarFiltros()}
+              className="w-44 h-9 text-sm"
+            />
+            <Button size="sm" onClick={aplicarFiltros} className="h-9 bg-orange-500 hover:bg-orange-600">
+              <Search className="w-4 h-4 mr-1" /> Aplicar Filtros
+            </Button>
             {temFiltroAtivo && (
-              <Button variant="ghost" size="sm" onClick={limparFiltros} className="h-8 text-xs text-slate-500 hover:text-red-600">
-                <X className="w-3 h-3 mr-1" /> Limpar filtros
+              <Button variant="ghost" size="sm" onClick={limparFiltros} className="h-9 text-slate-500 hover:text-red-600">
+                <X className="w-4 h-4 mr-1" /> Limpar
               </Button>
             )}
             {temFiltroAtivo && (
-              <span className="text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded-full border border-orange-200">
+              <span className="text-xs text-orange-600 font-semibold bg-orange-50 px-2 py-1 rounded-full border border-orange-200">
                 {dadosRelatorio.atendimentosFiltrados.length} atendimento(s) encontrado(s)
               </span>
             )}
