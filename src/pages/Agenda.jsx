@@ -50,11 +50,17 @@ const EMPTY_FORM = {
   status: 'agendado',
 };
 
-function AgendamentoModal({ open, onClose, agendamento, onSaved }) {
-  const [form, setForm] = useState(agendamento ? {
-    ...agendamento,
-    data_hora: agendamento.data_hora ? format(new Date(agendamento.data_hora), "yyyy-MM-dd'T'HH:mm") : '',
-  } : EMPTY_FORM);
+function AgendamentoModal({ open, onClose, agendamento, onSaved, unidadeId, dataHoraInicial }) {
+  const isEdicao = !!(agendamento?.id);
+  const [form, setForm] = useState(() => {
+    if (isEdicao) {
+      return {
+        ...agendamento,
+        data_hora: agendamento.data_hora ? format(new Date(agendamento.data_hora), "yyyy-MM-dd'T'HH:mm") : '',
+      };
+    }
+    return { ...EMPTY_FORM, data_hora: dataHoraInicial || '' };
+  });
   const [saving, setSaving] = useState(false);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -63,10 +69,10 @@ function AgendamentoModal({ open, onClose, agendamento, onSaved }) {
     if (!form.titulo || !form.data_hora) return toast.error('Informe título e data/hora');
     setSaving(true);
     const data = { ...form, data_hora: new Date(form.data_hora).toISOString(), duracao_minutos: parseInt(form.duracao_minutos) || 60 };
-    if (agendamento?.id) {
+    if (isEdicao) {
       await base44.entities.Agendamento.update(agendamento.id, data);
     } else {
-      await base44.entities.Agendamento.create(data);
+      await base44.entities.Agendamento.create({ ...data, unidade_id: unidadeId });
     }
     setSaving(false);
     onSaved();
@@ -408,8 +414,10 @@ export default function Agenda() {
         <AgendamentoModal
           open={showModal}
           onClose={() => { setShowModal(false); setEditando(null); }}
-          agendamento={editando}
+          agendamento={editando?.id ? editando : null}
+          dataHoraInicial={!editando?.id ? editando?.data_hora : undefined}
           onSaved={onSaved}
+          unidadeId={unidadeAtual?.id}
         />
       )}
 
