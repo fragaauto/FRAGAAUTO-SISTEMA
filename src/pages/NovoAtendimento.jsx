@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -100,11 +100,20 @@ export default function NovoAtendimento() {
     staleTime: 10 * 60 * 1000
   });
 
-  const { data: clientes = [] } = useQuery({
+  const { data: clientesBrutos = [] } = useQuery({
     queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryFn: () => base44.entities.Cliente.list('-created_date', 500),
     staleTime: 5 * 60 * 1000
   });
+
+  const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
+  const clientes = useMemo(() => {
+    if (!unidadeAtual) return clientesBrutos;
+    return clientesBrutos.filter(c => {
+      if (c.unidade_id) return c.unidade_id === unidadeAtual.id;
+      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
+    });
+  }, [clientesBrutos, unidadeAtual]);
 
   const { data: configs = [] } = useQuery({
     queryKey: ['configuracoes'],
