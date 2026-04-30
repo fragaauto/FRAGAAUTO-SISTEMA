@@ -63,6 +63,7 @@ export default function NovoAtendimento() {
   const [criandoCliente, setCriandoCliente] = useState(false);
   const [showCadastrarCliente, setShowCadastrarCliente] = useState(false);
   const [nomeParaCadastro, setNomeParaCadastro] = useState('');
+  const [buscaNome, setBuscaNome] = useState('');
   const [clienteSugestoes, setClienteSugestoes] = useState([]);
   const [showSugestoes, setShowSugestoes] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
@@ -222,27 +223,29 @@ export default function NovoAtendimento() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Sugestões calculadas sempre a partir do estado atual de busca e clientes
+  const sugestoesCalculadas = useMemo(() => {
+    const q = buscaNome.trim().toLowerCase();
+    if (q.length < 2 || clienteSelecionado) return [];
+    return clientes.filter(c => {
+      const nome = (c.nome || '').toLowerCase();
+      const tel = (c.telefone || '').replace(/\D/g, '');
+      const cpf = (c.cpf_cnpj || '').replace(/\D/g, '');
+      const qDigits = q.replace(/\D/g, '');
+      return nome.includes(q) || (qDigits.length >= 2 && (tel.includes(qDigits) || cpf.includes(qDigits)));
+    }).slice(0, 8);
+  }, [buscaNome, clientes, clienteSelecionado]);
+
   const handleNomeClienteChange = (value) => {
+    setBuscaNome(value);
     setFormData(prev => ({ ...prev, cliente_nome: value }));
     setClienteSelecionado(null);
-    const q = value.trim().toLowerCase();
-    if (q.length >= 2) {
-      const encontrados = clientes.filter(c => {
-        const nome = (c.nome || '').toLowerCase();
-        const telefone = c.telefone || '';
-        const cpf = (c.cpf_cnpj || '').replace(/\D/g, '');
-        return nome.includes(q) || telefone.includes(q) || cpf.includes(q.replace(/\D/g, ''));
-      }).slice(0, 8);
-      setClienteSugestoes(encontrados);
-      setShowSugestoes(encontrados.length > 0);
-    } else {
-      setClienteSugestoes([]);
-      setShowSugestoes(false);
-    }
+    setShowSugestoes(value.trim().length >= 2);
   };
 
   const handleSelecionarClienteSugestao = (cliente) => {
     setClienteSelecionado(cliente);
+    setBuscaNome(cliente.nome);
     setFormData(prev => ({
       ...prev,
       cliente_nome: cliente.nome,
@@ -251,7 +254,6 @@ export default function NovoAtendimento() {
       cliente_endereco: cliente.endereco || ''
     }));
     setShowSugestoes(false);
-    setClienteSugestoes([]);
     toast.success(`Cliente ${cliente.nome} selecionado`);
   };
 
@@ -512,6 +514,7 @@ export default function NovoAtendimento() {
 
   const handleSelecionarCliente = (cliente) => {
     setClienteSelecionado(cliente);
+    setBuscaNome(cliente.nome);
     setFormData(prev => ({
       ...prev,
       cliente_nome: cliente.nome,
@@ -732,21 +735,11 @@ export default function NovoAtendimento() {
                       <Input
                         ref={nomeInputRef}
                         placeholder="Digite o nome para buscar ou cadastrar..."
-                        value={formData.cliente_nome}
+                        value={buscaNome}
                         onChange={(e) => handleNomeClienteChange(e.target.value)}
                         onBlur={() => setTimeout(() => setShowSugestoes(false), 200)}
                         onFocus={() => {
-                          const q = (formData.cliente_nome || '').trim().toLowerCase();
-                          if (q.length >= 2 && !clienteSelecionado) {
-                            const encontrados = clientes.filter(c => {
-                              const nome = (c.nome || '').toLowerCase();
-                              const telefone = c.telefone || '';
-                              const cpf = (c.cpf_cnpj || '').replace(/\D/g, '');
-                              return nome.includes(q) || telefone.includes(q) || cpf.includes(q.replace(/\D/g, ''));
-                            }).slice(0, 8);
-                            setClienteSugestoes(encontrados);
-                            if (encontrados.length > 0) setShowSugestoes(true);
-                          }
+                          if (buscaNome.trim().length >= 2 && !clienteSelecionado) setShowSugestoes(true);
                         }}
                         className="h-12"
                         autoComplete="off"
@@ -759,12 +752,12 @@ export default function NovoAtendimento() {
                     </div>
 
                     {/* Dropdown de sugestões */}
-                    {showSugestoes && clienteSugestoes.length > 0 && (
+                    {showSugestoes && sugestoesCalculadas.length > 0 && (
                       <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
                         <div className="px-3 py-1.5 bg-slate-50 text-xs text-slate-500 font-medium border-b">
-                          Clientes encontrados
+                          {sugestoesCalculadas.length} cliente(s) encontrado(s)
                         </div>
-                        {clienteSugestoes.map(c => (
+                        {sugestoesCalculadas.map(c => (
                           <button
                             key={c.id}
                             onMouseDown={() => handleSelecionarClienteSugestao(c)}
