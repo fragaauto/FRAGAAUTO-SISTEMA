@@ -223,17 +223,18 @@ export default function NovoAtendimento() {
   };
 
   const handleNomeClienteChange = (value) => {
-    handleInputChange('cliente_nome', value);
+    setFormData(prev => ({ ...prev, cliente_nome: value }));
     setClienteSelecionado(null);
     if (value.length >= 2) {
-      const q = value.toLowerCase();
-      const encontrados = clientes.filter(c =>
-        c.nome?.toLowerCase().includes(q) ||
-        c.telefone?.includes(q) ||
-        c.cpf_cnpj?.replace(/\D/g, '').includes(value.replace(/\D/g, ''))
-      ).slice(0, 6);
+      const q = value.toLowerCase().trim();
+      const encontrados = clientes.filter(c => {
+        const nome = (c.nome || '').toLowerCase();
+        const telefone = c.telefone || '';
+        const cpf = (c.cpf_cnpj || '').replace(/\D/g, '');
+        return nome.includes(q) || telefone.includes(q) || cpf.includes(value.replace(/\D/g, ''));
+      }).slice(0, 8);
       setClienteSugestoes(encontrados);
-      setShowSugestoes(true);
+      setShowSugestoes(encontrados.length > 0);
     } else {
       setClienteSugestoes([]);
       setShowSugestoes(false);
@@ -733,9 +734,18 @@ export default function NovoAtendimento() {
                         placeholder="Digite o nome para buscar ou cadastrar..."
                         value={formData.cliente_nome}
                         onChange={(e) => handleNomeClienteChange(e.target.value)}
-                        onBlur={() => setTimeout(() => setShowSugestoes(false), 150)}
+                        onBlur={() => setTimeout(() => setShowSugestoes(false), 200)}
                         onFocus={() => {
-                          if (clienteSugestoes.length > 0) setShowSugestoes(true);
+                          if (formData.cliente_nome && formData.cliente_nome.length >= 2 && !clienteSelecionado) {
+                            const q = formData.cliente_nome.toLowerCase();
+                            const encontrados = clientes.filter(c =>
+                              c.nome?.toLowerCase().includes(q) ||
+                              c.telefone?.includes(q) ||
+                              c.cpf_cnpj?.replace(/\D/g, '').includes(formData.cliente_nome.replace(/\D/g, ''))
+                            ).slice(0, 8);
+                            setClienteSugestoes(encontrados);
+                            if (encontrados.length > 0) setShowSugestoes(true);
+                          }
                         }}
                         className="h-12"
                         autoComplete="off"
