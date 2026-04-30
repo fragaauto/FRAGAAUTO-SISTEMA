@@ -72,6 +72,30 @@
       "type": "string",
       "description": "Queixa inicial do cliente"
     },
+    "fotos": {
+      "type": "array",
+      "description": "Fotos anexadas ao atendimento",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL p\u00fablica da foto"
+          },
+          "descricao": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o ou legenda da foto"
+          },
+          "data_upload": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usuario": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "itens_queixa": {
       "type": "array",
       "description": "Itens do or\u00e7amento da queixa inicial",
@@ -127,7 +151,6 @@
           },
           "tecnicos": {
             "type": "array",
-            "description": "Lista de t\u00e9cnicos respons\u00e1veis por este servi\u00e7o",
             "items": {
               "type": "object",
               "properties": {
@@ -149,12 +172,10 @@
     },
     "data_aprovacao_queixa": {
       "type": "string",
-      "format": "date-time",
-      "description": "Data de aprova\u00e7\u00e3o da queixa"
+      "format": "date-time"
     },
     "checklist": {
       "type": "array",
-      "description": "Itens do checklist",
       "items": {
         "type": "object",
         "properties": {
@@ -204,7 +225,6 @@
     },
     "itens_orcamento": {
       "type": "array",
-      "description": "Itens selecionados para or\u00e7amento do checklist",
       "items": {
         "type": "object",
         "properties": {

@@ -46,6 +46,7 @@ import OrdemServicoTecnica from '../components/OrdemServicoTecnica';
 import ImpressaoQueixa from '../components/atendimento/ImpressaoQueixa';
 import ModalEditarClienteVeiculo from '../components/atendimento/ModalEditarClienteVeiculo';
 import AbaFinalizacaoPagamento from '../components/financeiro/AbaFinalizacaoPagamento';
+import FotosAtendimento from '../components/atendimento/FotosAtendimento';
 import AdicionarItemOrcamento from '../components/orcamento/AdicionarItemOrcamento';
 import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import { format } from 'date-fns';
@@ -842,6 +843,13 @@ export default function VerAtendimento() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Fotos do Atendimento */}
+            <FotosAtendimento
+              atendimento={atendimento}
+              readOnly={pagamentoLancado}
+              onUpdate={(data) => updateMutation.mutate(data)}
+            />
 
             {/* Observações do Serviço */}
             <Card>
