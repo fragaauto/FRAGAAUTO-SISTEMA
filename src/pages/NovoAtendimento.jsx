@@ -225,13 +225,13 @@ export default function NovoAtendimento() {
   const handleNomeClienteChange = (value) => {
     setFormData(prev => ({ ...prev, cliente_nome: value }));
     setClienteSelecionado(null);
-    if (value.length >= 2) {
-      const q = value.toLowerCase().trim();
+    const q = value.trim().toLowerCase();
+    if (q.length >= 2) {
       const encontrados = clientes.filter(c => {
         const nome = (c.nome || '').toLowerCase();
         const telefone = c.telefone || '';
         const cpf = (c.cpf_cnpj || '').replace(/\D/g, '');
-        return nome.includes(q) || telefone.includes(q) || cpf.includes(value.replace(/\D/g, ''));
+        return nome.includes(q) || telefone.includes(q) || cpf.includes(q.replace(/\D/g, ''));
       }).slice(0, 8);
       setClienteSugestoes(encontrados);
       setShowSugestoes(encontrados.length > 0);
@@ -736,13 +736,14 @@ export default function NovoAtendimento() {
                         onChange={(e) => handleNomeClienteChange(e.target.value)}
                         onBlur={() => setTimeout(() => setShowSugestoes(false), 200)}
                         onFocus={() => {
-                          if (formData.cliente_nome && formData.cliente_nome.length >= 2 && !clienteSelecionado) {
-                            const q = formData.cliente_nome.toLowerCase();
-                            const encontrados = clientes.filter(c =>
-                              c.nome?.toLowerCase().includes(q) ||
-                              c.telefone?.includes(q) ||
-                              c.cpf_cnpj?.replace(/\D/g, '').includes(formData.cliente_nome.replace(/\D/g, ''))
-                            ).slice(0, 8);
+                          const q = (formData.cliente_nome || '').trim().toLowerCase();
+                          if (q.length >= 2 && !clienteSelecionado) {
+                            const encontrados = clientes.filter(c => {
+                              const nome = (c.nome || '').toLowerCase();
+                              const telefone = c.telefone || '';
+                              const cpf = (c.cpf_cnpj || '').replace(/\D/g, '');
+                              return nome.includes(q) || telefone.includes(q) || cpf.includes(q.replace(/\D/g, ''));
+                            }).slice(0, 8);
                             setClienteSugestoes(encontrados);
                             if (encontrados.length > 0) setShowSugestoes(true);
                           }
