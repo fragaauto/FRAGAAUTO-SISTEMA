@@ -119,6 +119,8 @@ export default function VerAtendimento() {
   const [showOrdemServico, setShowOrdemServico] = useState(false);
   const [showImpressaoQueixa, setShowImpressaoQueixa] = useState(false);
   const [showEditarDados, setShowEditarDados] = useState(false);
+  const [obsServico, setObsServico] = useState('');
+  const obsServicoTimer = React.useRef(null);
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -127,6 +129,11 @@ export default function VerAtendimento() {
   React.useEffect(() => {
     base44.auth.me().then(setUser).catch(() => setUser(null));
   }, []);
+
+  // Sincronizar obs_servico quando atendimento carrega
+  React.useEffect(() => {
+    if (atendimento) setObsServico(atendimento.observacoes || '');
+  }, [atendimento?.id]);
 
   const { data: atendimento, isLoading, error } = useQuery({
     queryKey: ['atendimento', id],
@@ -831,6 +838,28 @@ export default function VerAtendimento() {
                     </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Observações do Serviço */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Observações do Serviço</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  placeholder="Anotações gerais sobre o serviço... (salvo automaticamente)"
+                  value={obsServico}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setObsServico(val);
+                    if (obsServicoTimer.current) clearTimeout(obsServicoTimer.current);
+                    obsServicoTimer.current = setTimeout(() => {
+                      updateMutation.mutate({ observacoes: val });
+                    }, 1500);
+                  }}
+                  className="min-h-[100px]"
+                />
               </CardContent>
             </Card>
 

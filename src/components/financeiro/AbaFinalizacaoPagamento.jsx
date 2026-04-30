@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -102,6 +102,22 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const [tecnicosSelecionados, setTecnicosSelecionados] = useState(atendimento.tecnicos_responsaveis || []);
   const [obsInterna, setObsInterna] = useState(atendimento.obs_interna || '');
   const [obsExterna, setObsExterna] = useState(atendimento.obs_externa || '');
+  const autoSaveTimer = useRef(null);
+
+  const autoSaveObs = useCallback((interna, externa) => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      base44.entities.Atendimento.update(atendimento.id, {
+        obs_interna: interna,
+        obs_externa: externa,
+        obs_interna_usuario: user?.email,
+        obs_interna_data: new Date().toISOString(),
+      }).then(() => {
+        onUpdate?.();
+      });
+    }, 1500);
+  }, [atendimento.id, user]);
+
   const [usouPecasExternas, setUsouPecasExternas] = useState(
     atendimento.custo_pecas_externas != null ? (atendimento.custo_pecas_externas > 0 ? 'sim' : 'nao') : null
   );
@@ -429,8 +445,8 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         <CardContent className="space-y-2">
           <Textarea
             value={obsInterna}
-            onChange={e => setObsInterna(e.target.value)}
-            placeholder="Observações visíveis apenas para a equipe..."
+            onChange={e => { setObsInterna(e.target.value); autoSaveObs(e.target.value, obsExterna); }}
+            placeholder="Observações visíveis apenas para a equipe... (salvo automaticamente)"
             className="min-h-[80px] text-sm"
           />
           {atendimento.obs_interna_usuario && (
@@ -452,23 +468,12 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         <CardContent>
           <Textarea
             value={obsExterna}
-            onChange={e => setObsExterna(e.target.value)}
-            placeholder="Orientações, garantia, próximas revisões... (aparece no PDF e WhatsApp)"
+            onChange={e => { setObsExterna(e.target.value); autoSaveObs(obsInterna, e.target.value); }}
+            placeholder="Orientações, garantia, próximas revisões... (aparece no PDF e WhatsApp) — salvo automaticamente"
             className="min-h-[80px] text-sm"
           />
         </CardContent>
       </Card>
-
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => salvarObsMutation.mutate()}
-        disabled={salvarObsMutation.isPending}
-        className="w-full"
-      >
-        {salvarObsMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-        Salvar Observações
-      </Button>
 
       {/* Técnicos Responsáveis */}
       <Card className={config.os_tecnico_obrigatorio && tecnicosSelecionados.length === 0 && !jaLancado ? 'border-red-300 bg-red-50' : ''}>
