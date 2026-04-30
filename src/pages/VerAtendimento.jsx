@@ -130,10 +130,7 @@ export default function VerAtendimento() {
     base44.auth.me().then(setUser).catch(() => setUser(null));
   }, []);
 
-  // Sincronizar obs_servico quando atendimento carrega
-  React.useEffect(() => {
-    if (atendimento) setObsServico(atendimento.observacoes || '');
-  }, [atendimento?.id]);
+
 
   const { data: atendimento, isLoading, error } = useQuery({
     queryKey: ['atendimento', id],
@@ -146,6 +143,11 @@ export default function VerAtendimento() {
     retry: 1,
     refetchOnWindowFocus: false
   });
+
+  // Sincronizar obs_servico quando atendimento carrega
+  React.useEffect(() => {
+    if (atendimento) setObsServico(atendimento.observacoes || '');
+  }, [atendimento?.id]);
 
   const { data: configs = [] } = useQuery({
     queryKey: ['configuracoes'],
