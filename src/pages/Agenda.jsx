@@ -215,6 +215,7 @@ export default function Agenda() {
     const maxOs = todosAtendimentos.reduce((max, a) => Math.max(max, a.numero_os || 0), 0);
     const novoNumeroOs = maxOs + 1;
     const result = await base44.entities.Atendimento.create({
+      unidade_id: ag.unidade_id || '',
       numero_os: novoNumeroOs,
       cliente_nome: ag.cliente_nome || '',
       cliente_telefone: ag.cliente_telefone || '',
