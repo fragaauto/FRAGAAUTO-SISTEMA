@@ -30,6 +30,7 @@ export default function Usuarios() {
   const [aprovando, setAprovando] = useState(null);
   const [editando, setEditando] = useState(null);
   const [editandoUnidadeId, setEditandoUnidadeId] = useState('');
+  const [editandoUnidadesIds, setEditandoUnidadesIds] = useState([]);
   const [modulosSelecionados, setModulosSelecionados] = useState([]);
   const [podeVerDashboards, setPodeVerDashboards] = useState(true);
 
@@ -84,6 +85,7 @@ export default function Usuarios() {
   const handleEditarPermissoes = (u) => {
     setEditando(u);
     setEditandoUnidadeId(u.unidade_id || '');
+    setEditandoUnidadesIds(u.unidades_ids || (u.unidade_id ? [u.unidade_id] : []));
     
     let modulosBase = u.modulos_liberados || [];
     if (modulosBase.length === 0 && u.funcao_id) {
@@ -95,13 +97,22 @@ export default function Usuarios() {
     setPodeVerDashboards(u.pode_ver_dashboards !== false);
   };
 
+  const toggleUnidade = (unidadeId) => {
+    setEditandoUnidadesIds(prev =>
+      prev.includes(unidadeId)
+        ? prev.filter(id => id !== unidadeId)
+        : [...prev, unidadeId]
+    );
+  };
+
   const handleSalvarPermissoes = async () => {
     if (!editando) return;
     try {
       await base44.entities.User.update(editando.id, {
         modulos_liberados: modulosSelecionados,
         pode_ver_dashboards: podeVerDashboards,
-        unidade_id: editandoUnidadeId || null,
+        unidade_id: editandoUnidadesIds[0] || null,
+        unidades_ids: editandoUnidadesIds,
       });
       toast.success('Permissões atualizadas!');
       setEditando(null);
@@ -333,19 +344,32 @@ export default function Usuarios() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="mb-1 block">Unidade</Label>
-              <Select value={editandoUnidadeId} onValueChange={setEditandoUnidadeId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sem restrição de unidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>Sem restrição</SelectItem>
-                  {unidades.map(u => (
-                    <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-500 mt-1">Define qual unidade este usuário pode acessar.</p>
+              <Label className="mb-2 block">Unidades com Acesso</Label>
+              <p className="text-xs text-slate-500 mb-3">
+                Marque as unidades que este usuário pode acessar. Deixe vazio para liberar todas.
+              </p>
+              <div className="space-y-2 border border-slate-200 rounded-lg p-3 bg-slate-50">
+                {unidades.length === 0 ? (
+                  <p className="text-sm text-slate-400">Nenhuma unidade cadastrada</p>
+                ) : (
+                  unidades.map(uni => (
+                    <div key={uni.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`unidade-${uni.id}`}
+                        checked={editandoUnidadesIds.includes(uni.id)}
+                        onCheckedChange={() => toggleUnidade(uni.id)}
+                      />
+                      <Label htmlFor={`unidade-${uni.id}`} className="cursor-pointer text-sm font-normal flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5 text-orange-500" />
+                        {uni.nome}
+                      </Label>
+                    </div>
+                  ))
+                )}
+              </div>
+              {editandoUnidadesIds.length === 0 && (
+                <p className="text-xs text-amber-600 mt-1">⚠ Nenhuma unidade selecionada — usuário verá todas as unidades.</p>
+              )}
             </div>
 
           {editando?.funcao_id && (() => {

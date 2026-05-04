@@ -20,7 +20,17 @@ export function UnidadeProvider({ children }) {
         base44.entities.Unidade.filter({ status: 'ativo' })
       ]);
       setUser(me);
-      setUnidades(lista);
+
+      // Filtra unidades pelo acesso do usuário
+      let unidadesFiltradas = lista;
+      if (me?.role !== 'admin') {
+        const idsPermitidos = me?.unidades_ids || [];
+        if (idsPermitidos.length > 0) {
+          unidadesFiltradas = lista.filter(u => idsPermitidos.includes(u.id));
+        }
+        // se unidades_ids vazio, acessa todas (comportamento legado)
+      }
+      setUnidades(unidadesFiltradas);
 
       // Admin: restaura última seleção ou usa primeira unidade
       if (me?.role === 'admin') {
@@ -28,13 +38,10 @@ export function UnidadeProvider({ children }) {
         const encontrada = salva ? lista.find(u => u.id === salva) : null;
         setUnidadeAtualState(encontrada || lista[0] || null);
       } else {
-        // Operacional: usa a unidade vinculada ao usuário
-        if (me?.unidade_id) {
-          const uniUser = lista.find(u => u.id === me.unidade_id);
-          setUnidadeAtualState(uniUser || null);
-        } else {
-          setUnidadeAtualState(lista[0] || null);
-        }
+        // Operacional: usa primeira unidade permitida
+        const salva = localStorage.getItem('unidade_selecionada_id');
+        const encontrada = salva ? unidadesFiltradas.find(u => u.id === salva) : null;
+        setUnidadeAtualState(encontrada || unidadesFiltradas[0] || null);
       }
     } catch {
       // não autenticado — sem contexto de unidade
