@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Users, Truck, UserCog } from 'lucide-react';
+import { Users, Truck, UserCog, ShieldCheck } from 'lucide-react';
 import ClientesTab from '@/components/cadastros/ClientesTab';
 import FornecedoresTab from '@/components/cadastros/FornecedoresTab';
 import FuncionariosTab from '@/components/cadastros/FuncionariosTab';
+import UsuariosTab from '@/components/cadastros/UsuariosTab';
 
 export default function Cadastros() {
   return (
@@ -27,6 +28,9 @@ export default function Cadastros() {
             <TabsTrigger value="funcionarios" className="flex items-center gap-2">
               <UserCog className="w-4 h-4" /> Funcionários
             </TabsTrigger>
+            <TabsTrigger value="usuarios" className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4" /> Usuários
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="clientes">
@@ -37,6 +41,9 @@ export default function Cadastros() {
           </TabsContent>
           <TabsContent value="funcionarios">
             <FuncionariosTab />
+          </TabsContent>
+          <TabsContent value="usuarios">
+            <UsuariosTab />
           </TabsContent>
         </Tabs>
       </div>
