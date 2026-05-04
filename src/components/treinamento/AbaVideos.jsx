@@ -75,19 +75,26 @@ function VideoCard({ video, isAdmin, onDelete }) {
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl p-0 overflow-hidden">
-          <div className="aspect-video w-full">
-            <iframe
-              src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1`}
-              title={video.titulo}
-              className="w-full h-full"
-              allowFullScreen
-              allow="autoplay; encrypted-media"
+        <DialogContent className="max-w-2xl">
+          <div className="space-y-4">
+            <img
+              src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
+              alt={video.titulo}
+              className="w-full rounded-lg"
             />
-          </div>
-          <div className="p-4">
-            <h3 className="font-bold text-slate-800">{video.titulo}</h3>
-            {video.descricao && <p className="text-slate-500 text-sm mt-1">{video.descricao}</p>}
+            <div>
+              <h3 className="font-bold text-slate-800 text-lg">{video.titulo}</h3>
+              {video.descricao && <p className="text-slate-500 text-sm mt-1">{video.descricao}</p>}
+            </div>
+            <a
+              href={`https://www.youtube.com/watch?v=${video.youtube_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+            >
+              <Youtube className="w-5 h-5" />
+              Assistir no YouTube
+            </a>
           </div>
         </DialogContent>
       </Dialog>
