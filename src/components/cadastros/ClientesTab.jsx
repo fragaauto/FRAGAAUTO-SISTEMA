@@ -37,16 +37,8 @@ export default function ClientesTab() {
     staleTime: 5 * 60 * 1000
   });
 
-  const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
-
-  // Filtra localmente: registros da unidade atual + legados (sem unidade_id) apenas no Auto Portas
-  const clientes = useMemo(() => {
-    if (!unidadeAtual) return clientesBrutos;
-    return clientesBrutos.filter(c => {
-      if (c.unidade_id) return c.unidade_id === unidadeAtual.id;
-      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
-    });
-  }, [clientesBrutos, unidadeAtual]);
+  // Clientes são compartilhados entre todas as unidades
+  const clientes = clientesBrutos;
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
