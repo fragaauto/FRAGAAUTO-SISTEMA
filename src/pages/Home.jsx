@@ -233,7 +233,7 @@ export default function Home() {
   },
   {
     icon: FileText,
-    title: 'Manual de Treinamento',
+    title: 'Treinamentos',
     description: 'Guia passo a passo do fluxo de atendimento para colaboradores.',
     href: createPageUrl('ManualTreinamento'),
     color: 'bg-slate-700'

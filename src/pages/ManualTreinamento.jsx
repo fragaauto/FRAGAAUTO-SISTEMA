@@ -424,7 +424,7 @@ ${ETAPAS.map((e) => `
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold text-slate-800">Manual de Treinamento</h1>
+              <h1 className="text-xl font-bold text-slate-800">Treinamentos</h1>
               <p className="text-sm text-slate-500">Fluxo completo de atendimento</p>
             </div>
           </div>
