@@ -1,8 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, BookOpen, CheckCircle2, AlertTriangle, Info, Star, ChevronRight } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Download, BookOpen, CheckCircle2, AlertTriangle, Info, Star, ChevronRight, Youtube, FileImage } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import AbaVideos from '../components/treinamento/AbaVideos';
+import AbaConteudos from '../components/treinamento/AbaConteudos';
 
 const ETAPAS = [
   {
@@ -192,6 +197,13 @@ const REGRAS = [
 export default function ManualTreinamento() {
   const navigate = useNavigate();
   const printRef = useRef();
+  const [user, setUser] = useState(null);
+
+  React.useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => setUser(null));
+  }, []);
+
+  const isAdmin = user?.role === 'admin';
 
   const handleGerarPDF = () => {
     const conteudo = printRef.current;
@@ -423,7 +435,33 @@ ${ETAPAS.map((e) => `
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6" ref={printRef}>
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        <Tabs defaultValue="manual">
+          <TabsList className="mb-6 h-auto gap-1 flex-wrap">
+            <TabsTrigger value="manual" className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Manual
+            </TabsTrigger>
+            <TabsTrigger value="videos" className="flex items-center gap-2">
+              <Youtube className="w-4 h-4" />
+              Vídeos de Treinamento
+            </TabsTrigger>
+            <TabsTrigger value="conteudos" className="flex items-center gap-2">
+              <FileImage className="w-4 h-4" />
+              Outros Conteúdos
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="videos">
+            <AbaVideos isAdmin={isAdmin} />
+          </TabsContent>
+
+          <TabsContent value="conteudos">
+            <AbaConteudos isAdmin={isAdmin} />
+          </TabsContent>
+
+          <TabsContent value="manual">
+      <div className="space-y-6" ref={printRef}>
         {/* Hero Card */}
         <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-8 flex items-center gap-6">
           <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -549,6 +587,9 @@ ${ETAPAS.map((e) => `
         <p className="text-center text-slate-400 text-xs pb-4">
           Manual de Treinamento – Fraga Auto Portas · Sistema de Gestão · Uso Interno · v1.0 / 2026
         </p>
+      </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

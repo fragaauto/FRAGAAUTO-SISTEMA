@@ -1,0 +1,56 @@
+{
+  "name": "ConteudoTreinamento",
+  "type": "object",
+  "properties": {
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "video",
+        "conteudo"
+      ],
+      "description": "Tipo: video do youtube ou outro conteudo (imagem/texto)"
+    },
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do conte\u00fado"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o ou legenda"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL do YouTube ou da imagem"
+    },
+    "youtube_id": {
+      "type": "string",
+      "description": "ID do v\u00eddeo no YouTube (extra\u00eddo da URL)"
+    },
+    "playlist": {
+      "type": "string",
+      "description": "Nome da playlist (somente para v\u00eddeos)"
+    },
+    "ordem": {
+      "type": "number",
+      "description": "Ordem de exibi\u00e7\u00e3o dentro da playlist",
+      "default": 0
+    },
+    "conteudo_tipo": {
+      "type": "string",
+      "enum": [
+        "imagem",
+        "texto",
+        "link"
+      ],
+      "description": "Subtipo para conte\u00fados n\u00e3o-video"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "tipo",
+    "titulo"
+  ]
+}
