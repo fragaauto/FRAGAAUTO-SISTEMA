@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Search, Check, X, Plus, Minus } from 'lucide-react';
+import { Search, Check, X, RefreshCw } from 'lucide-react';
 import { toast } from "sonner";
 import { useUnidade } from '@/lib/UnidadeContext';
 
@@ -15,31 +14,25 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
   const { unidadeAtual } = useUnidade();
 
   const [formData, setFormData] = useState({
-    nome: '',
-    descricao: '',
-    tipo: 'geral',
-    ajuste_tipo: 'percentual',
-    ajuste_valor: 0,
-    itens: [],
-    cliente_ids: [],
-    grupo_ids: [],
-    ativa: true,
+    nome: '', descricao: '', tipo: 'geral',
+    ajuste_tipo: 'percentual', ajuste_valor: 0,
+    itens: [], cliente_ids: [], grupo_ids: [], ativa: true,
   });
 
   const [searchProduto, setSearchProduto] = useState('');
   const [searchCliente, setSearchCliente] = useState('');
 
+  // Para ajuste em lote na lista de selecionados
+  const [loteAjusteTipo, setLoteAjusteTipo] = useState('percentual');
+  const [loteAjusteValor, setLoteAjusteValor] = useState('');
+
   useEffect(() => {
     if (lista) {
       setFormData({
-        nome: lista.nome || '',
-        descricao: lista.descricao || '',
-        tipo: lista.tipo || 'geral',
-        ajuste_tipo: lista.ajuste_tipo || 'percentual',
-        ajuste_valor: lista.ajuste_valor ?? 0,
-        itens: lista.itens || [],
-        cliente_ids: lista.cliente_ids || [],
-        grupo_ids: lista.grupo_ids || [],
+        nome: lista.nome || '', descricao: lista.descricao || '',
+        tipo: lista.tipo || 'geral', ajuste_tipo: lista.ajuste_tipo || 'percentual',
+        ajuste_valor: lista.ajuste_valor ?? 0, itens: lista.itens || [],
+        cliente_ids: lista.cliente_ids || [], grupo_ids: lista.grupo_ids || [],
         ativa: lista.ativa !== false,
       });
     }
@@ -71,6 +64,16 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
     !searchCliente || c.nome?.toLowerCase().includes(searchCliente.toLowerCase()) || c.telefone?.includes(searchCliente)
   );
 
+  const todosSelecionados = clientes.length > 0 && clientes.every(c => formData.cliente_ids.includes(c.id));
+
+  const toggleTodosClientes = () => {
+    if (todosSelecionados) {
+      setFormData(p => ({ ...p, cliente_ids: [] }));
+    } else {
+      setFormData(p => ({ ...p, cliente_ids: clientes.map(c => c.id) }));
+    }
+  };
+
   const toggleProduto = (produto) => {
     const exists = formData.itens.find(i => i.produto_id === produto.id);
     if (exists) {
@@ -94,6 +97,37 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
       ...p,
       itens: p.itens.map(i => i.produto_id === produto_id ? { ...i, preco_customizado: parseFloat(preco) || 0 } : i)
     }));
+  };
+
+  // Aplica ajuste em lote a todos os itens selecionados
+  const aplicarAjusteLote = () => {
+    const val = parseFloat(loteAjusteValor);
+    if (isNaN(val)) return toast.error('Informe um valor válido');
+    setFormData(p => ({
+      ...p,
+      itens: p.itens.map(i => {
+        let novo;
+        if (loteAjusteTipo === 'percentual') {
+          novo = i.preco_original * (1 + val / 100);
+        } else if (loteAjusteTipo === 'fixo_sobre_original') {
+          novo = i.preco_original + val;
+        } else {
+          // valor absoluto fixo para todos
+          novo = val;
+        }
+        return { ...i, preco_customizado: parseFloat(Math.max(0, novo).toFixed(2)) };
+      })
+    }));
+    toast.success('Ajuste aplicado a todos os itens!');
+  };
+
+  // Restaura preços originais de todos os itens
+  const restaurarOriginais = () => {
+    setFormData(p => ({
+      ...p,
+      itens: p.itens.map(i => ({ ...i, preco_customizado: i.preco_original }))
+    }));
+    toast.success('Preços originais restaurados!');
   };
 
   const toggleCliente = (id) => {
@@ -181,7 +215,7 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
 
           {/* Configuração SELECIONADOS */}
           {formData.tipo === 'selecionados' && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Produtos ({formData.itens.length} selecionado(s))</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -203,28 +237,73 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
                 })}
               </div>
 
+              {/* Tabela de preços com ajuste em lote */}
               {formData.itens.length > 0 && (
-                <div className="border rounded-lg divide-y mt-2">
-                  <div className="px-3 py-2 bg-slate-50 text-xs font-semibold text-slate-600 flex justify-between">
-                    <span>Produto</span><span>Preço Customizado</span>
-                  </div>
-                  {formData.itens.map(item => (
-                    <div key={item.produto_id} className="px-3 py-2 flex items-center justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{item.produto_nome}</p>
-                        <p className="text-xs text-slate-500">Original: R$ {item.preco_original?.toFixed(2)}</p>
+                <div className="space-y-2">
+                  {/* Ajuste em lote */}
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs font-semibold text-blue-700 mb-2">⚡ Aplicar ajuste em todos os itens</p>
+                    <div className="flex gap-2 items-end flex-wrap">
+                      <div className="flex-1 min-w-32">
+                        <Select value={loteAjusteTipo} onValueChange={setLoteAjusteTipo}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="percentual">% sobre original</SelectItem>
+                            <SelectItem value="fixo_sobre_original">R$ sobre original</SelectItem>
+                            <SelectItem value="absoluto">Valor fixo igual p/ todos</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-400">R$</span>
-                        <Input type="number" step="0.01" min="0" value={item.preco_customizado}
-                          onChange={e => updatePrecoItem(item.produto_id, e.target.value)}
-                          className="w-24 h-8 text-sm" />
-                        <button type="button" onClick={() => toggleProduto({ id: item.produto_id })} className="text-red-400 hover:text-red-600">
-                          <X className="w-4 h-4" />
-                        </button>
+                      <div className="flex-1 min-w-24">
+                        <Input type="number" step="0.01" placeholder={loteAjusteTipo === 'percentual' ? '-10 = -10%' : 'valor'}
+                          value={loteAjusteValor} onChange={e => setLoteAjusteValor(e.target.value)}
+                          className="h-8 text-xs" />
                       </div>
+                      <Button type="button" size="sm" onClick={aplicarAjusteLote} className="h-8 text-xs bg-blue-600 hover:bg-blue-700">
+                        Aplicar
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={restaurarOriginais} className="h-8 text-xs" title="Restaurar preços originais">
+                        <RefreshCw className="w-3 h-3 mr-1" /> Restaurar
+                      </Button>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Tabela individual */}
+                  <div className="border rounded-lg divide-y">
+                    <div className="px-3 py-2 bg-slate-50 text-xs font-semibold text-slate-600 grid grid-cols-3 gap-2">
+                      <span className="col-span-1">Produto</span>
+                      <span className="text-center">Preço Original</span>
+                      <span className="text-right">Preço Customizado</span>
+                    </div>
+                    {formData.itens.map(item => {
+                      const diff = item.preco_customizado - item.preco_original;
+                      const diffPct = item.preco_original ? (diff / item.preco_original * 100) : 0;
+                      return (
+                        <div key={item.produto_id} className="px-3 py-2 grid grid-cols-3 gap-2 items-center">
+                          <div className="col-span-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{item.produto_nome}</p>
+                            {diff !== 0 && (
+                              <p className={`text-xs ${diff < 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                {diff > 0 ? '+' : ''}{diffPct.toFixed(1)}%
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-center text-sm text-slate-500">
+                            R$ {item.preco_original?.toFixed(2)}
+                          </div>
+                          <div className="flex items-center gap-1 justify-end">
+                            <span className="text-xs text-slate-400">R$</span>
+                            <Input type="number" step="0.01" min="0" value={item.preco_customizado}
+                              onChange={e => updatePrecoItem(item.produto_id, e.target.value)}
+                              className="w-24 h-8 text-sm" />
+                            <button type="button" onClick={() => toggleProduto({ id: item.produto_id })} className="text-red-400 hover:text-red-600 ml-1">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -254,17 +333,25 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
 
             {/* Clientes individuais */}
             <div>
-              <Label className="text-xs text-slate-500">Clientes Individuais ({formData.cliente_ids.length} selecionado(s))</Label>
-              <div className="relative mt-1 mb-1">
+              <div className="flex items-center justify-between mb-1">
+                <Label className="text-xs text-slate-500">
+                  Clientes Individuais ({formData.cliente_ids.length}/{clientes.length})
+                </Label>
+                <button type="button" onClick={toggleTodosClientes}
+                  className={`text-xs px-3 py-1 rounded-full border transition-all font-medium ${todosSelecionados ? 'bg-orange-500 border-orange-500 text-white' : 'border-slate-300 text-slate-600 hover:border-orange-400 hover:text-orange-600'}`}>
+                  {todosSelecionados ? '✓ Todos selecionados' : 'Selecionar todos'}
+                </button>
+              </div>
+              <div className="relative mb-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input placeholder="Buscar cliente..." value={searchCliente} onChange={e => setSearchCliente(e.target.value)} className="pl-9 h-8 text-sm" />
               </div>
-              <div className="max-h-36 overflow-y-auto border rounded-lg divide-y">
+              <div className="max-h-44 overflow-y-auto border rounded-lg divide-y">
                 {clientesFiltrados.map(c => {
                   const sel = formData.cliente_ids.includes(c.id);
                   return (
                     <button key={c.id} type="button" onClick={() => toggleCliente(c.id)}
-                      className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-50 ${sel ? 'bg-orange-50' : ''}`}>
+                      className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-50 transition-colors ${sel ? 'bg-orange-50' : ''}`}>
                       <div>
                         <p className="text-sm font-medium">{c.nome}</p>
                         <p className="text-xs text-slate-500">{c.telefone}</p>
@@ -273,6 +360,9 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
                     </button>
                   );
                 })}
+                {clientesFiltrados.length === 0 && (
+                  <p className="text-center py-4 text-sm text-slate-400">Nenhum cliente encontrado</p>
+                )}
               </div>
             </div>
           </div>
