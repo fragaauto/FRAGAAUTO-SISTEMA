@@ -81,6 +81,7 @@ export default function Produtos() {
   const [search, setSearch] = useState('');
   const [categoriaFilter, setCategoriaFilter] = useState('all');
   const [ordenacao, setOrdenacao] = useState('nome_asc');
+  const [listaPrecoId, setListaPrecoId] = useState('padrao');
   const [pagina, setPagina] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -121,6 +122,28 @@ export default function Produtos() {
     queryFn: () => base44.entities.Produto.list('', 3000),
     staleTime: 5 * 60 * 1000
   });
+
+  const { data: listasPrecos = [] } = useQuery({
+    queryKey: ['listas-precos', unidadeAtual?.id],
+    queryFn: () => base44.entities.ListaPrecos.filter({ unidade_id: unidadeAtual?.id }),
+    enabled: !!unidadeAtual?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const listaAtiva = listasPrecos.find(l => l.id === listaPrecoId);
+
+  // Calcula preço do produto conforme a lista selecionada
+  const getPrecoLista = (produto) => {
+    if (!listaAtiva) return produto.valor;
+    if (listaAtiva.tipo === 'selecionados') {
+      const item = (listaAtiva.itens || []).find(i => i.produto_id === produto.id);
+      return item ? item.preco_customizado : produto.valor;
+    }
+    // tipo 'geral'
+    const aj = listaAtiva.ajuste_valor || 0;
+    if (listaAtiva.ajuste_tipo === 'percentual') return produto.valor * (1 + aj / 100);
+    return produto.valor + aj;
+  };
 
   const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
 
@@ -1173,7 +1196,32 @@ export default function Produtos() {
               <SelectItem value="data_asc">Última alteração (mais antiga)</SelectItem>
             </SelectContent>
           </Select>
+          {listasPrecos.length > 0 && (
+            <Select value={listaPrecoId} onValueChange={setListaPrecoId}>
+              <SelectTrigger className="w-full sm:w-56 h-12 border-orange-300 text-orange-700">
+                <SelectValue placeholder="Lista de preços" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="padrao">💰 Preço padrão</SelectItem>
+                {listasPrecos.filter(l => l.ativa !== false).map(l => (
+                  <SelectItem key={l.id} value={l.id}>🏷️ {l.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
+        {listaAtiva && (
+          <div className="mt-2 px-1 flex items-center gap-2 text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+            <span>🏷️</span>
+            <span>Lista ativa: <strong>{listaAtiva.nome}</strong></span>
+            {listaAtiva.tipo === 'geral' && listaAtiva.ajuste_valor !== 0 && (
+              <span className="text-xs text-slate-500">
+                ({listaAtiva.ajuste_valor > 0 ? '+' : ''}{listaAtiva.ajuste_valor}{listaAtiva.ajuste_tipo === 'percentual' ? '%' : ' R$'})
+              </span>
+            )}
+            <button onClick={() => setListaPrecoId('padrao')} className="ml-auto text-xs underline text-slate-500 hover:text-red-500">Remover</button>
+          </div>
+        )}
       </div>
 
       {/* Import Progress */}
@@ -1326,9 +1374,22 @@ export default function Produtos() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <p className="font-bold text-green-600 text-lg">
-                          R$ {produto.valor?.toFixed(2)}
-                        </p>
+                        <div className="text-right">
+                          {listaAtiva ? (
+                            <>
+                              <p className="font-bold text-orange-600 text-lg">
+                                R$ {getPrecoLista(produto).toFixed(2)}
+                              </p>
+                              {getPrecoLista(produto) !== produto.valor && (
+                                <p className="text-xs text-slate-400 line-through">R$ {produto.valor?.toFixed(2)}</p>
+                              )}
+                            </>
+                          ) : (
+                            <p className="font-bold text-green-600 text-lg">
+                              R$ {produto.valor?.toFixed(2)}
+                            </p>
+                          )}
+                        </div>
                         <div className="flex gap-1">
                          <Button
                            variant="ghost"
