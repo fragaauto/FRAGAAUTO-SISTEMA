@@ -928,7 +928,7 @@ export default function Produtos() {
 
       // Processar novos produtos em lotes
       for (let i = 0; i < novos.length; i += batchSize) {
-        const batch = novos.slice(i, i + batchSize);
+        const batch = novos.slice(i, i + batchSize).map(p => ({ ...p, unidade_id: unidadeAtual?.id || null }));
         try {
           const resultado = await bulkCreateMutation.mutateAsync(batch);
           sucessos += batch.length;
