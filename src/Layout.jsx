@@ -89,9 +89,8 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // Redirecionar para login se não autenticado (exceto páginas públicas)
+  // Se não autenticado, apenas mostra loading (AuthContext cuida do redirect)
   if (!user && !isPaginaPublica) {
-    base44.auth.redirectToLogin();
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
