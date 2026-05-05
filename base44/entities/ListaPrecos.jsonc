@@ -1,0 +1,87 @@
+{
+  "name": "ListaPrecos",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome da lista de pre\u00e7os"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o da lista"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "geral",
+        "selecionados"
+      ],
+      "default": "geral",
+      "description": "geral = aplica desconto/acr\u00e9scimo a todos os produtos; selecionados = apenas produtos escolhidos"
+    },
+    "ajuste_tipo": {
+      "type": "string",
+      "enum": [
+        "percentual",
+        "fixo"
+      ],
+      "default": "percentual",
+      "description": "Para listas gerais: tipo de ajuste no pre\u00e7o"
+    },
+    "ajuste_valor": {
+      "type": "number",
+      "default": 0,
+      "description": "Para listas gerais: valor do ajuste (negativo = desconto, positivo = acr\u00e9scimo)"
+    },
+    "itens": {
+      "type": "array",
+      "description": "Para listas de produtos selecionados",
+      "items": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "string"
+          },
+          "produto_nome": {
+            "type": "string"
+          },
+          "produto_codigo": {
+            "type": "string"
+          },
+          "preco_original": {
+            "type": "number"
+          },
+          "preco_customizado": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "cliente_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs de clientes individuais atrelados a esta lista"
+    },
+    "grupo_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs de grupos de clientes atrelados a esta lista"
+    },
+    "ativa": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "nome",
+    "tipo"
+  ]
+}

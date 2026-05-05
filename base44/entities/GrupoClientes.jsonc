@@ -1,0 +1,28 @@
+{
+  "name": "GrupoClientes",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome do grupo de clientes"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do grupo"
+    },
+    "cliente_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs dos clientes neste grupo"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

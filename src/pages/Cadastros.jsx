@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Users, Truck, UserCog, ShieldCheck } from 'lucide-react';
+import { Users, Truck, UserCog, ShieldCheck, Tag, UsersRound } from 'lucide-react';
 import ClientesTab from '@/components/cadastros/ClientesTab';
 import FornecedoresTab from '@/components/cadastros/FornecedoresTab';
 import FuncionariosTab from '@/components/cadastros/FuncionariosTab';
 import UsuariosTab from '@/components/cadastros/UsuariosTab';
+import ListasPrecosTab from '@/components/precos/ListasPrecosTab';
+import GruposClientesTab from '@/components/precos/GruposClientesTab';
 
 export default function Cadastros() {
   return (
@@ -18,7 +20,7 @@ export default function Cadastros() {
 
       <div className="max-w-5xl mx-auto px-4 py-6">
         <Tabs defaultValue="clientes">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap h-auto gap-1">
             <TabsTrigger value="clientes" className="flex items-center gap-2">
               <Users className="w-4 h-4" /> Clientes
             </TabsTrigger>
@@ -30,6 +32,12 @@ export default function Cadastros() {
             </TabsTrigger>
             <TabsTrigger value="usuarios" className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4" /> Usuários
+            </TabsTrigger>
+            <TabsTrigger value="grupos" className="flex items-center gap-2">
+              <UsersRound className="w-4 h-4" /> Grupos de Clientes
+            </TabsTrigger>
+            <TabsTrigger value="listas-precos" className="flex items-center gap-2">
+              <Tag className="w-4 h-4" /> Listas de Preços
             </TabsTrigger>
           </TabsList>
 
@@ -44,6 +52,12 @@ export default function Cadastros() {
           </TabsContent>
           <TabsContent value="usuarios">
             <UsuariosTab />
+          </TabsContent>
+          <TabsContent value="grupos">
+            <GruposClientesTab />
+          </TabsContent>
+          <TabsContent value="listas-precos">
+            <ListasPrecosTab />
           </TabsContent>
         </Tabs>
       </div>
