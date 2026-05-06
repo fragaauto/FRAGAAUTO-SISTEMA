@@ -1,0 +1,90 @@
+{
+  "name": "Encomenda",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade"
+    },
+    "atendimento_id": {
+      "type": "string",
+      "description": "ID do atendimento de origem"
+    },
+    "numero_os": {
+      "type": "number",
+      "description": "N\u00famero da OS de origem"
+    },
+    "nome_cliente": {
+      "type": "string",
+      "description": "Nome do cliente"
+    },
+    "telefone_cliente": {
+      "type": "string",
+      "description": "Telefone do cliente"
+    },
+    "modelo_veiculo": {
+      "type": "string",
+      "description": "Modelo do ve\u00edculo"
+    },
+    "ano_veiculo": {
+      "type": "string",
+      "description": "Ano do ve\u00edculo"
+    },
+    "placa_veiculo": {
+      "type": "string",
+      "description": "Placa do ve\u00edculo"
+    },
+    "peca": {
+      "type": "string",
+      "description": "Pe\u00e7a/produto encomendado"
+    },
+    "valor_venda": {
+      "type": "number",
+      "description": "Valor de venda ao cliente"
+    },
+    "custo_encomenda": {
+      "type": "number",
+      "description": "Custo da encomenda (compra)"
+    },
+    "foi_comprada": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a pe\u00e7a j\u00e1 foi comprada"
+    },
+    "data_chegada": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de chegada da pe\u00e7a"
+    },
+    "data_aviso_cliente": {
+      "type": "string",
+      "format": "date",
+      "description": "Data em que o cliente foi avisado"
+    },
+    "foi_entregue": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a pe\u00e7a foi entregue ao cliente"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "nao_comprada",
+        "comprada_aguardando",
+        "chegou_nao_avisado",
+        "avisado_nao_entregue",
+        "entregue"
+      ],
+      "default": "nao_comprada",
+      "description": "Status calculado da encomenda"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais"
+    }
+  },
+  "required": [
+    "peca",
+    "nome_cliente"
+  ]
+}
