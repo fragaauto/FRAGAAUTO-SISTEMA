@@ -15,7 +15,8 @@ import {
   Calendar,
   Shield,
   Loader2,
-  LogOut
+  LogOut,
+  ShoppingBag
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -46,6 +47,7 @@ const NAV_ITEMS = [
   { name: 'Base de Conhecimento IA', icon: Sparkles, path: 'BaseConhecimentoIA', modulo: null, apenasAdmin: true },
   { name: 'Treinamentos', icon: FileText, path: 'ManualTreinamento', modulo: null },
   { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas', modulo: null },
+  { name: 'Controle de Encomendas', icon: Package, path: 'ControleEncomendas', modulo: null },
 ];
 
 

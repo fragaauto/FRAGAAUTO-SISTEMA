@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import ItemOrcamento from './ItemOrcamento';
@@ -8,9 +8,13 @@ import ItemOrcamento from './ItemOrcamento';
  * e cria automaticamente o registro na entidade Encomenda.
  */
 export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, readOnly, atendimento }) {
+  // Ref para evitar criar encomenda duplicada na mesma sessão
+  const encomendaCriada = useRef(!!item.sob_encomenda);
+
   const handleUpdate = async (updatedItem) => {
-    // Detectar se acabou de marcar "sob encomenda"
-    if (updatedItem.sob_encomenda && !item.sob_encomenda) {
+    // Se acabou de marcar "sob encomenda" e ainda não criou nesta sessão
+    if (updatedItem.sob_encomenda && !encomendaCriada.current) {
+      encomendaCriada.current = true;
       try {
         await base44.entities.Encomenda.create({
           unidade_id: atendimento?.unidade_id || null,
@@ -30,9 +34,16 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
         });
         toast.success(`📦 Encomenda registrada: ${updatedItem.nome}`);
       } catch (e) {
+        encomendaCriada.current = false; // permite tentar novamente
         toast.error('Erro ao criar encomenda');
       }
     }
+
+    // Se desmarcou, reset da ref para permitir criar novamente se marcar de novo
+    if (!updatedItem.sob_encomenda) {
+      encomendaCriada.current = false;
+    }
+
     onUpdate(updatedItem);
   };
 
