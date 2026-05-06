@@ -42,6 +42,7 @@ import {
   Truck,
   Bell,
   Gift,
+  Plus,
 } from 'lucide-react';
 import MenuAtendimento from '@/components/atendimento/MenuAtendimento';
 import { format, differenceInDays } from 'date-fns';
@@ -111,6 +112,38 @@ export default function ControleEncomendas() {
   const [filtroStatus, setFiltroStatus] = useState('todos');
   const [editando, setEditando] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [criando, setCriando] = useState(false);
+  const [novaEncomenda, setNovaEncomenda] = useState({
+    peca: '', nome_cliente: '', telefone_cliente: '',
+    placa_veiculo: '', modelo_veiculo: '', ano_veiculo: '',
+    valor_venda: '', custo_encomenda: '', observacoes: '',
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.Encomenda.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['encomendas']);
+      toast.success('Encomenda criada!');
+      setCriando(false);
+      setNovaEncomenda({ peca: '', nome_cliente: '', telefone_cliente: '', placa_veiculo: '', modelo_veiculo: '', ano_veiculo: '', valor_venda: '', custo_encomenda: '', observacoes: '' });
+    },
+  });
+
+  const salvarNova = () => {
+    if (!novaEncomenda.peca.trim() || !novaEncomenda.nome_cliente.trim()) {
+      toast.error('Peça e Cliente são obrigatórios');
+      return;
+    }
+    createMutation.mutate({
+      ...novaEncomenda,
+      unidade_id: unidadeAtual?.id || null,
+      valor_venda: parseFloat(novaEncomenda.valor_venda) || 0,
+      custo_encomenda: parseFloat(novaEncomenda.custo_encomenda) || 0,
+      foi_comprada: false,
+      foi_entregue: false,
+      status: 'nao_comprada',
+    });
+  };
 
   const { data: encomendas = [], isLoading } = useQuery({
     queryKey: ['encomendas', unidadeAtual?.id],
@@ -245,15 +278,20 @@ export default function ControleEncomendas() {
               </h1>
               <p className="text-slate-500">{encomendas.length} encomenda(s) registrada(s)</p>
             </div>
-            {lucroTotal > 0 && (
-              <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2">
-                <TrendingUp className="w-5 h-5 text-green-600" />
-                <div>
-                  <p className="text-xs text-green-700">Lucro Total (Entregues)</p>
-                  <p className="font-bold text-green-700">R$ {lucroTotal.toFixed(2)}</p>
+            <div className="flex items-center gap-3">
+              {lucroTotal > 0 && (
+                <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                  <div>
+                    <p className="text-xs text-green-700">Lucro Total (Entregues)</p>
+                    <p className="font-bold text-green-700">R$ {lucroTotal.toFixed(2)}</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+              <Button onClick={() => setCriando(true)} className="bg-orange-500 hover:bg-orange-600">
+                <Plus className="w-4 h-4 mr-2" /> Nova Encomenda
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -414,6 +452,62 @@ export default function ControleEncomendas() {
           </div>
         )}
       </div>
+
+      {/* Modal Nova Encomenda */}
+      <Dialog open={criando} onOpenChange={(open) => !open && setCriando(false)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova Encomenda Manual</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <Label>Peça *</Label>
+                <Input value={novaEncomenda.peca} onChange={e => setNovaEncomenda(p => ({ ...p, peca: e.target.value }))} placeholder="Ex: Trava elétrica 2 fios" autoFocus />
+              </div>
+              <div>
+                <Label>Cliente *</Label>
+                <Input value={novaEncomenda.nome_cliente} onChange={e => setNovaEncomenda(p => ({ ...p, nome_cliente: e.target.value }))} placeholder="Nome do cliente" />
+              </div>
+              <div>
+                <Label>Telefone</Label>
+                <Input value={novaEncomenda.telefone_cliente} onChange={e => setNovaEncomenda(p => ({ ...p, telefone_cliente: e.target.value }))} placeholder="(00) 00000-0000" />
+              </div>
+              <div>
+                <Label>Placa</Label>
+                <Input value={novaEncomenda.placa_veiculo} onChange={e => setNovaEncomenda(p => ({ ...p, placa_veiculo: e.target.value }))} placeholder="ABC1234" />
+              </div>
+              <div>
+                <Label>Modelo</Label>
+                <Input value={novaEncomenda.modelo_veiculo} onChange={e => setNovaEncomenda(p => ({ ...p, modelo_veiculo: e.target.value }))} placeholder="Ex: Gol" />
+              </div>
+              <div>
+                <Label>Ano</Label>
+                <Input value={novaEncomenda.ano_veiculo} onChange={e => setNovaEncomenda(p => ({ ...p, ano_veiculo: e.target.value }))} placeholder="2020" />
+              </div>
+              <div>
+                <Label>Valor de Venda (R$)</Label>
+                <Input type="number" step="0.01" value={novaEncomenda.valor_venda} onChange={e => setNovaEncomenda(p => ({ ...p, valor_venda: e.target.value }))} placeholder="0,00" />
+              </div>
+              <div>
+                <Label>Custo (R$)</Label>
+                <Input type="number" step="0.01" value={novaEncomenda.custo_encomenda} onChange={e => setNovaEncomenda(p => ({ ...p, custo_encomenda: e.target.value }))} placeholder="0,00" />
+              </div>
+            </div>
+            <div>
+              <Label>Observações</Label>
+              <Textarea value={novaEncomenda.observacoes} onChange={e => setNovaEncomenda(p => ({ ...p, observacoes: e.target.value }))} className="min-h-[60px]" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCriando(false)}>Cancelar</Button>
+            <Button onClick={salvarNova} disabled={createMutation.isPending} className="bg-orange-500 hover:bg-orange-600">
+              {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Criar Encomenda
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal Edição */}
       <Dialog open={!!editando} onOpenChange={(open) => !open && setEditando(null)}>
