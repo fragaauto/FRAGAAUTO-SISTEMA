@@ -93,10 +93,6 @@ export default function NovoAtendimento() {
     observacoes: '',
     tecnico: '',
     status: 'queixa_pendente',
-    produto_sob_encomenda: false,
-    peca_encomenda: '',
-    valor_venda_encomenda: '',
-    custo_encomenda: '',
   });
 
   const { data: produtos = [] } = useQuery({
@@ -149,8 +145,10 @@ export default function NovoAtendimento() {
     },
     onSuccess: async (result) => {
       console.log('✅ [CRIAR ATENDIMENTO] Sucesso:', result);
-      // Automação: criar encomenda se produto_sob_encomenda = true
-      if (formData.produto_sob_encomenda && formData.peca_encomenda) {
+      // Automação: criar encomenda para cada item marcado como sob encomenda
+      const todosItens = [...(formData.itens_queixa || []), ...(formData.itens_orcamento || [])];
+      const itensEncomenda = todosItens.filter(i => i.sob_encomenda);
+      for (const item of itensEncomenda) {
         try {
           await base44.entities.Encomenda.create({
             unidade_id: unidadeAtual?.id || null,
@@ -161,17 +159,19 @@ export default function NovoAtendimento() {
             modelo_veiculo: result.modelo || '',
             ano_veiculo: result.ano || '',
             placa_veiculo: result.placa || '',
-            peca: formData.peca_encomenda,
-            valor_venda: parseFloat(formData.valor_venda_encomenda) || 0,
-            custo_encomenda: parseFloat(formData.custo_encomenda) || 0,
+            peca: item.nome,
+            valor_venda: item.valor_total || 0,
+            custo_encomenda: 0,
             foi_comprada: false,
             foi_entregue: false,
             status: 'nao_comprada',
           });
-          toast.success('✅ Encomenda registrada automaticamente!');
         } catch (e) {
-          toast.error('Atendimento criado, mas falha ao registrar encomenda');
+          console.error('Erro ao criar encomenda para:', item.nome, e);
         }
+      }
+      if (itensEncomenda.length > 0) {
+        toast.success(`✅ ${itensEncomenda.length} encomenda(s) registrada(s) automaticamente!`);
       }
       toast.success('Atendimento criado com sucesso!');
       queryClient.invalidateQueries(['atendimentos']);
@@ -896,65 +896,6 @@ export default function NovoAtendimento() {
                       ))}
                     </SelectContent>
                   </Select>
-                </CardContent>
-              </Card>
-
-              {/* Produto Sob Encomenda */}
-              <Card className={formData.produto_sob_encomenda ? 'border-orange-300 bg-orange-50' : ''}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3 mb-4">
-                    <Checkbox
-                      id="produto_sob_encomenda"
-                      checked={formData.produto_sob_encomenda}
-                      onCheckedChange={(checked) => handleInputChange('produto_sob_encomenda', checked)}
-                    />
-                    <div>
-                      <label htmlFor="produto_sob_encomenda" className="text-sm font-semibold text-slate-700 cursor-pointer flex items-center gap-2">
-                        <Package className="w-4 h-4 text-orange-600" />
-                        Produto sob encomenda?
-                      </label>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Marque se algum produto precisa ser encomendado. Será registrado automaticamente no Controle de Encomendas.
-                      </p>
-                    </div>
-                  </div>
-                  {formData.produto_sob_encomenda && (
-                    <div className="space-y-3 pt-3 border-t border-orange-200">
-                      <div>
-                        <Label>Peça / Produto encomendado *</Label>
-                        <Input
-                          placeholder="Ex: Motor de vidro elétrico dianteiro esquerdo"
-                          value={formData.peca_encomenda}
-                          onChange={(e) => handleInputChange('peca_encomenda', e.target.value)}
-                          className="h-11"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label>Valor de Venda (R$)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0,00"
-                            value={formData.valor_venda_encomenda}
-                            onChange={(e) => handleInputChange('valor_venda_encomenda', e.target.value)}
-                            className="h-11"
-                          />
-                        </div>
-                        <div>
-                          <Label>Custo Estimado (R$)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0,00"
-                            value={formData.custo_encomenda}
-                            onChange={(e) => handleInputChange('custo_encomenda', e.target.value)}
-                            className="h-11"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 

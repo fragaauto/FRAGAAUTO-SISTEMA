@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Wrench } from 'lucide-react';
+import { Trash2, Wrench, Package } from 'lucide-react';
 import AtribuirTecnicoModal from './AtribuirTecnicoModal';
 
 export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = false }) {
@@ -53,12 +53,23 @@ export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = fal
     });
   };
 
+  const handleSobEncomendaChange = (checked) => {
+    onUpdate({ ...item, sob_encomenda: checked });
+  };
+
   return (
     <>
-      <div className="flex flex-col gap-2 p-4 bg-slate-50 rounded-xl border border-slate-200">
+      <div className={`flex flex-col gap-2 p-4 rounded-xl border ${item.sob_encomenda ? 'bg-orange-50 border-orange-300' : 'bg-slate-50 border-slate-200'}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-slate-800 truncate">{item.nome}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-semibold text-slate-800 truncate">{item.nome}</p>
+              {item.sob_encomenda && (
+                <Badge className="bg-orange-100 text-orange-800 border-orange-300 text-xs">
+                  <Package className="w-3 h-3 mr-1" /> Sob encomenda
+                </Badge>
+              )}
+            </div>
             {item.tecnicos && item.tecnicos.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {item.tecnicos.map((tec, idx) => (
@@ -144,6 +155,21 @@ export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = fal
             <Trash2 className="w-5 h-5" />
           </Button>
         </div>
+        )}
+
+        {!readOnly && (
+          <label className="flex items-center gap-2 cursor-pointer mt-1 w-fit">
+            <input
+              type="checkbox"
+              checked={!!item.sob_encomenda}
+              onChange={(e) => handleSobEncomendaChange(e.target.checked)}
+              className="w-4 h-4 accent-orange-500"
+            />
+            <span className="text-xs text-slate-600 flex items-center gap-1">
+              <Package className="w-3 h-3 text-orange-500" />
+              Produto sob encomenda
+            </span>
+          </label>
         )}
       </div>
 
