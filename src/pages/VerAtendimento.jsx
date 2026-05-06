@@ -48,6 +48,7 @@ import AbaFinalizacaoPagamento from '../components/financeiro/AbaFinalizacaoPaga
 import FotosAtendimento from '../components/atendimento/FotosAtendimento';
 import AdicionarItemOrcamento from '../components/orcamento/AdicionarItemOrcamento';
 import ItemOrcamento from '../components/orcamento/ItemOrcamento';
+import ItemOrcamentoComEncomenda from '../components/orcamento/ItemOrcamentoComEncomenda';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -1407,9 +1408,10 @@ export default function VerAtendimento() {
                 <CardContent className="space-y-3">
                   {atendimento.itens_queixa.map((item, idx) => (
                     <div key={idx} className="space-y-2">
-                      <ItemOrcamento
+                      <ItemOrcamentoComEncomenda
                         item={item}
                         readOnly={pagamentoLancado}
+                        atendimento={atendimento}
                         onUpdate={(updated) => handleUpdateItemQueixa(idx, updated)}
                         onRemove={() => {
                           const novosItens = atendimento.itens_queixa.filter((_, i) => i !== idx);
@@ -1465,9 +1467,10 @@ export default function VerAtendimento() {
                   <CardContent className="space-y-3">
                     {atendimento.itens_orcamento.map((item, idx) => (
                       <div key={idx} className="space-y-2">
-                        <ItemOrcamento
+                        <ItemOrcamentoComEncomenda
                           item={item}
                           readOnly={pagamentoLancado}
+                          atendimento={atendimento}
                           onUpdate={(updated) => handleUpdateItemChecklist(idx, updated)}
                           onRemove={() => {
                             const novosItens = atendimento.itens_orcamento.filter((_, i) => i !== idx);
