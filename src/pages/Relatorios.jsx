@@ -48,7 +48,7 @@ export default function Relatorios() {
 
   const { data: atendimentosBrutos = [] } = useQuery({
     queryKey: ['atendimentos'],
-    queryFn: () => base44.entities.Atendimento.list('-created_date', 500),
+    queryFn: () => base44.entities.Atendimento.list('-created_date', 5000),
     staleTime: 2 * 60 * 1000
   });
 
@@ -161,6 +161,29 @@ export default function Relatorios() {
 
     return { totalOrcamentos: atendimentosFiltrados.length, servicosAprovados, servicosReprovados, valorTotalAprovado, valorTotalReprovado, detalhesServicos, atendimentosFiltrados, rankingServicos: rankingArray };
   }, [atendimentos, periodo, dataEspecifica, filtroCliente, filtroVeiculo, filtroProduto]);
+
+  // Atendimentos filtrados APENAS por período e unidade (sem filtros de cliente/veículo/produto)
+  // Usado na aba de técnicos para não distorcer os totais de produção
+  const atendimentosPorPeriodo = useMemo(() => {
+    const now = new Date();
+    return atendimentos.filter(a => {
+      const dataAtendimento = new Date(a.created_date);
+      dataAtendimento.setHours(0, 0, 0, 0);
+      if (periodo === 'especifica') {
+        if (!dataEspecifica.from) return true;
+        const from = new Date(dataEspecifica.from); from.setHours(0, 0, 0, 0);
+        if (dataEspecifica.to) {
+          const to = new Date(dataEspecifica.to); to.setHours(23, 59, 59, 999);
+          return dataAtendimento >= from && dataAtendimento <= to;
+        }
+        return dataAtendimento.toDateString() === from.toDateString();
+      }
+      const diasFiltro = parseInt(periodo);
+      if (diasFiltro === 0) return true;
+      const diff = Math.floor((now - dataAtendimento) / (1000 * 60 * 60 * 24));
+      return diff <= diasFiltro;
+    });
+  }, [atendimentos, periodo, dataEspecifica]);
 
   if (!paginaPermitida(modulosAtivos, 'Relatorios')) return <ModuloBloqueado nomeModulo="Relatórios" />;
 
@@ -366,7 +389,7 @@ export default function Relatorios() {
           </TabsContent>
 
           <TabsContent value="tecnicos">
-            <RelatorioTecnicos atendimentos={dadosRelatorio.atendimentosFiltrados} config={config} labelPeriodo={labelPeriodo} />
+            <RelatorioTecnicos atendimentos={atendimentosPorPeriodo} config={config} labelPeriodo={labelPeriodo} />
           </TabsContent>
         </Tabs>
       </div>
