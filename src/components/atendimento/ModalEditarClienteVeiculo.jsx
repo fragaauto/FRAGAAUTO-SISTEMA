@@ -22,6 +22,7 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
     ano: atendimento.ano || '',
     km_atual: atendimento.km_atual || '',
     observacoes_veiculo: atendimento.observacoes_veiculo || '',
+    data_entrada: atendimento.data_entrada ? new Date(atendimento.data_entrada).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
     tecnico: atendimento.tecnico || '',
   });
 
@@ -46,7 +47,8 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
   const handleSave = () => {
     onSave({
       ...dados,
-      placa: dados.placa.toUpperCase()
+      placa: dados.placa.toUpperCase(),
+      data_entrada: dados.data_entrada ? new Date(dados.data_entrada).toISOString() : atendimento.data_entrada,
     });
   };
 
@@ -110,6 +112,15 @@ export default function ModalEditarClienteVeiculo({ atendimento, onSave, onClose
           </TabsContent>
 
           <TabsContent value="veiculo" className="space-y-4 pt-4">
+            <div>
+              <Label>Data de Entrada</Label>
+              <Input
+                type="datetime-local"
+                value={dados.data_entrada}
+                onChange={(e) => setDados(p => ({ ...p, data_entrada: e.target.value }))}
+                className="h-11"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Placa *</Label>
