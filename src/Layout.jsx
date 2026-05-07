@@ -71,6 +71,7 @@ export default function Layout({ children, currentPageName }) {
     queryKey: ['configuracoes'],
     queryFn: () => base44.entities.Configuracao.list(),
     staleTime: 5 * 60 * 1000,
+    enabled: !!user,
   });
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
 
@@ -91,8 +92,9 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // Se não autenticado, apenas mostra loading (AuthContext cuida do redirect)
+  // Se não autenticado, redirecionar para login
   if (!user && !isPaginaPublica) {
+    base44.auth.redirectToLogin(window.location.href);
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
