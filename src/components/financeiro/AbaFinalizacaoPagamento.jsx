@@ -98,6 +98,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     ? todosItensAprovados.reduce((acc, i) => acc + (Number(i.valor_total) || 0), 0)
     : (atendimento.valor_final || atendimento.subtotal || 0);
   const jaLancado = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial' || atendimento.status_pagamento === 'faturado';
+  const isFaturadoPendente = atendimento.status_pagamento === 'faturado';
 
   const [tecnicosSelecionados, setTecnicosSelecionados] = useState(atendimento.tecnicos_responsaveis || []);
   const [obsInterna, setObsInterna] = useState(atendimento.obs_interna || '');
@@ -258,6 +259,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       }
 
       const isFaturado = pagamentos.some(p => p.forma === 'faturado');
+      // Faturado = pendente de recebimento, não considerado pago ainda
       const statusPag = isFaturado ? 'faturado' : 'pago';
       const custoExterno = parseFloat(custoPecasExternas) || 0;
 
@@ -326,14 +328,15 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         });
       }
 
-      // Conta a receber se faturado
+      // Conta a receber se faturado — lançado como "A Receber" no financeiro
       if (isFaturado) {
         await base44.entities.ContaReceber.create({
+          unidade_id: atendimento.unidade_id,
           cliente_id: atendimento.cliente_id,
           cliente_nome: atendimento.cliente_nome,
           cliente_telefone: atendimento.cliente_telefone,
           atendimento_id: atendimento.id,
-          descricao: `Atendimento ${atendimento.placa} - ${atendimento.modelo}`,
+          descricao: `OS ${atendimento.numero_os ? '#' + String(atendimento.numero_os).padStart(6,'0') + ' - ' : ''}${atendimento.placa} - ${atendimento.cliente_nome || atendimento.modelo}`,
           valor_total: totalComDesconto,
           valor_pago: 0,
           desconto: desconto,
@@ -838,15 +841,15 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       {/* Botão Lançar no Caixa */}
       {jaLancado ? (
         <div className="space-y-3">
-          <div className="flex items-center justify-center gap-3 py-5 text-green-700 bg-green-50 rounded-xl border-2 border-green-300">
-            <Lock className="w-6 h-6" />
+          <div className={`flex items-center justify-center gap-3 py-5 rounded-xl border-2 ${isFaturadoPendente ? 'text-orange-700 bg-orange-50 border-orange-300' : 'text-green-700 bg-green-50 border-green-300'}`}>
+            {isFaturadoPendente ? <Receipt className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
             <div className="text-center">
-              <p className="font-bold text-lg">Lançado no Caixa</p>
-              <p className="text-sm text-green-600">
-                {atendimento.data_pagamento
-                  ? `em ${new Date(atendimento.data_pagamento).toLocaleString('pt-BR')}`
-                  : ''}
-                {atendimento.usuario_pagamento ? ` por ${atendimento.usuario_pagamento.split('@')[0]}` : ''}
+              <p className="font-bold text-lg">{isFaturadoPendente ? 'Faturado — Aguardando Recebimento' : 'Lançado no Caixa'}</p>
+              <p className={`text-sm ${isFaturadoPendente ? 'text-orange-600' : 'text-green-600'}`}>
+                {isFaturadoPendente
+                  ? 'Lançado em Contas a Receber no Financeiro'
+                  : `${atendimento.data_pagamento ? `em ${new Date(atendimento.data_pagamento).toLocaleString('pt-BR')}` : ''}${atendimento.usuario_pagamento ? ` por ${atendimento.usuario_pagamento.split('@')[0]}` : ''}`
+                }
               </p>
             </div>
             <CheckCircle2 className="w-6 h-6" />

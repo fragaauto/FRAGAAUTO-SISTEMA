@@ -482,7 +482,9 @@ export default function Atendimentos() {
           <div className="space-y-3">
             {atendimentosPaginados.map((atendimento, index) => {
               const isSelecionado = selecionados.includes(atendimento.id);
-              const pago = !!atendimento.status_pagamento && atendimento.status_pagamento !== null;
+              // Faturado = pendente de recebimento, não bloqueia o atendimento como pago
+              const pago = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial';
+              const faturado = atendimento.status_pagamento === 'faturado';
               return (
                 <motion.div
                   key={atendimento.id}
@@ -494,11 +496,13 @@ export default function Atendimentos() {
                     className={`transition-all border-2 ${
                       pago
                         ? 'border-green-200 bg-green-50/60'
+                        : faturado
+                        ? 'border-orange-200 bg-orange-50/60'
                         : isSelecionado
                         ? 'border-orange-300 bg-orange-50'
                         : 'hover:shadow-lg hover:border-orange-200 cursor-pointer'
                     }`}
-                    onClick={() => !isSelecionado && !pago && navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
+                    onClick={() => !isSelecionado && navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
@@ -515,8 +519,8 @@ export default function Atendimentos() {
                         )}
 
                         {/* Ícone */}
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${pago ? 'bg-green-100' : 'bg-slate-100'}`}>
-                          {pago ? <Lock className="w-5 h-5 text-green-600" /> : <Car className="w-5 h-5 text-slate-600" />}
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${pago ? 'bg-green-100' : faturado ? 'bg-orange-100' : 'bg-slate-100'}`}>
+                          {pago ? <Lock className="w-5 h-5 text-green-600" /> : faturado ? <Lock className="w-5 h-5 text-orange-500" /> : <Car className="w-5 h-5 text-slate-600" />}
                         </div>
 
                         {/* Dados */}
@@ -532,6 +536,11 @@ export default function Atendimentos() {
                             {pago && (
                               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-600 text-white">
                                 <CheckCircle2 className="w-3 h-3" /> Pago
+                              </span>
+                            )}
+                            {faturado && (
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-500 text-white">
+                                A Receber
                               </span>
                             )}
                           </div>

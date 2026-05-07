@@ -47,15 +47,39 @@ export default function ContasReceberTab() {
   }, [contasBrutos, unidadeAtual]);
 
   const baixarMutation = useMutation({
-    mutationFn: async (conta) => {
-      await base44.entities.ContaReceber.update(conta.id, { status: 'pago', valor_pago: conta.valor_total, data_pagamento: new Date().toISOString() });
-      await base44.entities.LancamentoFinanceiro.create({
-        tipo: 'entrada', descricao: `Baixa: ${conta.descricao}`,
-        valor: conta.valor_total, forma_pagamento: conta.forma_pagamento || 'pix',
-        conta_receber_id: conta.id, data_lancamento: new Date().toISOString(), categoria: 'servico',
+    mutationFn: async ({ conta, formaPagamento }) => {
+      const agora = new Date().toISOString();
+      await base44.entities.ContaReceber.update(conta.id, {
+        status: 'pago',
+        valor_pago: conta.valor_total,
+        data_pagamento: agora,
+        forma_pagamento: formaPagamento || conta.forma_pagamento || 'pix',
       });
+      await base44.entities.LancamentoFinanceiro.create({
+        tipo: 'entrada',
+        descricao: `Recebimento: ${conta.descricao}`,
+        valor: conta.valor_total,
+        forma_pagamento: formaPagamento || conta.forma_pagamento || 'pix',
+        conta_receber_id: conta.id,
+        atendimento_id: conta.atendimento_id || null,
+        data_lancamento: agora,
+        categoria: 'servico',
+      });
+      // Se veio de um atendimento faturado, marcar como pago
+      if (conta.atendimento_id) {
+        await base44.entities.Atendimento.update(conta.atendimento_id, {
+          status_pagamento: 'pago',
+          data_pagamento: agora,
+        });
+      }
     },
-    onSuccess: () => { toast.success('Marcado como pago!'); qc.invalidateQueries(['contas-receber']); setSelecionada(null); },
+    onSuccess: () => {
+      toast.success('Recebimento registrado! Atendimento marcado como pago.');
+      qc.invalidateQueries(['contas-receber']);
+      qc.invalidateQueries(['atendimentos']);
+      qc.invalidateQueries(['atendimento']);
+      setSelecionada(null);
+    },
   });
 
   // Auto-marcar vencidas
@@ -123,35 +147,61 @@ export default function ContasReceberTab() {
       )}
 
       {/* Modal detalhe */}
-      <Dialog open={!!selecionada} onOpenChange={() => setSelecionada(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>{selecionada?.cliente_nome}</DialogTitle></DialogHeader>
-          {selecionada && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div><span className="text-slate-500">Valor:</span> <span className="font-bold">R$ {(selecionada.valor_total || 0).toFixed(2)}</span></div>
-                <div><span className="text-slate-500">Status:</span> <Badge className={STATUS_COLORS[selecionada.status]}>{STATUS_LABELS[selecionada.status]}</Badge></div>
-                <div><span className="text-slate-500">Vencimento:</span> <span>{selecionada.data_vencimento ? format(new Date(selecionada.data_vencimento), 'dd/MM/yyyy') : '-'}</span></div>
-                <div><span className="text-slate-500">Forma:</span> <span>{selecionada.forma_pagamento || '-'}</span></div>
-              </div>
-              {selecionada.descricao && <p className="text-sm text-slate-600">{selecionada.descricao}</p>}
-              {(selecionada.status === 'pendente' || selecionada.status === 'vencido' || selecionada.status === 'parcial') && (
-                <Button
-                  onClick={() => baixarMutation.mutate(selecionada)}
-                  disabled={baixarMutation.isPending}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                >
-                  {baixarMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                  Dar Baixa (Marcar como Pago)
-                </Button>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {selecionada && <DetalheContaModal
+        conta={selecionada}
+        onClose={() => setSelecionada(null)}
+        onBaixar={(formaPagamento) => baixarMutation.mutate({ conta: selecionada, formaPagamento })}
+        isLoading={baixarMutation.isPending}
+      />}
 
       <NovaContaReceberModal open={showNova} onClose={() => setShowNova(false)} onSaved={() => { setShowNova(false); qc.invalidateQueries(['contas-receber']); }} />
     </div>
+  );
+}
+
+function DetalheContaModal({ conta, onClose, onBaixar, isLoading }) {
+  const [formaPagamento, setFormaPagamento] = useState(conta.forma_pagamento !== 'faturado' ? (conta.forma_pagamento || 'pix') : 'pix');
+  const isPendente = conta.status === 'pendente' || conta.status === 'vencido' || conta.status === 'parcial';
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>{conta.cliente_nome}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div><span className="text-slate-500">Valor:</span> <span className="font-bold">R$ {(conta.valor_total || 0).toFixed(2)}</span></div>
+            <div><span className="text-slate-500">Status:</span> <Badge className={STATUS_COLORS[conta.status]}>{STATUS_LABELS[conta.status]}</Badge></div>
+            <div><span className="text-slate-500">Vencimento:</span> <span>{conta.data_vencimento ? format(new Date(conta.data_vencimento), 'dd/MM/yyyy') : '-'}</span></div>
+            <div><span className="text-slate-500">Origem:</span> <span>{conta.atendimento_id ? 'Atendimento' : 'Manual'}</span></div>
+          </div>
+          {conta.descricao && <p className="text-sm text-slate-600">{conta.descricao}</p>}
+          {isPendente && (
+            <div className="space-y-2 pt-2 border-t">
+              <Label className="text-sm font-medium">Forma de Recebimento</Label>
+              <div className="flex flex-wrap gap-1">
+                {['dinheiro','pix','cartao_credito','cartao_debito','transferencia','boleto'].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setFormaPagamento(f)}
+                    className={`px-2 py-1 rounded text-xs border transition-all ${formaPagamento === f ? 'bg-green-600 text-white border-green-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    {f.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
+              <Button
+                onClick={() => onBaixar(formaPagamento)}
+                disabled={isLoading}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                Confirmar Recebimento
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
