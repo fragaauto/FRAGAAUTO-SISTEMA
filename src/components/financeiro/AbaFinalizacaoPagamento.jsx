@@ -127,12 +127,12 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const [descontoTipo, setDescontoTipo] = useState('valor');
   const [descontoValor, setDescontoValor] = useState(atendimento.desconto_pagamento || 0);
   const [pagamentos, setPagamentos] = useState(() => {
+    const hojeInit = new Date().toISOString().split('T')[0];
     if (atendimento.formas_pagamento_lancamento?.length > 0) {
-      return atendimento.formas_pagamento_lancamento;
+      return atendimento.formas_pagamento_lancamento.map(p => ({ data_lancamento: hojeInit, ...p }));
     }
-    // Calcular valor inicial considerando desconto já aplicado
     const valorInicial = valorBase - (atendimento.desconto_pagamento || 0);
-    return [{ forma: 'pix', valor: Math.max(0, valorInicial) }];
+    return [{ forma: 'pix', valor: Math.max(0, valorInicial), data_lancamento: hojeInit }];
   });
 
   const desconto = descontoTipo === 'percentual'
@@ -153,7 +153,8 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   };
   const totalLiquido = pagamentos.reduce((s, p, i) => s + calcValorLiquido(p, i), 0);
 
-  const addPagamento = () => setPagamentos([...pagamentos, { forma: 'dinheiro', valor: 0 }]);
+  const hoje = new Date().toISOString().split('T')[0];
+  const addPagamento = () => setPagamentos([...pagamentos, { forma: 'dinheiro', valor: 0, data_lancamento: hoje }]);
   const removePagamento = (i) => setPagamentos(pagamentos.filter((_, idx) => idx !== i));
   const updatePagamento = (i, field, val) => {
     const novo = [...pagamentos];
@@ -312,6 +313,9 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
 
         const valorLiquidoFinal = Math.max(0, valorLiquido - (custoExterno / pagamentos.length));
         const descontoPecaEsseLancamento = custoExterno > 0 ? parseFloat((custoExterno / pagamentos.length).toFixed(2)) : 0;
+        const dataLancamento = pag.data_lancamento
+          ? new Date(pag.data_lancamento + 'T12:00:00').toISOString()
+          : new Date().toISOString();
         await base44.entities.LancamentoFinanceiro.create({
           unidade_id: atendimento.unidade_id,
           tipo: 'entrada',
@@ -323,7 +327,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
           parcelas: parcelas,
           atendimento_id: atendimento.id,
           usuario: user?.email,
-          data_lancamento: new Date().toISOString(),
+          data_lancamento: dataLancamento,
           categoria: 'servico',
           desconto_peca_externa: descontoPecaEsseLancamento > 0 ? descontoPecaEsseLancamento : null,
           descricao_peca_externa: descontoPecaEsseLancamento > 0 ? (descricaoPecasExternas || null) : null,
@@ -721,6 +725,15 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
                           ))}
                         </select>
                       )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-slate-500 whitespace-nowrap">Data no financeiro:</Label>
+                      <Input
+                        type="date"
+                        value={pag.data_lancamento || hoje}
+                        onChange={e => updatePagamento(i, 'data_lancamento', e.target.value)}
+                        className="h-8 text-sm flex-1"
+                      />
                     </div>
                     {mostraTaxa && (
                       <p className="text-xs text-slate-400">
