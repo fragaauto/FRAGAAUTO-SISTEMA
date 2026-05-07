@@ -79,7 +79,7 @@ export default function NovoAtendimento() {
     ano: '',
     km_atual: '',
     observacoes_veiculo: '',
-    data_entrada: new Date().toISOString(),
+    data_entrada: (() => { const d = new Date(); return d.toISOString().slice(0, 16); })(),
     queixa_inicial: '',
     itens_queixa: [],
     checklist: {},
@@ -422,7 +422,7 @@ export default function NovoAtendimento() {
       ano: formData.ano || '',
       km_atual: formData.km_atual || '',
       observacoes_veiculo: formData.observacoes_veiculo || '',
-      data_entrada: formData.data_entrada,
+      data_entrada: formData.data_entrada ? new Date(formData.data_entrada).toISOString() : new Date().toISOString(),
       queixa_inicial: formData.queixa_inicial || '',
       itens_queixa: formData.itens_queixa || [],
       checklist: checklistArray,
@@ -679,6 +679,15 @@ export default function NovoAtendimento() {
                     </CardTitle>
                   </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="mb-4">
+                    <Label>Data de Entrada</Label>
+                    <Input
+                      type="datetime-local"
+                      value={formData.data_entrada}
+                      onChange={(e) => handleInputChange('data_entrada', e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Placa *</Label>
