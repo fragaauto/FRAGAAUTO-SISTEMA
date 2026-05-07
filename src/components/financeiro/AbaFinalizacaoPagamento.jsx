@@ -284,6 +284,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
 
       // Registrar movimentos de estoque
       const movimentos = pecas.map(p => ({
+        unidade_id: atendimento.unidade_id,
         produto_id: p.produto_id,
         produto_nome: p.nome,
         tipo: 'saida',
@@ -312,6 +313,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         const valorLiquidoFinal = Math.max(0, valorLiquido - (custoExterno / pagamentos.length));
         const descontoPecaEsseLancamento = custoExterno > 0 ? parseFloat((custoExterno / pagamentos.length).toFixed(2)) : 0;
         await base44.entities.LancamentoFinanceiro.create({
+          unidade_id: atendimento.unidade_id,
           tipo: 'entrada',
           descricao: `Atendimento ${atendimento.placa} - ${atendimento.cliente_nome || ''}${parcelas > 1 ? ` (${parcelas}x)` : ''}`,
           valor: valorLiquidoFinal,
