@@ -664,7 +664,7 @@ export default function Atendimentos() {
     <Dialog open={!!reciboAtendimento} onOpenChange={(open) => !open && setReciboAtendimento(null)}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>FRAGA AUTO PORTAS</DialogTitle>
+          <DialogTitle>FRAGA AUTO</DialogTitle>
         </DialogHeader>
         {reciboAtendimento &&
           <ReciboAtendimento atendimento={reciboAtendimento} config={config} />
