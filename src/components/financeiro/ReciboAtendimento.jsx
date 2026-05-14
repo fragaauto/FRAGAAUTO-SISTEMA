@@ -46,7 +46,9 @@ export default function ReciboAtendimento({ atendimento, config }) {
   const formas = atendimento.formas_pagamento_lancamento || [];
   const formaUnica = atendimento.forma_pagamento_lancamento;
   const obsCliente = atendimento.obs_externa || '';
-  // Consolida técnicos de todas as fontes: aba pagamento, itens da queixa e itens do orçamento
+  const obsInterna = atendimento.obs_interna || '';
+
+  // Consolida técnicos de todas as fontes
   const tecnicosMap = new Map();
   (atendimento.tecnicos_responsaveis || []).forEach(t => t?.id && tecnicosMap.set(t.id, t.nome));
   [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])].forEach(item => {
@@ -57,17 +59,21 @@ export default function ReciboAtendimento({ atendimento, config }) {
 
   const dataServico = atendimento.data_pagamento || atendimento.data_entrada || atendimento.created_date;
   const osNum = atendimento.numero_os ? `OS #${String(atendimento.numero_os).padStart(6, '0')}` : '';
+  const nomeEmpresa = config?.nome_empresa || 'FRAGA AUTO';
+  const logoUrl = config?.logo_url || '';
+
+  // Monta técnicos por item para impressão
+  const getResponsaveisItem = (item) => {
+    const tecs = (item.tecnicos || []).map(t => t.nome).filter(Boolean);
+    return tecs.length > 0 ? tecs.join(', ') : '';
+  };
 
   const gerarTextoWhatsApp = () => {
-    const empresa = config?.nome_empresa || 'Auto Center';
-    const cnpj = config?.cnpj ? `CNPJ: ${config.cnpj}` : '';
-    const tel = config?.telefone ? `📞 ${config.telefone}` : '';
-
     let texto = `*🧾 COMPROVANTE DE SERVIÇO*\n`;
-    texto += `*${empresa}*\n`;
-    if (cnpj) texto += `${cnpj}\n`;
+    texto += `*${nomeEmpresa}*\n`;
+    if (config?.cnpj) texto += `CNPJ: ${config.cnpj}\n`;
     if (config?.endereco) texto += `📍 ${config.endereco}\n`;
-    if (tel) texto += `${tel}\n`;
+    if (config?.telefone) texto += `📞 ${config.telefone}\n`;
     texto += `\n`;
 
     if (osNum) texto += `*${osNum}*\n`;
@@ -86,9 +92,13 @@ export default function ReciboAtendimento({ atendimento, config }) {
     texto += `\n`;
 
     if (temItens) {
-      texto += `*SERVIÇOS REALIZADOS*\n`;
+      texto += `*SERVIÇOS / PRODUTOS*\n`;
       itensSemDuplicata.forEach(item => {
-        texto += `• ${item.nome} (${item.quantidade}x) — ${fmtMoeda(item.valor_total)}\n`;
+        const resp = getResponsaveisItem(item);
+        const obsItem = item.observacao_item || '';
+        texto += `• *${item.nome}* (${item.quantidade}x) — ${fmtMoeda(item.valor_total)}\n`;
+        if (resp) texto += `  🔧 Responsável: ${resp}\n`;
+        if (obsItem) texto += `  📝 ${obsItem}\n`;
       });
       texto += `\n`;
     }
@@ -107,26 +117,45 @@ export default function ReciboAtendimento({ atendimento, config }) {
 
     if (tecnicosResp.length > 0) texto += `\n*Técnico(s):* ${tecnicosResp.map(t => t.nome).join(', ')}\n`;
     else if (atendimento.tecnico) texto += `\n*Técnico:* ${atendimento.tecnico}\n`;
+
     if (obsCliente) texto += `\n📝 *Observações:*\n${obsCliente}\n`;
+    if (obsInterna) texto += `\n🔧 *Obs. Técnica:*\n${obsInterna}\n`;
 
     texto += `\n✅ Obrigado pela preferência!`;
     return texto;
   };
 
   const handlePrint = () => {
-    const empresa = config?.nome_empresa || 'Auto Center';
-
     const itensHtml = temItens
-      ? `<div style="font-weight:bold;margin-top:12px;margin-bottom:4px">SERVIÇOS REALIZADOS</div>
-         ${itensSemDuplicata.map(i => `
-           <div style="display:flex;justify-content:space-between;font-size:12px;margin:2px 0">
-             <span>${i.nome} ${i.quantidade > 1 ? `(${i.quantidade}x)` : ''}</span>
-             <span>${fmtMoeda(i.valor_total)}</span>
-           </div>`).join('')}`
+      ? `<div class="section-title" style="margin-top:12px">SERVIÇOS / PRODUTOS</div>
+         <table style="width:100%;border-collapse:collapse;font-size:12px">
+           <thead>
+             <tr style="border-bottom:1px solid #ccc">
+               <th style="text-align:left;padding:4px 2px">Descrição</th>
+               <th style="text-align:center;padding:4px 2px">Qtd</th>
+               <th style="text-align:right;padding:4px 2px">Valor</th>
+             </tr>
+           </thead>
+           <tbody>
+             ${itensSemDuplicata.map(i => {
+               const resp = getResponsaveisItem(i);
+               const obsItem = i.observacao_item || '';
+               return `<tr>
+                 <td style="padding:4px 2px;vertical-align:top">
+                   <div style="font-weight:600">${i.nome}</div>
+                   ${resp ? `<div style="font-size:11px;color:#555">🔧 ${resp}</div>` : ''}
+                   ${obsItem ? `<div style="font-size:11px;color:#666;font-style:italic">📝 ${obsItem}</div>` : ''}
+                 </td>
+                 <td style="text-align:center;padding:4px 2px;vertical-align:top">${i.quantidade}x</td>
+                 <td style="text-align:right;padding:4px 2px;vertical-align:top">${fmtMoeda(i.valor_total)}</td>
+               </tr>`;
+             }).join('')}
+           </tbody>
+         </table>`
       : '';
 
     const descontoHtml = desconto > 0
-      ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#16a34a"><span>Desconto</span><span>- ${fmtMoeda(desconto)}</span></div>`
+      ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#16a34a;margin-top:4px"><span>Desconto</span><span>- ${fmtMoeda(desconto)}</span></div>`
       : '';
 
     const formasHtml = formas.length > 0
@@ -140,21 +169,33 @@ export default function ReciboAtendimento({ atendimento, config }) {
         ? `<div style="font-size:12px"><b>Pagamento:</b> ${FORMA_LABEL[formaUnica] || formaUnica}</div>`
         : '';
 
+    const tecHtml = tecnicosResp.length > 0
+      ? `<div class="divider"></div><div class="row"><span>Técnico(s):</span><span>${tecnicosResp.map(t => t.nome).join(', ')}</span></div>`
+      : atendimento.tecnico
+        ? `<div class="divider"></div><div class="row"><span>Técnico:</span><span>${atendimento.tecnico}</span></div>`
+        : '';
+
+    const obsHtml = (obsCliente || obsInterna)
+      ? `<div class="divider"></div>
+         ${obsCliente ? `<div style="font-size:12px;margin:4px 0"><b>Observações / Garantia:</b><br>${obsCliente}</div>` : ''}
+         ${obsInterna ? `<div style="font-size:12px;margin:4px 0"><b>Obs. Técnica:</b><br>${obsInterna}</div>` : ''}`
+      : '';
+
     const html = `
       <html><head><title>Comprovante de Serviço</title>
       <style>
-        body { font-family: Arial, sans-serif; max-width: 420px; margin: 0 auto; padding: 24px; color: #1e293b; }
-        h2 { text-align: center; margin: 0 0 4px; font-size: 18px; }
+        body { font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #1e293b; }
+        h2 { text-align: center; margin: 0 0 4px; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
         .center { text-align: center; color: #555; font-size: 12px; }
         .divider { border-top: 1px dashed #ccc; margin: 10px 0; }
-        .section-title { font-weight: bold; font-size: 12px; color: #555; margin: 8px 0 4px; text-transform: uppercase; }
+        .section-title { font-weight: bold; font-size: 11px; color: #555; margin: 8px 0 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         .row { display: flex; justify-content: space-between; font-size: 13px; margin: 3px 0; }
         .total { font-weight: bold; font-size: 16px; border-top: 2px solid #1e293b; padding-top: 6px; margin-top: 6px; }
         .footer { text-align: center; margin-top: 16px; font-size: 12px; color: #888; }
         .os { text-align:center; font-size: 13px; font-weight:bold; margin-bottom: 4px; }
       </style></head><body>
-      ${config?.logo_url ? `<div style="text-align:center;margin-bottom:8px"><img src="${config.logo_url}" style="max-height:64px;max-width:180px;object-fit:contain" /></div>` : ''}
-      <h2>${empresa}</h2>
+      ${logoUrl ? `<div style="text-align:center;margin-bottom:8px"><img src="${logoUrl}" style="max-height:72px;max-width:200px;object-fit:contain" /></div>` : ''}
+      <h2>${nomeEmpresa}</h2>
       ${config?.cnpj ? `<div class="center">CNPJ: ${config.cnpj}</div>` : ''}
       ${config?.endereco ? `<div class="center">${config.endereco}</div>` : ''}
       ${config?.telefone ? `<div class="center">Tel: ${config.telefone}</div>` : ''}
@@ -177,8 +218,8 @@ export default function ReciboAtendimento({ atendimento, config }) {
       ${descontoHtml}
       <div class="row total"><span>TOTAL</span><span>${fmtMoeda(valorFinalPago)}</span></div>
       ${formasHtml}
-      ${tecnicosResp.length > 0 ? `<div class="divider"></div><div class="row"><span>Técnico(s):</span><span>${tecnicosResp.map(t => t.nome).join(', ')}</span></div>` : atendimento.tecnico ? `<div class="divider"></div><div class="row"><span>Técnico:</span><span>${atendimento.tecnico}</span></div>` : ''}
-      ${obsCliente ? `<div class="divider"></div><div style="font-size:12px;margin:4px 0"><b>Observações / Garantia:</b><br>${obsCliente}</div>` : ''}
+      ${tecHtml}
+      ${obsHtml}
       <div class="divider"></div>
       <div style="margin-top:32px">
         <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:32px">
@@ -195,7 +236,7 @@ export default function ReciboAtendimento({ atendimento, config }) {
       </body></html>
     `;
 
-    const win = window.open('', '_blank', 'width=520,height=750');
+    const win = window.open('', '_blank', 'width=560,height=800');
     win.document.write(html);
     win.document.close();
     win.print();
@@ -219,10 +260,10 @@ export default function ReciboAtendimento({ atendimento, config }) {
       <CardContent className="space-y-3 text-xs">
         {/* Empresa */}
         <div className="text-center pb-1 border-b border-green-200">
-          {config?.logo_url && (
-            <img src={config.logo_url} alt="Logo" className="h-12 object-contain mx-auto mb-1" />
+          {logoUrl && (
+            <img src={logoUrl} alt="Logo" className="h-14 object-contain mx-auto mb-1" />
           )}
-          <p className="font-bold text-slate-800 text-sm">{config?.nome_empresa || 'Auto Center'}</p>
+          <p className="font-bold text-slate-800 text-sm tracking-wide">{nomeEmpresa}</p>
           {config?.cnpj && <p className="text-slate-500">CNPJ: {config.cnpj}</p>}
           {config?.endereco && <p className="text-slate-500">{config.endereco}</p>}
           {config?.telefone && <p className="text-slate-500">Tel: {config.telefone}</p>}
@@ -254,18 +295,30 @@ export default function ReciboAtendimento({ atendimento, config }) {
           {atendimento.km_atual && <div className="flex justify-between"><span className="text-slate-500">KM:</span><span className="text-slate-700">{atendimento.km_atual}</span></div>}
         </div>
 
-        {/* Itens */}
+        {/* Itens com responsáveis e observações */}
         {temItens && (
           <>
             <div className="border-t border-green-200" />
-            <div className="space-y-1">
-              <p className="font-semibold text-slate-600 uppercase text-xs">Serviços Realizados</p>
-              {itensSemDuplicata.map((item, idx) => (
-                <div key={idx} className="flex justify-between text-slate-700">
-                  <span>{item.nome}{item.quantidade > 1 ? ` (${item.quantidade}x)` : ''}</span>
-                  <span>{fmtMoeda(item.valor_total)}</span>
-                </div>
-              ))}
+            <div className="space-y-2">
+              <p className="font-semibold text-slate-600 uppercase text-xs">Serviços / Produtos</p>
+              {itensSemDuplicata.map((item, idx) => {
+                const resp = getResponsaveisItem(item);
+                const obsItem = item.observacao_item || '';
+                return (
+                  <div key={idx} className="bg-white rounded border border-green-100 p-1.5 space-y-0.5">
+                    <div className="flex justify-between text-slate-700 font-medium">
+                      <span>{item.nome}{item.quantidade > 1 ? ` (${item.quantidade}x)` : ''}</span>
+                      <span className="ml-2 shrink-0">{fmtMoeda(item.valor_total)}</span>
+                    </div>
+                    {resp && (
+                      <div className="text-slate-500 text-xs">🔧 {resp}</div>
+                    )}
+                    {obsItem && (
+                      <div className="text-slate-500 text-xs italic">📝 {obsItem}</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
@@ -317,10 +370,15 @@ export default function ReciboAtendimento({ atendimento, config }) {
           </div>
         )}
 
-        {/* Obs para o cliente */}
+        {/* Observações */}
         {obsCliente && (
           <div className="p-2 bg-white border border-green-200 rounded text-slate-600">
             <span className="font-semibold">Obs / Garantia: </span>{obsCliente}
+          </div>
+        )}
+        {obsInterna && (
+          <div className="p-2 bg-white border border-green-200 rounded text-slate-600">
+            <span className="font-semibold">Obs. Técnica: </span>{obsInterna}
           </div>
         )}
 
