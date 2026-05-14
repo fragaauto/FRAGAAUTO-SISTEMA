@@ -9,10 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Plus, 
-  Search, 
-  Car, 
+import {
+  Plus,
+  Search,
+  Car,
   Calendar,
   ArrowRight,
   FileText,
@@ -26,8 +26,8 @@ import {
   RotateCcw,
   Printer,
   MessageCircle,
-  CheckCircle2
-} from 'lucide-react';
+  CheckCircle2 } from
+'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,8 +37,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  AlertDialogTrigger } from
+"@/components/ui/alert-dialog";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
@@ -47,8 +47,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from
+"@/components/ui/select";
 import { toast } from "sonner";
 import Paginacao from '@/components/ui/Paginacao';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -72,7 +72,7 @@ const STATUS_FIXOS = {
 
 function getStatusInfo(statusValue, statusPersonalizados = []) {
   if (STATUS_FIXOS[statusValue]) return STATUS_FIXOS[statusValue];
-  const custom = statusPersonalizados.find(s => s.valor === statusValue);
+  const custom = statusPersonalizados.find((s) => s.valor === statusValue);
   if (custom) return { label: custom.label, cor: custom.cor };
   return { label: statusValue, cor: '#64748b' };
 }
@@ -82,38 +82,38 @@ function StatusBadge({ statusValue, statusPersonalizados }) {
   return (
     <span
       className="px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap"
-      style={{ background: info.cor }}
-    >
+      style={{ background: info.cor }}>
+      
       {info.label}
-    </span>
-  );
+    </span>);
+
 }
 
 function StatusSelect({ value, onChange, statusPersonalizados, onClick }) {
   const todosStatus = [
-    ...Object.entries(STATUS_FIXOS).map(([valor, s]) => ({ valor, label: s.label, cor: s.cor })),
-    ...(statusPersonalizados || [])
-  ];
+  ...Object.entries(STATUS_FIXOS).map(([valor, s]) => ({ valor, label: s.label, cor: s.cor })),
+  ...(statusPersonalizados || [])];
+
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
         className="h-7 text-xs border-slate-200 bg-white w-40"
-        onClick={(e) => { e.stopPropagation(); onClick && onClick(e); }}
-      >
+        onClick={(e) => {e.stopPropagation();onClick && onClick(e);}}>
+        
         <SelectValue />
       </SelectTrigger>
       <SelectContent onClick={(e) => e.stopPropagation()}>
-        {todosStatus.map(s => (
-          <SelectItem key={s.valor} value={s.valor}>
+        {todosStatus.map((s) =>
+        <SelectItem key={s.valor} value={s.valor}>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.cor }} />
               {s.label}
             </div>
           </SelectItem>
-        ))}
+        )}
       </SelectContent>
-    </Select>
-  );
+    </Select>);
+
 }
 
 export default function Atendimentos() {
@@ -142,7 +142,7 @@ export default function Atendimentos() {
   // Filtra localmente: registros da unidade atual + legados (sem unidade_id) apenas no Auto Portas
   const atendimentos = useMemo(() => {
     if (!unidadeAtual) return atendimentosBrutos;
-    return atendimentosBrutos.filter(a => {
+    return atendimentosBrutos.filter((a) => {
       if (a.unidade_id) return a.unidade_id === unidadeAtual.id;
       return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
     });
@@ -173,17 +173,17 @@ export default function Atendimentos() {
   });
 
   const handleExcluirEmMassa = async () => {
-    await Promise.all(selecionados.map(id => deleteMutation.mutateAsync(id)));
+    await Promise.all(selecionados.map((id) => deleteMutation.mutateAsync(id)));
     toast.success(`${selecionados.length} atendimento(s) excluído(s)!`);
     setSelecionados([]);
   };
 
-  const filteredAtendimentos = atendimentos.filter(a => {
-    const matchSearch = 
-      a.placa?.toLowerCase().includes(search.toLowerCase()) ||
-      a.modelo?.toLowerCase().includes(search.toLowerCase()) ||
-      a.cliente_nome?.toLowerCase().includes(search.toLowerCase()) ||
-      (a.numero_os && String(a.numero_os).includes(search));
+  const filteredAtendimentos = atendimentos.filter((a) => {
+    const matchSearch =
+    a.placa?.toLowerCase().includes(search.toLowerCase()) ||
+    a.modelo?.toLowerCase().includes(search.toLowerCase()) ||
+    a.cliente_nome?.toLowerCase().includes(search.toLowerCase()) ||
+    a.numero_os && String(a.numero_os).includes(search);
     const matchStatus = statusFilter === 'all' || a.status === statusFilter;
 
     const dataAtendimento = a.data_entrada ? new Date(a.data_entrada) : new Date(a.created_date);
@@ -193,9 +193,9 @@ export default function Atendimentos() {
     let matchProduto = true;
     if (produtoFilter) {
       const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
-      matchProduto = todosItens.some(item =>
-        item.produto_id === produtoFilter ||
-        item.nome?.toLowerCase().includes(produtoFilter.toLowerCase())
+      matchProduto = todosItens.some((item) =>
+      item.produto_id === produtoFilter ||
+      item.nome?.toLowerCase().includes(produtoFilter.toLowerCase())
       );
     }
 
@@ -206,30 +206,30 @@ export default function Atendimentos() {
   const atendimentosPaginados = filteredAtendimentos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
 
   const todosStatusOpcoes = [
-    ...Object.entries(STATUS_FIXOS).map(([valor, s]) => ({ valor, label: s.label, cor: s.cor })),
-    ...statusPersonalizados
-  ];
+  ...Object.entries(STATUS_FIXOS).map(([valor, s]) => ({ valor, label: s.label, cor: s.cor })),
+  ...statusPersonalizados];
+
 
   // Checkboxes
-  const todosSelecionados = filteredAtendimentos.length > 0 && filteredAtendimentos.every(a => selecionados.includes(a.id));
+  const todosSelecionados = filteredAtendimentos.length > 0 && filteredAtendimentos.every((a) => selecionados.includes(a.id));
   const algunsSelecionados = selecionados.length > 0 && !todosSelecionados;
 
   const toggleSelecionado = (id, e) => {
     e.stopPropagation();
-    setSelecionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setSelecionados((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
 
   const toggleTodos = () => {
     if (todosSelecionados) {
       setSelecionados([]);
     } else {
-      setSelecionados(filteredAtendimentos.map(a => a.id));
+      setSelecionados(filteredAtendimentos.map((a) => a.id));
     }
   };
 
   const handleAlterarStatusEmMassa = async () => {
     if (!statusEmMassa || selecionados.length === 0) return;
-    await Promise.all(selecionados.map(id => updateStatusMutation.mutateAsync({ id, status: statusEmMassa })));
+    await Promise.all(selecionados.map((id) => updateStatusMutation.mutateAsync({ id, status: statusEmMassa })));
     toast.success(`Status de ${selecionados.length} atendimento(s) atualizado!`);
     setSelecionados([]);
     setStatusEmMassa('');
@@ -255,7 +255,7 @@ export default function Atendimentos() {
           atendimento_id: atendimento.id,
           data_lancamento: new Date().toISOString(),
           categoria: 'estorno',
-          estornado: false,
+          estornado: false
         });
       }
     }
@@ -282,7 +282,7 @@ export default function Atendimentos() {
   const enviarWhatsApp = (atendimento, e) => {
     e.stopPropagation();
     const telefone = atendimento.cliente_telefone?.replace(/\D/g, '');
-    if (!telefone) { toast.error('Cliente sem telefone cadastrado'); return; }
+    if (!telefone) {toast.error('Cliente sem telefone cadastrado');return;}
     const msg = `*Olá ${atendimento.cliente_nome || ''}!*\n\nSeu atendimento foi *finalizado* com sucesso! ✅\n\n🚗 *Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n💰 *Valor:* R$ ${atendimento.valor_final_pago?.toFixed(2) || atendimento.valor_final?.toFixed(2) || '0.00'}\n\nObrigado pela preferência! 🙏`;
     window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
@@ -317,27 +317,27 @@ export default function Atendimentos() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <Input
-              placeholder="Buscar por placa, modelo, cliente ou Nº OS..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPagina(1); }}
-              className="pl-10 h-12"
-            />
+                placeholder="Buscar por placa, modelo, cliente ou Nº OS..."
+                value={search}
+                onChange={(e) => {setSearch(e.target.value);setPagina(1);}}
+                className="pl-10 h-12" />
+              
           </div>
-          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPagina(1); }}>
+          <Select value={statusFilter} onValueChange={(v) => {setStatusFilter(v);setPagina(1);}}>
             <SelectTrigger className="w-full sm:w-56 h-12">
               <Filter className="w-4 h-4 mr-2 flex-shrink-0" />
               <SelectValue placeholder="Todos os status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os status</SelectItem>
-              {todosStatusOpcoes.map(s => (
+              {todosStatusOpcoes.map((s) =>
                 <SelectItem key={s.valor} value={s.valor}>
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full" style={{ background: s.cor }} />
                     {s.label}
                   </div>
                 </SelectItem>
-              ))}
+                )}
             </SelectContent>
           </Select>
         </div>
@@ -346,11 +346,11 @@ export default function Atendimentos() {
         <div className="relative mt-3">
           <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
-            placeholder="Filtrar por produto/serviço..."
-            value={produtoFilter}
-            onChange={(e) => { setProdutoFilter(e.target.value); setPagina(1); }}
-            className="pl-10 h-10 text-sm"
-          />
+              placeholder="Filtrar por produto/serviço..."
+              value={produtoFilter}
+              onChange={(e) => {setProdutoFilter(e.target.value);setPagina(1);}}
+              className="pl-10 h-10 text-sm" />
+            
         </div>
 
         {/* Filtro por data */}
@@ -358,65 +358,65 @@ export default function Atendimentos() {
           <div className="flex items-center gap-2 flex-1">
             <Calendar className="w-4 h-4 text-slate-400 flex-shrink-0" />
             <Input
-              type="date"
-              value={dataInicio}
-              onChange={(e) => setDataInicio(e.target.value)}
-              className="h-10 text-sm"
-              placeholder="Data inicial"
-            />
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                className="h-10 text-sm"
+                placeholder="Data inicial" />
+              
           </div>
           <div className="flex items-center gap-2 flex-1">
             <span className="text-slate-400 text-sm flex-shrink-0">até</span>
             <Input
-              type="date"
-              value={dataFim}
-              onChange={(e) => setDataFim(e.target.value)}
-              className="h-10 text-sm"
-            />
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                className="h-10 text-sm" />
+              
           </div>
-          {(dataInicio || dataFim || produtoFilter) && (
-            <Button variant="ghost" size="sm" className="h-10 text-slate-500 px-2" onClick={() => { setDataInicio(''); setDataFim(''); setProdutoFilter(''); }}>
+          {(dataInicio || dataFim || produtoFilter) &&
+            <Button variant="ghost" size="sm" className="h-10 text-slate-500 px-2" onClick={() => {setDataInicio('');setDataFim('');setProdutoFilter('');}}>
               Limpar tudo
             </Button>
-          )}
+            }
         </div>
 
         {/* Barra de ação em massa */}
-        {filteredAtendimentos.length > 0 && (
+        {filteredAtendimentos.length > 0 &&
           <div className="flex items-center gap-3 mt-3 py-2 px-3 bg-white rounded-lg border border-slate-200">
             <Checkbox
               checked={todosSelecionados}
               onCheckedChange={toggleTodos}
-              className={algunsSelecionados ? 'data-[state=unchecked]:bg-slate-200' : ''}
-            />
+              className={algunsSelecionados ? 'data-[state=unchecked]:bg-slate-200' : ''} />
+            
             <span className="text-sm text-slate-600">
               {selecionados.length > 0 ? `${selecionados.length} selecionado(s)` : 'Selecionar todos'}
             </span>
 
-            {selecionados.length > 0 && (
-              <div className="flex items-center gap-2 ml-auto">
+            {selecionados.length > 0 &&
+            <div className="flex items-center gap-2 ml-auto">
                 <Tag className="w-4 h-4 text-slate-400 flex-shrink-0" />
                 <Select value={statusEmMassa} onValueChange={setStatusEmMassa}>
                   <SelectTrigger className="h-8 text-sm w-48">
                     <SelectValue placeholder="Alterar status para..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {todosStatusOpcoes.map(s => (
-                      <SelectItem key={s.valor} value={s.valor}>
+                    {todosStatusOpcoes.map((s) =>
+                  <SelectItem key={s.valor} value={s.valor}>
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full" style={{ background: s.cor }} />
                           {s.label}
                         </div>
                       </SelectItem>
-                    ))}
+                  )}
                   </SelectContent>
                 </Select>
                 <Button
-                  size="sm"
-                  onClick={handleAlterarStatusEmMassa}
-                  disabled={!statusEmMassa || updateStatusMutation.isPending}
-                  className="bg-orange-500 hover:bg-orange-600 h-8"
-                >
+                size="sm"
+                onClick={handleAlterarStatusEmMassa}
+                disabled={!statusEmMassa || updateStatusMutation.isPending}
+                className="bg-orange-500 hover:bg-orange-600 h-8">
+                
                   {updateStatusMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Aplicar'}
                 </Button>
                 <AlertDialog>
@@ -436,35 +436,35 @@ export default function Atendimentos() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={handleExcluirEmMassa}
-                        className="bg-red-500 hover:bg-red-600"
-                      >
+                      onClick={handleExcluirEmMassa}
+                      className="bg-red-500 hover:bg-red-600">
+                      
                         Excluir
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
                 <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 text-slate-500"
-                  onClick={() => setSelecionados([])}
-                >
+                size="sm"
+                variant="ghost"
+                className="h-8 text-slate-500"
+                onClick={() => setSelecionados([])}>
+                
                   Cancelar
                 </Button>
               </div>
-            )}
+            }
           </div>
-        )}
+          }
       </div>
 
       {/* List */}
       <div className="max-w-4xl mx-auto px-4 pb-8">
-        {isLoading ? (
+        {isLoading ?
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-          </div>
-        ) : filteredAtendimentos.length === 0 ? (
+          </div> :
+          filteredAtendimentos.length === 0 ?
           <Card className="py-12">
             <CardContent className="text-center">
               <FileText className="w-12 h-12 mx-auto mb-4 text-slate-300" />
@@ -476,47 +476,47 @@ export default function Atendimentos() {
                 </Button>
               </Link>
             </CardContent>
-          </Card>
-        ) : (
+          </Card> :
+
           <>
           <div className="space-y-3">
             {atendimentosPaginados.map((atendimento, index) => {
-              const isSelecionado = selecionados.includes(atendimento.id);
-              // Faturado = pendente de recebimento, não bloqueia o atendimento como pago
-              const pago = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial';
-              const faturado = atendimento.status_pagamento === 'faturado';
-              return (
-                <motion.div
-                  key={atendimento.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.03 }}
-                >
+                const isSelecionado = selecionados.includes(atendimento.id);
+                // Faturado = pendente de recebimento, não bloqueia o atendimento como pago
+                const pago = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial';
+                const faturado = atendimento.status_pagamento === 'faturado';
+                return (
+                  <motion.div
+                    key={atendimento.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.03 }}>
+                    
                   <Card
-                    className={`transition-all border-2 ${
-                      pago
-                        ? 'border-green-200 bg-green-50/60'
-                        : faturado
-                        ? 'border-orange-200 bg-orange-50/60'
-                        : isSelecionado
-                        ? 'border-orange-300 bg-orange-50'
-                        : 'hover:shadow-lg hover:border-orange-200 cursor-pointer'
-                    }`}
-                    onClick={() => !isSelecionado && navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
-                  >
+                      className={`transition-all border-2 ${
+                      pago ?
+                      'border-green-200 bg-green-50/60' :
+                      faturado ?
+                      'border-orange-200 bg-orange-50/60' :
+                      isSelecionado ?
+                      'border-orange-300 bg-orange-50' :
+                      'hover:shadow-lg hover:border-orange-200 cursor-pointer'}`
+                      }
+                      onClick={() => !isSelecionado && navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}>
+                      
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
                         {/* Checkbox */}
-                        {!pago && (
+                        {!pago &&
                           <div onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                               checked={isSelecionado}
                               onCheckedChange={(checked) => {
-                                setSelecionados(prev => checked ? [...prev, atendimento.id] : prev.filter(x => x !== atendimento.id));
-                              }}
-                            />
+                                setSelecionados((prev) => checked ? [...prev, atendimento.id] : prev.filter((x) => x !== atendimento.id));
+                              }} />
+                            
                           </div>
-                        )}
+                          }
 
                         {/* Ícone */}
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${pago ? 'bg-green-100' : faturado ? 'bg-orange-100' : 'bg-slate-100'}`}>
@@ -526,56 +526,56 @@ export default function Atendimentos() {
                         {/* Dados */}
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                            {atendimento.numero_os && (
+                            {atendimento.numero_os &&
                               <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
                                 OS #{String(atendimento.numero_os).padStart(6, '0')}
                               </span>
-                            )}
+                              }
                             <h3 className="font-bold text-slate-800">{atendimento.placa}</h3>
                             <StatusBadge statusValue={atendimento.status} statusPersonalizados={statusPersonalizados} />
-                            {pago && (
+                            {pago &&
                               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-600 text-white">
                                 <CheckCircle2 className="w-3 h-3" /> Pago
                               </span>
-                            )}
-                            {faturado && (
+                              }
+                            {faturado &&
                               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-500 text-white">
                                 A Receber
                               </span>
-                            )}
+                              }
                           </div>
                           <p className="text-sm text-slate-600 truncate">
                             {atendimento.marca} {atendimento.modelo} {atendimento.ano && `• ${atendimento.ano}`}
                           </p>
-                          {atendimento.cliente_nome && (
+                          {atendimento.cliente_nome &&
                             <p className="text-xs text-slate-500">{atendimento.cliente_nome}</p>
-                          )}
+                            }
 
                           {/* Status select — apenas se não pago */}
-                          {!pago && (
+                          {!pago &&
                             <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                               <StatusSelect
                                 value={atendimento.status}
                                 onChange={(novoStatus) => handleAlterarStatusIndividual(atendimento.id, novoStatus, atendimento.status)}
-                                statusPersonalizados={statusPersonalizados}
-                              />
+                                statusPersonalizados={statusPersonalizados} />
+                              
                             </div>
-                          )}
+                            }
 
                           {/* Comprovante para concluído não pago */}
-                          {!pago && atendimento.status === 'concluido' && (
+                          {!pago && atendimento.status === 'concluido' &&
                             <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                              <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => { e.stopPropagation(); setReciboAtendimento(atendimento); }}>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => {e.stopPropagation();setReciboAtendimento(atendimento);}}>
                                 <FileCheck className="w-3 h-3 mr-1" /> Comprovante
                               </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50 px-2" onClick={(e) => enviarWhatsApp(atendimento, e)}>
                                 <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
                               </Button>
                             </div>
-                          )}
+                            }
 
                           {/* Ações para atendimento pago */}
-                          {pago && (
+                          {pago &&
                             <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -601,14 +601,14 @@ export default function Atendimentos() {
                               <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={(e) => imprimirAtendimento(atendimento, e)}>
                               <Printer className="w-3 h-3 mr-1" /> Visualizar OS
                               </Button>
-                              <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => { e.stopPropagation(); setReciboAtendimento(atendimento); }}>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => {e.stopPropagation();setReciboAtendimento(atendimento);}}>
                                 <FileCheck className="w-3 h-3 mr-1" /> Comprovante
                               </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50 px-2" onClick={(e) => enviarWhatsApp(atendimento, e)}>
                                 <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
                               </Button>
                             </div>
-                          )}
+                            }
                         </div>
 
                         {/* Valor e data */}
@@ -618,45 +618,45 @@ export default function Atendimentos() {
                           </p>
                           <p className="text-xs text-slate-500 flex items-center gap-1 justify-end">
                             <Calendar className="w-3 h-3" />
-                            {atendimento.data_entrada
-                              ? format(new Date(atendimento.data_entrada), "dd/MM/yyyy", { locale: ptBR })
-                              : format(new Date(atendimento.created_date), "dd/MM/yyyy", { locale: ptBR })
-                            }
+                            {atendimento.data_entrada ?
+                              format(new Date(atendimento.data_entrada), "dd/MM/yyyy", { locale: ptBR }) :
+                              format(new Date(atendimento.created_date), "dd/MM/yyyy", { locale: ptBR })
+                              }
                           </p>
-                          {pago && atendimento.data_pagamento && (
+                          {pago && atendimento.data_pagamento &&
                             <p className="text-xs text-green-600 font-medium mt-0.5">
                               Pago: {format(new Date(atendimento.data_pagamento), "dd/MM", { locale: ptBR })}
                             </p>
-                          )}
-                          {atendimento.numero_os && (
+                            }
+                          {atendimento.numero_os &&
                             <p className="text-xs font-mono text-slate-400 mt-0.5">
                               #{String(atendimento.numero_os).padStart(6, '0')}
                             </p>
-                          )}
+                            }
                         </div>
 
-                        {!pago && (
+                        {!pago &&
                           <ArrowRight
                             className="w-5 h-5 text-slate-400 flex-shrink-0 hidden sm:block"
-                            onClick={() => navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))}
-                          />
-                        )}
+                            onClick={() => navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))} />
+
+                          }
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
-              );
-            })}
+                </motion.div>);
+
+              })}
           </div>
           <Paginacao
-            paginaAtual={pagina}
-            totalPaginas={totalPaginas}
-            onMudar={(p) => { setPagina(p); window.scrollTo(0, 0); }}
-            totalRegistros={filteredAtendimentos.length}
-            porPagina={POR_PAGINA}
-          />
+              paginaAtual={pagina}
+              totalPaginas={totalPaginas}
+              onMudar={(p) => {setPagina(p);window.scrollTo(0, 0);}}
+              totalRegistros={filteredAtendimentos.length}
+              porPagina={POR_PAGINA} />
+            
           </>
-        )}
+          }
       </div>
     </div>
 
@@ -664,13 +664,13 @@ export default function Atendimentos() {
     <Dialog open={!!reciboAtendimento} onOpenChange={(open) => !open && setReciboAtendimento(null)}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Comprovante de Serviço</DialogTitle>
+          <DialogTitle>FRAGA AUTO PORTAS</DialogTitle>
         </DialogHeader>
-        {reciboAtendimento && (
+        {reciboAtendimento &&
           <ReciboAtendimento atendimento={reciboAtendimento} config={config} />
-        )}
+          }
       </DialogContent>
     </Dialog>
-    </>
-  );
+    </>);
+
 }
