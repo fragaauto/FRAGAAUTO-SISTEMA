@@ -1,0 +1,9 @@
+{
+  "name": "FRAGA AUTO PORTAS - FRAGA TECH 01",
+  "site": {
+    "installCommand": "npm install",
+    "buildCommand": "npm run build",
+    "serveCommand": "npm run dev",
+    "outputDirectory": "./dist"
+  }
+}
