@@ -1,0 +1,52 @@
+{
+  "name": "RegistroRotina",
+  "type": "object",
+  "properties": {
+    "tarefa_id": {
+      "type": "string",
+      "description": "ID da TarefaRotina"
+    },
+    "tarefa_titulo": {
+      "type": "string",
+      "description": "T\u00edtulo da tarefa (cache)"
+    },
+    "funcao_id": {
+      "type": "string",
+      "description": "ID da fun\u00e7\u00e3o do funcion\u00e1rio"
+    },
+    "funcao_nome": {
+      "type": "string",
+      "description": "Nome da fun\u00e7\u00e3o (cache)"
+    },
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade"
+    },
+    "funcionario_email": {
+      "type": "string",
+      "description": "Email do funcion\u00e1rio que marcou como feita"
+    },
+    "funcionario_nome": {
+      "type": "string",
+      "description": "Nome do funcion\u00e1rio (cache)"
+    },
+    "data_execucao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de execu\u00e7\u00e3o (YYYY-MM-DD)"
+    },
+    "dia_semana": {
+      "type": "number",
+      "description": "Dia da semana (0=Dom...6=S\u00e1b)"
+    },
+    "concluida_em": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora exata da conclus\u00e3o"
+    }
+  },
+  "required": [
+    "tarefa_id",
+    "data_execucao"
+  ]
+}
