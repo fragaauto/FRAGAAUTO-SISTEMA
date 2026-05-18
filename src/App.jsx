@@ -10,6 +10,7 @@ import { UnidadeProvider } from '@/lib/UnidadeContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import GerenciarUnidades from './pages/GerenciarUnidades';
 import ControleEncomendas from './pages/ControleEncomendas';
+import RotinaDiaria from './pages/RotinaDiaria';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -63,6 +64,7 @@ const AuthenticatedApp = () => {
       ))}
       <Route path="/GerenciarUnidades" element={<LayoutWrapper currentPageName="GerenciarUnidades"><GerenciarUnidades /></LayoutWrapper>} />
       <Route path="/ControleEncomendas" element={<LayoutWrapper currentPageName="ControleEncomendas"><ControleEncomendas /></LayoutWrapper>} />
+      <Route path="/RotinaDiaria" element={<LayoutWrapper currentPageName="RotinaDiaria"><RotinaDiaria /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

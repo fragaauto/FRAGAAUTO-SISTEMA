@@ -1,0 +1,62 @@
+{
+  "name": "TarefaRotina",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade"
+    },
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo da tarefa"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o detalhada da tarefa"
+    },
+    "funcao_id": {
+      "type": "string",
+      "description": "ID da fun\u00e7\u00e3o do funcion\u00e1rio respons\u00e1vel"
+    },
+    "funcao_nome": {
+      "type": "string",
+      "description": "Nome da fun\u00e7\u00e3o (cache)"
+    },
+    "dias_semana": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "description": "Dias da semana (0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=S\u00e1b)"
+    },
+    "links": {
+      "type": "array",
+      "description": "Links de ferramentas/planilhas para esta tarefa",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ordem": {
+      "type": "number",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    },
+    "ativa": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "titulo",
+    "funcao_id",
+    "dias_semana"
+  ]
+}

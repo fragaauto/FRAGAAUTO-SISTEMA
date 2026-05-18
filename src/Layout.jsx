@@ -48,6 +48,7 @@ const NAV_ITEMS = [
   { name: 'Base de Conhecimento IA', icon: Sparkles, path: 'BaseConhecimentoIA', modulo: null, apenasAdmin: true },
   { name: 'Treinamentos', icon: FileText, path: 'ManualTreinamento', modulo: null },
   { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas', modulo: null },
+  { name: 'Rotina Diária', icon: ClipboardCheck, path: 'RotinaDiaria', modulo: null },
 ];
 
 

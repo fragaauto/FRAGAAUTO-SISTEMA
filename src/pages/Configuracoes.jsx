@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
-import { Building2, DollarSign, ClipboardCheck, TrendingUp, Plug, Package, Layers } from 'lucide-react';
+import { Building2, DollarSign, ClipboardCheck, TrendingUp, Plug, Package, Layers, ListTodo } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import TabEmpresa from '@/components/configuracoes/TabEmpresa';
@@ -11,6 +11,7 @@ import TabFinanceiro from '@/components/configuracoes/TabFinanceiro';
 import TabAtendimento from '@/components/configuracoes/TabAtendimento';
 import TabMarketing from '@/components/configuracoes/TabMarketing';
 import TabIntegracoes from '@/components/configuracoes/TabIntegracoes';
+import TabRotina from '@/components/configuracoes/TabRotina';
 import { TODOS_MODULOS } from '@/components/modulos';
 import { useUnidade } from '@/lib/UnidadeContext';
 
@@ -192,6 +193,9 @@ export default function Configuracoes() {
           <TabsTrigger value="modulos" className="flex items-center gap-1.5">
             <Package className="w-4 h-4" />Módulos
           </TabsTrigger>
+          <TabsTrigger value="rotina" className="flex items-center gap-1.5">
+            <ListTodo className="w-4 h-4" />Rotina
+          </TabsTrigger>
         </TabsList>
 
         <div className="mb-4">
@@ -226,6 +230,10 @@ export default function Configuracoes() {
 
         <TabsContent value="modulos">
           <ModulosTab formData={formData} onChange={handleChange} onSave={handleSave} isSaving={saveMutation.isPending} />
+        </TabsContent>
+
+        <TabsContent value="rotina">
+          <TabRotina />
         </TabsContent>
       </Tabs>
     </div>
