@@ -137,7 +137,7 @@ export default function FluxoCaixaTab() {
     : null;
 
   const filtrados = lancamentos.filter(l => {
-    const data = l.data_lancamento || '';
+    const data = l.data_lancamento || l.created_date || '';
     const dentroPeriodo = periodo === 'custom'
       ? (!dataInicio || data >= dataInicio) && (!dataFim || data <= dataFim)
       : data >= dataInicio;
@@ -151,7 +151,7 @@ export default function FluxoCaixaTab() {
 
   // Saldo anterior: todos os lançamentos ANTES do início do período filtrado
   const anteriores = dataInicio
-    ? lancamentos.filter(l => (l.data_lancamento || '') < dataInicio)
+    ? lancamentos.filter(l => (l.data_lancamento || l.created_date || '') < dataInicio)
     : [];
   const saldoAnterior = anteriores.reduce((s, l) => s + (l.tipo === 'entrada' ? (l.valor || 0) : -(l.valor || 0)), 0);
   const saldoFinal = saldoAnterior + saldo;
