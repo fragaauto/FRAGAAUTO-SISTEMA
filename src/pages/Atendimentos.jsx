@@ -133,7 +133,7 @@ export default function Atendimentos() {
 
   const { data: atendimentosBrutos = [], isLoading } = useQuery({
     queryKey: ['atendimentos'],
-    queryFn: () => base44.entities.Atendimento.list('-created_date'),
+    queryFn: () => base44.entities.Atendimento.list('-created_date', 2000),
     staleTime: 2 * 60 * 1000
   });
 
