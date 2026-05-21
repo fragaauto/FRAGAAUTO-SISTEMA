@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -131,22 +131,59 @@ export default function Atendimentos() {
   const [reciboAtendimento, setReciboAtendimento] = useState(null);
   const POR_PAGINA = 20;
 
+  // Busca server-side por data para suportar anos de histórico
   const { data: atendimentosBrutos = [], isLoading } = useQuery({
-    queryKey: ['atendimentos'],
-    queryFn: () => base44.entities.Atendimento.list('-created_date', 2000),
+    queryKey: ['atendimentos', dataInicio, dataFim],
+    queryFn: async () => {
+      if (dataInicio || dataFim) {
+        const dateFilter = {};
+        if (dataInicio) dateFilter.$gte = dataInicio + 'T00:00:00.000Z';
+        if (dataFim) dateFilter.$lte = dataFim + 'T23:59:59.000Z';
+        return base44.entities.Atendimento.filter({ data_entrada: dateFilter }, '-data_entrada', 2000);
+      }
+      // Sem filtro de data: últimos 90 dias
+      const noventa = new Date();
+      noventa.setDate(noventa.getDate() - 90);
+      return base44.entities.Atendimento.filter(
+        { data_entrada: { $gte: noventa.toISOString() } },
+        '-data_entrada',
+        2000
+      );
+    },
     staleTime: 2 * 60 * 1000
   });
+
+  // Busca específica por número de OS quando não encontrado nos resultados atuais
+  const [buscandoOS, setBuscandoOS] = useState(false);
+  const [resultadoOSExtra, setResultadoOSExtra] = useState([]);
+
+  const buscarOSEspecifica = async (numeroOS) => {
+    if (!numeroOS || isNaN(numeroOS)) return;
+    setBuscandoOS(true);
+    try {
+      const resultado = await base44.entities.Atendimento.filter({ numero_os: parseInt(numeroOS) }, '-created_date', 10);
+      setResultadoOSExtra(resultado);
+    } catch (e) {
+      setResultadoOSExtra([]);
+    }
+    setBuscandoOS(false);
+  };
 
   const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
 
   // Filtra localmente: registros da unidade atual + legados (sem unidade_id) apenas no Auto Portas
   const atendimentos = useMemo(() => {
-    if (!unidadeAtual) return atendimentosBrutos;
-    return atendimentosBrutos.filter((a) => {
+    const base = [
+      ...atendimentosBrutos,
+      // Inclui resultados de busca por OS específica que não estejam já na lista
+      ...resultadoOSExtra.filter(r => !atendimentosBrutos.find(a => a.id === r.id))
+    ];
+    if (!unidadeAtual) return base;
+    return base.filter((a) => {
       if (a.unidade_id) return a.unidade_id === unidadeAtual.id;
       return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
     });
-  }, [atendimentosBrutos, unidadeAtual]);
+  }, [atendimentosBrutos, resultadoOSExtra, unidadeAtual]);
 
 
 
@@ -178,12 +215,22 @@ export default function Atendimentos() {
     setSelecionados([]);
   };
 
+  // Quando busca é um número de OS e não há resultados, buscar server-side
+  const osNaoEncontrada = search && !isNaN(search) && atendimentos.every(a => !String(a.numero_os).includes(search));
+  useEffect(() => {
+    if (osNaoEncontrada && search.length >= 2) {
+      buscarOSEspecifica(search);
+    } else {
+      setResultadoOSExtra([]);
+    }
+  }, [osNaoEncontrada, search]);
+
   const filteredAtendimentos = atendimentos.filter((a) => {
-    const matchSearch =
+    const matchSearch = !search ||
     a.placa?.toLowerCase().includes(search.toLowerCase()) ||
     a.modelo?.toLowerCase().includes(search.toLowerCase()) ||
     a.cliente_nome?.toLowerCase().includes(search.toLowerCase()) ||
-    a.numero_os && String(a.numero_os).includes(search);
+    (a.numero_os && String(a.numero_os).includes(search));
     const matchStatus = statusFilter === 'all' || a.status === statusFilter;
 
     const dataAtendimento = a.data_entrada ? new Date(a.data_entrada) : new Date(a.created_date);
@@ -313,7 +360,14 @@ export default function Atendimentos() {
 
       {/* Filters */}
       <div className="max-w-4xl mx-auto px-4 py-4">
-        <div className="flex flex-col sm:flex-row gap-3">
+      {/* Aviso sobre período carregado */}
+      {!dataInicio && !dataFim && (
+        <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex items-center gap-2">
+          <Calendar className="w-4 h-4 flex-shrink-0" />
+          Mostrando atendimentos dos últimos 90 dias. Use o filtro de data para buscar períodos anteriores (até 3+ anos).
+        </div>
+      )}
+      <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <Input
