@@ -46,7 +46,11 @@ export default function KitsTab() {
 
   const addFerramenta = (f) => {
     if (form.ferramentas.find(x => x.ferramenta_id === f.id)) return;
-    setForm(p => ({ ...p, ferramentas: [...p.ferramentas, { ferramenta_id: f.id, ferramenta_nome: f.nome, ferramenta_codigo: f.codigo }] }));
+    setForm(p => ({ ...p, ferramentas: [...p.ferramentas, { ferramenta_id: f.id, ferramenta_nome: f.nome, ferramenta_codigo: f.codigo, numero_lacre: '' }] }));
+  };
+
+  const updateLacre = (ferramenta_id, valor) => {
+    setForm(p => ({ ...p, ferramentas: p.ferramentas.map(x => x.ferramenta_id === ferramenta_id ? { ...x, numero_lacre: valor } : x) }));
   };
 
   const removeFerramenta = (id) => setForm(p => ({ ...p, ferramentas: p.ferramentas.filter(x => x.ferramenta_id !== id) }));
@@ -80,7 +84,10 @@ export default function KitsTab() {
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {(k.ferramentas || []).map(f => (
-                    <span key={f.ferramenta_id} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{f.ferramenta_nome}</span>
+                    <span key={f.ferramenta_id} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      {f.ferramenta_nome}
+                      {f.numero_lacre && <span className="font-mono text-slate-400">#{f.numero_lacre}</span>}
+                    </span>
                   ))}
                 </div>
                 {k.responsavel_atual_nome && <p className="text-xs text-slate-500 mt-1">👤 {k.responsavel_atual_nome}</p>}
@@ -125,12 +132,19 @@ export default function KitsTab() {
             </div>
             <div>
               <Label>Ferramentas do Kit</Label>
-              <div className="mt-1 mb-2 flex flex-wrap gap-1">
+              <div className="mt-1 mb-2 space-y-1">
                 {form.ferramentas.map(f => (
-                  <span key={f.ferramenta_id} className="flex items-center gap-1 text-xs bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full">
-                    {f.ferramenta_nome}
-                    <button onClick={() => removeFerramenta(f.ferramenta_id)}><X className="w-3 h-3" /></button>
-                  </span>
+                  <div key={f.ferramenta_id} className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-2 py-1">
+                    <span className="text-xs text-orange-700 flex-1 font-medium">{f.ferramenta_nome}</span>
+                    <input
+                      type="text"
+                      placeholder="Nº Lacre"
+                      value={f.numero_lacre || ''}
+                      onChange={e => updateLacre(f.ferramenta_id, e.target.value)}
+                      className="text-xs border border-orange-200 rounded px-2 py-0.5 w-24 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400"
+                    />
+                    <button onClick={() => removeFerramenta(f.ferramenta_id)}><X className="w-3 h-3 text-orange-500" /></button>
+                  </div>
                 ))}
               </div>
               <Input placeholder="Buscar ferramenta..." value={ferrSearch} onChange={e => setFerrSearch(e.target.value)} className="mb-1" />
