@@ -45,15 +45,14 @@ export default function KitsTab() {
   };
 
   const addFerramenta = (f) => {
-    if (form.ferramentas.find(x => x.ferramenta_id === f.id)) return;
-    setForm(p => ({ ...p, ferramentas: [...p.ferramentas, { ferramenta_id: f.id, ferramenta_nome: f.nome, ferramenta_codigo: f.codigo, numero_lacre: '' }] }));
+    setForm(p => ({ ...p, ferramentas: [...p.ferramentas, { _uid: Date.now() + Math.random(), ferramenta_id: f.id, ferramenta_nome: f.nome, ferramenta_codigo: f.codigo, numero_lacre: '' }] }));
   };
 
-  const updateLacre = (ferramenta_id, valor) => {
-    setForm(p => ({ ...p, ferramentas: p.ferramentas.map(x => x.ferramenta_id === ferramenta_id ? { ...x, numero_lacre: valor } : x) }));
+  const updateLacre = (uid, valor) => {
+    setForm(p => ({ ...p, ferramentas: p.ferramentas.map(x => x._uid === uid ? { ...x, numero_lacre: valor } : x) }));
   };
 
-  const removeFerramenta = (id) => setForm(p => ({ ...p, ferramentas: p.ferramentas.filter(x => x.ferramenta_id !== id) }));
+  const removeFerramenta = (uid) => setForm(p => ({ ...p, ferramentas: p.ferramentas.filter(x => x._uid !== uid) }));
 
   const filtered = kits.filter(k => !search || k.nome?.toLowerCase().includes(search.toLowerCase()) || k.codigo?.toLowerCase().includes(search.toLowerCase()));
   const ferrFiltradas = ferramentas.filter(f => !ferrSearch || f.nome?.toLowerCase().includes(ferrSearch.toLowerCase()) || f.codigo?.toLowerCase().includes(ferrSearch.toLowerCase()));
@@ -133,17 +132,17 @@ export default function KitsTab() {
             <div>
               <Label>Ferramentas do Kit</Label>
               <div className="mt-1 mb-2 space-y-1">
-                {form.ferramentas.map(f => (
-                  <div key={f.ferramenta_id} className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-2 py-1">
+                {form.ferramentas.map((f, idx) => (
+                  <div key={f._uid || idx} className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-2 py-1">
                     <span className="text-xs text-orange-700 flex-1 font-medium">{f.ferramenta_nome}</span>
                     <input
                       type="text"
                       placeholder="Nº Lacre"
                       value={f.numero_lacre || ''}
-                      onChange={e => updateLacre(f.ferramenta_id, e.target.value)}
+                      onChange={e => updateLacre(f._uid || idx, e.target.value)}
                       className="text-xs border border-orange-200 rounded px-2 py-0.5 w-24 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400"
                     />
-                    <button onClick={() => removeFerramenta(f.ferramenta_id)}><X className="w-3 h-3 text-orange-500" /></button>
+                    <button onClick={() => removeFerramenta(f._uid || idx)}><X className="w-3 h-3 text-orange-500" /></button>
                   </div>
                 ))}
               </div>
