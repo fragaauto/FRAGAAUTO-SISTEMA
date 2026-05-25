@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Pencil, Trash2, Package, X } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Package, X, Copy } from 'lucide-react';
 
 const STATUS_COLORS = {
   'Disponível': 'bg-green-100 text-green-700 border-green-200',
@@ -38,6 +38,11 @@ export default function KitsTab() {
 
   const openNew = () => { setForm({ codigo: '', nome: '', ferramentas: [], responsavel_atual_id: '', responsavel_atual_nome: '', status: 'Disponível' }); setEditId(null); setModal(true); };
   const openEdit = (k) => { setForm({ ...k, ferramentas: k.ferramentas || [] }); setEditId(k.id); setModal(true); };
+  const duplicar = (k) => {
+    setForm({ codigo: k.codigo ? k.codigo + '-COPIA' : '', nome: k.nome + ' (Cópia)', ferramentas: k.ferramentas || [], responsavel_atual_id: '', responsavel_atual_nome: '', status: 'Disponível' });
+    setEditId(null);
+    setModal(true);
+  };
 
   const addFerramenta = (f) => {
     if (form.ferramentas.find(x => x.ferramenta_id === f.id)) return;
@@ -81,6 +86,7 @@ export default function KitsTab() {
                 {k.responsavel_atual_nome && <p className="text-xs text-slate-500 mt-1">👤 {k.responsavel_atual_nome}</p>}
               </div>
               <div className="flex gap-1">
+                <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-400 hover:text-blue-600" title="Duplicar kit" onClick={() => duplicar(k)}><Copy className="w-4 h-4" /></Button>
                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(k)}><Pencil className="w-4 h-4" /></Button>
                 <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-600" onClick={() => { if (confirm('Excluir?')) deleteMutation.mutate(k.id); }}><Trash2 className="w-4 h-4" /></Button>
               </div>
