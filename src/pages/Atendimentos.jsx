@@ -139,16 +139,32 @@ export default function Atendimentos() {
         const dateFilter = {};
         if (dataInicio) dateFilter.$gte = dataInicio + 'T00:00:00.000Z';
         if (dataFim) dateFilter.$lte = dataFim + 'T23:59:59.000Z';
-        return base44.entities.Atendimento.filter({ data_entrada: dateFilter }, '-data_entrada', 2000);
+        // Busca por data_entrada E por created_date (para registros sem data_entrada)
+        const [porDataEntrada, porCreatedDate] = await Promise.all([
+          base44.entities.Atendimento.filter({ data_entrada: dateFilter }, '-data_entrada', 2000),
+          base44.entities.Atendimento.filter({ created_date: dateFilter }, '-created_date', 500),
+        ]);
+        const ids = new Set(porDataEntrada.map(a => a.id));
+        return [...porDataEntrada, ...porCreatedDate.filter(a => !ids.has(a.id))];
       }
       // Sem filtro de data: últimos 90 dias
       const noventa = new Date();
       noventa.setDate(noventa.getDate() - 90);
-      return base44.entities.Atendimento.filter(
-        { data_entrada: { $gte: noventa.toISOString() } },
-        '-data_entrada',
-        2000
-      );
+      // Busca registros com data_entrada E registros sem data_entrada (criados recentemente via API/agente)
+      const [porDataEntrada, porCreatedDate] = await Promise.all([
+        base44.entities.Atendimento.filter(
+          { data_entrada: { $gte: noventa.toISOString() } },
+          '-data_entrada',
+          2000
+        ),
+        base44.entities.Atendimento.filter(
+          { created_date: { $gte: noventa.toISOString() } },
+          '-created_date',
+          500
+        ),
+      ]);
+      const ids = new Set(porDataEntrada.map(a => a.id));
+      return [...porDataEntrada, ...porCreatedDate.filter(a => !ids.has(a.id))];
     },
     staleTime: 2 * 60 * 1000
   });
