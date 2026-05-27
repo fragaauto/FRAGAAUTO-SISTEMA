@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -118,6 +118,8 @@ function StatusSelect({ value, onChange, statusPersonalizados, onClick }) {
 
 export default function Atendimentos() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const vendaDiretaFilter = searchParams.get('venda_direta') === 'true';
   const queryClient = useQueryClient();
   const { unidadeAtual, filtroUnidade } = useUnidade();
   const [search, setSearch] = useState('');
@@ -262,7 +264,8 @@ export default function Atendimentos() {
       );
     }
 
-    return matchSearch && matchStatus && matchDataInicio && matchDataFim && matchProduto;
+    const matchVendaDireta = !vendaDiretaFilter || a.venda_direta === true;
+    return matchSearch && matchStatus && matchDataInicio && matchDataFim && matchProduto && matchVendaDireta;
   });
 
   const totalPaginas = Math.ceil(filteredAtendimentos.length / POR_PAGINA);
@@ -354,14 +357,14 @@ export default function Atendimentos() {
     <>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
       {/* Menu de abas */}
-      <MenuAtendimento currentPath="Atendimentos" />
+      <MenuAtendimento currentPath={vendaDiretaFilter ? 'Atendimentos?venda_direta=true' : 'Atendimentos'} />
       
       {/* Header */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Atendimentos</h1>
+              <h1 className="text-2xl font-bold text-slate-800">{vendaDiretaFilter ? 'Vendas Diretas' : 'Atendimentos'}</h1>
               <p className="text-slate-500">{atendimentos.length} registros</p>
             </div>
             <Link to={createPageUrl('NovoAtendimento')}>

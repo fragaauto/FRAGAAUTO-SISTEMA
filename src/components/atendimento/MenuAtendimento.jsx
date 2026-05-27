@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -15,6 +16,8 @@ const ABAS_CONFIG = [
 ];
 
 export default function MenuAtendimento({ currentPath }) {
+  const location = useLocation();
+  const currentFullPath = location.pathname.replace('/', '') + location.search;
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me()
@@ -33,7 +36,7 @@ export default function MenuAtendimento({ currentPath }) {
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex gap-1 overflow-x-auto">
             {ABAS_CONFIG.map(aba => {
-              const isActive = currentPath === aba.path;
+              const isActive = currentFullPath === aba.path || currentPath === aba.path;
               const Icon = aba.icon;
               return (
                 <Link
