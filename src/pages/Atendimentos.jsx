@@ -604,7 +604,7 @@ export default function Atendimentos() {
                                 OS #{String(atendimento.numero_os).padStart(6, '0')}
                               </span>
                               }
-                            <h3 className="font-bold text-slate-800">{atendimento.placa}</h3>
+                            <h3 className="font-bold text-slate-800">{atendimento.placa || (atendimento.venda_direta ? '🛒 Venda Direta' : '—')}</h3>
                             <StatusBadge statusValue={atendimento.status} statusPersonalizados={statusPersonalizados} />
                             {pago &&
                               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-600 text-white">
@@ -618,7 +618,7 @@ export default function Atendimentos() {
                               }
                           </div>
                           <p className="text-sm text-slate-600 truncate">
-                            {atendimento.marca} {atendimento.modelo} {atendimento.ano && `• ${atendimento.ano}`}
+                            {atendimento.modelo ? `${atendimento.marca || ''} ${atendimento.modelo} ${atendimento.ano ? '• ' + atendimento.ano : ''}`.trim() : (atendimento.venda_direta ? 'Sem veículo' : '—')}
                           </p>
                           {atendimento.cliente_nome &&
                             <p className="text-xs text-slate-500">{atendimento.cliente_nome}</p>
