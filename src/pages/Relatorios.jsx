@@ -81,7 +81,7 @@ export default function Relatorios() {
     const now = new Date();
 
     const atendimentosFiltrados = atendimentos.filter(a => {
-      const dataAtendimento = new Date(a.created_date);
+      const dataAtendimento = new Date(a.data_entrada || a.created_date);
       dataAtendimento.setHours(0, 0, 0, 0);
 
       // Filtro de período
@@ -167,7 +167,7 @@ export default function Relatorios() {
   const atendimentosPorPeriodo = useMemo(() => {
     const now = new Date();
     return atendimentos.filter(a => {
-      const dataAtendimento = new Date(a.created_date);
+      const dataAtendimento = new Date(a.data_entrada || a.created_date);
       dataAtendimento.setHours(0, 0, 0, 0);
       if (periodo === 'especifica') {
         if (!dataEspecifica.from) return true;
