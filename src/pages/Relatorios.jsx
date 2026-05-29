@@ -136,7 +136,7 @@ export default function Relatorios() {
       
       const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
       todosItens.forEach(item => {
-        detalhesServicos.push({ atendimento_placa: a.placa, cliente: a.cliente_nome, produto: item.nome, quantidade: item.quantidade, valor_unitario: item.valor_unitario, valor_total: item.valor_total, status: item.status_aprovacao, data: a.created_date, atendimento_concluido: atendimentoConcluido });
+        detalhesServicos.push({ atendimento_placa: a.placa, modelo: a.modelo, cliente: a.cliente_nome, produto: item.nome, quantidade: item.quantidade, valor_unitario: item.valor_unitario, valor_total: item.valor_total, status: item.status_aprovacao, data: a.created_date, atendimento_concluido: atendimentoConcluido });
         
         if (item.nome) {
           if (!rankingServicos[item.nome]) rankingServicos[item.nome] = { nome: item.nome, qtd_total: 0, qtd_aprovado: 0, qtd_reprovado: 0, valor_total: 0 };
@@ -192,9 +192,9 @@ export default function Relatorios() {
     : periodo === '0' ? 'Todo o período' : `Últimos ${periodo} dias`;
 
   const exportarGeralCSV = () => {
-    const linhas = ['Data;Placa;Cliente;Produto/Serviço;Quantidade;Valor Unit.;Valor Total;Status'];
+    const linhas = ['Data;Placa;Modelo;Cliente;Produto/Serviço;Quantidade;Valor Unit.;Valor Total;Status'];
     dadosRelatorio.detalhesServicos.forEach(item => {
-      linhas.push([format(new Date(item.data), 'dd/MM/yyyy', { locale: ptBR }), item.atendimento_placa, item.cliente || '-', item.produto, item.quantidade, item.valor_unitario?.toFixed(2), item.valor_total?.toFixed(2), item.status === 'aprovado' ? 'Aprovado' : item.status === 'reprovado' ? 'Reprovado' : 'Pendente'].join(';'));
+      linhas.push([format(new Date(item.data), 'dd/MM/yyyy', { locale: ptBR }), item.atendimento_placa || '-', item.modelo || '-', item.cliente || '-', item.produto, item.quantidade, item.valor_unitario?.toFixed(2), item.valor_total?.toFixed(2), item.status === 'aprovado' ? 'Aprovado' : item.status === 'reprovado' ? 'Reprovado' : 'Pendente'].join(';'));
     });
     const blob = new Blob(['\ufeff' + linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `relatorio_geral_${format(new Date(), 'yyyy-MM-dd')}.csv`; link.click();
@@ -205,21 +205,23 @@ export default function Relatorios() {
     const doc = new jsPDF({ orientation: 'landscape' });
     doc.setFontSize(16); doc.text('Relatório Geral de Atendimentos', 14, 18);
     doc.setFontSize(9); doc.text(`Período: ${labelPeriodo}  |  Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 26);
-    const headers = ['Data', 'Placa', 'Cliente', 'Produto/Serviço', 'Qtd', 'Valor Total', 'Status'];
-    const colW = [22, 20, 35, 70, 12, 25, 22];
+    const headers = ['Data', 'Placa', 'Modelo', 'Cliente', 'Produto/Serviço', 'Qtd', 'Valor Total', 'Status'];
+    const colW = [20, 18, 28, 28, 58, 10, 22, 18];
     let y = 34;
-    doc.setFillColor(249, 115, 22); doc.rect(14, y, 262, 7, 'F');
+    const totalW = colW.reduce((s, w) => s + w, 0);
+    doc.setFillColor(249, 115, 22); doc.rect(14, y, totalW, 7, 'F');
     doc.setTextColor(255,255,255); doc.setFontSize(8);
     let x = 14; headers.forEach((h, i) => { doc.text(h, x + 1, y + 5); x += colW[i]; });
     doc.setTextColor(0,0,0); y += 9;
     dadosRelatorio.detalhesServicos.forEach((item, idx) => {
       if (y > 190) { doc.addPage(); y = 14; }
-      if (idx % 2 === 0) { doc.setFillColor(248,250,252); doc.rect(14, y - 1, 262, 7, 'F'); }
+      if (idx % 2 === 0) { doc.setFillColor(248,250,252); doc.rect(14, y - 1, totalW, 7, 'F'); }
       const row = [
         format(new Date(item.data), 'dd/MM/yy', { locale: ptBR }),
         item.atendimento_placa || '',
-        (item.cliente || '-').substring(0, 20),
-        (item.produto || '').substring(0, 38),
+        (item.modelo || '-').substring(0, 14),
+        (item.cliente || '-').substring(0, 15),
+        (item.produto || '').substring(0, 32),
         String(item.quantidade || ''),
         `R$ ${(item.valor_total || 0).toFixed(2)}`,
         item.status === 'aprovado' ? 'Aprovado' : item.status === 'reprovado' ? 'Reprovado' : 'Pendente',
@@ -356,12 +358,13 @@ export default function Relatorios() {
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead><tr className="border-b border-slate-200">{['Data','Placa','Cliente','Serviço','Qtd','Valor','Status'].map(h => <th key={h} className="text-left p-3 text-sm font-semibold text-slate-600">{h}</th>)}</tr></thead>
+                    <thead><tr className="border-b border-slate-200">{['Data','Placa','Modelo','Cliente','Serviço','Qtd','Valor','Status'].map(h => <th key={h} className="text-left p-3 text-sm font-semibold text-slate-600">{h}</th>)}</tr></thead>
                     <tbody>
                       {dadosRelatorio.detalhesServicos.map((item, i) => (
                         <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
                           <td className="p-3 text-sm">{format(new Date(item.data), 'dd/MM/yyyy', { locale: ptBR })}</td>
-                          <td className="p-3 text-sm font-medium">{item.atendimento_placa}</td>
+                          <td className="p-3 text-sm font-medium">{item.atendimento_placa || '-'}</td>
+                          <td className="p-3 text-sm text-slate-600">{item.modelo || '-'}</td>
                           <td className="p-3 text-sm">{item.cliente || '-'}</td>
                           <td className="p-3 text-sm">{item.produto}</td>
                           <td className="p-3 text-sm text-right">{item.quantidade}</td>
