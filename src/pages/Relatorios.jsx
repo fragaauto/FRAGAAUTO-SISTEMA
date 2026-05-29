@@ -30,15 +30,9 @@ export default function Relatorios() {
   const [periodo, setPeriodo] = useState('30');
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
 
-  // Estados dos inputs (ainda não aplicados)
   const [inputCliente, setInputCliente] = useState('');
   const [inputVeiculo, setInputVeiculo] = useState('');
   const [inputProduto, setInputProduto] = useState('');
-
-  // Estados aplicados (usados no filtro real)
-  const [filtroCliente, setFiltroCliente] = useState('');
-  const [filtroVeiculo, setFiltroVeiculo] = useState('');
-  const [filtroProduto, setFiltroProduto] = useState('');
 
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
   const config = configs[0] || {};
@@ -60,21 +54,14 @@ export default function Relatorios() {
     });
   }, [atendimentosBrutos, unidadeAtual]);
 
-  const temFiltroAtivo = filtroCliente || filtroVeiculo || filtroProduto;
+  const temFiltroAtivo = inputCliente.trim() || inputVeiculo.trim() || inputProduto.trim();
 
-  const aplicarFiltros = () => {
-    setFiltroCliente(inputCliente.trim());
-    setFiltroVeiculo(inputVeiculo.trim());
-    setFiltroProduto(inputProduto.trim());
-  };
+  const aplicarFiltros = () => {}; // filtros são em tempo real
 
   const limparFiltros = () => {
     setInputCliente('');
     setInputVeiculo('');
     setInputProduto('');
-    setFiltroCliente('');
-    setFiltroVeiculo('');
-    setFiltroProduto('');
   };
 
   const dadosRelatorio = useMemo(() => {
@@ -103,23 +90,26 @@ export default function Relatorios() {
       }
 
       // Filtro de cliente (contém, sem distinção maiúsculas)
-      if (filtroCliente) {
+      const fc = inputCliente.trim();
+      if (fc) {
         const nome = String(a.cliente_nome || '').toLowerCase();
-        if (!nome.includes(filtroCliente.toLowerCase())) return false;
+        if (!nome.includes(fc.toLowerCase())) return false;
       }
 
       // Filtro de veículo — placa ou modelo (contém)
-      if (filtroVeiculo) {
+      const fv = inputVeiculo.trim();
+      if (fv) {
         const placa = String(a.placa || '').toLowerCase();
         const modelo = String(a.modelo || '').toLowerCase();
-        const busca = filtroVeiculo.toLowerCase();
+        const busca = fv.toLowerCase();
         if (!placa.includes(busca) && !modelo.includes(busca)) return false;
       }
 
       // Filtro de produto/serviço — verifica se algum item contém o texto
-      if (filtroProduto) {
+      const fp = inputProduto.trim();
+      if (fp) {
         const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
-        const busca = filtroProduto.toLowerCase();
+        const busca = fp.toLowerCase();
         const temProduto = todosItens.some(item => String(item.nome || '').toLowerCase().includes(busca));
         if (!temProduto) return false;
       }
@@ -136,7 +126,7 @@ export default function Relatorios() {
       
       const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
       todosItens.forEach(item => {
-        detalhesServicos.push({ atendimento_placa: a.placa, modelo: a.modelo, cliente: a.cliente_nome, produto: item.nome, quantidade: item.quantidade, valor_unitario: item.valor_unitario, valor_total: item.valor_total, status: item.status_aprovacao, data: a.created_date, atendimento_concluido: atendimentoConcluido });
+        detalhesServicos.push({ numero_os: a.numero_os, atendimento_placa: a.placa, modelo: a.modelo, cliente: a.cliente_nome, produto: item.nome, quantidade: item.quantidade, valor_unitario: item.valor_unitario, valor_total: item.valor_total, status: item.status_aprovacao, data: a.data_entrada || a.created_date, atendimento_concluido: atendimentoConcluido });
         
         if (item.nome) {
           if (!rankingServicos[item.nome]) rankingServicos[item.nome] = { nome: item.nome, qtd_total: 0, qtd_aprovado: 0, qtd_reprovado: 0, valor_total: 0 };
@@ -160,7 +150,7 @@ export default function Relatorios() {
     const rankingArray = Object.values(rankingServicos).sort((a, b) => b.qtd_aprovado - a.qtd_aprovado);
 
     return { totalOrcamentos: atendimentosFiltrados.length, servicosAprovados, servicosReprovados, valorTotalAprovado, valorTotalReprovado, detalhesServicos, atendimentosFiltrados, rankingServicos: rankingArray };
-  }, [atendimentos, periodo, dataEspecifica, filtroCliente, filtroVeiculo, filtroProduto]);
+  }, [atendimentos, periodo, dataEspecifica, inputCliente, inputVeiculo, inputProduto]);
 
   // Atendimentos filtrados APENAS por período e unidade (sem filtros de cliente/veículo/produto)
   // Usado na aba de técnicos para não distorcer os totais de produção
@@ -192,9 +182,9 @@ export default function Relatorios() {
     : periodo === '0' ? 'Todo o período' : `Últimos ${periodo} dias`;
 
   const exportarGeralCSV = () => {
-    const linhas = ['Data;Placa;Modelo;Cliente;Produto/Serviço;Quantidade;Valor Unit.;Valor Total;Status'];
+    const linhas = ['OS;Data;Placa;Modelo;Cliente;Produto/Serviço;Quantidade;Valor Unit.;Valor Total;Status'];
     dadosRelatorio.detalhesServicos.forEach(item => {
-      linhas.push([format(new Date(item.data), 'dd/MM/yyyy', { locale: ptBR }), item.atendimento_placa || '-', item.modelo || '-', item.cliente || '-', item.produto, item.quantidade, item.valor_unitario?.toFixed(2), item.valor_total?.toFixed(2), item.status === 'aprovado' ? 'Aprovado' : item.status === 'reprovado' ? 'Reprovado' : 'Pendente'].join(';'));
+      linhas.push([item.numero_os || '-', format(new Date(item.data), 'dd/MM/yyyy', { locale: ptBR }), item.atendimento_placa || '-', item.modelo || '-', item.cliente || '-', item.produto, item.quantidade, item.valor_unitario?.toFixed(2), item.valor_total?.toFixed(2), item.status === 'aprovado' ? 'Aprovado' : item.status === 'reprovado' ? 'Reprovado' : 'Pendente'].join(';'));
     });
     const blob = new Blob(['\ufeff' + linhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `relatorio_geral_${format(new Date(), 'yyyy-MM-dd')}.csv`; link.click();
@@ -358,10 +348,11 @@ export default function Relatorios() {
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead><tr className="border-b border-slate-200">{['Data','Placa','Modelo','Cliente','Serviço','Qtd','Valor','Status'].map(h => <th key={h} className="text-left p-3 text-sm font-semibold text-slate-600">{h}</th>)}</tr></thead>
+                    <thead><tr className="border-b border-slate-200">{['OS','Data','Placa','Modelo','Cliente','Serviço','Qtd','Valor','Status'].map(h => <th key={h} className="text-left p-3 text-sm font-semibold text-slate-600">{h}</th>)}</tr></thead>
                     <tbody>
                       {dadosRelatorio.detalhesServicos.map((item, i) => (
                         <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="p-3 text-sm text-slate-500">{item.numero_os ? String(item.numero_os).padStart(4,'0') : '-'}</td>
                           <td className="p-3 text-sm">{format(new Date(item.data), 'dd/MM/yyyy', { locale: ptBR })}</td>
                           <td className="p-3 text-sm font-medium">{item.atendimento_placa || '-'}</td>
                           <td className="p-3 text-sm text-slate-600">{item.modelo || '-'}</td>
