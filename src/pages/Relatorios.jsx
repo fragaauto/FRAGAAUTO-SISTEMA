@@ -383,7 +383,7 @@ export default function Relatorios() {
           </TabsContent>
 
           <TabsContent value="tecnicos">
-            <RelatorioTecnicos atendimentos={atendimentosPorPeriodo} config={config} labelPeriodo={labelPeriodo} />
+            <RelatorioTecnicos atendimentos={atendimentos} config={config} labelPeriodo={labelPeriodo} />
           </TabsContent>
         </Tabs>
       </div>

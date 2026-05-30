@@ -14,8 +14,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '' }) {
   const [filtroTecnico, setFiltroTecnico] = useState('todos');
   const [filtroProduto, setFiltroProduto] = useState('');
-  const [filtroDataInicio, setFiltroDataInicio] = useState('');
-  const [filtroDataFim, setFiltroDataFim] = useState('');
+  // Default: primeiro dia do mês atual até hoje
+  const hoje = new Date();
+  const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10);
+  const hojeStr = hoje.toISOString().slice(0, 10);
+  const [filtroDataInicio, setFiltroDataInicio] = useState(primeiroDiaMes);
+  const [filtroDataFim, setFiltroDataFim] = useState(hojeStr);
   const [tecnicoExpandido, setTecnicoExpandido] = useState(null);
   const [incluirDetalhes, setIncluirDetalhes] = useState(false);
   
@@ -32,6 +36,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
   }, [config]);
 
   const atendimentosFiltradosPorData = useMemo(() => {
+    // Sempre filtra por data — padrão é o mês atual
     if (!filtroDataInicio && !filtroDataFim) return atendimentos;
     return atendimentos.filter(a => {
       const dataAtendimento = new Date(a.data_entrada || a.created_date);
@@ -184,7 +189,13 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     );
   }
 
+  const totalBruto = dadosTecnicos.reduce((sum, t) => sum + t.valorBrutoTotal, 0);
   const totalLiquido = dadosTecnicos.reduce((sum, t) => sum + t.valorLiquidoTotal, 0);
+  const totalSemTecnico = atendimentosFiltradosPorData.filter(a => {
+    const t = a.tecnicos_responsaveis?.length > 0 ? a.tecnicos_responsaveis : (a.tecnico ? a.tecnico.split(',').map(n=>({nome:n.trim()})).filter(n=>n.nome) : []);
+    return t.length === 0;
+  });
+  const valorSemTecnico = totalSemTecnico.reduce((s,a)=>s+(Number(a.valor_final)||0),0);
 
   const exportarExcel = () => {
     const linhas = ['Técnico;Atendimentos;Concluídos;Valor Bruto;Valor Líquido'];
@@ -355,10 +366,16 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {totalSemTecnico.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+          ⚠️ <strong>{totalSemTecnico.length} atendimento(s)</strong> no período não possuem técnico atribuído — R$ {valorSemTecnico.toFixed(2)} não estão sendo contabilizados na produção.
+        </div>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Técnicos no período</p><p className="text-3xl font-bold text-blue-600 mt-1">{dadosTecnicos.length}</p></CardContent></Card>
-        <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Total Produção Líquida</p><p className="text-2xl font-bold text-green-600 mt-1">R$ {totalLiquido.toFixed(2)}</p></CardContent></Card>
-        <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Média por Técnico</p><p className="text-2xl font-bold text-orange-600 mt-1">R$ {dadosTecnicos.length > 0 ? (totalLiquido / dadosTecnicos.length).toFixed(2) : '0.00'}</p></CardContent></Card>
+        <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Total Produção Bruta</p><p className="text-2xl font-bold text-green-600 mt-1">R$ {totalBruto.toFixed(2)}</p></CardContent></Card>
+        <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Total Líquido (c/ impostos)</p><p className="text-2xl font-bold text-emerald-600 mt-1">R$ {totalLiquido.toFixed(2)}</p></CardContent></Card>
+        <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Média por Técnico</p><p className="text-2xl font-bold text-orange-600 mt-1">R$ {dadosTecnicos.length > 0 ? (totalBruto / dadosTecnicos.length).toFixed(2) : '0.00'}</p></CardContent></Card>
       </div>
 
       <Card>
