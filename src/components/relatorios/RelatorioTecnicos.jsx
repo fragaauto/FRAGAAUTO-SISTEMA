@@ -195,7 +195,9 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     const t = a.tecnicos_responsaveis?.length > 0 ? a.tecnicos_responsaveis : (a.tecnico ? a.tecnico.split(',').map(n=>({nome:n.trim()})).filter(n=>n.nome) : []);
     return t.length === 0;
   });
+  const semTecnicoConcluidos = totalSemTecnico.filter(a => a.status === 'concluido');
   const valorSemTecnico = totalSemTecnico.reduce((s,a)=>s+(Number(a.valor_final)||0),0);
+  const valorSemTecnicoConcluido = semTecnicoConcluidos.reduce((s,a)=>s+(Number(a.valor_final)||0),0);
 
   const exportarExcel = () => {
     const linhas = ['Técnico;Atendimentos;Concluídos;Valor Bruto;Valor Líquido'];
@@ -366,9 +368,12 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         </div>
       )}
 
-      {totalSemTecnico.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-          ⚠️ <strong>{totalSemTecnico.length} atendimento(s)</strong> no período não possuem técnico atribuído — R$ {valorSemTecnico.toFixed(2)} não estão sendo contabilizados na produção.
+      {semTecnicoConcluidos.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+          ⚠️ <strong>{semTecnicoConcluidos.length} atendimento(s) CONCLUÍDOS sem técnico atribuído</strong> — R$ {valorSemTecnicoConcluido.toLocaleString('pt-BR', {minimumFractionDigits:2})} não estão sendo contabilizados na produção. Acesse esses atendimentos e atribua o técnico responsável para que o valor apareça aqui.
+          {totalSemTecnico.length > semTecnicoConcluidos.length && (
+            <span className="block mt-1 text-red-600">+ {totalSemTecnico.length - semTecnicoConcluidos.length} atendimento(s) em aberto também sem técnico (R$ {(valorSemTecnico - valorSemTecnicoConcluido).toLocaleString('pt-BR', {minimumFractionDigits:2})}).</span>
+          )}
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
