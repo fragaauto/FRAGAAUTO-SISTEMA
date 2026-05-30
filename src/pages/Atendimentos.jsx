@@ -55,6 +55,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import ReciboAtendimento from '@/components/financeiro/ReciboAtendimento';
 import { FileCheck } from 'lucide-react';
 import MenuAtendimento from '@/components/atendimento/MenuAtendimento';
+import AtribuirTecnicoRapido from '@/components/atendimento/AtribuirTecnicoRapido';
 
 const STATUS_FIXOS = {
   rascunho: { label: 'Rascunho', cor: '#94a3b8' },
@@ -83,10 +84,8 @@ function StatusBadge({ statusValue, statusPersonalizados }) {
     <span
       className="px-2 py-0.5 rounded-full text-xs font-medium text-white whitespace-nowrap"
       style={{ background: info.cor }}>
-      
       {info.label}
     </span>);
-
 }
 
 function StatusSelect({ value, onChange, statusPersonalizados, onClick }) {
@@ -99,7 +98,6 @@ function StatusSelect({ value, onChange, statusPersonalizados, onClick }) {
       <SelectTrigger
         className="h-7 text-xs border-slate-200 bg-white w-40"
         onClick={(e) => {e.stopPropagation();onClick && onClick(e);}}>
-        
         <SelectValue />
       </SelectTrigger>
       <SelectContent onClick={(e) => e.stopPropagation()}>
@@ -113,7 +111,6 @@ function StatusSelect({ value, onChange, statusPersonalizados, onClick }) {
         )}
       </SelectContent>
     </Select>);
-
 }
 
 export default function Atendimentos() {
@@ -131,6 +128,7 @@ export default function Atendimentos() {
   const [statusEmMassa, setStatusEmMassa] = useState('');
   const [pagina, setPagina] = useState(1);
   const [reciboAtendimento, setReciboAtendimento] = useState(null);
+  const [atribuirTecnico, setAtribuirTecnico] = useState(null);
   const POR_PAGINA = 20;
 
   // Busca server-side por data para suportar anos de histórico
@@ -141,7 +139,6 @@ export default function Atendimentos() {
         const dateFilter = {};
         if (dataInicio) dateFilter.$gte = dataInicio + 'T00:00:00.000Z';
         if (dataFim) dateFilter.$lte = dataFim + 'T23:59:59.000Z';
-        // Busca por data_entrada E por created_date (para registros sem data_entrada)
         const [porDataEntrada, porCreatedDate] = await Promise.all([
           base44.entities.Atendimento.filter({ data_entrada: dateFilter }, '-data_entrada', 2000),
           base44.entities.Atendimento.filter({ created_date: dateFilter }, '-created_date', 500),
@@ -149,10 +146,8 @@ export default function Atendimentos() {
         const ids = new Set(porDataEntrada.map(a => a.id));
         return [...porDataEntrada, ...porCreatedDate.filter(a => !ids.has(a.id))];
       }
-      // Sem filtro de data: últimos 90 dias
       const noventa = new Date();
       noventa.setDate(noventa.getDate() - 90);
-      // Busca registros com data_entrada E registros sem data_entrada (criados recentemente via API/agente)
       const [porDataEntrada, porCreatedDate] = await Promise.all([
         base44.entities.Atendimento.filter(
           { data_entrada: { $gte: noventa.toISOString() } },
@@ -171,7 +166,6 @@ export default function Atendimentos() {
     staleTime: 2 * 60 * 1000
   });
 
-  // Busca específica por número de OS quando não encontrado nos resultados atuais
   const [buscandoOS, setBuscandoOS] = useState(false);
   const [resultadoOSExtra, setResultadoOSExtra] = useState([]);
 
@@ -189,11 +183,9 @@ export default function Atendimentos() {
 
   const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
 
-  // Filtra localmente: registros da unidade atual + legados (sem unidade_id) apenas no Auto Portas
   const atendimentos = useMemo(() => {
     const base = [
       ...atendimentosBrutos,
-      // Inclui resultados de busca por OS específica que não estejam já na lista
       ...resultadoOSExtra.filter(r => !atendimentosBrutos.find(a => a.id === r.id))
     ];
     if (!unidadeAtual) return base;
@@ -202,8 +194,6 @@ export default function Atendimentos() {
       return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
     });
   }, [atendimentosBrutos, resultadoOSExtra, unidadeAtual]);
-
-
 
   const { data: configs = [] } = useQuery({
     queryKey: ['configuracoes'],
@@ -233,7 +223,6 @@ export default function Atendimentos() {
     setSelecionados([]);
   };
 
-  // Quando busca é um número de OS e não há resultados, buscar server-side
   const osNaoEncontrada = search && !isNaN(search) && atendimentos.every(a => !String(a.numero_os).includes(search));
   useEffect(() => {
     if (osNaoEncontrada && search.length >= 2) {
@@ -275,8 +264,6 @@ export default function Atendimentos() {
   ...Object.entries(STATUS_FIXOS).map(([valor, s]) => ({ valor, label: s.label, cor: s.cor })),
   ...statusPersonalizados];
 
-
-  // Checkboxes
   const todosSelecionados = filteredAtendimentos.length > 0 && filteredAtendimentos.every((a) => selecionados.includes(a.id));
   const algunsSelecionados = selecionados.length > 0 && !todosSelecionados;
 
@@ -325,7 +312,6 @@ export default function Atendimentos() {
         });
       }
     }
-    // Reverter movimentos de estoque
     const movimentos = await base44.entities.MovimentoEstoque.filter({ atendimento_id: atendimento.id });
     for (const mov of movimentos) {
       if (mov.tipo === 'saida') {
@@ -353,6 +339,8 @@ export default function Atendimentos() {
     window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
+  const semTecnico = (a) => a.status === 'concluido' && !a.tecnicos_responsaveis?.length && !a.tecnico;
+
   return (
     <>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30">
@@ -379,7 +367,6 @@ export default function Atendimentos() {
 
       {/* Filters */}
       <div className="max-w-4xl mx-auto px-4 py-4">
-      {/* Aviso sobre período carregado */}
       {!dataInicio && !dataFim && (
         <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex items-center gap-2">
           <Calendar className="w-4 h-4 flex-shrink-0" />
@@ -394,7 +381,6 @@ export default function Atendimentos() {
                 value={search}
                 onChange={(e) => {setSearch(e.target.value);setPagina(1);}}
                 className="pl-10 h-12" />
-              
           </div>
           <Select value={statusFilter} onValueChange={(v) => {setStatusFilter(v);setPagina(1);}}>
             <SelectTrigger className="w-full sm:w-56 h-12">
@@ -423,7 +409,6 @@ export default function Atendimentos() {
               value={produtoFilter}
               onChange={(e) => {setProdutoFilter(e.target.value);setPagina(1);}}
               className="pl-10 h-10 text-sm" />
-            
         </div>
 
         {/* Filtro por data */}
@@ -436,7 +421,6 @@ export default function Atendimentos() {
                 onChange={(e) => setDataInicio(e.target.value)}
                 className="h-10 text-sm"
                 placeholder="Data inicial" />
-              
           </div>
           <div className="flex items-center gap-2 flex-1">
             <span className="text-slate-400 text-sm flex-shrink-0">até</span>
@@ -445,7 +429,6 @@ export default function Atendimentos() {
                 value={dataFim}
                 onChange={(e) => setDataFim(e.target.value)}
                 className="h-10 text-sm" />
-              
           </div>
           {(dataInicio || dataFim || produtoFilter) &&
             <Button variant="ghost" size="sm" className="h-10 text-slate-500 px-2" onClick={() => {setDataInicio('');setDataFim('');setProdutoFilter('');}}>
@@ -489,7 +472,6 @@ export default function Atendimentos() {
                 onClick={handleAlterarStatusEmMassa}
                 disabled={!statusEmMassa || updateStatusMutation.isPending}
                 className="bg-orange-500 hover:bg-orange-600 h-8">
-                
                   {updateStatusMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Aplicar'}
                 </Button>
                 <AlertDialog>
@@ -511,7 +493,6 @@ export default function Atendimentos() {
                       <AlertDialogAction
                       onClick={handleExcluirEmMassa}
                       className="bg-red-500 hover:bg-red-600">
-                      
                         Excluir
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -522,7 +503,6 @@ export default function Atendimentos() {
                 variant="ghost"
                 className="h-8 text-slate-500"
                 onClick={() => setSelecionados([])}>
-                
                   Cancelar
                 </Button>
               </div>
@@ -555,9 +535,9 @@ export default function Atendimentos() {
           <div className="space-y-3">
             {atendimentosPaginados.map((atendimento, index) => {
                 const isSelecionado = selecionados.includes(atendimento.id);
-                // Faturado = pendente de recebimento, não bloqueia o atendimento como pago
                 const pago = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial';
                 const faturado = atendimento.status_pagamento === 'faturado';
+                const semTec = semTecnico(atendimento);
                 return (
                   <motion.div
                     key={atendimento.id}
@@ -587,7 +567,6 @@ export default function Atendimentos() {
                               onCheckedChange={(checked) => {
                                 setSelecionados((prev) => checked ? [...prev, atendimento.id] : prev.filter((x) => x !== atendimento.id));
                               }} />
-                            
                           </div>
                           }
 
@@ -631,9 +610,23 @@ export default function Atendimentos() {
                                 value={atendimento.status}
                                 onChange={(novoStatus) => handleAlterarStatusIndividual(atendimento.id, novoStatus, atendimento.status)}
                                 statusPersonalizados={statusPersonalizados} />
-                              
                             </div>
                             }
+
+                          {/* Aviso: concluído sem técnico */}
+                          {semTec && (
+                            <div className="flex items-center gap-2 mt-2 px-2 py-1.5 bg-red-50 border border-red-200 rounded-lg" onClick={(e) => e.stopPropagation()}>
+                              <span className="text-xs text-red-700 flex-1">⚠️ Sem técnico atribuído — não conta na produção</span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 text-xs border-red-300 text-red-700 hover:bg-red-100 px-2 flex-shrink-0"
+                                onClick={(e) => { e.stopPropagation(); setAtribuirTecnico(atendimento); }}
+                              >
+                                Atribuir
+                              </Button>
+                            </div>
+                          )}
 
                           {/* Comprovante para concluído não pago */}
                           {!pago && atendimento.status === 'concluido' &&
@@ -672,7 +665,7 @@ export default function Atendimentos() {
                                 </AlertDialogContent>
                               </AlertDialog>
                               <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={(e) => imprimirAtendimento(atendimento, e)}>
-                              <Printer className="w-3 h-3 mr-1" /> Visualizar OS
+                                <Printer className="w-3 h-3 mr-1" /> Visualizar OS
                               </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => {e.stopPropagation();setReciboAtendimento(atendimento);}}>
                                 <FileCheck className="w-3 h-3 mr-1" /> Comprovante
@@ -712,13 +705,11 @@ export default function Atendimentos() {
                           <ArrowRight
                             className="w-5 h-5 text-slate-400 flex-shrink-0 hidden sm:block"
                             onClick={() => navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`))} />
-
                           }
                       </div>
                     </CardContent>
                   </Card>
                 </motion.div>);
-
               })}
           </div>
           <Paginacao
@@ -727,11 +718,18 @@ export default function Atendimentos() {
               onMudar={(p) => {setPagina(p);window.scrollTo(0, 0);}}
               totalRegistros={filteredAtendimentos.length}
               porPagina={POR_PAGINA} />
-            
           </>
           }
       </div>
     </div>
+
+    {/* Modal Atribuir Técnico */}
+    {atribuirTecnico && (
+      <AtribuirTecnicoRapido
+        atendimento={atribuirTecnico}
+        onClose={() => setAtribuirTecnico(null)}
+      />
+    )}
 
     {/* Modal Comprovante */}
     <Dialog open={!!reciboAtendimento} onOpenChange={(open) => !open && setReciboAtendimento(null)}>
@@ -745,5 +743,4 @@ export default function Atendimentos() {
       </DialogContent>
     </Dialog>
     </>);
-
 }
