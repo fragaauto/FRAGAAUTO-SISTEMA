@@ -1,0 +1,50 @@
+{
+  "name": "MovimentoEstoque",
+  "type": "object",
+  "properties": {
+    "produto_id": {
+      "type": "string"
+    },
+    "produto_nome": {
+      "type": "string"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "entrada",
+        "saida",
+        "ajuste",
+        "estorno"
+      ],
+      "description": "Tipo de movimenta\u00e7\u00e3o"
+    },
+    "quantidade": {
+      "type": "number"
+    },
+    "custo_unitario": {
+      "type": "number"
+    },
+    "atendimento_id": {
+      "type": "string"
+    },
+    "compra_id": {
+      "type": "string"
+    },
+    "usuario": {
+      "type": "string"
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "data_movimento": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "produto_id",
+    "produto_nome",
+    "tipo",
+    "quantidade"
+  ]
+}

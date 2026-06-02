@@ -1,0 +1,66 @@
+{
+  "name": "Compra",
+  "type": "object",
+  "properties": {
+    "fornecedor": {
+      "type": "string"
+    },
+    "numero_nf": {
+      "type": "string"
+    },
+    "data_compra": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "itens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "string"
+          },
+          "produto_nome": {
+            "type": "string"
+          },
+          "quantidade": {
+            "type": "number"
+          },
+          "valor_unitario": {
+            "type": "number"
+          },
+          "valor_total": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "valor_total": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "rascunho",
+        "confirmada",
+        "cancelada"
+      ],
+      "default": "rascunho"
+    },
+    "conta_pagar_id": {
+      "type": "string"
+    },
+    "xml_nfe": {
+      "type": "string"
+    },
+    "usuario": {
+      "type": "string"
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "fornecedor"
+  ]
+}

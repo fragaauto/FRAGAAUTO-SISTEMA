@@ -41,5 +41,11 @@
       "type": "boolean",
       "default": true
     }
-  }
+  },
+  "required": [
+    "unidade_id",
+    "unidades_ids",
+    "funcao_id",
+    "modulos_liberados"
+  ]
 }

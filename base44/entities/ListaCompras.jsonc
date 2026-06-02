@@ -1,0 +1,70 @@
+{
+  "name": "ListaCompras",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome da lista de compras"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais da lista"
+    },
+    "itens": {
+      "type": "array",
+      "description": "Produtos cadastrados no estoque",
+      "items": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "string"
+          },
+          "produto_nome": {
+            "type": "string"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "quantidade": {
+            "type": "number"
+          },
+          "obs": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "itens_livres": {
+      "type": "array",
+      "description": "Produtos n\u00e3o cadastrados para comprar",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "quantidade": {
+            "type": "number"
+          },
+          "obs": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "aberta",
+        "concluida"
+      ],
+      "default": "aberta"
+    },
+    "usuario": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

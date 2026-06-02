@@ -1,0 +1,73 @@
+{
+  "name": "Funcionario",
+  "type": "object",
+  "properties": {
+    "nome_completo": {
+      "type": "string",
+      "description": "Nome completo do funcion\u00e1rio"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF do funcion\u00e1rio"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "Telefone do funcion\u00e1rio"
+    },
+    "email": {
+      "type": "string",
+      "description": "E-mail do funcion\u00e1rio"
+    },
+    "data_nascimento": {
+      "type": "string",
+      "description": "Data de nascimento"
+    },
+    "endereco": {
+      "type": "string",
+      "description": "Endere\u00e7o completo"
+    },
+    "funcao_id": {
+      "type": "string",
+      "description": "ID da fun\u00e7\u00e3o/cargo"
+    },
+    "funcao_nome": {
+      "type": "string",
+      "description": "Nome da fun\u00e7\u00e3o/cargo"
+    },
+    "data_admissao": {
+      "type": "string",
+      "format": "date",
+      "description": "Data de admiss\u00e3o"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "inativo",
+        "ferias",
+        "afastado"
+      ],
+      "default": "ativo",
+      "description": "Status do funcion\u00e1rio"
+    },
+    "login_usuario": {
+      "type": "string",
+      "description": "Nome de usu\u00e1rio para login interno"
+    },
+    "senha_hash": {
+      "type": "string",
+      "description": "Senha criptografada (hash)"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es gerais"
+    },
+    "foto_url": {
+      "type": "string",
+      "description": "URL da foto do funcion\u00e1rio"
+    }
+  },
+  "required": [
+    "nome_completo"
+  ]
+}

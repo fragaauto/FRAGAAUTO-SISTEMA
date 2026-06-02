@@ -530,6 +530,7 @@ function EditarLancamentoModal({ lancamento, onClose, onSaved }) {
 }
 
 function NovoLancamentoModal({ open, onClose, onSaved }) {
+  const { unidadeAtual } = useUnidade();
   const hoje = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ tipo: 'entrada', descricao: '', valor: '', forma_pagamento: 'dinheiro', categoria: '', observacoes: '', data: hoje });
   const [saving, setSaving] = useState(false);
@@ -539,7 +540,12 @@ function NovoLancamentoModal({ open, onClose, onSaved }) {
     if (!form.data) return toast.error('Selecione a data do lançamento');
     setSaving(true);
     const dataLancamento = new Date(form.data + 'T12:00:00').toISOString();
-    await base44.entities.LancamentoFinanceiro.create({ ...form, valor: parseFloat(form.valor), data_lancamento: dataLancamento });
+    await base44.entities.LancamentoFinanceiro.create({
+      ...form,
+      valor: parseFloat(form.valor),
+      data_lancamento: dataLancamento,
+      unidade_id: unidadeAtual?.id || null,
+    });
     setSaving(false);
     onSaved();
   };

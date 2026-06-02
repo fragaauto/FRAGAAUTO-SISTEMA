@@ -1,0 +1,50 @@
+{
+  "name": "Fornecedor",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome fantasia do fornecedor"
+    },
+    "razao_social": {
+      "type": "string"
+    },
+    "cnpj": {
+      "type": "string"
+    },
+    "telefone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "contato": {
+      "type": "string",
+      "description": "Nome do contato principal"
+    },
+    "endereco": {
+      "type": "string"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": [
+        "pecas",
+        "servicos",
+        "materiais",
+        "equipamentos",
+        "outros"
+      ],
+      "default": "pecas"
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

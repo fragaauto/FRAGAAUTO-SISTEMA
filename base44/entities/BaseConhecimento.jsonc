@@ -1,0 +1,38 @@
+{
+  "name": "BaseConhecimento",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo do documento de conhecimento"
+    },
+    "conteudo": {
+      "type": "string",
+      "description": "Conte\u00fado do conhecimento (texto livre)"
+    },
+    "fonte_tipo": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "google_docs"
+      ],
+      "default": "manual",
+      "description": "Tipo de fonte do conte\u00fado"
+    },
+    "fonte_url": {
+      "type": "string",
+      "description": "URL do Google Docs para sincroniza\u00e7\u00e3o"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    },
+    "ultima_sincronizacao": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "titulo"
+  ]
+}

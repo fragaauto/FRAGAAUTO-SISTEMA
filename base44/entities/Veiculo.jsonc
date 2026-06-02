@@ -1,0 +1,34 @@
+{
+  "name": "Veiculo",
+  "type": "object",
+  "properties": {
+    "placa": {
+      "type": "string",
+      "description": "Placa do ve\u00edculo"
+    },
+    "modelo": {
+      "type": "string",
+      "description": "Modelo do ve\u00edculo"
+    },
+    "marca": {
+      "type": "string",
+      "description": "Marca do ve\u00edculo"
+    },
+    "ano": {
+      "type": "string",
+      "description": "Ano do ve\u00edculo"
+    },
+    "cor": {
+      "type": "string",
+      "description": "Cor do ve\u00edculo"
+    },
+    "cliente_id": {
+      "type": "string",
+      "description": "ID do cliente propriet\u00e1rio"
+    }
+  },
+  "required": [
+    "placa",
+    "modelo"
+  ]
+}

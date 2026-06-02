@@ -1,0 +1,101 @@
+{
+  "name": "FuncaoFuncionario",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome da fun\u00e7\u00e3o (ex: T\u00e9cnico, Recepcionista, Gerente)"
+    },
+    "descricao": {
+      "type": "string"
+    },
+    "modulos_liberados": {
+      "type": "array",
+      "description": "Lista de IDs de m\u00f3dulos que esta fun\u00e7\u00e3o pode acessar",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pode_ver_relatorio_proprio": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se funcion\u00e1rios com esta fun\u00e7\u00e3o podem ver seu pr\u00f3prio relat\u00f3rio de produ\u00e7\u00e3o"
+    },
+    "pode_ver_dashboards": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se pode ver a vis\u00e3o geral e dashboards na p\u00e1gina inicial"
+    },
+    "pode_acessar_manual": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se pode acessar o Manual de Treinamento"
+    },
+    "pode_acessar_configuracoes": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se pode acessar Configura\u00e7\u00f5es"
+    },
+    "pode_acessar_usuarios": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se pode acessar Usu\u00e1rios"
+    },
+    "abas_atendimento": {
+      "type": "array",
+      "description": "Abas do menu Atendimentos que esta fun\u00e7\u00e3o pode acessar",
+      "items": {
+        "type": "string",
+        "enum": [
+          "lista",
+          "novo",
+          "aprovacoes",
+          "reprovados",
+          "vendas_diretas"
+        ]
+      },
+      "default": [
+        "lista",
+        "novo"
+      ]
+    },
+    "abas_os": {
+      "type": "array",
+      "description": "Abas internas de uma OS que esta fun\u00e7\u00e3o pode acessar",
+      "items": {
+        "type": "string",
+        "enum": [
+          "queixa",
+          "checklist",
+          "orcamento",
+          "autorizacao",
+          "pagamento"
+        ]
+      },
+      "default": [
+        "queixa",
+        "checklist",
+        "orcamento",
+        "autorizacao",
+        "pagamento"
+      ]
+    },
+    "percentual_comissao": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual de comiss\u00e3o sobre produ\u00e7\u00e3o l\u00edquida (%)"
+    },
+    "meta_mensal": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta mensal de produ\u00e7\u00e3o em R$"
+    },
+    "regra_premiacao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o das regras de premia\u00e7\u00e3o para esta fun\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

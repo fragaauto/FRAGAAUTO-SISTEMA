@@ -1,0 +1,40 @@
+{
+  "name": "ChecklistItem",
+  "type": "object",
+  "properties": {
+    "item": {
+      "type": "string",
+      "description": "Nome do item do checklist"
+    },
+    "categoria": {
+      "type": "string",
+      "description": "Categoria do item"
+    },
+    "ordem": {
+      "type": "number",
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    },
+    "obrigatorio": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 obrigat\u00f3rio preencher"
+    },
+    "produtos_padrao": {
+      "type": "array",
+      "description": "IDs dos produtos padr\u00e3o para este item",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o item est\u00e1 ativo"
+    }
+  },
+  "required": [
+    "item",
+    "categoria",
+    "ordem"
+  ]
+}
