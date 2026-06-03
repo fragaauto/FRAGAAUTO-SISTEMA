@@ -623,12 +623,13 @@ export default function Remarketing() {
         <EnvioEmMassaModal
           itens={filaPorStatus.pendente.filter(i => selecionados.includes(i.id))}
           config={config}
-          onClose={() => { setEnvioEmMassaOpen(false); setSelecionados([]); }}
-          onEnviado={(id) => {
-            updateFilaMutation.mutate({
-              id,
-              data: { status: 'enviado', dataUltimoEnvio: new Date().toISOString(), tentativas: 1 }
-            });
+          onClose={() => {
+            setEnvioEmMassaOpen(false);
+            setSelecionados([]);
+            queryClient.invalidateQueries(['remarketing-fila']);
+          }}
+          onEnviado={() => {
+            // O backend já atualizou o status — apenas refresca a fila no final
           }}
         />
       )}

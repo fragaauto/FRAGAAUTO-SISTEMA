@@ -51,7 +51,9 @@ export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado })
       const data = res.data;
 
       if (!data?.ok) {
-        toast.error(data?.error || 'Erro ao enviar lote');
+        const errMsg = data?.error || 'Erro ao enviar lote';
+        toast.error(errMsg);
+        setStatusMsg('Erro: ' + errMsg);
         setRodando(false);
         return;
       }
@@ -78,9 +80,9 @@ export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado })
         return;
       }
 
-      if (data.aindaPendentes > 0 && idsPendentesRef.current.length > 0) {
-        // Aguarda 2s e dispara próximo lote (intervalo já foi feito no backend)
-        setTimeout(() => dispararLote(), 2000);
+      if (idsPendentesRef.current.length > 0) {
+        // Aguarda 3s e dispara próximo lote (intervalo principal já foi feito no backend)
+        setTimeout(() => dispararLote(), 3000);
       } else {
         setRodando(false);
         setStatusMsg('');
