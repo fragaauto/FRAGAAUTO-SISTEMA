@@ -7,8 +7,10 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Send, Loader2, CheckCircle2, XCircle, AlertTriangle, Clock, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useUnidade } from '@/lib/UnidadeContext';
 
 export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado }) {
+  const { unidadeAtual } = useUnidade();
   const [intervaloMin, setIntervaloMin] = useState(15);
   const [intervaloMax, setIntervaloMax] = useState(25);
   const [rodando, setRodando] = useState(false);
@@ -46,6 +48,7 @@ export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado })
         ids: pendentes,
         intervaloMin,
         intervaloMax,
+        unidade_id: unidadeAtual?.id || null,
       });
 
       const data = res.data;

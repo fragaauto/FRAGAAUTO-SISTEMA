@@ -52,17 +52,22 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { ids, intervaloMin = 15, intervaloMax = 25 } = await req.json();
+    const { ids, intervaloMin = 15, intervaloMax = 25, unidade_id } = await req.json();
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return Response.json({ error: 'Lista de IDs obrigatória' }, { status: 400 });
     }
 
     const configs = await base44.entities.Configuracao.list();
-    const config = configs[0];
+
+    // Tenta pegar config da unidade específica, senão pega a primeira que tem Evolution configurada
+    let config = unidade_id ? configs.find(c => c.unidade_id === unidade_id) : null;
+    if (!config?.evolution_api_url) {
+      config = configs.find(c => c.evolution_api_url && c.evolution_api_key && c.evolution_instance);
+    }
 
     if (!config?.evolution_api_url || !config?.evolution_api_key || !config?.evolution_instance) {
-      return Response.json({ error: 'Evolution API não configurada' }, { status: 400 });
+      return Response.json({ error: 'Evolution API não configurada. Configure em Configurações > Integrações.' }, { status: 400 });
     }
 
     const evolutionBase = config.evolution_api_url.replace(/\/$/, '');
