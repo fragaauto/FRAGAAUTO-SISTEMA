@@ -54,6 +54,21 @@
       "type": "string",
       "description": "Assinatura digital base64"
     },
+    "fotos": {
+      "type": "array",
+      "description": "Fotos tiradas no momento da retirada/devolu\u00e7\u00e3o",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "observacao": {
       "type": "string"
     }

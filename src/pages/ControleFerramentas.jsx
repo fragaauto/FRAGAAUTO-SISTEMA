@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Wrench, Package, ArrowLeftRight, Droplets, BarChart2, AlertTriangle } from 'lucide-react';
+import { Wrench, Package, ArrowLeftRight, Droplets, BarChart2, AlertTriangle, History } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import FerraamentasTab from '@/components/ferramentas/FerramentasTab';
@@ -8,6 +8,7 @@ import KitsTab from '@/components/ferramentas/KitsTab';
 import MovimentacoesTab from '@/components/ferramentas/MovimentacoesTab';
 import InsumosTab from '@/components/ferramentas/InsumosTab';
 import ConsumoTab from '@/components/ferramentas/ConsumoTab';
+import HistoricoKitsTab from '@/components/ferramentas/HistoricoKitsTab';
 
 export default function ControleFerramentas() {
   const [tab, setTab] = useState('ferramentas');
@@ -75,6 +76,9 @@ export default function ControleFerramentas() {
           <TabsTrigger value="consumo" className="flex items-center gap-1.5 text-xs sm:text-sm">
             <BarChart2 className="w-4 h-4" /> Consumo
           </TabsTrigger>
+          <TabsTrigger value="historico" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <History className="w-4 h-4" /> Histórico
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="ferramentas">
@@ -91,6 +95,9 @@ export default function ControleFerramentas() {
         </TabsContent>
         <TabsContent value="consumo">
           <ConsumoTab />
+        </TabsContent>
+        <TabsContent value="historico">
+          <HistoricoKitsTab />
         </TabsContent>
       </Tabs>
     </div>

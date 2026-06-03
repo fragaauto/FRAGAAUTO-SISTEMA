@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Plus, ArrowUpFromLine, ArrowDownToLine, CheckCircle2, Search } from 'lucide-react';
+import { Plus, ArrowUpFromLine, ArrowDownToLine, CheckCircle2, Search, Camera, X, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function MovimentacoesTab() {
@@ -16,9 +16,11 @@ export default function MovimentacoesTab() {
   const [modal, setModal] = useState(false);
   const [search, setSearch] = useState('');
   const [tipoFilter, setTipoFilter] = useState('all');
-  const [form, setForm] = useState({ tipo: 'Retirada', item_tipo: 'Ferramenta', ferramenta_id: '', kit_id: '', responsavel_id: '', responsavel_nome: '', observacao: '', assinatura: '' });
+  const [form, setForm] = useState({ tipo: 'Retirada', item_tipo: 'Ferramenta', ferramenta_id: '', kit_id: '', responsavel_id: '', responsavel_nome: '', observacao: '', assinatura: '', fotos: [] });
   const canvasRef = useRef();
   const [drawing, setDrawing] = useState(false);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const fileInputRef = useRef();
 
   const { data: movs = [], isLoading } = useQuery({ queryKey: ['movimentacoes'], queryFn: () => base44.entities.MovimentacaoFerramenta.list('-data_hora', 200) });
   const { data: ferramentas = [] } = useQuery({ queryKey: ['ferramentas'], queryFn: () => base44.entities.Ferramenta.list() });
@@ -50,7 +52,26 @@ export default function MovimentacoesTab() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['movimentacoes'] }); qc.invalidateQueries({ queryKey: ['ferramentas'] }); qc.invalidateQueries({ queryKey: ['kits'] }); setModal(false); resetForm(); },
   });
 
-  const resetForm = () => setForm({ tipo: 'Retirada', item_tipo: 'Ferramenta', ferramenta_id: '', kit_id: '', responsavel_id: '', responsavel_nome: '', observacao: '', assinatura: '' });
+  const resetForm = () => setForm({ tipo: 'Retirada', item_tipo: 'Ferramenta', ferramenta_id: '', kit_id: '', responsavel_id: '', responsavel_nome: '', observacao: '', assinatura: '', fotos: [] });
+
+  const handleFotoUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setUploadingFoto(true);
+    try {
+      const novasFotos = [];
+      for (const file of files) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        novasFotos.push({ url: file_url, descricao: '' });
+      }
+      setForm(p => ({ ...p, fotos: [...(p.fotos || []), ...novasFotos] }));
+    } finally {
+      setUploadingFoto(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const removeFoto = (idx) => setForm(p => ({ ...p, fotos: p.fotos.filter((_, i) => i !== idx) }));
 
   // Canvas drawing
   useEffect(() => {
@@ -114,7 +135,10 @@ export default function MovimentacoesTab() {
                 </div>
                 <div className="text-xs text-slate-500 mt-0.5">👤 {m.responsavel_nome} · {m.data_hora ? format(new Date(m.data_hora), 'dd/MM/yy HH:mm') : ''}</div>
               </div>
-              {m.assinatura && <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {m.assinatura && <CheckCircle2 className="w-4 h-4 text-green-500" title="Assinatura registrada" />}
+                {m.fotos?.length > 0 && <span className="flex items-center gap-0.5 text-xs text-orange-500"><Camera className="w-3.5 h-3.5" />{m.fotos.length}</span>}
+              </div>
             </div>
           ))}
         </div>
@@ -182,6 +206,29 @@ export default function MovimentacoesTab() {
             <div>
               <Label>Observação</Label>
               <Textarea value={form.observacao} onChange={e => setForm(p => ({ ...p, observacao: e.target.value }))} rows={2} />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <Label className="flex items-center gap-1.5"><Camera className="w-4 h-4" /> Fotos</Label>
+                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingFoto} className="text-xs h-7">
+                  {uploadingFoto ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Camera className="w-3 h-3 mr-1" />}
+                  {uploadingFoto ? 'Enviando...' : 'Adicionar foto'}
+                </Button>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFotoUpload} />
+              </div>
+              {form.fotos?.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {form.fotos.map((foto, idx) => (
+                    <div key={idx} className="relative rounded-lg overflow-hidden border border-slate-200">
+                      <img src={foto.url} alt="" className="w-full h-20 object-cover" />
+                      <button onClick={() => removeFoto(idx)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
