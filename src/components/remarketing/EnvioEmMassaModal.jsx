@@ -1,110 +1,117 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Send, Loader2, CheckCircle2, XCircle, AlertTriangle, Clock, X } from 'lucide-react';
-import { addDays, format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
-
-function gerarMensagem(item, config) {
-  const diasValidade = config.dias_validade_oferta || 7;
-  const oferta = config.oferta_padrao_remarketing || '';
-  const condicao = config.condicao_pagamento_remarketing || '';
-  const dataValidade = format(addDays(new Date(), diasValidade), "dd/MM/yyyy", { locale: ptBR });
-  const listaServicos = (item.servicosPendentes || [])
-    .map(s => `• ${s.nome} - R$ ${(s.valor_total || 0).toFixed(2)}`).join('\n');
-  const total = (item.valorTotalPendentes || 0).toFixed(2);
-
-  let msg = config.mensagem_remarketing
-    ? config.mensagem_remarketing
-    : `Olá {nome} 👋\n\nNa sua última visita identificamos que no seu {veiculo} ficou pendente:\n\n{lista_servicos}\n\nTotal: R$ {total}\n\nTenho uma condição especial pra você!\n\n{oferta}\nCondição: {condicao}\n\nConsigo manter até {data_validade}.\n\nPosso agendar para você?`;
-
-  return msg
-    .replace('{nome}', item.clienteNome || 'Cliente')
-    .replace('{veiculo}', `${item.placa} - ${item.modelo}`)
-    .replace('{lista_servicos}', listaServicos)
-    .replace('{total}', total)
-    .replace('{oferta}', oferta || '⭐ Condição especial disponível')
-    .replace('{condicao}', condicao || 'A combinar')
-    .replace('{data_validade}', dataValidade)
-    .replace('{nome_empresa}', config.nome_empresa || 'nossa empresa');
-}
 
 export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado }) {
   const [intervaloMin, setIntervaloMin] = useState(15);
   const [intervaloMax, setIntervaloMax] = useState(25);
   const [rodando, setRodando] = useState(false);
   const [cancelado, setCancelado] = useState(false);
-  const [resultados, setResultados] = useState([]); // { id, nome, ok, semWhatsapp, erro }
-  const [indiceAtual, setIndiceAtual] = useState(-1);
+  const [resultados, setResultados] = useState([]);
+  const [enviados, setEnviados] = useState(0);
+  const [erros, setErros] = useState(0);
+  const [statusMsg, setStatusMsg] = useState('');
+  const cancelRef = useRef(false);
 
-  const progresso = itens.length > 0 ? Math.round((resultados.length / itens.length) * 100) : 0;
-  const finalizado = resultados.length === itens.length && itens.length > 0;
+  // IDs ainda pendentes (começa com todos, vai sendo reduzido conforme lotes são enviados)
+  const idsPendentesRef = useRef(itens.map(i => i.id));
+  const totalRef = useRef(itens.length);
 
-  const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+  const progresso = totalRef.current > 0
+    ? Math.round(((enviados + erros) / totalRef.current) * 100)
+    : 0;
+  const finalizado = !rodando && (enviados + erros) >= totalRef.current && totalRef.current > 0;
 
-  const iniciarEnvio = async () => {
-    setRodando(true);
-    setCancelado(false);
-    setResultados([]);
-    const cancelRef = { value: false };
+  // Estima tempo: 5 contatos por lote com média de intervalos
+  const tempoEstimado = Math.ceil(itens.length * ((intervaloMin + intervaloMax) / 2) / 60);
 
-    for (let i = 0; i < itens.length; i++) {
-      if (cancelRef.value) break;
-      const item = itens[i];
-      setIndiceAtual(i);
-
-      const tel = (item.clienteTelefone || '').replace(/\D/g, '');
-      if (!tel) {
-        setResultados(prev => [...prev, { id: item.id, nome: item.clienteNome, ok: false, erro: 'Telefone inválido' }]);
-        continue;
-      }
-
-      const mensagem = gerarMensagem(item, config);
-
-      try {
-        const res = await base44.functions.invoke('enviarMensagemWhatsApp', { telefone: tel, mensagem });
-        if (res.data?.ok) {
-          setResultados(prev => [...prev, { id: item.id, nome: item.clienteNome, ok: true }]);
-          onEnviado(item.id);
-        } else {
-          const errMsg = res.data?.error || 'Erro desconhecido';
-          const semWhatsapp = errMsg.includes('exists":false') || errMsg.toLowerCase().includes('not registered');
-          setResultados(prev => [...prev, { id: item.id, nome: item.clienteNome, ok: false, semWhatsapp, erro: semWhatsapp ? 'Sem WhatsApp' : errMsg }]);
-        }
-      } catch (e) {
-        setResultados(prev => [...prev, { id: item.id, nome: item.clienteNome, ok: false, erro: e.message }]);
-      }
-
-      // Aguardar intervalo aleatório entre envios (exceto o último)
-      if (i < itens.length - 1 && !cancelRef.value) {
-        const min = Math.min(intervaloMin, intervaloMax);
-        const max = Math.max(intervaloMin, intervaloMax);
-        const segundos = min + Math.floor(Math.random() * (max - min + 1));
-        for (let s = 0; s < segundos; s++) {
-          if (cancelRef.value) break;
-          await sleep(1000);
-        }
-      }
+  const dispararLote = async () => {
+    if (cancelRef.current) return;
+    if (idsPendentesRef.current.length === 0) {
+      setRodando(false);
+      return;
     }
 
-    setRodando(false);
-    setIndiceAtual(-1);
+    const pendentes = idsPendentesRef.current;
+    setStatusMsg(`Enviando lote (${pendentes.length} restantes)...`);
+
+    try {
+      const res = await base44.functions.invoke('dispararEnvioMassaRemarketingLote', {
+        ids: pendentes,
+        intervaloMin,
+        intervaloMax,
+      });
+
+      const data = res.data;
+
+      if (!data?.ok) {
+        toast.error(data?.error || 'Erro ao enviar lote');
+        setRodando(false);
+        return;
+      }
+
+      // Atualiza contadores
+      setEnviados(prev => prev + (data.enviados || 0));
+      setErros(prev => prev + (data.erros || 0));
+
+      // Registra resultados individuais
+      if (data.resultados?.length) {
+        setResultados(prev => [...prev, ...data.resultados]);
+
+        // Notifica os enviados com sucesso
+        data.resultados.filter(r => r.ok).forEach(r => onEnviado(r.id));
+      }
+
+      // Remove os IDs que foram processados neste lote
+      const processadosIds = new Set((data.resultados || []).map(r => r.id));
+      idsPendentesRef.current = idsPendentesRef.current.filter(id => !processadosIds.has(id));
+
+      if (cancelRef.current) {
+        setRodando(false);
+        setStatusMsg('');
+        return;
+      }
+
+      if (data.aindaPendentes > 0 && idsPendentesRef.current.length > 0) {
+        // Aguarda 2s e dispara próximo lote (intervalo já foi feito no backend)
+        setTimeout(() => dispararLote(), 2000);
+      } else {
+        setRodando(false);
+        setStatusMsg('');
+        toast.success('Envio em massa concluído!');
+      }
+
+    } catch (e) {
+      toast.error('Erro na comunicação: ' + e.message);
+      setRodando(false);
+    }
+  };
+
+  const iniciarEnvio = () => {
+    idsPendentesRef.current = itens.map(i => i.id);
+    totalRef.current = itens.length;
+    cancelRef.current = false;
+    setCancelado(false);
+    setResultados([]);
+    setEnviados(0);
+    setErros(0);
+    setRodando(true);
+    dispararLote();
   };
 
   const cancelarEnvio = () => {
+    cancelRef.current = true;
     setCancelado(true);
     setRodando(false);
+    setStatusMsg('');
     toast.info('Envio interrompido.');
   };
-
-  const sucessos = resultados.filter(r => r.ok).length;
-  const erros = resultados.filter(r => !r.ok).length;
 
   return (
     <Dialog open onOpenChange={!rodando ? onClose : undefined}>
@@ -132,7 +139,10 @@ export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado })
                 <span className="text-sm text-amber-700">segundos</span>
               </div>
               <p className="text-xs text-amber-600 mt-2">
-                ⚠️ Intervalo aleatório para parecer mais humano e evitar bloqueios. Tempo estimado: ~{Math.ceil(itens.length * ((intervaloMin + intervaloMax) / 2) / 60)} min.
+                ⚠️ Intervalo aleatório para parecer mais humano e evitar bloqueios. Tempo estimado: ~{tempoEstimado} min.
+              </p>
+              <p className="text-xs text-green-700 mt-1 font-medium">
+                ✅ O envio roda no servidor — você pode fechar esta tela sem interromper.
               </p>
             </div>
           )}
@@ -141,24 +151,24 @@ export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado })
           {(rodando || finalizado || resultados.length > 0) && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-slate-600">
-                <span>{resultados.length} de {itens.length} enviados</span>
+                <span>{enviados + erros} de {totalRef.current} processados</span>
                 <span>{progresso}%</span>
               </div>
               <Progress value={progresso} className="h-3" />
-              {rodando && indiceAtual >= 0 && (
+              {rodando && statusMsg && (
                 <p className="text-xs text-slate-500 flex items-center gap-1">
                   <Loader2 className="w-3 h-3 animate-spin" />
-                  Enviando para: {itens[indiceAtual]?.clienteNome}
+                  {statusMsg}
                 </p>
               )}
             </div>
           )}
 
           {/* Resultado resumo */}
-          {resultados.length > 0 && (
+          {(enviados > 0 || erros > 0) && (
             <div className="flex gap-3">
               <div className="flex items-center gap-1 text-sm text-green-700 bg-green-50 rounded px-2 py-1">
-                <CheckCircle2 className="w-4 h-4" /> {sucessos} enviados
+                <CheckCircle2 className="w-4 h-4" /> {enviados} enviados
               </div>
               <div className="flex items-center gap-1 text-sm text-red-700 bg-red-50 rounded px-2 py-1">
                 <XCircle className="w-4 h-4" /> {erros} com erro
@@ -173,8 +183,6 @@ export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado })
                 <div key={i} className="flex items-center gap-2 px-3 py-2 text-sm">
                   {r.ok ? (
                     <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  ) : r.semWhatsapp ? (
-                    <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                   ) : (
                     <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                   )}
@@ -204,6 +212,9 @@ export default function EnvioEmMassaModal({ itens, config, onClose, onEnviado })
               <Button onClick={onClose} className="flex-1 bg-green-600 hover:bg-green-700">
                 <CheckCircle2 className="w-4 h-4 mr-2" /> Concluído
               </Button>
+            )}
+            {cancelado && (
+              <Button variant="outline" onClick={onClose} className="flex-1">Fechar</Button>
             )}
           </div>
         </div>
