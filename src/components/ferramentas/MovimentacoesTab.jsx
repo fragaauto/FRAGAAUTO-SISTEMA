@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Plus, ArrowUpFromLine, ArrowDownToLine, CheckCircle2, Search, Camera, X, Loader2 } from 'lucide-react';
+import { Plus, ArrowUpFromLine, ArrowDownToLine, CheckCircle2, Search, Camera, X, Loader2, ImagePlus } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function MovimentacoesTab() {
@@ -21,6 +21,7 @@ export default function MovimentacoesTab() {
   const [drawing, setDrawing] = useState(false);
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const fileInputRef = useRef();
+  const cameraInputRef = useRef();
 
   const { data: movs = [], isLoading } = useQuery({ queryKey: ['movimentacoes'], queryFn: () => base44.entities.MovimentacaoFerramenta.list('-data_hora', 200) });
   const { data: ferramentas = [] } = useQuery({ queryKey: ['ferramentas'], queryFn: () => base44.entities.Ferramenta.list() });
@@ -209,12 +210,19 @@ export default function MovimentacoesTab() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <Label className="flex items-center gap-1.5"><Camera className="w-4 h-4" /> Fotos</Label>
-                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingFoto} className="text-xs h-7">
-                  {uploadingFoto ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Camera className="w-3 h-3 mr-1" />}
-                  {uploadingFoto ? 'Enviando...' : 'Adicionar foto'}
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <Label className="flex items-center gap-1.5 flex-1"><Camera className="w-4 h-4" /> Fotos</Label>
+                <Button size="sm" variant="outline" onClick={() => cameraInputRef.current?.click()} disabled={uploadingFoto} className="text-xs h-7 gap-1">
+                  {uploadingFoto ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
+                  Tirar foto
                 </Button>
+                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingFoto} className="text-xs h-7 gap-1">
+                  {uploadingFoto ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImagePlus className="w-3 h-3" />}
+                  Galeria
+                </Button>
+                {/* Câmera: abre direto a câmera no celular */}
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFotoUpload} />
+                {/* Galeria: permite selecionar arquivo(s) */}
                 <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFotoUpload} />
               </div>
               {form.fotos?.length > 0 && (
