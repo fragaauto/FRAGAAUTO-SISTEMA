@@ -30,7 +30,6 @@ import SeletorUnidade from '@/components/SeletorUnidade';
 // Todos os itens de navegação com módulo associado
 const NAV_ITEMS = [
   { name: 'Home', icon: Home, path: 'Home', modulo: null },
-  { name: 'Dashboard', icon: Home, path: 'Dashboard', modulo: 'relatorios' },
   { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento', modulo: 'atendimentos' },
   { name: 'Atendimentos', icon: FileText, path: 'Atendimentos', modulo: 'atendimentos' },
   { name: 'Controle de Encomendas', icon: Package, path: 'ControleEncomendas', modulo: null },
@@ -40,6 +39,7 @@ const NAV_ITEMS = [
   { name: 'Cadastros', icon: Users, path: 'Cadastros', modulo: 'clientes' },
   { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist', modulo: 'checklist' },
   { name: 'Agenda', icon: Calendar, path: 'Agenda', modulo: 'agenda' },
+  { name: 'Rotina Diária', icon: ClipboardCheck, path: 'RotinaDiaria', modulo: null },
   { name: 'Financeiro', icon: TrendingUp, path: 'Financeiro', modulo: 'financeiro' },
   { name: 'Compras', icon: Package, path: 'Compras', modulo: 'estoque' },
   { name: 'Configurações', icon: Wrench, path: 'Configuracoes', modulo: null },
@@ -48,7 +48,6 @@ const NAV_ITEMS = [
   { name: 'Base de Conhecimento IA', icon: Sparkles, path: 'BaseConhecimentoIA', modulo: null, apenasAdmin: true },
   { name: 'Treinamentos', icon: FileText, path: 'ManualTreinamento', modulo: null },
   { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas', modulo: null },
-  { name: 'Rotina Diária', icon: ClipboardCheck, path: 'RotinaDiaria', modulo: null },
 ];
 
 

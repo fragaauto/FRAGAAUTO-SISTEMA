@@ -33,6 +33,7 @@ import {
 'lucide-react';
 import { motion } from 'framer-motion';
 import AgendaHoje from '../components/agenda/AgendaHoje';
+import RotinaHojeCard from '../components/rotina/RotinaHojeCard';
 import { useUnidade } from '@/lib/UnidadeContext';
 
 const UNIDADE_LAVA_JATO_ID = '69ea76b72f920804f5d68eac';
@@ -338,8 +339,11 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Rotina Diária do Dia */}
+      <RotinaHojeCard />
+
       {/* Agenda */}
-      <div className="max-w-6xl mx-auto px-4 pt-6 pb-2">
+      <div className="max-w-6xl mx-auto px-4 pt-4 pb-2">
         <AgendaHoje />
       </div>
 
