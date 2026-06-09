@@ -17,12 +17,15 @@ export default function TabMetas() {
 
   const { data: metas = [] } = useQuery({
     queryKey: ['metas_vendas', unidadeAtual?.id],
-    queryFn: () => base44.entities.MetaVendas.list(),
+    queryFn: () => base44.entities.MetaVendas.filter({ unidade_id: unidadeAtual?.id }),
     enabled: !!unidadeAtual,
   });
 
   useEffect(() => {
-    const meta = metas.find(m => m.unidade_id === unidadeAtual?.id) || metas[0];
+    // Resetar form ao trocar de unidade
+    setForm({ meta_dia: '', meta_semana: '', meta_mes: '' });
+    setMetaId(null);
+    const meta = metas[0];
     if (meta) {
       setMetaId(meta.id);
       setForm({
@@ -31,7 +34,7 @@ export default function TabMetas() {
         meta_mes: meta.meta_mes || '',
       });
     }
-  }, [metas, unidadeAtual]);
+  }, [metas, unidadeAtual?.id]);
 
   const saveMutation = useMutation({
     mutationFn: (data) => {

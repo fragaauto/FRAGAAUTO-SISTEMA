@@ -53,7 +53,7 @@ export default function MetasCard() {
 
   const { data: metas = [] } = useQuery({
     queryKey: ['metas_vendas', unidadeAtual?.id],
-    queryFn: () => base44.entities.MetaVendas.list(),
+    queryFn: () => base44.entities.MetaVendas.filter({ unidade_id: unidadeAtual?.id }),
     staleTime: 5 * 60 * 1000,
     enabled: !!unidadeAtual,
   });
@@ -65,7 +65,7 @@ export default function MetasCard() {
     enabled: !!unidadeAtual,
   });
 
-  const meta = metas.find(m => m.unidade_id === unidadeAtual?.id) || metas[0];
+  const meta = metas[0];
 
   // Se não há metas configuradas, não exibe
   if (!meta || (!meta.meta_dia && !meta.meta_semana && !meta.meta_mes)) return null;
