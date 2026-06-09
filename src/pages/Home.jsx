@@ -271,8 +271,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50">
 
-      {/* Barra de navegação rápida — visível em mobile/tablet */}
-      <div className="lg:hidden sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+      {/* Barra de navegação rápida */}
+      <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
         {/* Linha 1: Seletor de unidade */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Unidade</span>
