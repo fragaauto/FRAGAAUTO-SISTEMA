@@ -217,8 +217,8 @@ export default function Layout({ children, currentPageName }) {
                 <Menu className="w-6 h-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0 flex flex-col">
-              <div className="p-4 border-b border-slate-200 flex-shrink-0">
+            <SheetContent side="left" className="w-72 p-0" style={{display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100dvh'}}>
+              <div className="p-4 border-b border-slate-200" style={{flexShrink: 0}}>
                 <div className="flex items-center gap-2">
                   <img src="/logo.png" alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
                     e.target.style.display = 'none';
@@ -233,7 +233,7 @@ export default function Layout({ children, currentPageName }) {
                   </div>
                 </div>
               </div>
-              <div className="flex-1 p-4 overflow-y-auto" style={{overflowY: 'auto', scrollbarWidth: 'thin'}}>
+              <div className="p-4" style={{flex: 1, overflowY: 'scroll', WebkitOverflowScrolling: 'touch'}}>
                 <NavLinks onNavigate={() => setOpen(false)} />
               </div>
             </SheetContent>
