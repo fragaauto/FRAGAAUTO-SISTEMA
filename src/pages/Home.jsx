@@ -30,9 +30,9 @@ import {
   TrendingUp,
   Calendar,
   LogOut,
-  Building2,
-  ChevronDown } from
+  Menu } from
 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion } from 'framer-motion';
 import AgendaHoje from '../components/agenda/AgendaHoje';
 import RotinaHojeCard from '../components/rotina/RotinaHojeCard';
@@ -253,43 +253,73 @@ export default function Home() {
   }];
 
 
-  const MENU_RAPIDO = [
-    { label: 'Atendimentos', path: 'Atendimentos', icon: FileText },
-    { label: 'Novo OS', path: 'NovoAtendimento', icon: ClipboardCheck },
-    { label: 'Financeiro', path: 'Financeiro', icon: DollarSign },
-    { label: 'Clientes', path: 'Cadastros', icon: Users },
-    { label: 'Agenda', path: 'Agenda', icon: Calendar },
-    { label: 'Remarketing', path: 'Remarketing', icon: TrendingUp },
-    { label: 'Relatórios', path: 'Relatorios', icon: FileText },
-    { label: 'Produtos', path: 'Produtos', icon: Package },
-    { label: 'Compras', path: 'Compras', icon: Package },
-    { label: 'Rotina', path: 'RotinaDiaria', icon: ClipboardCheck },
-    { label: 'Ferramentas', path: 'ControleFerramentas', icon: Wrench },
-    { label: 'Configurações', path: 'Configuracoes', icon: Wrench },
+  const NAV_ITEMS = [
+    { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento' },
+    { name: 'Atendimentos', icon: FileText, path: 'Atendimentos' },
+    { name: 'Financeiro', icon: TrendingUp, path: 'Financeiro' },
+    { name: 'Clientes', icon: Users, path: 'Cadastros' },
+    { name: 'Agenda', icon: Calendar, path: 'Agenda' },
+    { name: 'Remarketing', icon: TrendingUp, path: 'Remarketing' },
+    { name: 'Relatórios', icon: FileText, path: 'Relatorios' },
+    { name: 'Produtos', icon: Package, path: 'Produtos' },
+    { name: 'Compras', icon: Package, path: 'Compras' },
+    { name: 'Rotina Diária', icon: ClipboardCheck, path: 'RotinaDiaria' },
+    { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas' },
+    { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist' },
+    { name: 'Usuários', icon: Users, path: 'Usuarios' },
+    { name: 'Configurações', icon: Wrench, path: 'Configuracoes' },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50">
 
-      {/* Barra de navegação rápida */}
+      {/* Header com menu lateral e seletor de unidade */}
       <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-        {/* Linha 1: Seletor de unidade */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Unidade</span>
+        <div className="flex items-center justify-between px-4 h-14">
+          <div className="flex items-center gap-3">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-6 h-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 p-0" style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100dvh' }}>
+                <div className="p-4 border-b border-slate-200" style={{ flexShrink: 0 }}>
+                  <div className="flex items-center gap-2">
+                    <img src="/logo.png" alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => { e.target.style.display = 'none'; e.target.nextElementSibling.style.display = 'flex'; }} />
+                    <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center" style={{ display: 'none' }}>
+                      <Wrench className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-800">Fraga Auto</p>
+                      <p className="text-xs text-slate-500">Sistema de Gestão</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 space-y-1" style={{ flex: 1, overflowY: 'scroll', WebkitOverflowScrolling: 'touch' }}>
+                  {NAV_ITEMS.map((item) => (
+                    <Link
+                      key={item.path}
+                      to={createPageUrl(item.path)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-600 hover:bg-slate-100"
+                    >
+                      <item.icon className="w-5 h-5" />
+                      {item.name}
+                    </Link>
+                  ))}
+                  <button
+                    onClick={() => base44.auth.logout()}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-600 hover:bg-red-50 hover:text-red-600 w-full"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    Sair
+                  </button>
+                </div>
+              </SheetContent>
+            </Sheet>
+            <span className="font-bold text-slate-800 text-sm">Fraga Auto</span>
+          </div>
           <SeletorUnidade />
-        </div>
-        {/* Linha 2: Atalhos de menu com scroll horizontal */}
-        <div className="flex gap-2 px-3 py-2 overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
-          {MENU_RAPIDO.map(item => (
-            <Link
-              key={item.path}
-              to={createPageUrl(item.path)}
-              className="flex flex-col items-center gap-1 flex-shrink-0 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-orange-50 hover:text-orange-600 transition-all text-slate-600 border border-slate-200 hover:border-orange-200"
-            >
-              <item.icon className="w-4 h-4" />
-              <span className="text-xs font-medium whitespace-nowrap">{item.label}</span>
-            </Link>
-          ))}
         </div>
       </div>
 
