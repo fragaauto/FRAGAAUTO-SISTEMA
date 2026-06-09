@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle2, Clock, AlertTriangle, Search, Plus, Loader2, X } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, Search, Plus, Loader2, X, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from 'date-fns';
 
 const STATUS_COLORS = {
@@ -45,6 +46,12 @@ export default function ContasReceberTab({ filtroData }) {
       return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
     });
   }, [contasBrutos, unidadeAtual]);
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.ContaReceber.delete(id),
+    onSuccess: () => { toast.success('Conta excluída!'); qc.invalidateQueries(['contas-receber']); },
+    onError: () => toast.error('Erro ao excluir conta'),
+  });
 
   const baixarMutation = useMutation({
     mutationFn: async ({ conta, formaPagamento }) => {
@@ -130,19 +137,38 @@ export default function ContasReceberTab({ filtroData }) {
         <div className="text-center py-12 text-slate-400">Nenhuma conta encontrada</div>
       ) : (
         filtradas.map(conta => (
-          <Card key={conta.id} className="cursor-pointer hover:shadow-md transition-all" onClick={() => setSelecionada(conta)}>
+          <Card key={conta.id} className="hover:shadow-md transition-all">
             <CardContent className="p-4">
               <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelecionada(conta)}>
                   <p className="font-semibold text-slate-800 truncate">{conta.cliente_nome}</p>
                   <p className="text-sm text-slate-500 truncate">{conta.descricao}</p>
                   <p className="text-xs text-slate-400 mt-1">
                     Vence: {conta.data_vencimento ? format(new Date(conta.data_vencimento), 'dd/MM/yyyy') : '-'}
                   </p>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-slate-800">R$ {(conta.valor_total || 0).toFixed(2)}</p>
-                  <Badge className={`text-xs mt-1 ${STATUS_COLORS[conta.status]}`}>{STATUS_LABELS[conta.status]}</Badge>
+                <div className="flex items-start gap-2 flex-shrink-0">
+                  <div className="text-right cursor-pointer" onClick={() => setSelecionada(conta)}>
+                    <p className="font-bold text-slate-800">R$ {(conta.valor_total || 0).toFixed(2)}</p>
+                    <Badge className={`text-xs mt-1 ${STATUS_COLORS[conta.status]}`}>{STATUS_LABELS[conta.status]}</Badge>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="icon" variant="ghost" className="w-7 h-7 text-slate-400 hover:text-red-500 flex-shrink-0">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
+                        <AlertDialogDescription>{conta.cliente_nome} — R$ {(conta.valor_total||0).toFixed(2)}<br />Esta ação não pode ser desfeita.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteMutation.mutate(conta.id)} className="bg-red-600 hover:bg-red-700">Excluir</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </CardContent>
