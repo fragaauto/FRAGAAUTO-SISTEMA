@@ -33,6 +33,7 @@ const TABS = [
 
 const FILTROS_RAPIDOS = [
   { value: 'hoje', label: 'Hoje' },
+  { value: 'ontem', label: 'Ontem' },
   { value: 'semana', label: 'Essa Semana' },
   { value: 'mes', label: 'Esse Mês' },
   { value: 'mes_passado', label: 'Mês Passado' },
@@ -94,28 +95,31 @@ export default function Financeiro() {
   // Calcular filtros globais de data (botões rápidos)
   function calcularIntervalo(filtro) {
     if (filtro === 'hoje') return { inicio: startOfDay(hoje), fim: endOfDay(hoje) };
+    if (filtro === 'ontem') return { inicio: startOfDay(subDays(hoje, 1)), fim: endOfDay(subDays(hoje, 1)) };
     if (filtro === 'semana') return { inicio: startOfDay(subDays(hoje, hoje.getDay() === 0 ? 6 : hoje.getDay() - 1)), fim: endOfDay(hoje) };
     if (filtro === 'mes_passado') { const mp = subMonths(hoje, 1); return { inicio: startOfMonth(mp), fim: endOfMonth(mp) }; }
     // mes (default)
     return { inicio: startOfMonth(hoje), fim: endOfMonth(hoje) };
   }
-  const { inicio: inicioGlobal, fim: fimGlobal } = calcularIntervalo(filtroGlobal);
-  const filtroDataProps = { inicio: inicioGlobal, fim: fimGlobal };
+  const { inicio: inicioGlobal, fim: fimGlobal } = filtroGlobal ? calcularIntervalo(filtroGlobal) : { inicio: null, fim: null };
+  const filtroDataProps = filtroGlobal ? { inicio: inicioGlobal, fim: fimGlobal } : null;
 
   // Calcular filtros de data do dashboard (usa filtroGlobal como base)
-  let inicioFiltro = inicioGlobal;
-  let fimFiltro = fimGlobal;
+  const inicioFiltro = inicioGlobal;
+  const fimFiltro = fimGlobal;
 
   const lancNaoEstornados = lancamentos.filter(l => !l.estornado);
 
   // Lançamentos do período
   const lancPeriodo = lancNaoEstornados.filter(l => {
+    if (!inicioFiltro || !fimFiltro) return true;
     const data = new Date(l.data_lancamento || l.created_date);
     return data >= inicioFiltro && data <= fimFiltro;
   });
 
   // Lançamentos anteriores ao período (para saldo anterior)
   const lancAnteriores = lancNaoEstornados.filter(l => {
+    if (!inicioFiltro) return false;
     const data = new Date(l.data_lancamento || l.created_date);
     return data < inicioFiltro;
   });
@@ -148,7 +152,7 @@ export default function Financeiro() {
               {FILTROS_RAPIDOS.map(f => (
                 <button
                   key={f.value}
-                  onClick={() => setFiltroGlobal(f.value)}
+                  onClick={() => setFiltroGlobal(prev => prev === f.value ? null : f.value)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
                     filtroGlobal === f.value
                       ? 'bg-green-600 text-white border-green-600'
@@ -183,11 +187,13 @@ export default function Financeiro() {
             <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200">
               <Calendar className="w-4 h-4 text-slate-500" />
               <span className="text-sm font-medium text-slate-600">
-                {FILTROS_RAPIDOS.find(f => f.value === filtroGlobal)?.label}
+                {filtroGlobal ? FILTROS_RAPIDOS.find(f => f.value === filtroGlobal)?.label : 'Todos os períodos'}
               </span>
-              <span className="text-xs text-slate-400 ml-auto">
-                {format(inicioFiltro, 'dd/MM/yyyy')} – {format(fimFiltro, 'dd/MM/yyyy')}
-              </span>
+              {inicioFiltro && fimFiltro && (
+                <span className="text-xs text-slate-400 ml-auto">
+                  {format(inicioFiltro, 'dd/MM/yyyy')} – {format(fimFiltro, 'dd/MM/yyyy')}
+                </span>
+              )}
             </div>
 
             {/* Saldo do Caixa */}
