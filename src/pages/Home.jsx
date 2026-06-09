@@ -29,13 +29,16 @@ import {
   DollarSign,
   TrendingUp,
   Calendar,
-  LogOut } from
+  LogOut,
+  Building2,
+  ChevronDown } from
 'lucide-react';
 import { motion } from 'framer-motion';
 import AgendaHoje from '../components/agenda/AgendaHoje';
 import RotinaHojeCard from '../components/rotina/RotinaHojeCard';
 import MetasCard from '../components/home/MetasCard';
 import { useUnidade } from '@/lib/UnidadeContext';
+import SeletorUnidade from '@/components/SeletorUnidade';
 
 const UNIDADE_LAVA_JATO_ID = '69ea76b72f920804f5d68eac';
 const AGENTE_AUTO_PORTAS = 'atendimento_whatsapp';
@@ -250,8 +253,46 @@ export default function Home() {
   }];
 
 
+  const MENU_RAPIDO = [
+    { label: 'Atendimentos', path: 'Atendimentos', icon: FileText },
+    { label: 'Novo OS', path: 'NovoAtendimento', icon: ClipboardCheck },
+    { label: 'Financeiro', path: 'Financeiro', icon: DollarSign },
+    { label: 'Clientes', path: 'Cadastros', icon: Users },
+    { label: 'Agenda', path: 'Agenda', icon: Calendar },
+    { label: 'Remarketing', path: 'Remarketing', icon: TrendingUp },
+    { label: 'Relatórios', path: 'Relatorios', icon: FileText },
+    { label: 'Produtos', path: 'Produtos', icon: Package },
+    { label: 'Compras', path: 'Compras', icon: Package },
+    { label: 'Rotina', path: 'RotinaDiaria', icon: ClipboardCheck },
+    { label: 'Ferramentas', path: 'ControleFerramentas', icon: Wrench },
+    { label: 'Configurações', path: 'Configuracoes', icon: Wrench },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50">
+
+      {/* Barra de navegação rápida — visível em mobile/tablet */}
+      <div className="lg:hidden sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+        {/* Linha 1: Seletor de unidade */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Unidade</span>
+          <SeletorUnidade />
+        </div>
+        {/* Linha 2: Atalhos de menu com scroll horizontal */}
+        <div className="flex gap-2 px-3 py-2 overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+          {MENU_RAPIDO.map(item => (
+            <Link
+              key={item.path}
+              to={createPageUrl(item.path)}
+              className="flex flex-col items-center gap-1 flex-shrink-0 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-orange-50 hover:text-orange-600 transition-all text-slate-600 border border-slate-200 hover:border-orange-200"
+            >
+              <item.icon className="w-4 h-4" />
+              <span className="text-xs font-medium whitespace-nowrap">{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white">
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-20">
