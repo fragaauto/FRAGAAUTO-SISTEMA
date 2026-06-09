@@ -8,16 +8,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Target, ArrowRight } from 'lucide-react';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
-function calcularFaturamento(atendimentos, de, ate) {
-  return atendimentos
-    .filter(a => {
-      if (a.status !== 'concluido') return false;
-      const dataRef = a.data_pagamento || a.data_aprovacao_checklist || a.updated_date;
+function calcularFaturamento(lancamentos, de, ate) {
+  return lancamentos
+    .filter(l => {
+      if (l.estornado) return false;
+      const dataRef = l.data_lancamento;
       if (!dataRef) return false;
       const data = new Date(dataRef);
       return data >= de && data <= ate;
     })
-    .reduce((sum, a) => sum + (a.valor_final_pago || a.valor_final || 0), 0);
+    .reduce((sum, l) => sum + (l.valor || 0), 0);
 }
 
 function BarraMeta({ label, atual, meta, cor }) {
@@ -80,9 +80,9 @@ export default function MetasCard() {
     enabled: !!unidadeAtual,
   });
 
-  const { data: atendimentos = [] } = useQuery({
-    queryKey: ['atendimentos_metas', unidadeAtual?.id],
-    queryFn: () => base44.entities.Atendimento.filter({ status: 'concluido', unidade_id: unidadeAtual?.id }, '-updated_date', 500),
+  const { data: lancamentos = [] } = useQuery({
+    queryKey: ['lancamentos_metas', unidadeAtual?.id],
+    queryFn: () => base44.entities.LancamentoFinanceiro.filter({ tipo: 'entrada', unidade_id: unidadeAtual?.id }, '-data_lancamento', 1000),
     staleTime: 2 * 60 * 1000,
     enabled: !!unidadeAtual,
   });
@@ -94,9 +94,9 @@ export default function MetasCard() {
   if (metasComValor.length === 0) return null;
 
   const agora = new Date();
-  const faturadoDia = calcularFaturamento(atendimentos, startOfDay(agora), endOfDay(agora));
-  const faturadoSemana = calcularFaturamento(atendimentos, startOfWeek(agora, { weekStartsOn: 1 }), endOfWeek(agora, { weekStartsOn: 1 }));
-  const faturadoMes = calcularFaturamento(atendimentos, startOfMonth(agora), endOfMonth(agora));
+  const faturadoDia = calcularFaturamento(lancamentos, startOfDay(agora), endOfDay(agora));
+  const faturadoSemana = calcularFaturamento(lancamentos, startOfWeek(agora, { weekStartsOn: 1 }), endOfWeek(agora, { weekStartsOn: 1 }));
+  const faturadoMes = calcularFaturamento(lancamentos, startOfMonth(agora), endOfMonth(agora));
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-6 pb-2">
