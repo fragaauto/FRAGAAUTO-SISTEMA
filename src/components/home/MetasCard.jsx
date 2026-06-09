@@ -6,14 +6,16 @@ import { base44 } from '@/api/base44Client';
 import { useUnidade } from '@/lib/UnidadeContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Target, ArrowRight } from 'lucide-react';
-import { startOfDay, startOfWeek, startOfMonth, isWithinInterval } from 'date-fns';
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
 function calcularFaturamento(atendimentos, de, ate) {
   return atendimentos
     .filter(a => {
       if (a.status !== 'concluido') return false;
-      const data = new Date(a.data_pagamento || a.updated_date);
-      return isWithinInterval(data, { start: de, end: ate });
+      const dataRef = a.data_pagamento || a.data_aprovacao_checklist || a.updated_date;
+      if (!dataRef) return false;
+      const data = new Date(dataRef);
+      return data >= de && data <= ate;
     })
     .reduce((sum, a) => sum + (a.valor_final_pago || a.valor_final || 0), 0);
 }
@@ -92,9 +94,9 @@ export default function MetasCard() {
   if (metasComValor.length === 0) return null;
 
   const agora = new Date();
-  const faturadoDia = calcularFaturamento(atendimentos, startOfDay(agora), agora);
-  const faturadoSemana = calcularFaturamento(atendimentos, startOfWeek(agora, { weekStartsOn: 1 }), agora);
-  const faturadoMes = calcularFaturamento(atendimentos, startOfMonth(agora), agora);
+  const faturadoDia = calcularFaturamento(atendimentos, startOfDay(agora), endOfDay(agora));
+  const faturadoSemana = calcularFaturamento(atendimentos, startOfWeek(agora, { weekStartsOn: 1 }), endOfWeek(agora, { weekStartsOn: 1 }));
+  const faturadoMes = calcularFaturamento(atendimentos, startOfMonth(agora), endOfMonth(agora));
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-6 pb-2">
