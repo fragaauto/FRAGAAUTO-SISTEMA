@@ -65,20 +65,6 @@ export default function ContasPagarTab({ filtroData }) {
     });
   }, []);
 
-  const toggleTodas = useCallback(() => {
-    setSelecionadas(prev => prev.size === filtradas.length ? new Set() : new Set(filtradas.map(c => c.id)));
-  }, [filtradas]);
-
-  const deletarLote = async () => {
-    setDeletandoLote(true);
-    await Promise.all([...selecionadas].map(id => base44.entities.ContaPagar.delete(id)));
-    setDeletandoLote(false);
-    setShowConfirmLote(false);
-    setSelecionadas(new Set());
-    toast.success(`${selecionadas.size} conta(s) excluída(s)!`);
-    qc.invalidateQueries(['contas-pagar']);
-  };
-
   const pagarMutation = useMutation({
     mutationFn: async (conta) => {
       await base44.entities.ContaPagar.update(conta.id, { status: 'pago', data_pagamento: new Date().toISOString() });
@@ -104,6 +90,22 @@ export default function ContasPagarTab({ filtroData }) {
       })();
       return matchStatus && matchSearch && matchData;
     });
+
+  const toggleTodas = () => {
+    setSelecionadas(prev => prev.size === filtradas.length ? new Set() : new Set(filtradas.map(c => c.id)));
+  };
+
+  const deletarLote = async () => {
+    const ids = [...selecionadas];
+    const count = ids.length;
+    setDeletandoLote(true);
+    await Promise.all(ids.map(id => base44.entities.ContaPagar.delete(id)));
+    setDeletandoLote(false);
+    setShowConfirmLote(false);
+    setSelecionadas(new Set());
+    toast.success(`${count} conta(s) excluída(s)!`);
+    qc.invalidateQueries(['contas-pagar']);
+  };
 
   return (
     <div className="space-y-3">
