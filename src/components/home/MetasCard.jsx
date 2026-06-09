@@ -32,7 +32,7 @@ function BarraMeta({ label, atual, meta, cor }) {
         <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{label}</span>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500">
-            R$ {atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / R$ {meta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {atual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / R$ {meta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
           {atingida && <span className="text-xs font-bold text-green-600">✓ Atingida!</span>}
         </div>
