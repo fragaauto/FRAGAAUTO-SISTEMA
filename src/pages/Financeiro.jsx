@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import {
   DollarSign, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2,
   Clock, Plus, Filter, Search, Loader2, ArrowUpCircle, ArrowDownCircle,
@@ -31,14 +31,11 @@ const TABS = [
   { id: 'caixa', label: '💰 Fluxo de Caixa' },
 ];
 
-// Opções de período para o filtro
-const PERIODOS = [
+const FILTROS_RAPIDOS = [
   { value: 'hoje', label: 'Hoje' },
-  { value: '7', label: 'Últimos 7 dias' },
-  { value: 'mes', label: 'Mês atual' },
-  { value: '30', label: 'Últimos 30 dias' },
-  { value: '90', label: 'Últimos 90 dias' },
-  { value: 'personalizado', label: 'Período personalizado' },
+  { value: 'semana', label: 'Essa Semana' },
+  { value: 'mes', label: 'Esse Mês' },
+  { value: 'mes_passado', label: 'Mês Passado' },
 ];
 
 const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
@@ -63,6 +60,7 @@ export default function Financeiro() {
   const [periodo, setPeriodo] = useState('mes');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
+  const [filtroGlobal, setFiltroGlobal] = useState('mes');
 
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
 
@@ -93,30 +91,20 @@ export default function Financeiro() {
 
   const hoje = new Date();
 
-  // Calcular filtros de data
-  let inicioFiltro, fimFiltro;
-  if (periodo === 'hoje') {
-    inicioFiltro = startOfDay(hoje);
-    fimFiltro = endOfDay(hoje);
-  } else if (periodo === 'mes') {
-    inicioFiltro = startOfMonth(hoje);
-    fimFiltro = endOfMonth(hoje);
-  } else if (periodo === '7') {
-    inicioFiltro = startOfDay(subDays(hoje, 7));
-    fimFiltro = endOfDay(hoje);
-  } else if (periodo === '30') {
-    inicioFiltro = startOfDay(subDays(hoje, 30));
-    fimFiltro = endOfDay(hoje);
-  } else if (periodo === '90') {
-    inicioFiltro = startOfDay(subDays(hoje, 90));
-    fimFiltro = endOfDay(hoje);
-  } else if (periodo === 'personalizado' && dataInicio && dataFim) {
-    inicioFiltro = startOfDay(new Date(dataInicio + 'T00:00:00'));
-    fimFiltro = endOfDay(new Date(dataFim + 'T23:59:59'));
-  } else {
-    inicioFiltro = startOfMonth(hoje);
-    fimFiltro = endOfMonth(hoje);
+  // Calcular filtros globais de data (botões rápidos)
+  function calcularIntervalo(filtro) {
+    if (filtro === 'hoje') return { inicio: startOfDay(hoje), fim: endOfDay(hoje) };
+    if (filtro === 'semana') return { inicio: startOfDay(subDays(hoje, hoje.getDay() === 0 ? 6 : hoje.getDay() - 1)), fim: endOfDay(hoje) };
+    if (filtro === 'mes_passado') { const mp = subMonths(hoje, 1); return { inicio: startOfMonth(mp), fim: endOfMonth(mp) }; }
+    // mes (default)
+    return { inicio: startOfMonth(hoje), fim: endOfMonth(hoje) };
   }
+  const { inicio: inicioGlobal, fim: fimGlobal } = calcularIntervalo(filtroGlobal);
+  const filtroDataProps = { inicio: inicioGlobal, fim: fimGlobal };
+
+  // Calcular filtros de data do dashboard (usa filtroGlobal como base)
+  let inicioFiltro = inicioGlobal;
+  let fimFiltro = fimGlobal;
 
   const lancNaoEstornados = lancamentos.filter(l => !l.estornado);
 
@@ -149,11 +137,29 @@ export default function Financeiro() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-3">
-            <DollarSign className="w-5 h-5 text-green-600" />
-            Financeiro
-          </h1>
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-green-600" />
+              Financeiro
+            </h1>
+            {/* Botões de filtro rápido de data */}
+            <div className="flex gap-1.5 overflow-x-auto">
+              {FILTROS_RAPIDOS.map(f => (
+                <button
+                  key={f.value}
+                  onClick={() => setFiltroGlobal(f.value)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                    filtroGlobal === f.value
+                      ? 'bg-green-600 text-white border-green-600'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-green-400 hover:text-green-700'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="flex gap-1 overflow-x-auto pb-1">
             {TABS.map(t => (
               <button
@@ -173,36 +179,12 @@ export default function Financeiro() {
       <div className="max-w-6xl mx-auto px-4 py-4">
         {tab === 'dashboard' && (
           <div className="space-y-4">
-            {/* Filtro de período */}
-            <div className="flex flex-wrap items-center gap-3 p-3 bg-white rounded-xl border border-slate-200">
+            {/* Label do período ativo */}
+            <div className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200">
               <Calendar className="w-4 h-4 text-slate-500" />
-              <Select value={periodo} onValueChange={setPeriodo}>
-                <SelectTrigger className="w-48 h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PERIODOS.map(p => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {periodo === 'personalizado' && (
-                <>
-                  <Input
-                    type="date"
-                    value={dataInicio}
-                    onChange={e => setDataInicio(e.target.value)}
-                    className="h-8 text-sm w-36"
-                  />
-                  <span className="text-slate-400 text-sm">até</span>
-                  <Input
-                    type="date"
-                    value={dataFim}
-                    onChange={e => setDataFim(e.target.value)}
-                    className="h-8 text-sm w-36"
-                  />
-                </>
-              )}
+              <span className="text-sm font-medium text-slate-600">
+                {FILTROS_RAPIDOS.find(f => f.value === filtroGlobal)?.label}
+              </span>
               <span className="text-xs text-slate-400 ml-auto">
                 {format(inicioFiltro, 'dd/MM/yyyy')} – {format(fimFiltro, 'dd/MM/yyyy')}
               </span>
@@ -281,9 +263,9 @@ export default function Financeiro() {
           </div>
         )}
 
-        {tab === 'receber' && <ContasReceberTab />}
-        {tab === 'pagar' && <ContasPagarTab />}
-        {tab === 'caixa' && <FluxoCaixaTab />}
+        {tab === 'receber' && <ContasReceberTab filtroData={filtroDataProps} />}
+        {tab === 'pagar' && <ContasPagarTab filtroData={filtroDataProps} />}
+        {tab === 'caixa' && <FluxoCaixaTab filtroData={filtroDataProps} />}
       </div>
     </div>
   );

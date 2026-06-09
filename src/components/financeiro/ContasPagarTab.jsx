@@ -25,7 +25,7 @@ const STATUS_COLORS = {
 
 const CATEGORIAS = ['aluguel','energia','agua','internet','folha_pagamento','manutencao','fornecedor_pecas','marketing','impostos','outros'];
 
-export default function ContasPagarTab() {
+export default function ContasPagarTab({ filtroData }) {
   const qc = useQueryClient();
   const { unidadeAtual } = useUnidade();
   const [search, setSearch] = useState('');
@@ -65,7 +65,11 @@ export default function ContasPagarTab() {
     .filter(c => {
       const matchStatus = filtroStatus === 'todos' || c.status === filtroStatus;
       const matchSearch = !search || c.fornecedor?.toLowerCase().includes(search.toLowerCase()) || c.descricao?.toLowerCase().includes(search.toLowerCase());
-      return matchStatus && matchSearch;
+      const matchData = !filtroData || (() => {
+        const data = new Date(c.data_vencimento || c.created_date);
+        return data >= filtroData.inicio && data <= filtroData.fim;
+      })();
+      return matchStatus && matchSearch && matchData;
     });
 
   return (

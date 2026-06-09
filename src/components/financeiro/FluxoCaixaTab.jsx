@@ -28,7 +28,7 @@ const FORMAS_LABELS = {
   cartao_debito: 'Débito', transferencia: 'Transferência', boleto: 'Boleto', faturado: 'Faturado'
 };
 
-export default function FluxoCaixaTab() {
+export default function FluxoCaixaTab({ filtroData }) {
   const qc = useQueryClient();
   const [periodo, setPeriodo] = useState('30');
   const [filtroForma, setFiltroForma] = useState('todos');
@@ -129,18 +129,25 @@ export default function FluxoCaixaTab() {
     return atendimento.tecnico || '';
   };
 
-  const dataInicio = periodo === 'custom'
-    ? (dataInicioPers ? new Date(dataInicioPers + 'T00:00:00').toISOString() : null)
-    : subDays(new Date(), parseInt(periodo)).toISOString();
-  const dataFim = periodo === 'custom'
-    ? (dataFimPers ? new Date(dataFimPers + 'T23:59:59').toISOString() : null)
-    : null;
+  // Se veio filtroData global, usa ele; senão usa o filtro interno da aba
+  const dataInicio = filtroData
+    ? filtroData.inicio.toISOString()
+    : periodo === 'custom'
+      ? (dataInicioPers ? new Date(dataInicioPers + 'T00:00:00').toISOString() : null)
+      : subDays(new Date(), parseInt(periodo)).toISOString();
+  const dataFim = filtroData
+    ? filtroData.fim.toISOString()
+    : periodo === 'custom'
+      ? (dataFimPers ? new Date(dataFimPers + 'T23:59:59').toISOString() : null)
+      : null;
 
   const filtrados = lancamentos.filter(l => {
     const data = l.data_lancamento || l.created_date || '';
-    const dentroPeriodo = periodo === 'custom'
-      ? (!dataInicio || data >= dataInicio) && (!dataFim || data <= dataFim)
-      : data >= dataInicio;
+    const dentroPeriodo = filtroData
+      ? data >= dataInicio && data <= dataFim
+      : periodo === 'custom'
+        ? (!dataInicio || data >= dataInicio) && (!dataFim || data <= dataFim)
+        : data >= dataInicio;
     const matchForma = filtroForma === 'todos' || l.forma_pagamento === filtroForma;
     return dentroPeriodo && matchForma;
   });

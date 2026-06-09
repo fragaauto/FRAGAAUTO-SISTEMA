@@ -25,7 +25,7 @@ const STATUS_COLORS = {
 
 const STATUS_LABELS = { pendente: 'Pendente', pago: 'Pago', parcial: 'Parcial', vencido: 'Vencido', cancelado: 'Cancelado' };
 
-export default function ContasReceberTab() {
+export default function ContasReceberTab({ filtroData }) {
   const qc = useQueryClient();
   const { unidadeAtual } = useUnidade();
   const [search, setSearch] = useState('');
@@ -89,7 +89,11 @@ export default function ContasReceberTab() {
     .filter(c => {
       const matchStatus = filtroStatus === 'todos' || c.status === filtroStatus;
       const matchSearch = !search || c.cliente_nome?.toLowerCase().includes(search.toLowerCase()) || c.descricao?.toLowerCase().includes(search.toLowerCase());
-      return matchStatus && matchSearch;
+      const matchData = !filtroData || (() => {
+        const data = new Date(c.data_vencimento || c.created_date);
+        return data >= filtroData.inicio && data <= filtroData.fim;
+      })();
+      return matchStatus && matchSearch && matchData;
     });
 
   const totalFiltrado = filtradas.reduce((s, c) => s + (c.valor_total || 0), 0);
