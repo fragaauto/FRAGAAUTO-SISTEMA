@@ -34,6 +34,7 @@ import {
 import { motion } from 'framer-motion';
 import AgendaHoje from '../components/agenda/AgendaHoje';
 import RotinaHojeCard from '../components/rotina/RotinaHojeCard';
+import MetasCard from '../components/home/MetasCard';
 import { useUnidade } from '@/lib/UnidadeContext';
 
 const UNIDADE_LAVA_JATO_ID = '69ea76b72f920804f5d68eac';
@@ -338,6 +339,9 @@ export default function Home() {
           </motion.div>
         </div>
       </div>
+
+      {/* Metas de Vendas */}
+      <MetasCard />
 
       {/* Rotina Diária do Dia */}
       <RotinaHojeCard />

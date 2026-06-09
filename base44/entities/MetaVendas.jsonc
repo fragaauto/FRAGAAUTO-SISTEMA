@@ -1,0 +1,23 @@
+{
+  "name": "MetaVendas",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade"
+    },
+    "meta_dia": {
+      "type": "number",
+      "description": "Meta de faturamento por dia (R$)"
+    },
+    "meta_semana": {
+      "type": "number",
+      "description": "Meta de faturamento por semana (R$)"
+    },
+    "meta_mes": {
+      "type": "number",
+      "description": "Meta de faturamento por m\u00eas (R$)"
+    }
+  },
+  "required": []
+}
