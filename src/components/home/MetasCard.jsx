@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -6,7 +6,9 @@ import { base44 } from '@/api/base44Client';
 import { useUnidade } from '@/lib/UnidadeContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Target, ArrowRight } from 'lucide-react';
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+
+const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
 
 function calcularFaturamento(lancamentos, de, ate) {
   return lancamentos
@@ -80,12 +82,20 @@ export default function MetasCard() {
     enabled: !!unidadeAtual,
   });
 
-  const { data: lancamentos = [] } = useQuery({
-    queryKey: ['lancamentos_metas', unidadeAtual?.id],
-    queryFn: () => base44.entities.LancamentoFinanceiro.filter({ tipo: 'entrada', unidade_id: unidadeAtual?.id }, '-data_lancamento', 1000),
+  const { data: lancamentosBrutos = [] } = useQuery({
+    queryKey: ['lancamentos_metas_todos'],
+    queryFn: () => base44.entities.LancamentoFinanceiro.filter({ tipo: 'entrada' }, '-data_lancamento', 1000),
     staleTime: 2 * 60 * 1000,
     enabled: !!unidadeAtual,
   });
+
+  const lancamentos = useMemo(() => {
+    if (!unidadeAtual) return lancamentosBrutos;
+    return lancamentosBrutos.filter(l => {
+      if (l.unidade_id) return l.unidade_id === unidadeAtual.id;
+      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
+    });
+  }, [lancamentosBrutos, unidadeAtual]);
 
   const metasAtivas = metas.filter(m => m.ativa !== false);
 
