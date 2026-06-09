@@ -6,6 +6,10 @@
       "type": "string",
       "description": "ID da unidade"
     },
+    "nome": {
+      "type": "string",
+      "description": "Nome da meta (ex: Meta 01 - Vendas Gerais)"
+    },
     "meta_dia": {
       "type": "number",
       "description": "Meta de faturamento por dia (R$)"
@@ -17,7 +21,14 @@
     "meta_mes": {
       "type": "number",
       "description": "Meta de faturamento por m\u00eas (R$)"
+    },
+    "ativa": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se esta meta est\u00e1 ativa"
     }
   },
-  "required": []
+  "required": [
+    "nome"
+  ]
 }

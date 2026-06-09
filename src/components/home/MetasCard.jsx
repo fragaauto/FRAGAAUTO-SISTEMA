@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useUnidade } from '@/lib/UnidadeContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Target, ArrowRight, TrendingUp } from 'lucide-react';
+import { Target, ArrowRight } from 'lucide-react';
 import { startOfDay, startOfWeek, startOfMonth, isWithinInterval } from 'date-fns';
 
 function calcularFaturamento(atendimentos, de, ate) {
@@ -30,7 +30,7 @@ function BarraMeta({ label, atual, meta, cor }) {
           <span className="text-xs text-slate-500">
             R$ {atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / R$ {meta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </span>
-          {atingida && <span className="text-xs font-bold text-green-600">✓ Meta atingida!</span>}
+          {atingida && <span className="text-xs font-bold text-green-600">✓ Atingida!</span>}
         </div>
       </div>
       <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -44,6 +44,26 @@ function BarraMeta({ label, atual, meta, cor }) {
           {pct.toFixed(0)}%
         </span>
       </div>
+    </div>
+  );
+}
+
+function MetaItemCard({ meta, faturadoDia, faturadoSemana, faturadoMes }) {
+  const temAlguma = meta.meta_dia > 0 || meta.meta_semana > 0 || meta.meta_mes > 0;
+  if (!temAlguma) return null;
+
+  return (
+    <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
+      <p className="text-sm font-bold text-slate-700">{meta.nome}</p>
+      {meta.meta_dia > 0 && (
+        <BarraMeta label="Hoje" atual={faturadoDia} meta={meta.meta_dia} cor="bg-blue-500" />
+      )}
+      {meta.meta_semana > 0 && (
+        <BarraMeta label="Esta Semana" atual={faturadoSemana} meta={meta.meta_semana} cor="bg-violet-500" />
+      )}
+      {meta.meta_mes > 0 && (
+        <BarraMeta label="Este Mês" atual={faturadoMes} meta={meta.meta_mes} cor="bg-emerald-500" />
+      )}
     </div>
   );
 }
@@ -65,26 +85,22 @@ export default function MetasCard() {
     enabled: !!unidadeAtual,
   });
 
-  const meta = metas[0];
+  const metasAtivas = metas.filter(m => m.ativa !== false);
 
-  // Se não há metas configuradas, não exibe
-  if (!meta || (!meta.meta_dia && !meta.meta_semana && !meta.meta_mes)) return null;
+  // Não exibe se não houver metas configuradas com valores
+  const metasComValor = metasAtivas.filter(m => m.meta_dia > 0 || m.meta_semana > 0 || m.meta_mes > 0);
+  if (metasComValor.length === 0) return null;
 
   const agora = new Date();
-  const inicioDia = startOfDay(agora);
-  const inicioSemana = startOfWeek(agora, { weekStartsOn: 1 }); // segunda
-  const inicioMes = startOfMonth(agora);
-  const fimAgora = agora;
-
-  const faturadoDia = calcularFaturamento(atendimentos, inicioDia, fimAgora);
-  const faturadoSemana = calcularFaturamento(atendimentos, inicioSemana, fimAgora);
-  const faturadoMes = calcularFaturamento(atendimentos, inicioMes, fimAgora);
+  const faturadoDia = calcularFaturamento(atendimentos, startOfDay(agora), agora);
+  const faturadoSemana = calcularFaturamento(atendimentos, startOfWeek(agora, { weekStartsOn: 1 }), agora);
+  const faturadoMes = calcularFaturamento(atendimentos, startOfMonth(agora), agora);
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-6 pb-2">
       <Card className="border border-blue-200 bg-blue-50/30">
         <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Target className="w-5 h-5 text-blue-600" />
               <h2 className="text-base font-bold text-slate-800">Metas de Vendas</h2>
@@ -97,31 +113,16 @@ export default function MetasCard() {
             </Link>
           </div>
 
-          <div className="space-y-4">
-            {meta.meta_dia > 0 && (
-              <BarraMeta
-                label="Hoje"
-                atual={faturadoDia}
-                meta={meta.meta_dia}
-                cor="bg-blue-500"
+          <div className="space-y-3">
+            {metasComValor.map(meta => (
+              <MetaItemCard
+                key={meta.id}
+                meta={meta}
+                faturadoDia={faturadoDia}
+                faturadoSemana={faturadoSemana}
+                faturadoMes={faturadoMes}
               />
-            )}
-            {meta.meta_semana > 0 && (
-              <BarraMeta
-                label="Esta Semana"
-                atual={faturadoSemana}
-                meta={meta.meta_semana}
-                cor="bg-violet-500"
-              />
-            )}
-            {meta.meta_mes > 0 && (
-              <BarraMeta
-                label="Este Mês"
-                atual={faturadoMes}
-                meta={meta.meta_mes}
-                cor="bg-emerald-500"
-              />
-            )}
+            ))}
           </div>
         </CardContent>
       </Card>
