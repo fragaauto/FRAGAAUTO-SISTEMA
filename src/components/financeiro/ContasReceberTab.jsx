@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useUnidade } from '@/lib/UnidadeContext';
 
 const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle2, Clock, AlertTriangle, Search, Plus, Loader2, X, Trash2 } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, Search, Plus, Loader2, X, Trash2, CheckSquare, Square } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from 'date-fns';
 
@@ -33,6 +34,9 @@ export default function ContasReceberTab({ filtroData }) {
   const [filtroStatus, setFiltroStatus] = useState('todos');
   const [showNova, setShowNova] = useState(false);
   const [selecionada, setSelecionada] = useState(null);
+  const [selecionadas, setSelecionadas] = useState(new Set());
+  const [showConfirmLote, setShowConfirmLote] = useState(false);
+  const [deletandoLote, setDeletandoLote] = useState(false);
 
   const { data: contasBrutos = [], isLoading } = useQuery({
     queryKey: ['contas-receber'],
@@ -52,6 +56,28 @@ export default function ContasReceberTab({ filtroData }) {
     onSuccess: () => { toast.success('Conta excluída!'); qc.invalidateQueries(['contas-receber']); },
     onError: () => toast.error('Erro ao excluir conta'),
   });
+
+  const toggleSelecionada = useCallback((id) => {
+    setSelecionadas(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleTodas = useCallback(() => {
+    setSelecionadas(prev => prev.size === filtradas.length ? new Set() : new Set(filtradas.map(c => c.id)));
+  }, [filtradas]);
+
+  const deletarLote = async () => {
+    setDeletandoLote(true);
+    await Promise.all([...selecionadas].map(id => base44.entities.ContaReceber.delete(id)));
+    setDeletandoLote(false);
+    setShowConfirmLote(false);
+    setSelecionadas(new Set());
+    toast.success(`${selecionadas.size} conta(s) excluída(s)!`);
+    qc.invalidateQueries(['contas-receber']);
+  };
 
   const baixarMutation = useMutation({
     mutationFn: async ({ conta, formaPagamento }) => {
@@ -127,9 +153,29 @@ export default function ContasReceberTab({ filtroData }) {
         </Button>
       </div>
 
-      <div className="text-sm text-slate-500 font-medium">
-        {filtradas.length} conta(s) · Total: <span className="text-slate-800">R$ {totalFiltrado.toFixed(2)}</span>
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-slate-500 font-medium">
+          {filtradas.length} conta(s) · Total: <span className="text-slate-800">R$ {totalFiltrado.toFixed(2)}</span>
+        </div>
+        {filtradas.length > 0 && (
+          <button onClick={toggleTodas} className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1">
+            <Checkbox checked={selecionadas.size === filtradas.length && filtradas.length > 0} onCheckedChange={toggleTodas} className="w-3.5 h-3.5" />
+            Selecionar todos
+          </button>
+        )}
       </div>
+
+      {selecionadas.size > 0 && (
+        <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-lg px-4 py-2">
+          <span className="text-sm font-medium text-red-700">{selecionadas.size} selecionada(s)</span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setSelecionadas(new Set())} className="text-slate-500 h-7 text-xs">Cancelar</Button>
+            <Button size="sm" onClick={() => setShowConfirmLote(true)} className="bg-red-600 hover:bg-red-700 h-7 text-xs gap-1">
+              <Trash2 className="w-3 h-3" /> Excluir {selecionadas.size}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
@@ -137,9 +183,14 @@ export default function ContasReceberTab({ filtroData }) {
         <div className="text-center py-12 text-slate-400">Nenhuma conta encontrada</div>
       ) : (
         filtradas.map(conta => (
-          <Card key={conta.id} className="hover:shadow-md transition-all">
+          <Card key={conta.id} className={`hover:shadow-md transition-all ${selecionadas.has(conta.id) ? 'ring-2 ring-red-400 bg-red-50/30' : ''}`}>
             <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  checked={selecionadas.has(conta.id)}
+                  onCheckedChange={() => toggleSelecionada(conta.id)}
+                  className="mt-1 flex-shrink-0"
+                />
                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelecionada(conta)}>
                   <p className="font-semibold text-slate-800 truncate">{conta.cliente_nome}</p>
                   <p className="text-sm text-slate-500 truncate">{conta.descricao}</p>
@@ -185,6 +236,22 @@ export default function ContasReceberTab({ filtroData }) {
       />}
 
       <NovaContaReceberModal open={showNova} onClose={() => setShowNova(false)} onSaved={() => { setShowNova(false); qc.invalidateQueries(['contas-receber']); }} />
+
+      <AlertDialog open={showConfirmLote} onOpenChange={setShowConfirmLote}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selecionadas.size} conta(s)?</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita. Todas as contas selecionadas serão removidas permanentemente.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletandoLote}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={deletarLote} disabled={deletandoLote} className="bg-red-600 hover:bg-red-700">
+              {deletandoLote ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Excluir todos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
