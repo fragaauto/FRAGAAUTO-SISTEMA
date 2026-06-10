@@ -1,0 +1,95 @@
+{
+  "name": "OrcamentoAvulso",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade"
+    },
+    "numero": {
+      "type": "number",
+      "description": "N\u00famero sequencial do or\u00e7amento"
+    },
+    "cliente_nome": {
+      "type": "string"
+    },
+    "cliente_telefone": {
+      "type": "string"
+    },
+    "cliente_cpf": {
+      "type": "string"
+    },
+    "veiculo_placa": {
+      "type": "string"
+    },
+    "veiculo_modelo": {
+      "type": "string"
+    },
+    "veiculo_ano": {
+      "type": "string"
+    },
+    "veiculo_km": {
+      "type": "string"
+    },
+    "itens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "quantidade": {
+            "type": "number"
+          },
+          "valor_unitario": {
+            "type": "number"
+          },
+          "valor_total": {
+            "type": "number"
+          },
+          "observacao": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "desconto": {
+      "type": "number",
+      "default": 0
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "total": {
+      "type": "number"
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "validade_dias": {
+      "type": "number",
+      "default": 7
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "aprovado",
+        "reprovado",
+        "convertido"
+      ],
+      "default": "pendente"
+    },
+    "atendimento_id": {
+      "type": "string",
+      "description": "ID do atendimento gerado a partir deste or\u00e7amento"
+    },
+    "usuario_nome": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "cliente_nome"
+  ]
+}

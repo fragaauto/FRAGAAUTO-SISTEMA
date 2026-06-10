@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Plus, Clock, XCircle, ShoppingBag } from 'lucide-react';
+import { FileText, Plus, Clock, XCircle, ShoppingBag, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ABAS_CONFIG = [
@@ -12,7 +12,8 @@ const ABAS_CONFIG = [
   { id: 'novo', nome: 'Nova OS', path: 'NovoAtendimento', icon: Plus },
   { id: 'aprovacoes', nome: 'Aprovações Pendentes', path: 'Dashboard', icon: Clock },
   { id: 'reprovados', nome: 'Serviços Reprovados', path: 'ServicosReprovados', icon: XCircle },
-  { id: 'vendas_diretas', nome: 'Vendas Diretas', path: 'Atendimentos?venda_direta=true', icon: ShoppingBag }
+  { id: 'vendas_diretas', nome: 'Vendas Diretas', path: 'Atendimentos?venda_direta=true', icon: ShoppingBag },
+  { id: 'orcamentos', nome: 'Orçamentos', path: 'Orcamentos', icon: ClipboardList },
 ];
 
 export default function MenuAtendimento({ currentPath }) {
