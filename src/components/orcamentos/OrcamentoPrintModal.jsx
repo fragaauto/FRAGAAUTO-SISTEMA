@@ -25,7 +25,7 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
     const doc = new jsPDF();
     const o = orcamento;
 
-    // Cabeçalho
+    // Cabeçalho com logo e contato
     doc.setFontSize(18);
     doc.setFont(undefined, 'bold');
     doc.text(empresa, 14, 18);
@@ -34,31 +34,37 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
     doc.setFont(undefined, 'normal');
     if (enderecoEmpresa) doc.text(enderecoEmpresa, 14, 24);
     if (telefoneEmpresa) doc.text(`Fone: ${telefoneEmpresa}`, 14, 29);
+    
+    // Informações de contato
+    doc.setFontSize(8);
+    doc.text(`📱 WhatsApp: (31) 3808-8840`, 14, 33);
+    doc.text(`📷 Instagram: @fragaautoportasoficial`, 14, 37);
+    doc.text(`🌐 Site: fragaauto.com.br`, 14, 41);
 
     // Título
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text(`ORÇAMENTO Nº ${String(o.numero || '').padStart(4, '0')}`, 14, 40);
+    doc.text(`ORÇAMENTO Nº ${String(o.numero || '').padStart(4, '0')}`, 14, 46);
     doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
-    doc.text(`Data: ${format(new Date(o.created_date), 'dd/MM/yyyy', { locale: ptBR })}`, 14, 46);
-    if (dataValidade) doc.text(`Válido até: ${dataValidade}`, 70, 46);
+    doc.text(`Data: ${format(new Date(o.created_date), 'dd/MM/yyyy', { locale: ptBR })}`, 14, 52);
+    if (dataValidade) doc.text(`Válido até: ${dataValidade}`, 70, 52);
 
     // Linha divisória
     doc.setDrawColor(200, 200, 200);
-    doc.line(14, 49, 196, 49);
+    doc.line(14, 55, 196, 55);
 
     // Cliente
     doc.setFontSize(10);
     doc.setFont(undefined, 'bold');
-    doc.text('DADOS DO CLIENTE', 14, 56);
+    doc.text('DADOS DO CLIENTE', 14, 62);
     doc.setFont(undefined, 'normal');
     doc.setFontSize(9);
-    doc.text(`Cliente: ${o.cliente_nome}`, 14, 62);
-    if (o.cliente_telefone) doc.text(`Telefone: ${o.cliente_telefone}`, 14, 67);
-    if (o.cliente_cpf) doc.text(`CPF/CNPJ: ${o.cliente_cpf}`, 100, 67);
+    doc.text(`Cliente: ${o.cliente_nome}`, 14, 68);
+    if (o.cliente_telefone) doc.text(`Telefone: ${o.cliente_telefone}`, 14, 73);
+    if (o.cliente_cpf) doc.text(`CPF/CNPJ: ${o.cliente_cpf}`, 100, 73);
 
-    let y = 73;
+    let y = 79;
     if (o.veiculo_placa || o.veiculo_modelo) {
       doc.setFont(undefined, 'bold');
       doc.text('VEÍCULO', 14, y);
@@ -158,6 +164,9 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
         <div class="center bold" style="font-size:14px;">${empresa}</div>
         ${enderecoEmpresa ? `<div class="center small">${enderecoEmpresa}</div>` : ''}
         ${telefoneEmpresa ? `<div class="center small">Tel: ${telefoneEmpresa}</div>` : ''}
+        <div class="center small">📱 (31) 3808-8840</div>
+        <div class="center small">📷 @fragaautoportasoficial</div>
+        <div class="center small">🌐 fragaauto.com.br</div>
         ${linhaDiv}
         <div class="center bold" style="font-size:13px;">ORÇAMENTO Nº ${String(o.numero || '').padStart(4, '0')}</div>
         <div class="center small">Data: ${format(new Date(o.created_date), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</div>
