@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus, Trash2, Search } from 'lucide-react';
+import { Loader2, Plus, Trash2, Search, UserPlus, CheckCircle2 } from 'lucide-react';
 import { toast } from "sonner";
 
 export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose, onSaved }) {
@@ -27,7 +27,16 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
 
   const [itens, setItens] = useState(orcamento?.itens || []);
   const [busca, setBusca] = useState('');
+  const [buscaCliente, setBuscaCliente] = useState('');
+  const [clienteSelecionado, setClienteSelecionado] = useState(null);
+  const [mostrarCadastro, setMostrarCadastro] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const { data: clientes = [] } = useQuery({
+    queryKey: ['clientes_list'],
+    queryFn: () => base44.entities.Cliente.list(),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos_list'],
@@ -35,6 +44,35 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
     staleTime: 5 * 60 * 1000,
   });
 
+  // Busca de clientes
+  const clientesFiltrados = buscaCliente.length >= 2
+    ? clientes.filter(c => {
+        const s = buscaCliente.toLowerCase();
+        return c.nome?.toLowerCase().includes(s) ||
+          c.telefone?.toLowerCase().includes(s) ||
+          c.cpf_cnpj?.toLowerCase().includes(s);
+      }).slice(0, 8)
+    : [];
+
+  const selecionarCliente = (c) => {
+    setClienteSelecionado(c);
+    setForm(p => ({
+      ...p,
+      cliente_nome: c.nome || '',
+      cliente_telefone: c.telefone || '',
+      cliente_cpf: c.cpf_cnpj || '',
+    }));
+    setBuscaCliente('');
+    setMostrarCadastro(false);
+  };
+
+  const limparCliente = () => {
+    setClienteSelecionado(null);
+    setBuscaCliente('');
+    setForm(p => ({ ...p, cliente_nome: '', cliente_telefone: '', cliente_cpf: '' }));
+  };
+
+  // Busca de produtos
   const produtosFiltrados = busca.length >= 2
     ? produtos.filter(p => {
         const s = busca.toLowerCase();
@@ -78,6 +116,22 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
   const desconto = parseFloat(form.desconto) || 0;
   const total = Math.max(0, subtotal - desconto);
 
+  const cadastrarNovoCliente = async () => {
+    if (!form.cliente_nome.trim()) return toast.error('Informe o nome do cliente');
+    try {
+      const novoCliente = await base44.entities.Cliente.create({
+        nome: form.cliente_nome,
+        telefone: form.cliente_telefone,
+        cpf_cnpj: form.cliente_cpf,
+      });
+      setClienteSelecionado(novoCliente);
+      setMostrarCadastro(false);
+      toast.success('Cliente cadastrado!');
+    } catch {
+      toast.error('Erro ao cadastrar cliente');
+    }
+  };
+
   const handleSave = async () => {
     if (!form.cliente_nome.trim()) return toast.error('Informe o nome do cliente');
     if (itens.length === 0) return toast.error('Adicione pelo menos um item');
@@ -103,7 +157,6 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
         await base44.entities.OrcamentoAvulso.update(orcamento.id, payload);
         toast.success('Orçamento atualizado!');
       } else {
-        // Próximo número
         const todos = await base44.entities.OrcamentoAvulso.list('-numero', 1);
         payload.numero = (todos[0]?.numero || 0) + 1;
         await base44.entities.OrcamentoAvulso.create(payload);
@@ -127,20 +180,85 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Cliente */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <Label>Nome do Cliente *</Label>
-              <Input value={form.cliente_nome} onChange={e => set('cliente_nome', e.target.value)} placeholder="Nome completo" />
-            </div>
-            <div>
-              <Label>Telefone</Label>
-              <Input value={form.cliente_telefone} onChange={e => set('cliente_telefone', e.target.value)} placeholder="(00) 00000-0000" />
-            </div>
-            <div>
-              <Label>CPF / CNPJ</Label>
-              <Input value={form.cliente_cpf} onChange={e => set('cliente_cpf', e.target.value)} />
-            </div>
+          {/* Busca de cliente */}
+          <div>
+            <Label>Cliente *</Label>
+            {clienteSelecionado ? (
+              <div className="flex items-center gap-2 p-2.5 bg-green-50 border border-green-200 rounded-lg mt-1">
+                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">{clienteSelecionado.nome}</p>
+                  {clienteSelecionado.telefone && <p className="text-xs text-slate-500">{clienteSelecionado.telefone}</p>}
+                </div>
+                <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400" onClick={limparCliente}>Trocar</Button>
+              </div>
+            ) : (
+              <div className="mt-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    className="pl-9"
+                    placeholder="Buscar cliente por nome, telefone ou CPF..."
+                    value={buscaCliente}
+                    onChange={e => { setBuscaCliente(e.target.value); setMostrarCadastro(false); }}
+                  />
+                </div>
+
+                {/* Resultados da busca */}
+                {clientesFiltrados.length > 0 && (
+                  <div className="mt-1 border rounded-lg bg-white shadow-sm max-h-40 overflow-y-auto z-10">
+                    {clientesFiltrados.map(c => (
+                      <button key={c.id} onClick={() => selecionarCliente(c)}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-orange-50 flex justify-between items-center border-b last:border-0">
+                        <span className="font-medium">{c.nome}</span>
+                        <span className="text-slate-400 text-xs">{c.telefone}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Não encontrou - opção de cadastrar */}
+                {buscaCliente.length >= 2 && clientesFiltrados.length === 0 && (
+                  <div className="mt-1 border rounded-lg bg-slate-50 p-3">
+                    <p className="text-sm text-slate-500 mb-2">Nenhum cliente encontrado.</p>
+                    {!mostrarCadastro ? (
+                      <Button size="sm" variant="outline" className="gap-1 text-xs border-orange-300 text-orange-600 hover:bg-orange-50"
+                        onClick={() => { setMostrarCadastro(true); set('cliente_nome', buscaCliente); }}>
+                        <UserPlus className="w-3 h-3" /> Cadastrar "{buscaCliente}"
+                      </Button>
+                    ) : (
+                      <div className="space-y-2">
+                        <Input placeholder="Nome completo" value={form.cliente_nome} onChange={e => set('cliente_nome', e.target.value)} className="h-8 text-sm" />
+                        <Input placeholder="Telefone" value={form.cliente_telefone} onChange={e => set('cliente_telefone', e.target.value)} className="h-8 text-sm" />
+                        <Input placeholder="CPF / CNPJ (opcional)" value={form.cliente_cpf} onChange={e => set('cliente_cpf', e.target.value)} className="h-8 text-sm" />
+                        <div className="flex gap-2">
+                          <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-xs gap-1" onClick={cadastrarNovoCliente}>
+                            <UserPlus className="w-3 h-3" /> Cadastrar e Usar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-xs" onClick={() => setMostrarCadastro(false)}>Cancelar</Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Usar sem cadastro */}
+                {buscaCliente.length >= 1 && !mostrarCadastro && (
+                  <Button size="sm" variant="ghost" className="mt-1 text-xs text-slate-400 w-full"
+                    onClick={() => { set('cliente_nome', buscaCliente); setClienteSelecionado({ nome: buscaCliente, id: '_manual' }); }}>
+                    Usar "{buscaCliente}" sem cadastrar
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Campos extras do cliente quando selecionado manualmente (sem id real) */}
+            {clienteSelecionado?.id !== '_manual' && clienteSelecionado && (
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <Input placeholder="Telefone" value={form.cliente_telefone} onChange={e => set('cliente_telefone', e.target.value)} className="h-8 text-sm" />
+                <Input placeholder="CPF / CNPJ" value={form.cliente_cpf} onChange={e => set('cliente_cpf', e.target.value)} className="h-8 text-sm" />
+              </div>
+            )}
           </div>
 
           {/* Veículo */}
@@ -170,7 +288,6 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
           <div className="border-t pt-3">
             <p className="text-sm font-semibold text-slate-700 mb-2">Itens do Orçamento *</p>
 
-            {/* Busca de produto */}
             <div className="relative mb-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
