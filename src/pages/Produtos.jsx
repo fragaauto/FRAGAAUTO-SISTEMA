@@ -1153,9 +1153,20 @@ export default function Produtos() {
 
       {/* Filters */}
       <div className="max-w-4xl mx-auto px-4 py-4">
-        <div className="flex flex-col sm:flex-row gap-3">
+        {/* Barra de pesquisa — sempre em cima, largura total */}
+        <div className="relative mb-3">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
+          <Input
+            placeholder="Buscar produto ou serviço..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPagina(1); }}
+            className="pl-14 h-14 text-base w-full"
+          />
+        </div>
+        {/* Filtros secundários */}
+        <div className="flex flex-wrap gap-3">
           {filteredProdutos.length > 0 && (
-            <label className="flex items-center gap-2 px-3 h-12 border rounded-lg bg-white cursor-pointer hover:bg-slate-50">
+            <label className="flex items-center gap-2 px-3 h-10 border rounded-lg bg-white cursor-pointer hover:bg-slate-50">
               <input
                 type="checkbox"
                 checked={selectedIds.length === filteredProdutos.length}
@@ -1165,17 +1176,8 @@ export default function Produtos() {
               <span className="text-sm font-medium">Selecionar todos</span>
             </label>
           )}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
-            <Input
-              placeholder="Buscar produto ou serviço..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPagina(1); }}
-              className="pl-12 h-14 text-base"
-            />
-          </div>
           <Select value={categoriaFilter} onValueChange={(v) => { setCategoriaFilter(v); setPagina(1); }}>
-            <SelectTrigger className="w-full sm:w-48 h-12">
+            <SelectTrigger className="w-40 h-10">
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>
             <SelectContent>
@@ -1186,7 +1188,7 @@ export default function Produtos() {
             </SelectContent>
           </Select>
           <Select value={ordenacao} onValueChange={setOrdenacao}>
-            <SelectTrigger className="w-full sm:w-52 h-12">
+            <SelectTrigger className="w-48 h-10">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>
@@ -1198,7 +1200,7 @@ export default function Produtos() {
           </Select>
           {listasPrecos.length > 0 && (
             <Select value={listaPrecoId} onValueChange={setListaPrecoId}>
-              <SelectTrigger className="w-full sm:w-56 h-12 border-orange-300 text-orange-700">
+              <SelectTrigger className="w-48 h-10 border-orange-300 text-orange-700">
                 <SelectValue placeholder="Lista de preços" />
               </SelectTrigger>
               <SelectContent>
