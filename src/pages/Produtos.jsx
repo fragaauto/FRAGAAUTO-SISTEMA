@@ -1166,12 +1166,12 @@ export default function Produtos() {
             </label>
           )}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
             <Input
               placeholder="Buscar produto ou serviço..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPagina(1); }}
-              className="pl-10 h-12"
+              className="pl-12 h-14 text-base"
             />
           </div>
           <Select value={categoriaFilter} onValueChange={(v) => { setCategoriaFilter(v); setPagina(1); }}>
