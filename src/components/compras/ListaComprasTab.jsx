@@ -336,12 +336,8 @@ function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
     if (!novoCod.trim() || !prod) return;
     setSaving(true);
     const fns = [...(prod.fornecedores || [])];
-    if (fns.length === 0) {
-      fns.push({ codigo_fornecedor: novoCod.trim(), fornecedor_nome: novoNome.trim(), principal: true });
-    } else {
-      const idx = fns.findIndex(f => f.principal) >= 0 ? fns.findIndex(f => f.principal) : 0;
-      fns[idx] = { ...fns[idx], codigo_fornecedor: novoCod.trim(), fornecedor_nome: novoNome.trim() };
-    }
+    // Sempre adiciona novo fornecedor ao array (não substitui)
+    fns.push({ codigo_fornecedor: novoCod.trim(), fornecedor_nome: novoNome.trim(), principal: fns.length === 0 });
     await base44.entities.Produto.update(prod.id, { fornecedores: fns });
     setSaving(false);
     setEditando(false);
@@ -380,44 +376,45 @@ function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
             <MapPin className="w-3 h-3" /> {prod.localizacao_estoque}
           </span>
         )}
-        {fornPrincipal?.codigo_fornecedor ? (
-          <span className="flex items-center gap-1 text-xs text-purple-600">
+        {/* Lista todos os fornecedores cadastrados */}
+        {(prod?.fornecedores || []).filter(f => f.codigo_fornecedor).map((f, i) => (
+          <span key={i} className="flex items-center gap-1 text-xs text-purple-600">
             <Building2 className="w-3 h-3" />
-            {fornPrincipal.fornecedor_nome && <strong>{fornPrincipal.fornecedor_nome}</strong>}
-            <span>— Cód: <strong>{fornPrincipal.codigo_fornecedor}</strong></span>
+            {f.fornecedor_nome && <strong>{f.fornecedor_nome}</strong>}
+            <span>— Cód: <strong>{f.codigo_fornecedor}</strong></span>
           </span>
-        ) : (
-          editando ? (
-            <div className="flex items-center gap-1 flex-wrap mt-0.5">
-              <Input
-                className="h-6 w-32 text-xs px-1.5"
-                placeholder="Nome do fornecedor"
-                value={novoNome}
-                onChange={e => setNovoNome(e.target.value)}
-                autoFocus
-              />
-              <Input
-                className="h-6 w-24 text-xs px-1.5"
-                placeholder="Cód. fornecedor"
-                value={novoCod}
-                onChange={e => setNovoCod(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && salvarFornecedor()}
-              />
-              <button onClick={salvarFornecedor} disabled={saving} className="text-green-600 hover:text-green-800">
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              </button>
-              <button onClick={() => { setEditando(false); setNovoCod(''); setNovoNome(''); }} className="text-slate-400 hover:text-red-400">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-700 underline underline-offset-2"
-              onClick={() => setEditando(true)}
-            >
-              <Building2 className="w-3 h-3" /> + Adicionar fornecedor
+        ))}
+        {/* Formulário ou botão de adicionar fornecedor — sempre visível */}
+        {editando ? (
+          <div className="flex items-center gap-1 flex-wrap mt-0.5">
+            <Input
+              className="h-6 w-32 text-xs px-1.5"
+              placeholder="Nome do fornecedor"
+              value={novoNome}
+              onChange={e => setNovoNome(e.target.value)}
+              autoFocus
+            />
+            <Input
+              className="h-6 w-24 text-xs px-1.5"
+              placeholder="Cód. fornecedor"
+              value={novoCod}
+              onChange={e => setNovoCod(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && salvarFornecedor()}
+            />
+            <button onClick={salvarFornecedor} disabled={saving} className="text-green-600 hover:text-green-800">
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             </button>
-          )
+            <button onClick={() => { setEditando(false); setNovoCod(''); setNovoNome(''); }} className="text-slate-400 hover:text-red-400">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button
+            className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-700 underline underline-offset-2"
+            onClick={() => setEditando(true)}
+          >
+            <Building2 className="w-3 h-3" /> + Adicionar fornecedor
+          </button>
         )}
         {/* Preço de compra */}
         {prod?.custo > 0 ? (
