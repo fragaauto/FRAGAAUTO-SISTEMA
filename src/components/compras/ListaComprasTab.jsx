@@ -327,9 +327,12 @@ function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
   const [editando, setEditando] = useState(false);
   const [novoCod, setNovoCod] = useState('');
   const [novoNome, setNovoNome] = useState('');
+  const [editandoCusto, setEditandoCusto] = useState(false);
+  const [novoCusto, setNovoCusto] = useState('');
   const [saving, setSaving] = useState(false);
+  const [savingCusto, setSavingCusto] = useState(false);
 
-  const salvar = async () => {
+  const salvarFornecedor = async () => {
     if (!novoCod.trim() || !prod) return;
     setSaving(true);
     const fns = [...(prod.fornecedores || [])];
@@ -346,6 +349,18 @@ function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
     setNovoNome('');
     if (onRefetchProdutos) onRefetchProdutos();
     toast.success('Fornecedor salvo no produto!');
+  };
+
+  const salvarCusto = async () => {
+    const custo = parseFloat(novoCusto.replace(',', '.'));
+    if (!custo || custo <= 0 || !prod) return;
+    setSavingCusto(true);
+    await base44.entities.Produto.update(prod.id, { custo });
+    setSavingCusto(false);
+    setEditandoCusto(false);
+    setNovoCusto('');
+    if (onRefetchProdutos) onRefetchProdutos();
+    toast.success('Preço de compra salvo no produto!');
   };
 
   return (
@@ -386,9 +401,9 @@ function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
                 placeholder="Cód. fornecedor"
                 value={novoCod}
                 onChange={e => setNovoCod(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && salvar()}
+                onKeyDown={e => e.key === 'Enter' && salvarFornecedor()}
               />
-              <button onClick={salvar} disabled={saving} className="text-green-600 hover:text-green-800">
+              <button onClick={salvarFornecedor} disabled={saving} className="text-green-600 hover:text-green-800">
                 {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
               </button>
               <button onClick={() => { setEditando(false); setNovoCod(''); setNovoNome(''); }} className="text-slate-400 hover:text-red-400">
@@ -401,6 +416,62 @@ function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
               onClick={() => setEditando(true)}
             >
               <Building2 className="w-3 h-3" /> + Adicionar fornecedor
+            </button>
+          )
+        )}
+        {/* Preço de compra */}
+        {prod?.custo > 0 ? (
+          editandoCusto ? (
+            <span className="flex items-center gap-1">
+              <span className="text-xs text-slate-500">R$</span>
+              <Input
+                className="h-6 w-24 text-xs px-1.5"
+                placeholder="Preço compra"
+                value={novoCusto}
+                onChange={e => setNovoCusto(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && salvarCusto()}
+                autoFocus
+              />
+              <button onClick={salvarCusto} disabled={savingCusto} className="text-green-600 hover:text-green-800">
+                {savingCusto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              </button>
+              <button onClick={() => { setEditandoCusto(false); setNovoCusto(''); }} className="text-slate-400 hover:text-red-400">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          ) : (
+            <button
+              className="flex items-center gap-1 text-xs text-green-700 hover:text-green-900 underline underline-offset-2"
+              onClick={() => { setNovoCusto(String(prod.custo)); setEditandoCusto(true); }}
+            >
+              💲 Custo: <strong>R$ {prod.custo.toFixed(2)}</strong>
+            </button>
+          )
+        ) : (
+          editandoCusto ? (
+            <span className="flex items-center gap-1">
+              <span className="text-xs text-slate-500">R$</span>
+              <Input
+                className="h-6 w-24 text-xs px-1.5"
+                placeholder="Preço compra"
+                value={novoCusto}
+                onChange={e => setNovoCusto(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && salvarCusto()}
+                autoFocus
+              />
+              <button onClick={salvarCusto} disabled={savingCusto} className="text-green-600 hover:text-green-800">
+                {savingCusto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              </button>
+              <button onClick={() => { setEditandoCusto(false); setNovoCusto(''); }} className="text-slate-400 hover:text-red-400">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          ) : (
+            <button
+              className="flex items-center gap-1 text-xs text-green-500 hover:text-green-700 underline underline-offset-2"
+              onClick={() => setEditandoCusto(true)}
+            >
+              💲 + Adicionar preço de compra
             </button>
           )
         )}
