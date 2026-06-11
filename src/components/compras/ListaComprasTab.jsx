@@ -324,26 +324,28 @@ function compartilharLista(lista) {
 function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
   const prod = produtos.find(p => p.id === it.produto_id);
   const fornPrincipal = prod?.fornecedores?.find(f => f.principal) || prod?.fornecedores?.[0];
-  const [editandoCodForn, setEditandoCodForn] = useState(false);
-  const [novoCodForn, setNovoCodForn] = useState('');
+  const [editando, setEditando] = useState(false);
+  const [novoCod, setNovoCod] = useState('');
+  const [novoNome, setNovoNome] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const salvarCodigoFornecedor = async () => {
-    if (!novoCodForn.trim() || !prod) return;
+  const salvar = async () => {
+    if (!novoCod.trim() || !prod) return;
     setSaving(true);
     const fns = [...(prod.fornecedores || [])];
     if (fns.length === 0) {
-      fns.push({ codigo_fornecedor: novoCodForn.trim(), principal: true });
+      fns.push({ codigo_fornecedor: novoCod.trim(), fornecedor_nome: novoNome.trim(), principal: true });
     } else {
       const idx = fns.findIndex(f => f.principal) >= 0 ? fns.findIndex(f => f.principal) : 0;
-      fns[idx] = { ...fns[idx], codigo_fornecedor: novoCodForn.trim() };
+      fns[idx] = { ...fns[idx], codigo_fornecedor: novoCod.trim(), fornecedor_nome: novoNome.trim() };
     }
     await base44.entities.Produto.update(prod.id, { fornecedores: fns });
     setSaving(false);
-    setEditandoCodForn(false);
-    setNovoCodForn('');
+    setEditando(false);
+    setNovoCod('');
+    setNovoNome('');
     if (onRefetchProdutos) onRefetchProdutos();
-    toast.success('Código do fornecedor salvo!');
+    toast.success('Fornecedor salvo no produto!');
   };
 
   return (
@@ -365,33 +367,40 @@ function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
         )}
         {fornPrincipal?.codigo_fornecedor ? (
           <span className="flex items-center gap-1 text-xs text-purple-600">
-            <Building2 className="w-3 h-3" /> Cód. Forn.: <strong>{fornPrincipal.codigo_fornecedor}</strong>
-            {fornPrincipal.fornecedor_nome && <span className="text-slate-400">({fornPrincipal.fornecedor_nome})</span>}
+            <Building2 className="w-3 h-3" />
+            {fornPrincipal.fornecedor_nome && <strong>{fornPrincipal.fornecedor_nome}</strong>}
+            <span>— Cód: <strong>{fornPrincipal.codigo_fornecedor}</strong></span>
           </span>
         ) : (
-          editandoCodForn ? (
-            <span className="flex items-center gap-1">
+          editando ? (
+            <div className="flex items-center gap-1 flex-wrap mt-0.5">
               <Input
-                className="h-6 w-28 text-xs px-1.5"
-                placeholder="Cód. fornecedor"
-                value={novoCodForn}
-                onChange={e => setNovoCodForn(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && salvarCodigoFornecedor()}
+                className="h-6 w-32 text-xs px-1.5"
+                placeholder="Nome do fornecedor"
+                value={novoNome}
+                onChange={e => setNovoNome(e.target.value)}
                 autoFocus
               />
-              <button onClick={salvarCodigoFornecedor} disabled={saving} className="text-green-600 hover:text-green-800">
+              <Input
+                className="h-6 w-24 text-xs px-1.5"
+                placeholder="Cód. fornecedor"
+                value={novoCod}
+                onChange={e => setNovoCod(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && salvar()}
+              />
+              <button onClick={salvar} disabled={saving} className="text-green-600 hover:text-green-800">
                 {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
               </button>
-              <button onClick={() => { setEditandoCodForn(false); setNovoCodForn(''); }} className="text-slate-400 hover:text-red-400">
+              <button onClick={() => { setEditando(false); setNovoCod(''); setNovoNome(''); }} className="text-slate-400 hover:text-red-400">
                 <X className="w-3.5 h-3.5" />
               </button>
-            </span>
+            </div>
           ) : (
             <button
               className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-700 underline underline-offset-2"
-              onClick={() => setEditandoCodForn(true)}
+              onClick={() => setEditando(true)}
             >
-              <Building2 className="w-3 h-3" /> + Adicionar cód. fornecedor
+              <Building2 className="w-3 h-3" /> + Adicionar fornecedor
             </button>
           )
         )}
