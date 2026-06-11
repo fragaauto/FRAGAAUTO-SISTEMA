@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Package, Check, Loader2, Trash2, Search, Edit, ChevronDown, ChevronUp, ShoppingBag, X, Printer, Share2 } from 'lucide-react';
+import { Plus, Package, Check, Loader2, Trash2, Search, Edit, ChevronDown, ChevronUp, ShoppingBag, X, Printer, Share2, Save, MapPin, Tag, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -262,14 +262,43 @@ function EditarListaModal({ lista, produtos, onClose, onSaved }) {
   );
 }
 
-function imprimirLista(lista) {
-  const todosItens = [
-    ...(lista.itens || []).map(i => ({ nome: i.produto_nome, qtd: i.quantidade, obs: i.obs, tipo: 'estoque' })),
-    ...(lista.itens_livres || []).map(i => ({ nome: i.nome, qtd: i.quantidade, obs: i.obs, tipo: 'livre' })),
-  ];
-  const linhas = todosItens.map(i =>
-    `<tr><td style="padding:8px;border-bottom:1px solid #e2e8f0;">${i.nome}${i.tipo === 'livre' ? ' <span style="font-size:10px;color:#f97316">*</span>' : ''}</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;">${i.qtd}</td><td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:12px;">${i.obs || ''}</td></tr>`
-  ).join('');
+function imprimirLista(lista, produtos = []) {
+  const itensEstoque = (lista.itens || []).map(i => {
+    const prod = produtos.find(p => p.id === i.produto_id);
+    const forn = prod?.fornecedores?.find(f => f.principal) || prod?.fornecedores?.[0];
+    return {
+      nome: i.produto_nome,
+      qtd: i.quantidade,
+      obs: i.obs,
+      tipo: 'estoque',
+      codigo: prod?.codigo || i.codigo || '',
+      localizacao: prod?.localizacao_estoque || '',
+      cod_fornecedor: forn?.codigo_fornecedor || '',
+      fornecedor_nome: forn?.fornecedor_nome || '',
+    };
+  });
+  const itensLivres = (lista.itens_livres || []).map(i => ({
+    nome: i.nome, qtd: i.quantidade, obs: i.obs, tipo: 'livre',
+    codigo: '', localizacao: '', cod_fornecedor: '', fornecedor_nome: '',
+  }));
+  const todosItens = [...itensEstoque, ...itensLivres];
+
+  const linhas = todosItens.map(i => {
+    const info = [
+      i.codigo ? `<span style="background:#e2e8f0;padding:1px 5px;border-radius:3px;font-size:10px;">Cód: ${i.codigo}</span>` : '',
+      i.localizacao ? `<span style="color:#3b82f6;font-size:10px;">📍 ${i.localizacao}</span>` : '',
+      i.cod_fornecedor ? `<span style="color:#7c3aed;font-size:10px;">Forn: ${i.cod_fornecedor}${i.fornecedor_nome ? ` (${i.fornecedor_nome})` : ''}</span>` : '',
+    ].filter(Boolean).join(' ');
+    return `<tr>
+      <td style="padding:8px;border-bottom:1px solid #e2e8f0;">
+        <div>${i.nome}${i.tipo === 'livre' ? ' <span style="font-size:10px;color:#f97316">*</span>' : ''}</div>
+        ${info ? `<div style="margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;">${info}</div>` : ''}
+      </td>
+      <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:bold;">${i.qtd}</td>
+      <td style="padding:8px;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:12px;">${i.obs || ''}</td>
+    </tr>`;
+  }).join('');
+
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${lista.nome}</title>
   <style>body{font-family:Arial,sans-serif;padding:24px;color:#1e293b}h2{margin-bottom:4px}p{margin:0 0 16px;color:#64748b;font-size:13px}table{width:100%;border-collapse:collapse}th{background:#1e40af;color:white;padding:8px;text-align:left;font-size:13px}tr:nth-child(even){background:#f8fafc}.footer{margin-top:16px;font-size:11px;color:#94a3b8}@media print{button{display:none}}</style></head>
   <body><h2>${lista.nome}</h2><p>${lista.observacoes || ''} — ${todosItens.length} itens — gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
@@ -292,7 +321,87 @@ function compartilharLista(lista) {
   window.open(url, '_blank');
 }
 
-function ListaCard({ lista, produtos, onUpdate }) {
+function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
+  const prod = produtos.find(p => p.id === it.produto_id);
+  const fornPrincipal = prod?.fornecedores?.find(f => f.principal) || prod?.fornecedores?.[0];
+  const [editandoCodForn, setEditandoCodForn] = useState(false);
+  const [novoCodForn, setNovoCodForn] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const salvarCodigoFornecedor = async () => {
+    if (!novoCodForn.trim() || !prod) return;
+    setSaving(true);
+    const fns = [...(prod.fornecedores || [])];
+    if (fns.length === 0) {
+      fns.push({ codigo_fornecedor: novoCodForn.trim(), principal: true });
+    } else {
+      const idx = fns.findIndex(f => f.principal) >= 0 ? fns.findIndex(f => f.principal) : 0;
+      fns[idx] = { ...fns[idx], codigo_fornecedor: novoCodForn.trim() };
+    }
+    await base44.entities.Produto.update(prod.id, { fornecedores: fns });
+    setSaving(false);
+    setEditandoCodForn(false);
+    setNovoCodForn('');
+    if (onRefetchProdutos) onRefetchProdutos();
+    toast.success('Código do fornecedor salvo!');
+  };
+
+  return (
+    <div className="bg-slate-50 rounded-lg px-3 py-2 text-sm border border-slate-100">
+      <div className="flex items-center justify-between">
+        <span className="font-medium text-slate-800">{it.produto_nome}</span>
+        <span className="font-semibold text-slate-600">x{it.quantidade}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+        {prod?.codigo && (
+          <span className="flex items-center gap-1 text-xs text-slate-500">
+            <Tag className="w-3 h-3" /> Cód: <strong>{prod.codigo}</strong>
+          </span>
+        )}
+        {prod?.localizacao_estoque && (
+          <span className="flex items-center gap-1 text-xs text-blue-600">
+            <MapPin className="w-3 h-3" /> {prod.localizacao_estoque}
+          </span>
+        )}
+        {fornPrincipal?.codigo_fornecedor ? (
+          <span className="flex items-center gap-1 text-xs text-purple-600">
+            <Building2 className="w-3 h-3" /> Cód. Forn.: <strong>{fornPrincipal.codigo_fornecedor}</strong>
+            {fornPrincipal.fornecedor_nome && <span className="text-slate-400">({fornPrincipal.fornecedor_nome})</span>}
+          </span>
+        ) : (
+          editandoCodForn ? (
+            <span className="flex items-center gap-1">
+              <Input
+                className="h-6 w-28 text-xs px-1.5"
+                placeholder="Cód. fornecedor"
+                value={novoCodForn}
+                onChange={e => setNovoCodForn(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && salvarCodigoFornecedor()}
+                autoFocus
+              />
+              <button onClick={salvarCodigoFornecedor} disabled={saving} className="text-green-600 hover:text-green-800">
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              </button>
+              <button onClick={() => { setEditandoCodForn(false); setNovoCodForn(''); }} className="text-slate-400 hover:text-red-400">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          ) : (
+            <button
+              className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-700 underline underline-offset-2"
+              onClick={() => setEditandoCodForn(true)}
+            >
+              <Building2 className="w-3 h-3" /> + Adicionar cód. fornecedor
+            </button>
+          )
+        )}
+        {it.obs && <span className="text-xs italic text-slate-400">{it.obs}</span>}
+      </div>
+    </div>
+  );
+}
+
+function ListaCard({ lista, produtos, onRefetchProdutos }) {
   const [expanded, setExpanded] = useState(false);
   const [editando, setEditando] = useState(false);
   const qc = useQueryClient();
@@ -325,7 +434,7 @@ function ListaCard({ lista, produtos, onUpdate }) {
               {lista.observacoes && <p className="text-xs text-slate-400 mt-0.5">{lista.observacoes}</p>}
             </div>
             <div className="flex items-center gap-2 ml-2">
-              <button onClick={() => imprimirLista(lista)} className="text-slate-400 hover:text-slate-700" title="Imprimir / Salvar PDF">
+              <button onClick={() => imprimirLista(lista, produtos)} className="text-slate-400 hover:text-slate-700" title="Imprimir / Salvar PDF">
                 <Printer className="w-4 h-4" />
               </button>
               <button onClick={() => compartilharLista(lista)} className="text-green-500 hover:text-green-700" title="Compartilhar no WhatsApp">
@@ -362,20 +471,10 @@ function ListaCard({ lista, produtos, onUpdate }) {
               {lista.itens?.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-slate-500 mb-1.5">📦 Produtos do Estoque</p>
-                  <div className="space-y-1">
-                    {lista.itens.map((it, idx) => {
-                      const prod = produtos.find(p => p.id === it.produto_id);
-                      return (
-                        <div key={idx} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 text-sm">
-                          <span className="font-medium">{it.produto_nome}</span>
-                          <div className="flex items-center gap-3 text-slate-500">
-                            {it.obs && <span className="text-xs italic">{it.obs}</span>}
-                            <span>x{it.quantidade}</span>
-                            {prod && <span className="text-xs text-slate-400">Estoque: {prod.estoque_atual || 0}</span>}
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="space-y-1.5">
+                    {lista.itens.map((it, idx) => (
+                      <ProdutoItemCard key={idx} it={it} produtos={produtos} onRefetchProdutos={onRefetchProdutos} />
+                    ))}
                   </div>
                 </div>
               )}
@@ -436,7 +535,7 @@ export default function ListaComprasTab() {
     staleTime: 30 * 1000,
   });
 
-  const { data: produtos = [] } = useQuery({
+  const { data: produtos = [], refetch: refetchProdutos } = useQuery({
     queryKey: ['produtos-estoque'],
     queryFn: () => base44.entities.Produto.filter({ ativo: true }),
     staleTime: 60 * 1000,
@@ -468,7 +567,7 @@ export default function ListaComprasTab() {
       ) : (
         <div className="space-y-3">
           {listasFiltradas.map(l => (
-            <ListaCard key={l.id} lista={l} produtos={produtos} />
+            <ListaCard key={l.id} lista={l} produtos={produtos} onRefetchProdutos={refetchProdutos} />
           ))}
         </div>
       )}
