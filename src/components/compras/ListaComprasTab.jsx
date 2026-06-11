@@ -34,7 +34,15 @@ function NovaListaModal({ open, onClose, produtos, onSaved }) {
   const addProduto = (p) => {
     setBusca('');
     if (itens.find(i => i.produto_id === p.id)) return toast.error('Já adicionado');
-    setItens(prev => [...prev, { produto_id: p.id, produto_nome: p.nome, codigo: p.codigo, quantidade: 1, obs: '' }]);
+    const fornPrincipal = p.fornecedores?.find(f => f.principal) || p.fornecedores?.[0];
+    setItens(prev => [...prev, {
+      produto_id: p.id,
+      produto_nome: p.nome,
+      codigo: p.codigo,
+      quantidade: 1,
+      obs: '',
+      preco_compra_fornecedor: fornPrincipal?.preco_compra || null,
+    }]);
   };
 
   const updateItem = (idx, field, val) => {
@@ -161,7 +169,15 @@ function EditarListaModal({ lista, produtos, onClose, onSaved }) {
 
   const addProduto = (p) => {
     setBusca('');
-    setItens(prev => [...prev, { produto_id: p.id, produto_nome: p.nome, codigo: p.codigo, quantidade: 1, obs: '' }]);
+    const fornPrincipal = p.fornecedores?.find(f => f.principal) || p.fornecedores?.[0];
+    setItens(prev => [...prev, {
+      produto_id: p.id,
+      produto_nome: p.nome,
+      codigo: p.codigo,
+      quantidade: 1,
+      obs: '',
+      preco_compra_fornecedor: fornPrincipal?.preco_compra || null,
+    }]);
   };
 
   const updateItem = (idx, field, val) => {
@@ -323,47 +339,48 @@ function compartilharLista(lista) {
 
 function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
   const prod = produtos.find(p => p.id === it.produto_id);
-  const fornPrincipal = prod?.fornecedores?.find(f => f.principal) || prod?.fornecedores?.[0];
   const [editando, setEditando] = useState(false);
-  const [novoCod, setNovoCod] = useState('');
-  const [novoNome, setNovoNome] = useState('');
-  const [editandoCusto, setEditandoCusto] = useState(false);
-  const [novoCusto, setNovoCusto] = useState('');
+  const [novoForn, setNovoForn] = useState({ nome: '', codigo: '', preco_compra: '' });
   const [saving, setSaving] = useState(false);
-  const [savingCusto, setSavingCusto] = useState(false);
 
   const salvarFornecedor = async () => {
-    if (!novoCod.trim() || !prod) return;
+    if (!novoForn.codigo.trim() || !prod) return;
     setSaving(true);
     const fns = [...(prod.fornecedores || [])];
-    // Sempre adiciona novo fornecedor ao array (não substitui)
-    fns.push({ codigo_fornecedor: novoCod.trim(), fornecedor_nome: novoNome.trim(), principal: fns.length === 0 });
+    const novoItem = {
+      fornecedor_nome: novoForn.nome.trim(),
+      codigo_fornecedor: novoForn.codigo.trim(),
+      principal: fns.length === 0,
+    };
+    if (novoForn.preco_compra) {
+      const preco = parseFloat(novoForn.preco_compra.replace(',', '.'));
+      if (preco > 0) novoItem.preco_compra = preco;
+    }
+    fns.push(novoItem);
     await base44.entities.Produto.update(prod.id, { fornecedores: fns });
     setSaving(false);
     setEditando(false);
-    setNovoCod('');
-    setNovoNome('');
+    setNovoForn({ nome: '', codigo: '', preco_compra: '' });
     if (onRefetchProdutos) onRefetchProdutos();
     toast.success('Fornecedor salvo no produto!');
   };
 
-  const salvarCusto = async () => {
-    const custo = parseFloat(novoCusto.replace(',', '.'));
-    if (!custo || custo <= 0 || !prod) return;
-    setSavingCusto(true);
-    await base44.entities.Produto.update(prod.id, { custo });
-    setSavingCusto(false);
-    setEditandoCusto(false);
-    setNovoCusto('');
-    if (onRefetchProdutos) onRefetchProdutos();
-    toast.success('Preço de compra salvo no produto!');
-  };
+  // Pega o preco_compra do fornecedor principal (ou primeiro) para exibir na lista
+  const fornPrincipal = prod?.fornecedores?.find(f => f.principal) || prod?.fornecedores?.[0];
+  const precoCompraLista = it.preco_compra_fornecedor || fornPrincipal?.preco_compra;
 
   return (
     <div className="bg-slate-50 rounded-lg px-3 py-2 text-sm border border-slate-100">
       <div className="flex items-center justify-between">
         <span className="font-medium text-slate-800">{it.produto_nome}</span>
-        <span className="font-semibold text-slate-600">x{it.quantidade}</span>
+        <div className="flex items-center gap-2">
+          {precoCompraLista > 0 && (
+            <span className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
+              R$ {precoCompraLista.toFixed(2)}
+            </span>
+          )}
+          <span className="font-semibold text-slate-600">x{it.quantidade}</span>
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
         {prod?.codigo && (
@@ -376,35 +393,43 @@ function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
             <MapPin className="w-3 h-3" /> {prod.localizacao_estoque}
           </span>
         )}
-        {/* Lista todos os fornecedores cadastrados */}
+        {/* Lista todos os fornecedores com código e preço */}
         {(prod?.fornecedores || []).filter(f => f.codigo_fornecedor).map((f, i) => (
           <span key={i} className="flex items-center gap-1 text-xs text-purple-600">
             <Building2 className="w-3 h-3" />
             {f.fornecedor_nome && <strong>{f.fornecedor_nome}</strong>}
-            <span>— Cód: <strong>{f.codigo_fornecedor}</strong></span>
+            <span>Cód: <strong>{f.codigo_fornecedor}</strong></span>
+            {f.preco_compra > 0 && <span className="text-green-700 font-semibold">· R$ {f.preco_compra.toFixed(2)}</span>}
           </span>
         ))}
         {/* Formulário ou botão de adicionar fornecedor — sempre visível */}
         {editando ? (
-          <div className="flex items-center gap-1 flex-wrap mt-0.5">
+          <div className="flex items-center gap-1 flex-wrap mt-1 bg-white border border-orange-200 rounded-lg p-2 w-full">
             <Input
-              className="h-6 w-32 text-xs px-1.5"
+              className="h-7 w-32 text-xs px-1.5"
               placeholder="Nome do fornecedor"
-              value={novoNome}
-              onChange={e => setNovoNome(e.target.value)}
+              value={novoForn.nome}
+              onChange={e => setNovoForn(p => ({ ...p, nome: e.target.value }))}
               autoFocus
             />
             <Input
-              className="h-6 w-24 text-xs px-1.5"
+              className="h-7 w-24 text-xs px-1.5"
               placeholder="Cód. fornecedor"
-              value={novoCod}
-              onChange={e => setNovoCod(e.target.value)}
+              value={novoForn.codigo}
+              onChange={e => setNovoForn(p => ({ ...p, codigo: e.target.value }))}
+            />
+            <span className="text-xs text-slate-400">R$</span>
+            <Input
+              className="h-7 w-24 text-xs px-1.5"
+              placeholder="Preço compra"
+              value={novoForn.preco_compra}
+              onChange={e => setNovoForn(p => ({ ...p, preco_compra: e.target.value }))}
               onKeyDown={e => e.key === 'Enter' && salvarFornecedor()}
             />
             <button onClick={salvarFornecedor} disabled={saving} className="text-green-600 hover:text-green-800">
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             </button>
-            <button onClick={() => { setEditando(false); setNovoCod(''); setNovoNome(''); }} className="text-slate-400 hover:text-red-400">
+            <button onClick={() => { setEditando(false); setNovoForn({ nome: '', codigo: '', preco_compra: '' }); }} className="text-slate-400 hover:text-red-400">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -415,62 +440,6 @@ function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
           >
             <Building2 className="w-3 h-3" /> + Adicionar fornecedor
           </button>
-        )}
-        {/* Preço de compra */}
-        {prod?.custo > 0 ? (
-          editandoCusto ? (
-            <span className="flex items-center gap-1">
-              <span className="text-xs text-slate-500">R$</span>
-              <Input
-                className="h-6 w-24 text-xs px-1.5"
-                placeholder="Preço compra"
-                value={novoCusto}
-                onChange={e => setNovoCusto(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && salvarCusto()}
-                autoFocus
-              />
-              <button onClick={salvarCusto} disabled={savingCusto} className="text-green-600 hover:text-green-800">
-                {savingCusto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              </button>
-              <button onClick={() => { setEditandoCusto(false); setNovoCusto(''); }} className="text-slate-400 hover:text-red-400">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </span>
-          ) : (
-            <button
-              className="flex items-center gap-1 text-xs text-green-700 hover:text-green-900 underline underline-offset-2"
-              onClick={() => { setNovoCusto(String(prod.custo)); setEditandoCusto(true); }}
-            >
-              💲 Custo: <strong>R$ {prod.custo.toFixed(2)}</strong>
-            </button>
-          )
-        ) : (
-          editandoCusto ? (
-            <span className="flex items-center gap-1">
-              <span className="text-xs text-slate-500">R$</span>
-              <Input
-                className="h-6 w-24 text-xs px-1.5"
-                placeholder="Preço compra"
-                value={novoCusto}
-                onChange={e => setNovoCusto(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && salvarCusto()}
-                autoFocus
-              />
-              <button onClick={salvarCusto} disabled={savingCusto} className="text-green-600 hover:text-green-800">
-                {savingCusto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              </button>
-              <button onClick={() => { setEditandoCusto(false); setNovoCusto(''); }} className="text-slate-400 hover:text-red-400">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </span>
-          ) : (
-            <button
-              className="flex items-center gap-1 text-xs text-green-500 hover:text-green-700 underline underline-offset-2"
-              onClick={() => setEditandoCusto(true)}
-            >
-              💲 + Adicionar preço de compra
-            </button>
-          )
         )}
         {it.obs && <span className="text-xs italic text-slate-400">{it.obs}</span>}
       </div>
