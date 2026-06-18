@@ -24,107 +24,223 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
   const gerarPDFA4 = () => {
     const doc = new jsPDF();
     const o = orcamento;
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
 
-    // Cabeçalho com logo e contato
-    doc.setFontSize(18);
+    // ── FAIXA DE CABEÇALHO ──────────────────────────────────────────
+    doc.setFillColor(249, 115, 22); // laranja
+    doc.rect(0, 0, pageW, 38, 'F');
+
+    // Faixa escura inferior do header
+    doc.setFillColor(234, 88, 12);
+    doc.rect(0, 32, pageW, 6, 'F');
+
+    // Nome da empresa
     doc.setFont(undefined, 'bold');
-    doc.text(empresa, 14, 18);
+    doc.setFontSize(20);
+    doc.setTextColor(255, 255, 255);
+    doc.text(empresa, 14, 16);
 
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'normal');
-    if (enderecoEmpresa) doc.text(enderecoEmpresa, 14, 24);
-    if (telefoneEmpresa) doc.text(`Fone: ${telefoneEmpresa}`, 14, 29);
-    
-    // Informações de contato
+    // Subtítulo / contato no header
     doc.setFontSize(8);
-    doc.text(`📱 WhatsApp: (31) 3808-8840`, 14, 33);
-    doc.text(`📷 Instagram: @fragaautoportasoficial`, 14, 37);
-    doc.text(`🌐 Site: fragaauto.com.br`, 14, 41);
-
-    // Título
-    doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
-    doc.text(`ORÇAMENTO Nº ${String(o.numero || '').padStart(4, '0')}`, 14, 46);
-    doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
-    doc.text(`Data: ${format(new Date(o.created_date), 'dd/MM/yyyy', { locale: ptBR })}`, 14, 52);
-    if (dataValidade) doc.text(`Válido até: ${dataValidade}`, 70, 52);
+    const contatoItems = [];
+    if (enderecoEmpresa) contatoItems.push(enderecoEmpresa);
+    if (config?.telefone) contatoItems.push(`Tel: ${config.telefone}`);
+    if (config?.whatsapp_atendimento) contatoItems.push(`WhatsApp: ${config.whatsapp_atendimento}`);
+    if (config?.instagram) contatoItems.push(`@${config.instagram.replace('@','')}`);
+    if (config?.site) contatoItems.push(config.site);
+    doc.text(contatoItems.join('   |   '), 14, 28);
 
-    // Linha divisória
-    doc.setDrawColor(200, 200, 200);
-    doc.line(14, 55, 196, 55);
-
-    // Cliente
-    doc.setFontSize(10);
+    // Badge "ORÇAMENTO" no lado direito do header
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(pageW - 70, 6, 56, 22, 3, 3, 'F');
     doc.setFont(undefined, 'bold');
-    doc.text('DADOS DO CLIENTE', 14, 62);
-    doc.setFont(undefined, 'normal');
     doc.setFontSize(9);
-    doc.text(`Cliente: ${o.cliente_nome}`, 14, 68);
-    if (o.cliente_telefone) doc.text(`Telefone: ${o.cliente_telefone}`, 14, 73);
-    if (o.cliente_cpf) doc.text(`CPF/CNPJ: ${o.cliente_cpf}`, 100, 73);
+    doc.setTextColor(249, 115, 22);
+    doc.text('ORÇAMENTO', pageW - 42, 14, { align: 'center' });
+    doc.setFontSize(13);
+    doc.text(`Nº ${String(o.numero || '').padStart(4, '0')}`, pageW - 42, 23, { align: 'center' });
 
-    let y = 79;
+    // ── DATAS ────────────────────────────────────────────────────────
+    let y = 48;
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Emissão: ${format(new Date(o.created_date), 'dd/MM/yyyy', { locale: ptBR })}`, 14, y);
+    if (dataValidade) {
+      doc.text(`Validade: ${dataValidade}`, 70, y);
+    }
+    if (o.usuario_nome) doc.text(`Emitido por: ${o.usuario_nome}`, 130, y);
+
+    // ── SEÇÃO CLIENTE + VEÍCULO (duas colunas) ───────────────────────
+    y += 10;
+    const colW = (pageW - 28) / 2;
+
+    // Box Cliente
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(14, y, colW, 30, 2, 2, 'FD');
+
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(249, 115, 22);
+    doc.text('CLIENTE', 18, y + 7);
+
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(30, 41, 59);
+    doc.text(o.cliente_nome || '—', 18, y + 14);
+
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+    const clienteInfo = [
+      o.cliente_telefone ? `Tel: ${o.cliente_telefone}` : '',
+      o.cliente_cpf ? `CPF: ${o.cliente_cpf}` : '',
+    ].filter(Boolean).join('   ');
+    if (clienteInfo) doc.text(clienteInfo, 18, y + 21);
+
+    // Box Veículo
+    const x2 = 14 + colW + 4;
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(x2, y, colW, 30, 2, 2, 'FD');
+
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(249, 115, 22);
+    doc.text('VEÍCULO', x2 + 4, y + 7);
+
     if (o.veiculo_placa || o.veiculo_modelo) {
       doc.setFont(undefined, 'bold');
-      doc.text('VEÍCULO', 14, y);
-      y += 6;
+      doc.setFontSize(9.5);
+      doc.setTextColor(30, 41, 59);
+      const modeloStr = [o.veiculo_modelo, o.veiculo_ano].filter(Boolean).join(' ');
+      doc.text(modeloStr || '—', x2 + 4, y + 14);
+
       doc.setFont(undefined, 'normal');
-      const vInfo = [o.veiculo_placa, o.veiculo_modelo, o.veiculo_ano, o.veiculo_km ? `${o.veiculo_km} km` : ''].filter(Boolean).join(' · ');
-      doc.text(vInfo, 14, y);
-      y += 8;
+      doc.setFontSize(8.5);
+      doc.setTextColor(71, 85, 105);
+      const vInfo = [
+        o.veiculo_placa ? `Placa: ${o.veiculo_placa}` : '',
+        o.veiculo_km ? `KM: ${o.veiculo_km}` : '',
+      ].filter(Boolean).join('   ');
+      if (vInfo) doc.text(vInfo, x2 + 4, y + 21);
+    } else {
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(148, 163, 184);
+      doc.text('Não informado', x2 + 4, y + 14);
     }
 
-    // Itens
+    y += 38;
+
+    // ── TABELA DE ITENS ──────────────────────────────────────────────
     doc.autoTable({
       startY: y,
-      head: [['Descrição', 'Qtd', 'Valor Unit.', 'Total']],
-      body: (o.itens || []).map(i => [
+      head: [['#', 'Descrição', 'Qtd', 'Valor Unit.', 'Total']],
+      body: (o.itens || []).map((i, idx) => [
+        idx + 1,
         i.observacao ? `${i.nome}\n${i.observacao}` : i.nome,
         i.quantidade,
         `R$ ${(i.valor_unitario || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         `R$ ${(i.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       ]),
-      styles: { fontSize: 8.5, cellPadding: 2 },
-      headStyles: { fillColor: [249, 115, 22], textColor: 255, fontStyle: 'bold' },
-      columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+      styles: {
+        fontSize: 8.5,
+        cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
+        textColor: [30, 41, 59],
+      },
+      headStyles: {
+        fillColor: [30, 41, 59],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8,
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 8 },
+        2: { halign: 'center', cellWidth: 14 },
+        3: { halign: 'right', cellWidth: 28 },
+        4: { halign: 'right', cellWidth: 28, fontStyle: 'bold' },
+      },
       margin: { left: 14, right: 14 },
     });
 
-    let finalY = doc.lastAutoTable.finalY + 5;
+    let finalY = doc.lastAutoTable.finalY + 6;
 
-    // Totais
+    // ── TOTAIS ───────────────────────────────────────────────────────
+    const totaisX = pageW - 14 - 70;
+
+    // Subtotal
+    doc.setFont(undefined, 'normal');
     doc.setFontSize(9);
-    doc.text(`Subtotal: R$ ${(o.subtotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 130, finalY, { align: 'left' });
-    finalY += 5;
+    doc.setTextColor(100, 116, 139);
+    doc.text('Subtotal:', totaisX, finalY);
+    doc.text(`R$ ${(o.subtotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageW - 14, finalY, { align: 'right' });
+    finalY += 6;
+
     if (o.desconto > 0) {
-      doc.setTextColor(200, 0, 0);
-      doc.text(`Desconto: - R$ ${(o.desconto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 130, finalY);
-      finalY += 5;
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(220, 38, 38);
+      doc.text('Desconto:', totaisX, finalY);
+      doc.text(`- R$ ${(o.desconto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageW - 14, finalY, { align: 'right' });
+      finalY += 6;
     }
-    doc.setFontSize(12);
+
+    // Linha separadora dos totais
+    doc.setDrawColor(226, 232, 240);
+    doc.line(totaisX, finalY, pageW - 14, finalY);
+    finalY += 5;
+
+    // TOTAL — caixa destacada
+    doc.setFillColor(249, 115, 22);
+    doc.roundedRect(totaisX - 4, finalY - 4, pageW - 14 - totaisX + 8, 12, 2, 2, 'F');
     doc.setFont(undefined, 'bold');
-    doc.text(`TOTAL: R$ ${(o.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 130, finalY + 2);
-    doc.setFont(undefined, 'normal');
-    finalY += 12;
+    doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
+    doc.text('TOTAL:', totaisX, finalY + 4);
+    doc.text(`R$ ${(o.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, pageW - 18, finalY + 4, { align: 'right' });
+    finalY += 16;
 
+    // ── OBSERVAÇÕES ──────────────────────────────────────────────────
     if (o.observacoes) {
-      doc.setFontSize(8.5);
+      doc.setFillColor(254, 252, 232);
+      doc.setDrawColor(253, 224, 71);
+      doc.roundedRect(14, finalY, pageW - 28, 14, 2, 2, 'FD');
       doc.setFont(undefined, 'italic');
-      doc.text(`Obs: ${o.observacoes}`, 14, finalY);
-      finalY += 10;
+      doc.setFontSize(8.5);
+      doc.setTextColor(113, 63, 18);
+      const obsLines = doc.splitTextToSize(`Obs: ${o.observacoes}`, pageW - 36);
+      doc.text(obsLines, 18, finalY + 6);
+      finalY += 18;
     }
 
-    // Assinatura
-    finalY += 10;
-    doc.setFontSize(9);
+    // ── ASSINATURAS ──────────────────────────────────────────────────
+    finalY += 14;
+    if (finalY > pageH - 40) { doc.addPage(); finalY = 20; }
+
+    doc.setDrawColor(203, 213, 225);
+    doc.setTextColor(100, 116, 139);
     doc.setFont(undefined, 'normal');
+    doc.setFontSize(8.5);
+
+    // Linha cliente
     doc.line(14, finalY, 90, finalY);
-    doc.line(110, finalY, 196, finalY);
-    finalY += 4;
-    doc.text('Assinatura do Cliente', 14, finalY);
-    doc.text('Responsável pela Empresa', 110, finalY);
+    doc.text('Assinatura do Cliente', 52, finalY + 5, { align: 'center' });
+    doc.text(o.cliente_nome || '', 52, finalY + 10, { align: 'center' });
+
+    // Linha empresa
+    doc.line(110, finalY, pageW - 14, finalY);
+    doc.text(`Responsável — ${empresa}`, (110 + pageW - 14) / 2, finalY + 5, { align: 'center' });
+
+    // ── RODAPÉ ───────────────────────────────────────────────────────
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, pageH - 14, pageW, 14, 'F');
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`${empresa}  ·  Documento gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, pageW / 2, pageH - 6, { align: 'center' });
 
     doc.save(`orcamento-${String(o.numero || o.id.slice(0, 6)).padStart(4, '0')}.pdf`);
   };
