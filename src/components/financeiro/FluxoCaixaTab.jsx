@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet, CalendarRange, Pencil } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet, CalendarRange, Pencil, Search } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -39,6 +39,7 @@ export default function FluxoCaixaTab({ filtroData }) {
   const [selecionados, setSelecionados] = useState(new Set());
   const [deletandoMultiplos, setDeletandoMultiplos] = useState(false);
   const [editando, setEditando] = useState(null); // lançamento sendo editado
+  const [busca, setBusca] = useState('');
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.LancamentoFinanceiro.delete(id),
@@ -149,7 +150,13 @@ export default function FluxoCaixaTab({ filtroData }) {
         ? (!dataInicio || data >= dataInicio) && (!dataFim || data <= dataFim)
         : data >= dataInicio;
     const matchForma = filtroForma === 'todos' || l.forma_pagamento === filtroForma;
-    return dentroPeriodo && matchForma;
+    const buscaLower = busca.toLowerCase().trim();
+    const matchBusca = !buscaLower
+      || (l.descricao || '').toLowerCase().includes(buscaLower)
+      || String(l.valor || '').includes(buscaLower)
+      || (l.categoria || '').toLowerCase().includes(buscaLower)
+      || (l.observacoes || '').toLowerCase().includes(buscaLower);
+    return dentroPeriodo && matchForma && matchBusca;
   });
 
   const entradas = filtrados.filter(l => l.tipo === 'entrada').reduce((s, l) => s + (l.valor || 0), 0);
@@ -314,6 +321,15 @@ export default function FluxoCaixaTab({ filtroData }) {
             {Object.entries(FORMAS_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
           </SelectContent>
         </Select>
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <Input
+            placeholder="Buscar por nome, descrição ou valor..."
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            className="pl-8 h-9 text-sm"
+          />
+        </div>
         <div className="ml-auto flex gap-2">
           <Button onClick={exportarPDF} disabled={exportando || filtrados.length === 0} variant="outline" className="gap-1">
             <Download className="w-4 h-4" /> PDF
