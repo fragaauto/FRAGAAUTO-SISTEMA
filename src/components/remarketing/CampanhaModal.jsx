@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const VARIAVEIS = ['{nome}', '{veiculo}', '{ultimo_servico}', '{placa}'];
 
-export default function CampanhaModal({ campanha, atendimentos, clientes = [], onClose, onSaved }) {
+export default function CampanhaModal({ campanha, contatosDisponiveis = [], onClose, onSaved }) {
   const [nome, setNome] = useState(campanha?.nomeCampanha || '');
   const [mensagem, setMensagem] = useState(campanha?.mensagemBase || 'Olá {nome} 👋\n\nGostaria de te oferecer uma condição especial para o seu {veiculo}.\n\nPosso te ajudar?');
   const [contatosSelecionados, setContatosSelecionados] = useState(campanha?.listaContatos?.map(c => c.clienteId) || []);
@@ -47,60 +47,7 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
   const [dataAgendamento, setDataAgendamento] = useState('');
   const [horaAgendamento, setHoraAgendamento] = useState('');
 
-  // Map de clientes para lookup O(1) — evita clientes.find() em loops
-  const clientesMap = useMemo(() => {
-    const m = new Map();
-    clientes.forEach(c => m.set(c.id, c));
-    return m;
-  }, [clientes]);
 
-  const contatosDisponiveis = useMemo(() => {
-    const map = {};
-
-    // 1. Adiciona clientes cadastrados (não bloqueados)
-    clientes.forEach(c => {
-      if (!c.bloqueado && c.telefone) {
-        map[c.id] = {
-          clienteId: c.id,
-          clienteNome: c.nome || 'Sem nome',
-          telefone: c.telefone,
-          veiculo: '',
-          ultimoServico: '',
-          atendimentoId: '',
-          // cache de dados do cliente para evitar lookups no render
-          _codigo: c.codigo,
-          _tipo_pessoa: c.tipo_pessoa,
-          _data_nascimento: c.data_nascimento,
-        };
-      }
-    });
-
-    // 2. Complementa com dados de atendimentos (veículo e último serviço)
-    const bloqueadosTelefones = new Set(clientes.filter(c => c.bloqueado).map(c => c.telefone).filter(Boolean));
-    atendimentos.forEach(at => {
-      if (!at.cliente_telefone) return;
-      if (bloqueadosTelefones.has(at.cliente_telefone)) return;
-      const chave = at.cliente_id || at.cliente_nome;
-      if (map[chave]) {
-        if (!map[chave].veiculo && at.placa) map[chave].veiculo = `${at.placa} - ${at.modelo}`;
-        if (!map[chave].ultimoServico && at.queixa_inicial) map[chave].ultimoServico = at.queixa_inicial;
-      } else {
-        map[chave] = {
-          clienteId: chave,
-          clienteNome: at.cliente_nome || 'Sem nome',
-          telefone: at.cliente_telefone,
-          veiculo: `${at.placa} - ${at.modelo}`,
-          ultimoServico: at.queixa_inicial || '',
-          atendimentoId: at.id,
-          _codigo: null,
-          _tipo_pessoa: null,
-          _data_nascimento: null,
-        };
-      }
-    });
-
-    return Object.values(map);
-  }, [atendimentos, clientes]);
 
   const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 

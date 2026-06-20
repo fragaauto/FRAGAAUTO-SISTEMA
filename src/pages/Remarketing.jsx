@@ -40,6 +40,7 @@ export default function Remarketing() {
   const [mensagemModalItem, setMensagemModalItem] = useState(null);
   const [campanhModalOpen, setCampanhaModalOpen] = useState(false);
   const [campanhaSelecionada, setCampanhaSelecionada] = useState(null);
+  const [abrindoCampanha, setAbrindoCampanha] = useState(false);
   const [sincronizando, setSincronizando] = useState(false);
   const [selecionados, setSelecionados] = useState([]);
   const [envioEmMassaOpen, setEnvioEmMassaOpen] = useState(false);
@@ -78,6 +79,49 @@ export default function Remarketing() {
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
   const config = configs[0] || {};
   const diasMinimos = config.dias_minimos_reenvio || 30;
+
+  // Pré-processa contatos aqui (fora do modal) para não travar na abertura
+  const contatosDisponiveis = useMemo(() => {
+    const map = {};
+    clientes.forEach(c => {
+      if (!c.bloqueado && c.telefone) {
+        map[c.id] = {
+          clienteId: c.id,
+          clienteNome: c.nome || 'Sem nome',
+          telefone: c.telefone,
+          veiculo: '',
+          ultimoServico: '',
+          atendimentoId: '',
+          _codigo: c.codigo,
+          _tipo_pessoa: c.tipo_pessoa,
+          _data_nascimento: c.data_nascimento,
+        };
+      }
+    });
+    const bloqueadosTelefones = new Set(clientes.filter(c => c.bloqueado).map(c => c.telefone).filter(Boolean));
+    atendimentos.forEach(at => {
+      if (!at.cliente_telefone) return;
+      if (bloqueadosTelefones.has(at.cliente_telefone)) return;
+      const chave = at.cliente_id || at.cliente_nome;
+      if (map[chave]) {
+        if (!map[chave].veiculo && at.placa) map[chave].veiculo = `${at.placa} - ${at.modelo}`;
+        if (!map[chave].ultimoServico && at.queixa_inicial) map[chave].ultimoServico = at.queixa_inicial;
+      } else {
+        map[chave] = {
+          clienteId: chave,
+          clienteNome: at.cliente_nome || 'Sem nome',
+          telefone: at.cliente_telefone,
+          veiculo: `${at.placa} - ${at.modelo}`,
+          ultimoServico: at.queixa_inicial || '',
+          atendimentoId: at.id,
+          _codigo: null,
+          _tipo_pessoa: null,
+          _data_nascimento: null,
+        };
+      }
+    });
+    return Object.values(map);
+  }, [atendimentos, clientes]);
 
   const updateFilaMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.RemarketingFila.update(id, data),
@@ -224,10 +268,15 @@ export default function Remarketing() {
                 Sincronizar Fila
               </Button>
               <Button
-                onClick={() => { setCampanhaSelecionada(null); setCampanhaModalOpen(true); }}
+                onClick={() => {
+                  setAbrindoCampanha(true);
+                  setCampanhaSelecionada(null);
+                  setTimeout(() => { setCampanhaModalOpen(true); setAbrindoCampanha(false); }, 0);
+                }}
+                disabled={abrindoCampanha}
                 className="bg-orange-500 hover:bg-orange-600"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                {abrindoCampanha ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
                 Nova Campanha
               </Button>
             </div>
@@ -609,8 +658,7 @@ export default function Remarketing() {
       {campanhModalOpen && (
         <CampanhaModal
           campanha={campanhaSelecionada}
-          atendimentos={atendimentos}
-          clientes={clientes}
+          contatosDisponiveis={contatosDisponiveis}
           onClose={() => setCampanhaModalOpen(false)}
           onSaved={() => {
             queryClient.invalidateQueries(['campanhas']);
