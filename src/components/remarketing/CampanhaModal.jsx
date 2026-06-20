@@ -47,41 +47,54 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
   const [dataAgendamento, setDataAgendamento] = useState('');
   const [horaAgendamento, setHoraAgendamento] = useState('');
 
+  // Map de clientes para lookup O(1) — evita clientes.find() em loops
+  const clientesMap = useMemo(() => {
+    const m = new Map();
+    clientes.forEach(c => m.set(c.id, c));
+    return m;
+  }, [clientes]);
+
   const contatosDisponiveis = useMemo(() => {
-    // Prioriza contatos do cadastro de clientes (não bloqueados)
     const map = {};
 
     // 1. Adiciona clientes cadastrados (não bloqueados)
-    clientes.filter(c => !c.bloqueado && c.telefone).forEach(c => {
-      map[c.id] = {
-        clienteId: c.id,
-        clienteNome: c.nome || 'Sem nome',
-        telefone: c.telefone,
-        veiculo: '',
-        ultimoServico: '',
-        atendimentoId: ''
-      };
+    clientes.forEach(c => {
+      if (!c.bloqueado && c.telefone) {
+        map[c.id] = {
+          clienteId: c.id,
+          clienteNome: c.nome || 'Sem nome',
+          telefone: c.telefone,
+          veiculo: '',
+          ultimoServico: '',
+          atendimentoId: '',
+          // cache de dados do cliente para evitar lookups no render
+          _codigo: c.codigo,
+          _tipo_pessoa: c.tipo_pessoa,
+          _data_nascimento: c.data_nascimento,
+        };
+      }
     });
 
-    // 2. Complementa com dados de atendimentos (veículo e último serviço), mas não adiciona bloqueados
+    // 2. Complementa com dados de atendimentos (veículo e último serviço)
     const bloqueadosTelefones = new Set(clientes.filter(c => c.bloqueado).map(c => c.telefone).filter(Boolean));
     atendimentos.forEach(at => {
       if (!at.cliente_telefone) return;
       if (bloqueadosTelefones.has(at.cliente_telefone)) return;
       const chave = at.cliente_id || at.cliente_nome;
       if (map[chave]) {
-        // Atualiza veiculo e ultimo servico se ja existe
         if (!map[chave].veiculo && at.placa) map[chave].veiculo = `${at.placa} - ${at.modelo}`;
         if (!map[chave].ultimoServico && at.queixa_inicial) map[chave].ultimoServico = at.queixa_inicial;
       } else {
-        // Adiciona se não estava no cadastro de clientes
         map[chave] = {
           clienteId: chave,
           clienteNome: at.cliente_nome || 'Sem nome',
           telefone: at.cliente_telefone,
           veiculo: `${at.placa} - ${at.modelo}`,
           ultimoServico: at.queixa_inicial || '',
-          atendimentoId: at.id
+          atendimentoId: at.id,
+          _codigo: null,
+          _tipo_pessoa: null,
+          _data_nascimento: null,
         };
       }
     });
@@ -110,63 +123,66 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
     }
   };
 
-  const contatosFiltrados = contatosDisponiveis.filter(c => {
-    if (filtroLetra && !c.clienteNome.toUpperCase().startsWith(filtroLetra)) return false;
-    if (filtroNome && !c.clienteNome.toLowerCase().includes(filtroNome.toLowerCase())) return false;
-    if (filtroTipo !== 'todos') {
-      const clienteObj = clientes.find(cl => cl.id === c.clienteId);
-      if (!clienteObj) return filtroTipo !== 'cadastrado';
-      if (filtroTipo === 'fisica' && clienteObj.tipo_pessoa !== 'fisica') return false;
-      if (filtroTipo === 'juridica' && clienteObj.tipo_pessoa !== 'juridica') return false;
-    }
-    if (filtroCodigoMin !== '') {
-      const clienteObj = clientes.find(cl => cl.id === c.clienteId);
-      if (!clienteObj?.codigo || clienteObj.codigo < Number(filtroCodigoMin)) return false;
-    }
-    if (filtroCodigoMax !== '') {
-      const clienteObj = clientes.find(cl => cl.id === c.clienteId);
-      if (!clienteObj?.codigo || clienteObj.codigo > Number(filtroCodigoMax)) return false;
-    }
-    // Filtro de aniversário: compara apenas dia e mês (ignora o ano)
-    if (filtroNascimentoInicio || filtroNascimentoFim) {
-      const clienteObj = clientes.find(cl => cl.id === c.clienteId);
-      const nasc = clienteObj?.data_nascimento;
-      if (!nasc) return false;
-      const nascDate = new Date(nasc + 'T00:00:00');
-      // Monta datas de comparação com o mesmo ano base para comparar só dia/mês
-      const anoBase = 2000;
-      const nascMD = new Date(anoBase, nascDate.getMonth(), nascDate.getDate());
-      if (filtroNascimentoInicio) {
-        const [yI, mI, dI] = filtroNascimentoInicio.split('-').map(Number);
-        const inicio = new Date(anoBase, mI - 1, dI);
-        if (nascMD < inicio) return false;
-      }
-      if (filtroNascimentoFim) {
-        const [yF, mF, dF] = filtroNascimentoFim.split('-').map(Number);
-        const fim = new Date(anoBase, mF - 1, dF);
-        if (nascMD > fim) return false;
-      }
-    }
-    return true;
-  }).sort((a, b) => {
-    if (ordenacao === 'alfabetica') return a.clienteNome.localeCompare(b.clienteNome, 'pt-BR');
-    if (ordenacao === 'nascimento') {
-      const ca = clientes.find(cl => cl.id === a.clienteId);
-      const cb = clientes.find(cl => cl.id === b.clienteId);
-      const da = ca?.data_nascimento || '';
-      const db = cb?.data_nascimento || '';
-      if (!da && !db) return 0;
-      if (!da) return 1;
-      if (!db) return -1;
-      return da.localeCompare(db);
-    }
-    // default: codigo
-    const ca = clientes.find(cl => cl.id === a.clienteId);
-    const cb = clientes.find(cl => cl.id === b.clienteId);
-    return (ca?.codigo || 0) - (cb?.codigo || 0);
-  });
+  // Memoiza filtro+sort — só recalcula quando filtros ou dados mudam
+  const contatosFiltrados = useMemo(() => {
+    const codigoMinNum = filtroCodigoMin !== '' ? Number(filtroCodigoMin) : null;
+    const codigoMaxNum = filtroCodigoMax !== '' ? Number(filtroCodigoMax) : null;
+    const filtroNomeLower = filtroNome ? filtroNome.toLowerCase() : '';
+    const filtroLetraUpper = filtroLetra ? filtroLetra.toUpperCase() : '';
 
-  const todosFiltradosSelecionados = contatosFiltrados.length > 0 && contatosFiltrados.every(c => contatosSelecionados.includes(c.clienteId));
+    // Pre-processa datas de aniversário fora do loop
+    let inicioDM = null, fimDM = null;
+    const anoBase = 2000;
+    if (filtroNascimentoInicio) {
+      const [, mI, dI] = filtroNascimentoInicio.split('-').map(Number);
+      inicioDM = new Date(anoBase, mI - 1, dI);
+    }
+    if (filtroNascimentoFim) {
+      const [, mF, dF] = filtroNascimentoFim.split('-').map(Number);
+      fimDM = new Date(anoBase, mF - 1, dF);
+    }
+
+    const filtrados = contatosDisponiveis.filter(c => {
+      if (filtroLetraUpper && !c.clienteNome.toUpperCase().startsWith(filtroLetraUpper)) return false;
+      if (filtroNomeLower && !c.clienteNome.toLowerCase().includes(filtroNomeLower)) return false;
+      if (filtroTipo !== 'todos') {
+        if (!c._tipo_pessoa) return filtroTipo !== 'cadastrado';
+        if (filtroTipo === 'fisica' && c._tipo_pessoa !== 'fisica') return false;
+        if (filtroTipo === 'juridica' && c._tipo_pessoa !== 'juridica') return false;
+      }
+      if (codigoMinNum !== null && (!c._codigo || c._codigo < codigoMinNum)) return false;
+      if (codigoMaxNum !== null && (!c._codigo || c._codigo > codigoMaxNum)) return false;
+      if (inicioDM || fimDM) {
+        if (!c._data_nascimento) return false;
+        const nascDate = new Date(c._data_nascimento + 'T00:00:00');
+        const nascMD = new Date(anoBase, nascDate.getMonth(), nascDate.getDate());
+        if (inicioDM && nascMD < inicioDM) return false;
+        if (fimDM && nascMD > fimDM) return false;
+      }
+      return true;
+    });
+
+    // Sort usando dados em cache no próprio contato — sem lookups extras
+    filtrados.sort((a, b) => {
+      if (ordenacao === 'alfabetica') return a.clienteNome.localeCompare(b.clienteNome, 'pt-BR');
+      if (ordenacao === 'nascimento') {
+        const da = a._data_nascimento || '';
+        const db = b._data_nascimento || '';
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        return da.localeCompare(db);
+      }
+      return (a._codigo || 0) - (b._codigo || 0);
+    });
+
+    return filtrados;
+  }, [contatosDisponiveis, filtroLetra, filtroNome, filtroTipo, filtroCodigoMin, filtroCodigoMax, filtroNascimentoInicio, filtroNascimentoFim, ordenacao]);
+
+  // Set para lookup O(1) no render da lista
+  const contatosSelecionadosSet = useMemo(() => new Set(contatosSelecionados), [contatosSelecionados]);
+
+  const todosFiltradosSelecionados = contatosFiltrados.length > 0 && contatosFiltrados.every(c => contatosSelecionadosSet.has(c.clienteId));
 
   const toggleTodosFiltrados = () => {
     if (todosFiltradosSelecionados) {
@@ -510,23 +526,20 @@ export default function CampanhaModal({ campanha, atendimentos, clientes = [], o
                 </span>
               </div>
               <div className="max-h-48 overflow-y-auto divide-y">
-                {contatosFiltrados.map(c => {
-                  const clienteObj = clientes.find(cl => cl.id === c.clienteId);
-                  return (
-                    <div key={c.clienteId} className="flex items-center gap-3 p-2 hover:bg-slate-50">
-                      <Checkbox checked={contatosSelecionados.includes(c.clienteId)} onCheckedChange={() => toggleContato(c.clienteId)} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          {clienteObj?.codigo && (
-                            <span className="font-mono text-xs text-slate-400">#{String(clienteObj.codigo).padStart(4, '0')}</span>
-                          )}
-                          <p className="text-sm font-medium text-slate-800 truncate">{c.clienteNome}</p>
-                        </div>
-                        <p className="text-xs text-slate-500">{[c.veiculo, c.telefone].filter(Boolean).join(' • ')}</p>
+                {contatosFiltrados.map(c => (
+                  <div key={c.clienteId} className="flex items-center gap-3 p-2 hover:bg-slate-50">
+                    <Checkbox checked={contatosSelecionadosSet.has(c.clienteId)} onCheckedChange={() => toggleContato(c.clienteId)} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        {c._codigo && (
+                          <span className="font-mono text-xs text-slate-400">#{String(c._codigo).padStart(4, '0')}</span>
+                        )}
+                        <p className="text-sm font-medium text-slate-800 truncate">{c.clienteNome}</p>
                       </div>
+                      <p className="text-xs text-slate-500">{[c.veiculo, c.telefone].filter(Boolean).join(' • ')}</p>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
                 {contatosFiltrados.length === 0 && <p className="text-center py-4 text-slate-500 text-sm">Nenhum contato encontrado</p>}
               </div>
             </div>
