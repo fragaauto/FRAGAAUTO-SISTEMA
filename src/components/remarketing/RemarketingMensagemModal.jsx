@@ -9,6 +9,7 @@ import { MessageCircle, Send, Edit2, Loader2, AlertTriangle, CheckCircle2, XCirc
 import { addDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
+import { useUnidade } from '@/lib/UnidadeContext';
 
 function gerarMensagem(item, config) {
   const nomeEmpresa = config.nome_empresa || 'nossa empresa';
@@ -39,6 +40,7 @@ function gerarMensagem(item, config) {
 }
 
 export default function RemarketingMensagemModal({ item, config, onClose, onEnviado }) {
+  const { unidadeAtual } = useUnidade();
   const [mensagem, setMensagem] = useState('');
   const [editando, setEditando] = useState(false);
   const [enviando, setEnviando] = useState(false);
@@ -62,6 +64,7 @@ export default function RemarketingMensagemModal({ item, config, onClose, onEnvi
       const res = await base44.functions.invoke('enviarMensagemWhatsApp', {
         telefone: tel,
         mensagem,
+        unidade_id: unidadeAtual?.id || null,
       });
       if (res.data?.ok) {
         setResultado({ ok: true });

@@ -70,15 +70,19 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { telefone, mensagem, midiaUrl, midiaTipo } = await req.json();
+    const body = await req.json();
+    const { telefone, mensagem, midiaUrl, midiaTipo, unidade_id } = body.payload ?? body;
 
     if (!telefone || !mensagem) {
       return Response.json({ error: 'Telefone e mensagem são obrigatórios.' }, { status: 400 });
     }
 
-    // Buscar configurações da Evolution API
-    const configs = await base44.entities.Configuracao.list();
-    const config = configs[0];
+    // Buscar configurações da Evolution API (asServiceRole para não depender de RLS)
+    const configs = await base44.asServiceRole.entities.Configuracao.list();
+    let config = unidade_id ? configs.find(c => c.unidade_id === unidade_id) : null;
+    if (!config?.evolution_api_url) {
+      config = configs.find(c => c.evolution_api_url && c.evolution_api_key && c.evolution_instance);
+    }
 
     if (!config?.evolution_api_url || !config?.evolution_api_key || !config?.evolution_instance) {
       return Response.json({

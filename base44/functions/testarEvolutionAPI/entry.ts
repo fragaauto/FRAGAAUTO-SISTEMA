@@ -7,7 +7,8 @@ Deno.serve(async (req) => {
     try { user = await base44.auth.me(); } catch (_) { user = null; }
     if (!user) return Response.json({ ok: false, mensagem: 'Não autenticado. Faça login e tente novamente.' });
 
-    const { url, apiKey, instance } = await req.json();
+    const body = await req.json();
+    const { url, apiKey, instance } = body.payload ?? body;
 
     if (!url || !apiKey || !instance) {
       return Response.json({
