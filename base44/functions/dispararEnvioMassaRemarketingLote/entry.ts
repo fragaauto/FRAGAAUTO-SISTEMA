@@ -52,7 +52,9 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { ids, intervaloMin = 15, intervaloMax = 25, unidade_id } = await req.json();
+    const body = await req.json();
+    // O SDK V3 pode encapsular os parâmetros em body.payload
+    const { ids, intervaloMin = 15, intervaloMax = 25, unidade_id } = body.payload ?? body;
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return Response.json({ error: 'Lista de IDs obrigatória' }, { status: 400 });
