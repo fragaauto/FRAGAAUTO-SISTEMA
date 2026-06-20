@@ -58,9 +58,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Lista de IDs obrigatória' }, { status: 400 });
     }
 
-    const configs = await base44.entities.Configuracao.list();
+    // Usa asServiceRole para garantir acesso a todas as configs (independente de unidade/RLS)
+    const configs = await base44.asServiceRole.entities.Configuracao.list();
 
-    // Tenta pegar config da unidade específica, senão pega a primeira que tem Evolution configurada
+    // Tenta pegar config da unidade específica, senão pega qualquer config que tenha Evolution configurada
     let config = unidade_id ? configs.find(c => c.unidade_id === unidade_id) : null;
     if (!config?.evolution_api_url) {
       config = configs.find(c => c.evolution_api_url && c.evolution_api_key && c.evolution_instance);
