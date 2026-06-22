@@ -49,6 +49,7 @@ import FotosAtendimento from '../components/atendimento/FotosAtendimento';
 import AdicionarItemOrcamento from '../components/orcamento/AdicionarItemOrcamento';
 import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import ItemOrcamentoComEncomenda from '../components/orcamento/ItemOrcamentoComEncomenda';
+import OrcamentoWhatsAppModal from '../components/orcamento/OrcamentoWhatsAppModal';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -120,6 +121,7 @@ export default function VerAtendimento() {
   const [showOrdemServico, setShowOrdemServico] = useState(false);
   const [showImpressaoQueixa, setShowImpressaoQueixa] = useState(false);
   const [showEditarDados, setShowEditarDados] = useState(false);
+  const [showOrcamentoWhatsApp, setShowOrcamentoWhatsApp] = useState(false);
   const [obsServico, setObsServico] = useState('');
   const obsServicoTimer = React.useRef(null);
 
@@ -1320,6 +1322,17 @@ export default function VerAtendimento() {
           </TabsContent>}
 
           {podeVerOrcamento && <TabsContent value="orcamento" className="space-y-4">
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowOrcamentoWhatsApp(true)}
+                className="border-green-500 text-green-700 hover:bg-green-50"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Enviar por WhatsApp
+              </Button>
+            </div>
             <AdicionarItemOrcamento
               atendimento={atendimento}
               produtos={produtos}
@@ -1902,6 +1915,14 @@ export default function VerAtendimento() {
               onSuccess: () => setShowEditarDados(false)
             });
           }}
+        />
+      )}
+
+      {showOrcamentoWhatsApp && (
+        <OrcamentoWhatsAppModal
+          atendimento={atendimento}
+          config={configs[0]}
+          onClose={() => setShowOrcamentoWhatsApp(false)}
         />
       )}
 
