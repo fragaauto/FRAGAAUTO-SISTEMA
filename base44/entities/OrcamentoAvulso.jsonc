@@ -87,6 +87,11 @@
     },
     "usuario_nome": {
       "type": "string"
+    },
+    "ultimo_envio_whatsapp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora do \u00faltimo envio de mensagem WhatsApp"
     }
   },
   "required": [

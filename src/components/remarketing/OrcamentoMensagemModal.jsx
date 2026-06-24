@@ -73,6 +73,7 @@ export default function OrcamentoMensagemModal({ orc, config, onClose }) {
       });
       if (res.data?.ok) {
         setResultado({ ok: true });
+        await base44.entities.OrcamentoAvulso.update(orc.id, { ultimo_envio_whatsapp: new Date().toISOString() });
         toast.success('Mensagem enviada com sucesso!');
         setTimeout(() => onClose(), 1500);
       } else {

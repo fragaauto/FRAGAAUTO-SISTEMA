@@ -103,6 +103,7 @@ export default function EnvioMassaOrcamentosModal({ orcamentos, config, onClose 
           unidade_id: unidadeAtual?.id || null,
         });
         if (res.data?.ok) {
+          await base44.entities.OrcamentoAvulso.update(orc.id, { ultimo_envio_whatsapp: new Date().toISOString() });
           setResultados(prev => [...prev, { nome: orc.cliente_nome, ok: true }]);
         } else {
           const errMsg = res.data?.error || 'Erro desconhecido';

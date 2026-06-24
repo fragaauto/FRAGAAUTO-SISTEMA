@@ -12,9 +12,9 @@ import { toast } from "sonner";
 import {
   MessageCircle, TrendingUp, Users, Send, RefreshCw,
   Phone, Car, DollarSign, Loader2, XCircle, CheckCircle2,
-  Clock, Ban, BarChart2, Plus, Eye, Edit2, Trash2, FileText
+  Clock, Ban, BarChart2, Plus, Eye, Edit2, Trash2, FileText, ClipboardList
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { format, subDays, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -36,6 +36,7 @@ const STATUS_CONFIG = {
 };
 
 export default function Remarketing() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState('fila');
@@ -258,6 +259,44 @@ export default function Remarketing() {
     };
   }, [filaRaw]);
 
+  const converterOrcamentoEmOS = async (orc) => {
+    try {
+      const todos = await base44.entities.Atendimento.list('-numero_os', 1);
+      const proximoNumero = (todos[0]?.numero_os || 0) + 1;
+      const atendimento = await base44.entities.Atendimento.create({
+        unidade_id: orc.unidade_id || null,
+        numero_os: proximoNumero,
+        cliente_nome: orc.cliente_nome,
+        cliente_telefone: orc.cliente_telefone,
+        cliente_cpf: orc.cliente_cpf,
+        placa: orc.veiculo_placa,
+        modelo: orc.veiculo_modelo,
+        ano: orc.veiculo_ano,
+        km_atual: orc.veiculo_km,
+        data_entrada: new Date().toISOString(),
+        status: 'rascunho',
+        itens_orcamento: (orc.itens || []).map(i => ({
+          ...i,
+          status_aprovacao: 'pendente',
+          status_servico: 'aguardando_autorizacao',
+        })),
+        subtotal: orc.subtotal || 0,
+        desconto: orc.desconto || 0,
+        valor_final: orc.total || 0,
+        obs_interna: `Convertido do Orçamento #${orc.numero || orc.id?.slice(0, 6)} via Marketing`,
+      });
+      await base44.entities.OrcamentoAvulso.update(orc.id, {
+        status: 'convertido',
+        atendimento_id: atendimento.id,
+      });
+      queryClient.invalidateQueries(['orcamentos-avulsos-remarketing']);
+      toast.success('Orçamento convertido em OS!');
+      navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`));
+    } catch (e) {
+      toast.error('Erro ao converter orçamento em OS');
+    }
+  };
+
   if (!paginaPermitida(modulosAtivos, 'Remarketing')) {
     return <ModuloBloqueado nomeModulo="Marketing Direto" />;
   }
@@ -424,9 +463,12 @@ export default function Remarketing() {
                           Total: R$ {(item.valorTotalPendentes || 0).toFixed(2)}
                         </p>
                         {item.dataUltimoEnvio && (
-                          <p className="text-xs text-slate-400 mt-1">
-                            Último envio: {format(new Date(item.dataUltimoEnvio), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                          </p>
+                          <div className="mt-2 flex items-center gap-1.5 bg-green-50 border border-green-200 rounded px-2 py-1">
+                            <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
+                            <p className="text-xs text-green-700 font-medium">
+                              Mensagem enviada em {format(new Date(item.dataUltimoEnvio), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </p>
+                          </div>
                         )}
                       </div>
                       <div className="flex flex-col gap-2 min-w-[120px]">
@@ -522,7 +564,7 @@ export default function Remarketing() {
                               {orc.status}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+                          <div className="flex items-center gap-4 text-sm text-slate-500 mt-1 flex-wrap">
                             {(orc.veiculo_placa || orc.veiculo_modelo) && (
                               <span className="flex items-center gap-1"><Car className="w-3 h-3" />{[orc.veiculo_placa, orc.veiculo_modelo].filter(Boolean).join(' - ')}</span>
                             )}
@@ -531,6 +573,14 @@ export default function Remarketing() {
                               📅 Gerado em: {format(new Date(orc.created_date), 'dd/MM/yyyy', { locale: ptBR })}
                             </span>
                           </div>
+                          {orc.ultimo_envio_whatsapp && (
+                            <div className="mt-1.5 flex items-center gap-1.5 bg-green-50 border border-green-200 rounded px-2 py-1 w-fit">
+                              <CheckCircle2 className="w-3 h-3 text-green-600 flex-shrink-0" />
+                              <p className="text-xs text-green-700 font-medium">
+                                Mensagem enviada em {format(new Date(orc.ultimo_envio_whatsapp), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </p>
+                            </div>
+                          )}
                           <div className="mt-2 space-y-1">
                             {(orc.itens || []).map((it, i) => (
                               <div key={i} className="flex justify-between text-sm bg-blue-50 rounded px-2 py-1">
@@ -554,11 +604,10 @@ export default function Remarketing() {
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
-                            className="w-full text-green-600 border-green-300"
-                            onClick={() => base44.entities.OrcamentoAvulso.update(orc.id, { status: 'aprovado' }).then(() => queryClient.invalidateQueries(['orcamentos-avulsos-remarketing']))}
+                            className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                            onClick={() => converterOrcamentoEmOS(orc)}
                           >
-                            <CheckCircle2 className="w-3 h-3 mr-1" /> Aprovado
+                            <ClipboardList className="w-3 h-3 mr-1" /> Converter em OS
                           </Button>
                           <Button
                             size="sm"
