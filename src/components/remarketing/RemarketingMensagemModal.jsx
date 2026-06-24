@@ -19,7 +19,12 @@ function gerarMensagem(item, config) {
   const dataValidade = format(addDays(new Date(), diasValidade), "dd/MM/yyyy", { locale: ptBR });
 
   const listaServicos = (item.servicosPendentes || [])
-    .map(s => `• ${s.nome} - R$ ${(s.valor_total || 0).toFixed(2)}`)
+    .map(s => {
+      let linha = `• ${s.nome} - R$ ${(s.valor_total || 0).toFixed(2)}`;
+      if (s.observacao_item) linha += `\n  📝 ${s.observacao_item}`;
+      if (s.observacao_cliente) linha += `\n  💬 ${s.observacao_cliente}`;
+      return linha;
+    })
     .join('\n');
 
   const total = item.valorTotalPendentes || 0;

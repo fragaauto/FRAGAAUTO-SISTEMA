@@ -24,7 +24,12 @@ function gerarMensagem(item, config) {
   const diasValidade = config.dias_validade_oferta || 7;
   const dataValidade = addDays(new Date(), diasValidade).toLocaleDateString('pt-BR');
   const listaServicos = (item.servicosPendentes || [])
-    .map(s => `• ${s.nome} - R$ ${(s.valor_total || 0).toFixed(2)}`).join('\n');
+    .map(s => {
+      let linha = `• ${s.nome} - R$ ${(s.valor_total || 0).toFixed(2)}`;
+      if (s.observacao_item) linha += `\n  📝 ${s.observacao_item}`;
+      if (s.observacao_cliente) linha += `\n  💬 ${s.observacao_cliente}`;
+      return linha;
+    }).join('\n');
   const total = (item.valorTotalPendentes || 0).toFixed(2);
 
   let msg = config.mensagem_remarketing

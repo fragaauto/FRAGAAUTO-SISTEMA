@@ -195,7 +195,9 @@ export default function Remarketing() {
           servicosPendentes: reprovados.map(i => ({
             nome: i.nome,
             valor_total: i.valor_total || 0,
-            quantidade: i.quantidade || 1
+            quantidade: i.quantidade || 1,
+            observacao_item: i.observacao_item || '',
+            observacao_cliente: i.observacao_cliente || ''
           })),
           valorTotalPendentes: valorTotal,
           tentativas: 0,
@@ -408,9 +410,13 @@ export default function Remarketing() {
                     </div>
                         <div className="mt-2 space-y-1">
                           {item.servicosPendentes?.map((s, i) => (
-                            <div key={i} className="flex justify-between text-sm bg-red-50 rounded px-2 py-1">
-                              <span className="text-slate-700">{s.nome}</span>
-                              <span className="font-medium text-red-600">R$ {(s.valor_total || 0).toFixed(2)}</span>
+                            <div key={i} className="text-sm bg-red-50 rounded px-2 py-1">
+                              <div className="flex justify-between">
+                                <span className="text-slate-700 font-medium">{s.nome}</span>
+                                <span className="font-medium text-red-600">R$ {(s.valor_total || 0).toFixed(2)}</span>
+                              </div>
+                              {s.observacao_item && <p className="text-xs text-slate-500 mt-0.5">📝 {s.observacao_item}</p>}
+                              {s.observacao_cliente && <p className="text-xs text-blue-600 mt-0.5">💬 Cliente: {s.observacao_cliente}</p>}
                             </div>
                           ))}
                         </div>
