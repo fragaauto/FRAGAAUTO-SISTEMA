@@ -18,6 +18,15 @@
     "atendimentoId": {
       "type": "string"
     },
+    "numeroOs": {
+      "type": "number",
+      "description": "N\u00famero da OS de refer\u00eancia"
+    },
+    "dataGerado": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data em que o item foi gerado na fila"
+    },
     "placa": {
       "type": "string"
     },

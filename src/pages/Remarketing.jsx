@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import {
   MessageCircle, TrendingUp, Users, Send, RefreshCw,
   Phone, Car, DollarSign, Loader2, XCircle, CheckCircle2,
-  Clock, Ban, BarChart2, Plus, Eye, Edit2, Trash2
+  Clock, Ban, BarChart2, Plus, Eye, Edit2, Trash2, FileText
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -75,6 +75,14 @@ export default function Remarketing() {
     queryFn: () => base44.entities.Configuracao.list(),
     staleTime: 10 * 60 * 1000
   });
+
+  const { data: orcamentosAvulsos = [], isLoading: loadingOrcamentos } = useQuery({
+    queryKey: ['orcamentos-avulsos-remarketing'],
+    queryFn: () => base44.entities.OrcamentoAvulso.list('-created_date'),
+    staleTime: 2 * 60 * 1000
+  });
+
+  const [orcamentoMsgModal, setOrcamentoMsgModal] = useState(null);
 
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
   const config = configs[0] || {};
@@ -176,6 +184,8 @@ export default function Remarketing() {
           clienteNome: at.cliente_nome || 'Cliente',
           clienteTelefone: at.cliente_telefone,
           atendimentoId: at.id,
+          numeroOs: at.numero_os || null,
+          dataGerado: at.data_entrada || at.created_date || new Date().toISOString(),
           placa: at.placa,
           modelo: at.modelo,
           servicosPendentes: reprovados.map(i => ({
@@ -370,22 +380,28 @@ export default function Remarketing() {
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between gap-4">
                     <input
-                      type="checkbox"
-                      checked={selecionados.includes(item.id)}
-                      onChange={e => setSelecionados(prev => e.target.checked ? [...prev, item.id] : prev.filter(i => i !== item.id))}
-                      className="w-4 h-4 mt-1 accent-orange-500 flex-shrink-0"
+                    type="checkbox"
+                    checked={selecionados.includes(item.id)}
+                    onChange={e => setSelecionados(prev => e.target.checked ? [...prev, item.id] : prev.filter(i => i !== item.id))}
+                    className="w-4 h-4 mt-1 accent-orange-500 flex-shrink-0"
                     />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-bold text-slate-800">{item.clienteNome}</p>
-                          <Badge className={STATUS_CONFIG[item.status]?.color}>
-                            {STATUS_CONFIG[item.status]?.label}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
-                          <span className="flex items-center gap-1"><Car className="w-3 h-3" />{item.placa} - {item.modelo}</span>
-                          <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{item.clienteTelefone}</span>
-                        </div>
+                    <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-bold text-slate-800">{item.clienteNome}</p>
+                      {item.numeroOs && <span className="text-xs font-mono bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">OS #{item.numeroOs}</span>}
+                      <Badge className={STATUS_CONFIG[item.status]?.color}>
+                        {STATUS_CONFIG[item.status]?.label}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+                      <span className="flex items-center gap-1"><Car className="w-3 h-3" />{item.placa} - {item.modelo}</span>
+                      <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{item.clienteTelefone}</span>
+                      {(item.dataGerado || item.created_date) && (
+                        <span className="flex items-center gap-1 text-xs text-slate-400">
+                          📅 Gerado em: {format(new Date(item.dataGerado || item.created_date), 'dd/MM/yyyy', { locale: ptBR })}
+                        </span>
+                      )}
+                    </div>
                         <div className="mt-2 space-y-1">
                           {item.servicosPendentes?.map((s, i) => (
                             <div key={i} className="flex justify-between text-sm bg-red-50 rounded px-2 py-1">
@@ -440,44 +456,80 @@ export default function Remarketing() {
 
           {/* ORÇAMENTOS NÃO CONVERTIDOS */}
           <TabsContent value="orcamentos" className="space-y-4 mt-4">
-            {(() => {
-              const orcamentosPendentes = atendimentos.filter(a => {
-                if (a.status_pagamento) return false;
-                const todos = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
-                return todos.length > 0 && (a.status === 'queixa_pendente' || a.status === 'queixa_aprovada' || a.status === 'em_diagnostico' || a.status === 'aguardando_aprovacao_checklist' || a.status === 'checklist_aprovado');
-              });
-              if (orcamentosPendentes.length === 0) return (
-                <Card><CardContent className="py-12 text-center text-slate-500">Nenhum orçamento pendente de conversão.</CardContent></Card>
+            {loadingOrcamentos ? (
+              <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>
+            ) : (() => {
+              const pendentes = orcamentosAvulsos.filter(o => o.status === 'pendente' || o.status === 'aprovado');
+              if (pendentes.length === 0) return (
+                <Card><CardContent className="py-12 text-center text-slate-500">
+                  <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  Nenhum orçamento pendente de conversão.
+                </CardContent></Card>
               );
-              return orcamentosPendentes.map(at => {
-                const telefone = at.cliente_telefone?.replace(/\D/g, '');
-                const valor = at.valor_final || 0;
-                const dias = Math.floor((Date.now() - new Date(at.created_date)) / (1000 * 60 * 60 * 24));
-                const msg4h = `Olá! Vi que você fez um orçamento com a gente. Posso te ajudar a agendar o serviço?`;
-                const msg24h = `Passando para saber se deseja dar andamento no seu orçamento. Qualquer dúvida estou por aqui!`;
+              return pendentes.map(orc => {
+                const telefone = orc.cliente_telefone?.replace(/\D/g, '');
+                const valor = orc.total || 0;
+                const dias = Math.floor((Date.now() - new Date(orc.created_date)) / (1000 * 60 * 60 * 24));
                 return (
-                  <Card key={at.id} className="hover:shadow-md transition-shadow">
+                  <Card key={orc.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="pt-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-bold text-slate-800">{at.cliente_nome || 'Sem nome'}</p>
+                            <p className="font-bold text-slate-800">{orc.cliente_nome || 'Sem nome'}</p>
+                            {orc.numero && <span className="text-xs font-mono bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Orç. #{orc.numero}</span>}
                             <Badge className={dias <= 1 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}>
                               {dias === 0 ? 'Hoje' : `${dias}d atrás`}
                             </Badge>
+                            <Badge className={orc.status === 'aprovado' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'}>
+                              {orc.status}
+                            </Badge>
                           </div>
-                          <p className="text-sm text-slate-500">{at.placa} — {at.modelo}</p>
-                          <p className="text-sm text-slate-500">{at.cliente_telefone}</p>
-                          <p className="font-bold text-orange-600 mt-1">R$ {valor.toFixed(2)}</p>
+                          <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+                            {(orc.veiculo_placa || orc.veiculo_modelo) && (
+                              <span className="flex items-center gap-1"><Car className="w-3 h-3" />{[orc.veiculo_placa, orc.veiculo_modelo].filter(Boolean).join(' - ')}</span>
+                            )}
+                            {orc.cliente_telefone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{orc.cliente_telefone}</span>}
+                            <span className="flex items-center gap-1 text-xs text-slate-400">
+                              📅 Gerado em: {format(new Date(orc.created_date), 'dd/MM/yyyy', { locale: ptBR })}
+                            </span>
+                          </div>
+                          <div className="mt-2 space-y-1">
+                            {(orc.itens || []).map((it, i) => (
+                              <div key={i} className="flex justify-between text-sm bg-blue-50 rounded px-2 py-1">
+                                <span className="text-slate-700">{it.nome}</span>
+                                <span className="font-medium text-blue-600">R$ {(it.valor_total || 0).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-right font-bold text-orange-600 mt-2">
+                            Total: R$ {valor.toFixed(2)}
+                          </p>
                         </div>
-                        <div className="flex flex-col gap-2">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700" disabled={!telefone}
-                            onClick={() => setMsgFollowup({ telefone, texto: msg4h, label: 'Follow-up 4h' })}>
-                            <MessageCircle className="w-3 h-3 mr-1" /> 4h
+                        <div className="flex flex-col gap-2 min-w-[120px]">
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 w-full"
+                            disabled={!telefone}
+                            onClick={() => setOrcamentoMsgModal({ telefone, nome: orc.cliente_nome, orc })}
+                          >
+                            <MessageCircle className="w-3 h-3 mr-1" /> Enviar
                           </Button>
-                          <Button size="sm" variant="outline" disabled={!telefone}
-                            onClick={() => setMsgFollowup({ telefone, texto: msg24h, label: 'Follow-up 24h' })}>
-                            <MessageCircle className="w-3 h-3 mr-1" /> 24h
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full text-green-600 border-green-300"
+                            onClick={() => base44.entities.OrcamentoAvulso.update(orc.id, { status: 'aprovado' }).then(() => queryClient.invalidateQueries(['orcamentos-avulsos-remarketing']))}
+                          >
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Aprovado
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="w-full text-red-500"
+                            onClick={() => base44.entities.OrcamentoAvulso.update(orc.id, { status: 'reprovado' }).then(() => queryClient.invalidateQueries(['orcamentos-avulsos-remarketing']))}
+                          >
+                            <Ban className="w-3 h-3 mr-1" /> Recusar
                           </Button>
                         </div>
                       </div>
@@ -665,6 +717,34 @@ export default function Remarketing() {
             setCampanhaModalOpen(false);
           }}
         />
+      )}
+
+      {/* Modal follow-up orçamento avulso */}
+      {orcamentoMsgModal && (
+        <Dialog open={!!orcamentoMsgModal} onOpenChange={() => setOrcamentoMsgModal(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Enviar Mensagem — {orcamentoMsgModal.nome}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Textarea
+                defaultValue={`Olá ${orcamentoMsgModal.nome}! Passando para saber se deseja dar andamento no seu orçamento. Qualquer dúvida estou por aqui! 😊`}
+                id="orc-msg-textarea"
+                className="min-h-[100px]"
+              />
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  const texto = document.getElementById('orc-msg-textarea').value;
+                  window.open(`https://wa.me/55${orcamentoMsgModal.telefone}?text=${encodeURIComponent(texto)}`, '_blank');
+                  setOrcamentoMsgModal(null);
+                }}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" /> Abrir WhatsApp
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {envioEmMassaOpen && (
