@@ -39,6 +39,10 @@
     "mensagem_remarketing": {
       "type": "string"
     },
+    "mensagem_orcamento": {
+      "type": "string",
+      "description": "Template de mensagem para follow-up de or\u00e7amentos"
+    },
     "formas_pagamento": {
       "type": "array",
       "items": {
@@ -136,6 +140,9 @@
           },
           "parcelas_sem_juros": {
             "type": "number"
+          },
+          "brinde": {
+            "type": "string"
           },
           "ativa": {
             "type": "boolean"

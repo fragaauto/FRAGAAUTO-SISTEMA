@@ -21,6 +21,8 @@ import { ptBR } from 'date-fns/locale';
 import RemarketingMensagemModal from '../components/remarketing/RemarketingMensagemModal';
 import CampanhaModal from '../components/remarketing/CampanhaModal';
 import EnvioEmMassaModal from '../components/remarketing/EnvioEmMassaModal';
+import OrcamentoMensagemModal from '../components/remarketing/OrcamentoMensagemModal';
+import EnvioMassaOrcamentosModal from '../components/remarketing/EnvioMassaOrcamentosModal';
 import ModuloBloqueado from '@/components/ModuloBloqueado';
 import { paginaPermitida } from '@/components/modulos';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -83,6 +85,8 @@ export default function Remarketing() {
   });
 
   const [orcamentoMsgModal, setOrcamentoMsgModal] = useState(null);
+  const [orcamentosSelecionados, setOrcamentosSelecionados] = useState([]);
+  const [envioMassaOrcamentosOpen, setEnvioMassaOrcamentosOpen] = useState(false);
 
   const modulosAtivos = configs[0]?.modulos_ativos ?? null;
   const config = configs[0] || {};
@@ -460,20 +464,47 @@ export default function Remarketing() {
               <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>
             ) : (() => {
               const pendentes = orcamentosAvulsos.filter(o => o.status === 'pendente' || o.status === 'aprovado');
+              const pendentesComTelefone = pendentes.filter(o => o.cliente_telefone);
               if (pendentes.length === 0) return (
                 <Card><CardContent className="py-12 text-center text-slate-500">
                   <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                   Nenhum orçamento pendente de conversão.
                 </CardContent></Card>
               );
-              return pendentes.map(orc => {
+              return (
+              <>
+              {pendentesComTelefone.length > 0 && (
+                <div className="flex items-center gap-3 bg-white border rounded-lg px-4 py-2">
+                  <input
+                    type="checkbox"
+                    checked={orcamentosSelecionados.length === pendentesComTelefone.length}
+                    onChange={e => setOrcamentosSelecionados(e.target.checked ? pendentesComTelefone.map(o => o.id) : [])}
+                    className="w-4 h-4 accent-blue-500"
+                  />
+                  <span className="text-sm text-slate-600">{orcamentosSelecionados.length} selecionado(s)</span>
+                  {orcamentosSelecionados.length > 0 && (
+                    <Button size="sm" className="ml-auto bg-blue-600 hover:bg-blue-700" onClick={() => setEnvioMassaOrcamentosOpen(true)}>
+                      <Send className="w-3 h-3 mr-1" /> Enviar {orcamentosSelecionados.length} selecionados
+                    </Button>
+                  )}
+                </div>
+              )}
+              {pendentes.map(orc => {
                 const telefone = orc.cliente_telefone?.replace(/\D/g, '');
                 const valor = orc.total || 0;
                 const dias = Math.floor((Date.now() - new Date(orc.created_date)) / (1000 * 60 * 60 * 24));
                 return (
-                  <Card key={orc.id} className="hover:shadow-md transition-shadow">
+                  <Card key={orc.id} className={`hover:shadow-md transition-shadow ${orcamentosSelecionados.includes(orc.id) ? 'ring-2 ring-blue-400' : ''}`}>
                     <CardContent className="pt-4">
                       <div className="flex items-start justify-between gap-4">
+                        {orc.cliente_telefone && (
+                          <input
+                            type="checkbox"
+                            checked={orcamentosSelecionados.includes(orc.id)}
+                            onChange={e => setOrcamentosSelecionados(prev => e.target.checked ? [...prev, orc.id] : prev.filter(i => i !== orc.id))}
+                            className="w-4 h-4 mt-1 accent-blue-500 flex-shrink-0"
+                          />
+                        )}
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-bold text-slate-800">{orc.cliente_nome || 'Sem nome'}</p>
@@ -509,9 +540,9 @@ export default function Remarketing() {
                         <div className="flex flex-col gap-2 min-w-[120px]">
                           <Button
                             size="sm"
-                            className="bg-green-600 hover:bg-green-700 w-full"
+                            className="bg-blue-600 hover:bg-blue-700 w-full"
                             disabled={!telefone}
-                            onClick={() => setOrcamentoMsgModal({ telefone, nome: orc.cliente_nome, orc })}
+                            onClick={() => setOrcamentoMsgModal(orc)}
                           >
                             <MessageCircle className="w-3 h-3 mr-1" /> Enviar
                           </Button>
@@ -536,7 +567,9 @@ export default function Remarketing() {
                     </CardContent>
                   </Card>
                 );
-              });
+              })}
+              </>
+              );
             })()}
           </TabsContent>
 
@@ -719,32 +752,24 @@ export default function Remarketing() {
         />
       )}
 
-      {/* Modal follow-up orçamento avulso */}
       {orcamentoMsgModal && (
-        <Dialog open={!!orcamentoMsgModal} onOpenChange={() => setOrcamentoMsgModal(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Enviar Mensagem — {orcamentoMsgModal.nome}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <Textarea
-                defaultValue={`Olá ${orcamentoMsgModal.nome}! Passando para saber se deseja dar andamento no seu orçamento. Qualquer dúvida estou por aqui! 😊`}
-                id="orc-msg-textarea"
-                className="min-h-[100px]"
-              />
-              <Button
-                className="w-full bg-green-600 hover:bg-green-700"
-                onClick={() => {
-                  const texto = document.getElementById('orc-msg-textarea').value;
-                  window.open(`https://wa.me/55${orcamentoMsgModal.telefone}?text=${encodeURIComponent(texto)}`, '_blank');
-                  setOrcamentoMsgModal(null);
-                }}
-              >
-                <MessageCircle className="w-4 h-4 mr-2" /> Abrir WhatsApp
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <OrcamentoMensagemModal
+          orc={orcamentoMsgModal}
+          config={config}
+          onClose={() => setOrcamentoMsgModal(null)}
+        />
+      )}
+
+      {envioMassaOrcamentosOpen && (
+        <EnvioMassaOrcamentosModal
+          orcamentos={orcamentosAvulsos.filter(o => (o.status === 'pendente' || o.status === 'aprovado') && orcamentosSelecionados.includes(o.id))}
+          config={config}
+          onClose={() => {
+            setEnvioMassaOrcamentosOpen(false);
+            setOrcamentosSelecionados([]);
+            queryClient.invalidateQueries(['orcamentos-avulsos-remarketing']);
+          }}
+        />
       )}
 
       {envioEmMassaOpen && (

@@ -54,7 +54,7 @@ export default function TabMarketing({ formData, onChange, onSave, isSaving }) {
             />
           </div>
           <div>
-            <Label>Texto Base da Mensagem de Remarketing</Label>
+            <Label>Texto Base da Mensagem de Remarketing (Vendas Perdidas)</Label>
             <Textarea
               value={formData.mensagem_remarketing || ''}
               onChange={e => onChange('mensagem_remarketing', e.target.value)}
@@ -63,6 +63,19 @@ export default function TabMarketing({ formData, onChange, onSave, isSaving }) {
             />
             <p className="text-xs text-slate-500 mt-1">
               Variáveis: {'{nome}'} {'{veiculo}'} {'{lista_servicos}'} {'{total}'} {'{oferta}'} {'{condicao}'} {'{data_validade}'} {'{nome_empresa}'}
+            </p>
+          </div>
+
+          <div>
+            <Label>Texto Base da Mensagem de Follow-up de Orçamentos</Label>
+            <Textarea
+              value={formData.mensagem_orcamento || ''}
+              onChange={e => onChange('mensagem_orcamento', e.target.value)}
+              className="min-h-[160px] font-mono text-sm"
+              placeholder={`Olá {nome} 👋\n\nPassando para saber se deseja dar andamento no seu orçamento:\n\n{lista_itens}\n\nTotal: R$ {total}\n\nQualquer dúvida, estou à disposição! 😊\n\n{nome_empresa}`}
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Variáveis: {'{nome}'} {'{lista_itens}'} {'{total}'} {'{numero}'} {'{nome_empresa}'}
             </p>
           </div>
         </CardContent>
