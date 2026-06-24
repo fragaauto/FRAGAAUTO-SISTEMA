@@ -21,11 +21,15 @@ function gerarMensagemOrcamento(orc, config) {
     : `Olá {nome} 👋\n\nPassando para saber se deseja dar andamento no seu orçamento:\n\n{lista_itens}\n\nTotal: R$ {total}\n\nQualquer dúvida, estou à disposição! 😊\n\n{nome_empresa}`;
 
   return msg
-    .replace('{nome}', orc.cliente_nome || 'Cliente')
-    .replace('{lista_itens}', listaItens)
-    .replace('{total}', total)
-    .replace('{nome_empresa}', nomeEmpresa)
-    .replace('{numero}', orc.numero ? `#${orc.numero}` : '');
+    .replace(/\{nome\}/g, orc.cliente_nome || 'Cliente')
+    .replace(/\{lista_itens\}/g, listaItens)
+    .replace(/\{lista_servicos\}/g, listaItens)
+    .replace(/\{total\}/g, `R$ ${total}`)
+    .replace(/\{nome_empresa\}/g, nomeEmpresa)
+    .replace(/\{numero\}/g, orc.numero ? `#${orc.numero}` : '')
+    .replace(/\{oferta\}/g, '')
+    .replace(/\{condicao\}/g, '')
+    .replace(/\{data_validade\}/g, '');
 }
 
 export default function OrcamentoMensagemModal({ orc, config, onClose }) {
