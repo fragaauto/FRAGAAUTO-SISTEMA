@@ -22,21 +22,26 @@ function gerarMensagem(item, config) {
     .map(s => `• ${s.nome} - R$ ${(s.valor_total || 0).toFixed(2)}`)
     .join('\n');
 
-  const total = (item.valorTotalPendentes || 0).toFixed(2);
+  const total = item.valorTotalPendentes || 0;
+
+  const matchPct = oferta.match(/(\d+)\s*%/);
+  const desconto = matchPct ? parseFloat(matchPct[1]) : 0;
+  const totalComDesconto = desconto > 0 ? (total * (1 - desconto / 100)).toFixed(2) : total.toFixed(2);
 
   let msg = config.mensagem_remarketing
     ? config.mensagem_remarketing
     : `Olá {nome} 👋\n\nNa sua última visita identificamos que no seu {veiculo} ficou pendente:\n\n{lista_servicos}\n\nTotal do serviço: R$ {total}\n\nTenho uma condição especial pra você!\n\n{oferta}\nCondição: {condicao}\n\nConsigo manter essa condição até {data_validade}.\n\nPosso agendar para você?`;
 
   return msg
-    .replace('{nome}', item.clienteNome || 'Cliente')
-    .replace('{veiculo}', `${item.placa} - ${item.modelo}` || 'seu veículo')
-    .replace('{lista_servicos}', listaServicos)
-    .replace('{total}', total)
-    .replace('{oferta}', oferta || '⭐ Condição especial disponível')
-    .replace('{condicao}', condicao || 'A combinar')
-    .replace('{data_validade}', dataValidade)
-    .replace('{nome_empresa}', nomeEmpresa);
+    .replace(/\{nome\}/g, item.clienteNome || 'Cliente')
+    .replace(/\{veiculo\}/g, `${item.placa} - ${item.modelo}` || 'seu veículo')
+    .replace(/\{lista_servicos\}/g, listaServicos)
+    .replace(/\{total\}/g, total.toFixed(2))
+    .replace(/\{total_com_desconto\}/g, totalComDesconto)
+    .replace(/\{oferta\}/g, oferta || '⭐ Condição especial disponível')
+    .replace(/\{condicao\}/g, condicao || 'A combinar')
+    .replace(/\{data_validade\}/g, dataValidade)
+    .replace(/\{nome_empresa\}/g, nomeEmpresa);
 }
 
 export default function RemarketingMensagemModal({ item, config, onClose, onEnviado }) {

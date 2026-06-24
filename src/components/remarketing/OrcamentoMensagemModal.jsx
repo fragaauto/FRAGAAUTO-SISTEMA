@@ -6,15 +6,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { MessageCircle, Send, Edit2, Loader2, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { addDays, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { useUnidade } from '@/lib/UnidadeContext';
 
 function gerarMensagemOrcamento(orc, config) {
   const nomeEmpresa = config.nome_empresa || 'nossa empresa';
+  const oferta = config.oferta_padrao_remarketing || '';
+  const condicao = config.condicao_pagamento_remarketing || '';
+  const diasValidade = config.dias_validade_oferta || 7;
+  const dataValidade = format(addDays(new Date(), diasValidade), "dd/MM/yyyy", { locale: ptBR });
+
   const listaItens = (orc.itens || [])
     .map(i => `• ${i.nome} - R$ ${(i.valor_total || 0).toFixed(2)}`)
     .join('\n');
-  const total = (orc.total || 0).toFixed(2);
+  const total = orc.total || 0;
+
+  // Calcula desconto se oferta contiver percentual (ex: "10% de desconto")
+  const matchPct = oferta.match(/(\d+)\s*%/);
+  const desconto = matchPct ? parseFloat(matchPct[1]) : 0;
+  const totalComDesconto = desconto > 0 ? (total * (1 - desconto / 100)).toFixed(2) : total.toFixed(2);
 
   let msg = config.mensagem_orcamento
     ? config.mensagem_orcamento
@@ -24,12 +36,13 @@ function gerarMensagemOrcamento(orc, config) {
     .replace(/\{nome\}/g, orc.cliente_nome || 'Cliente')
     .replace(/\{lista_itens\}/g, listaItens)
     .replace(/\{lista_servicos\}/g, listaItens)
-    .replace(/\{total\}/g, `R$ ${total}`)
+    .replace(/\{total\}/g, total.toFixed(2))
+    .replace(/\{total_com_desconto\}/g, totalComDesconto)
     .replace(/\{nome_empresa\}/g, nomeEmpresa)
     .replace(/\{numero\}/g, orc.numero ? `#${orc.numero}` : '')
-    .replace(/\{oferta\}/g, '')
-    .replace(/\{condicao\}/g, '')
-    .replace(/\{data_validade\}/g, '');
+    .replace(/\{oferta\}/g, oferta)
+    .replace(/\{condicao\}/g, condicao)
+    .replace(/\{data_validade\}/g, dataValidade);
 }
 
 export default function OrcamentoMensagemModal({ orc, config, onClose }) {

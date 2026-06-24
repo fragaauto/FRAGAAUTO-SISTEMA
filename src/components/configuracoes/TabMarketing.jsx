@@ -62,8 +62,9 @@ export default function TabMarketing({ formData, onChange, onSave, isSaving }) {
               placeholder={`Olá {nome} 👋\n\nNa sua última visita identificamos que no seu {veiculo} ficou pendente:\n\n{lista_servicos}\n\nTotal: R$ {total}\n\nTenho uma condição especial pra você! {oferta}\nCondição: {condicao}\nConsigo manter até {data_validade}.\n\nPosso agendar para você?`}
             />
             <p className="text-xs text-slate-500 mt-1">
-              Variáveis: {'{nome}'} {'{veiculo}'} {'{lista_servicos}'} {'{total}'} {'{oferta}'} {'{condicao}'} {'{data_validade}'} {'{nome_empresa}'}
+              Variáveis: {'{nome}'} {'{veiculo}'} {'{lista_servicos}'} {'{total}'} {'{total_com_desconto}'} {'{oferta}'} {'{condicao}'} {'{data_validade}'} {'{nome_empresa}'}
             </p>
+            <p className="text-xs text-slate-400 mt-0.5">💡 {'{total_com_desconto}'} calcula automaticamente o desconto percentual configurado na Oferta Padrão.</p>
           </div>
 
           <div>
@@ -75,8 +76,9 @@ export default function TabMarketing({ formData, onChange, onSave, isSaving }) {
               placeholder={`Olá {nome} 👋\n\nPassando para saber se deseja dar andamento no seu orçamento:\n\n{lista_itens}\n\nTotal: R$ {total}\n\nQualquer dúvida, estou à disposição! 😊\n\n{nome_empresa}`}
             />
             <p className="text-xs text-slate-500 mt-1">
-              Variáveis: {'{nome}'} {'{lista_itens}'} {'{total}'} {'{numero}'} {'{nome_empresa}'}
+              Variáveis: {'{nome}'} {'{lista_itens}'} {'{total}'} {'{total_com_desconto}'} {'{oferta}'} {'{condicao}'} {'{data_validade}'} {'{numero}'} {'{nome_empresa}'}
             </p>
+            <p className="text-xs text-slate-400 mt-0.5">💡 {'{total_com_desconto}'} usa a Oferta Padrão acima. Ex: se oferta for "10% de desconto", aplica 10% no total.</p>
           </div>
         </CardContent>
       </Card>
