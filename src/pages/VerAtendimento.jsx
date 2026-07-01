@@ -1282,10 +1282,15 @@ export default function VerAtendimento() {
                         .map((item, idx) => (
                           <div key={idx} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-red-200">
                             <XCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-                            <div>
+                            <div className="flex-1">
                               <p className="font-medium text-slate-800">{item.item}</p>
                               {item.comentario && (
                                 <p className="text-sm text-slate-600 mt-1">{item.comentario}</p>
+                              )}
+                              {item.foto_url && (
+                                <a href={item.foto_url} target="_blank" rel="noopener noreferrer">
+                                  <img src={item.foto_url} alt="Foto do defeito" className="mt-2 h-20 w-auto rounded-lg border border-red-200 object-cover hover:opacity-80 transition-opacity" />
+                                </a>
                               )}
                             </div>
                           </div>
@@ -1310,6 +1315,11 @@ export default function VerAtendimento() {
                             <p className="font-medium text-slate-800">{item.item}</p>
                             {item.comentario && (
                               <p className="text-sm text-slate-600 mt-1">{item.comentario}</p>
+                            )}
+                            {item.foto_url && (
+                              <a href={item.foto_url} target="_blank" rel="noopener noreferrer">
+                                <img src={item.foto_url} alt="Foto" className="mt-2 h-16 w-auto rounded-lg border border-slate-200 object-cover hover:opacity-80 transition-opacity" />
+                              </a>
                             )}
                           </div>
                           <Badge variant="outline" className="capitalize">

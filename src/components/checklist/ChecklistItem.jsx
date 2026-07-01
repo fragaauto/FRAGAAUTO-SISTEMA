@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, XCircle, MinusCircle, HelpCircle, ShoppingCart, Plus, Package, Trash2, ChevronDown, Search } from 'lucide-react';
+import { CheckCircle2, XCircle, MinusCircle, HelpCircle, ShoppingCart, Plus, Package, Trash2, ChevronDown, Search, Camera, X, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { base44 } from '@/api/base44Client';
 import {
   Collapsible,
   CollapsibleContent,
@@ -23,6 +24,8 @@ const STATUS_CONFIG = {
 export default function ChecklistItem({ item, value, onChange, produtos = [], onOpenCadastro, produtosNaQueixa = [] }) {
   const [showProdutos, setShowProdutos] = useState(false);
   const [searchProduto, setSearchProduto] = useState('');
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const fileInputRef = useRef(null);
   const currentStatus = value?.status || 'nao_verificado';
   const produtosVinculados = value?.produtos || [];
   const StatusIcon = STATUS_CONFIG[currentStatus]?.icon || HelpCircle;
@@ -127,6 +130,23 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
     });
   };
 
+  const handleFotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingFoto(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      onChange({ ...value, item: item.item, categoria: item.categoria, foto_url: file_url });
+    } finally {
+      setUploadingFoto(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoverFoto = () => {
+    onChange({ ...value, item: item.item, categoria: item.categoria, foto_url: null });
+  };
+
   const handleProdutoObservacao = (index, observacao) => {
     const novosProdutos = [...produtosVinculados];
     novosProdutos[index] = { ...novosProdutos[index], observacao };
@@ -201,6 +221,35 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
             onChange={handleCommentChange}
             className="min-h-[60px] text-base resize-none mb-2"
           />
+
+          {/* Foto do item */}
+          <div className="mb-2">
+            {value?.foto_url ? (
+              <div className="relative inline-block mt-1">
+                <img src={value.foto_url} alt="Foto do item" className="h-24 w-auto rounded-lg border border-slate-200 object-cover" />
+                <button
+                  type="button"
+                  onClick={handleRemoverFoto}
+                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFotoUpload} />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingFoto}
+                  className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 border border-dashed border-slate-300 hover:border-orange-400 rounded-lg px-3 py-1.5 transition-colors"
+                >
+                  {uploadingFoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                  {uploadingFoto ? 'Enviando...' : 'Adicionar foto'}
+                </button>
+              </>
+            )}
+          </div>
 
           {/* Include in budget */}
           {currentStatus === 'com_defeito' && (

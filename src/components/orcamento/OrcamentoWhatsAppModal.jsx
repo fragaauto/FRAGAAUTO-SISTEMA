@@ -67,6 +67,7 @@ function gerarTextoOrcamento(atendimento, config) {
       const statusEmoji = item.status_aprovacao === 'aprovado' ? '✅' : item.status_aprovacao === 'reprovado' ? '❌' : '⏳';
       let linha = `${statusEmoji} ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = *R$ ${Number(item.valor_total || 0).toFixed(2)}*`;
       if (item.observacao_item) linha += `\n  _📝 ${item.observacao_item}_`;
+      if (item.foto_url) linha += `\n  📸 *Ver foto:* ${item.foto_url}`;
       linhas.push(linha);
     });
     if (atendimento.subtotal_checklist > 0) {

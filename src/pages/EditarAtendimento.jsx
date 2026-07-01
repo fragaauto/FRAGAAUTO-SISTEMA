@@ -157,7 +157,8 @@ export default function EditarAtendimento() {
               status: item.status || 'nao_verificado',
               comentario: item.comentario || '',
               incluir_orcamento: item.incluir_orcamento || false,
-              produtos: produtosSalvos
+              produtos: produtosSalvos,
+              foto_url: item.foto_url || null
             };
           }
         });
@@ -301,7 +302,8 @@ export default function EditarAtendimento() {
               observacao_item: pv.observacao || '',
               comentario_tecnico: data.comentario || '',
               origem: 'checklist',
-              item_checklist: data.item
+              item_checklist: data.item,
+              foto_url: data.foto_url || null
             });
           }
         });
