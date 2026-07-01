@@ -210,6 +210,27 @@ export default function EditarAtendimento() {
     }));
   };
 
+  // Salva o checklist completo imediatamente no banco (usado após upload de foto)
+  const handleAutoSaveChecklist = async (itemId, novoValue) => {
+    setFormData(prev => {
+      const checklistAtualizado = { ...prev.checklist, [itemId]: novoValue };
+      const checklistArray = Object.entries(checklistAtualizado).map(([id, data]) => ({
+        item_id: id,
+        item: data.item,
+        categoria: data.categoria,
+        status: data.status || 'nao_verificado',
+        comentario: data.comentario || '',
+        incluir_orcamento: data.incluir_orcamento || false,
+        produtos: data.produtos || [],
+        foto_url: data.foto_url || null
+      }));
+      base44.entities.Atendimento.update(id, { checklist: checklistArray })
+        .then(() => toast.success('Foto salva!'))
+        .catch(() => toast.error('Erro ao salvar foto'));
+      return { ...prev, checklist: checklistAtualizado };
+    });
+  };
+
   const handleSave = () => {
     try {
       console.log("BOTÃO SALVAR CHECKLIST CLICADO");
@@ -485,6 +506,7 @@ export default function EditarAtendimento() {
               items={checklistItems.filter(item => item.categoria === categoria)}
               values={formData.checklist}
               onChange={handleChecklistChange}
+              onAutoSave={handleAutoSaveChecklist}
               isOpen={openSections[categoria] ?? false}
               onToggle={() => toggleSection(categoria)}
               produtos={produtos}

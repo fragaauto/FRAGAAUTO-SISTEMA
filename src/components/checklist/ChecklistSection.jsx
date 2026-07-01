@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import ChecklistItem from './ChecklistItem';
 
-export default function ChecklistSection({ categoria, items, values, onChange, isOpen, onToggle, produtos = [], onOpenCadastro, produtosNaQueixa = [], atendimentoId }) {
+export default function ChecklistSection({ categoria, items, values, onChange, onAutoSave, isOpen, onToggle, produtos = [], onOpenCadastro, produtosNaQueixa = [], atendimentoId }) {
   const completedCount = items.filter(item => {
     const val = values[item.id];
     return val?.status && val.status !== 'nao_verificado';
@@ -47,11 +47,10 @@ export default function ChecklistSection({ categoria, items, values, onChange, i
               item={item}
               value={values[item.id] || {}}
               onChange={(newValue) => onChange(item.id, newValue)}
+              onAutoSave={onAutoSave ? (novoValue) => onAutoSave(item.id, novoValue) : null}
               produtos={produtos}
               onOpenCadastro={onOpenCadastro}
               produtosNaQueixa={produtosNaQueixa}
-              atendimentoId={atendimentoId}
-              checklistCompleto={values}
             />
           ))}
         </div>
