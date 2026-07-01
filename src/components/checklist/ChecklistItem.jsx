@@ -21,7 +21,7 @@ const STATUS_CONFIG = {
   nao_verificado: { icon: HelpCircle, color: 'bg-yellow-500 hover:bg-yellow-600', textColor: 'text-yellow-600' }
 };
 
-export default function ChecklistItem({ item, value, onChange, produtos = [], onOpenCadastro, produtosNaQueixa = [] }) {
+export default function ChecklistItem({ item, value, onChange, produtos = [], onOpenCadastro, produtosNaQueixa = [], atendimentoId, checklistCompleto }) {
   const [showProdutos, setShowProdutos] = useState(false);
   const [searchProduto, setSearchProduto] = useState('');
   const [uploadingFoto, setUploadingFoto] = useState(false);
@@ -137,7 +137,18 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
     setUploadingFoto(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      onChange({ ...value, item: item.item, categoria: item.categoria, foto_url: file_url });
+      const novoValue = { ...value, item: item.item, categoria: item.categoria, foto_url: file_url };
+      onChange(novoValue);
+
+      // Salvar automaticamente no banco se tiver o atendimentoId e o checklist completo
+      if (atendimentoId && checklistCompleto) {
+        const checklistAtualizado = { ...checklistCompleto, [item.id]: novoValue };
+        const checklistArray = Object.entries(checklistAtualizado).map(([id, data]) => ({
+          item_id: id,
+          ...data
+        }));
+        await base44.entities.Atendimento.update(atendimentoId, { checklist: checklistArray });
+      }
     } finally {
       setUploadingFoto(false);
       e.target.value = '';

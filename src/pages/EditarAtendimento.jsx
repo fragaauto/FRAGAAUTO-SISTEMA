@@ -489,6 +489,7 @@ export default function EditarAtendimento() {
               onToggle={() => toggleSection(categoria)}
               produtos={produtos}
               onOpenCadastro={() => {}}
+              atendimentoId={id}
             />
           ))}
 
