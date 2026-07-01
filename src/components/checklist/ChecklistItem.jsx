@@ -26,6 +26,7 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
   const [searchProduto, setSearchProduto] = useState('');
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const currentStatus = value?.status || 'nao_verificado';
   const produtosVinculados = value?.produtos || [];
   const StatusIcon = STATUS_CONFIG[currentStatus]?.icon || HelpCircle;
@@ -236,18 +237,30 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
                 </button>
               </div>
             ) : (
-              <>
-                <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFotoUpload} />
+              <div className="flex gap-2 mt-1">
+                {/* Galeria/arquivo */}
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFotoUpload} />
+                {/* Câmera (mobile) */}
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFotoUpload} />
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingFoto}
                   className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 border border-dashed border-slate-300 hover:border-orange-400 rounded-lg px-3 py-1.5 transition-colors"
                 >
-                  {uploadingFoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
-                  {uploadingFoto ? 'Enviando...' : 'Adicionar foto'}
+                  {uploadingFoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span>🖼️</span>}
+                  {uploadingFoto ? 'Enviando...' : 'Galeria'}
                 </button>
-              </>
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={uploadingFoto}
+                  className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-orange-600 border border-dashed border-slate-300 hover:border-orange-400 rounded-lg px-3 py-1.5 transition-colors"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  Câmera
+                </button>
+              </div>
             )}
           </div>
 
