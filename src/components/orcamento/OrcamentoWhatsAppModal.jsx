@@ -67,7 +67,9 @@ function gerarTextoOrcamento(atendimento, config) {
       const statusEmoji = item.status_aprovacao === 'aprovado' ? '✅' : item.status_aprovacao === 'reprovado' ? '❌' : '⏳';
       let linha = `${statusEmoji} ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = *R$ ${Number(item.valor_total || 0).toFixed(2)}*`;
       if (item.observacao_item) linha += `\n  _📝 ${item.observacao_item}_`;
-      if (item.foto_url) linha += `\n  📸 *Ver foto:* ${item.foto_url}`;
+      // Buscar foto: pode estar no item do orçamento OU no item do checklist (pelo nome do item)
+      const fotoUrl = item.foto_url || (atendimento.checklist || []).find(c => c.item === item.item_checklist || c.item === item.nome)?.foto_url;
+      if (fotoUrl) linha += `\n  📸 *Ver foto:* ${fotoUrl}`;
       linhas.push(linha);
     });
     if (atendimento.subtotal_checklist > 0) {

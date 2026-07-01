@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle2, XCircle, MinusCircle, HelpCircle, ShoppingCart, Plus, Package, Trash2, ChevronDown, Search, Camera, X, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 import {
   Collapsible,
   CollapsibleContent,
@@ -140,23 +141,48 @@ export default function ChecklistItem({ item, value, onChange, produtos = [], on
       const novoValue = { ...value, item: item.item, categoria: item.categoria, foto_url: file_url };
       onChange(novoValue);
 
-      // Salvar automaticamente no banco se tiver o atendimentoId e o checklist completo
+      // Salvar automaticamente no banco com o checklist mais atualizado
       if (atendimentoId && checklistCompleto) {
         const checklistAtualizado = { ...checklistCompleto, [item.id]: novoValue };
-        const checklistArray = Object.entries(checklistAtualizado).map(([id, data]) => ({
-          item_id: id,
-          ...data
+        const checklistArray = Object.entries(checklistAtualizado).map(([itemId, data]) => ({
+          item_id: itemId,
+          item: data.item,
+          categoria: data.categoria,
+          status: data.status || 'nao_verificado',
+          comentario: data.comentario || '',
+          incluir_orcamento: data.incluir_orcamento || false,
+          produtos: data.produtos || [],
+          foto_url: data.foto_url || null
         }));
         await base44.entities.Atendimento.update(atendimentoId, { checklist: checklistArray });
+        toast.success('Foto salva!');
       }
+    } catch (err) {
+      toast.error('Erro ao salvar foto');
+      console.error(err);
     } finally {
       setUploadingFoto(false);
       e.target.value = '';
     }
   };
 
-  const handleRemoverFoto = () => {
-    onChange({ ...value, item: item.item, categoria: item.categoria, foto_url: null });
+  const handleRemoverFoto = async () => {
+    const novoValue = { ...value, item: item.item, categoria: item.categoria, foto_url: null };
+    onChange(novoValue);
+    if (atendimentoId && checklistCompleto) {
+      const checklistAtualizado = { ...checklistCompleto, [item.id]: novoValue };
+      const checklistArray = Object.entries(checklistAtualizado).map(([itemId, data]) => ({
+        item_id: itemId,
+        item: data.item,
+        categoria: data.categoria,
+        status: data.status || 'nao_verificado',
+        comentario: data.comentario || '',
+        incluir_orcamento: data.incluir_orcamento || false,
+        produtos: data.produtos || [],
+        foto_url: data.foto_url || null
+      }));
+      await base44.entities.Atendimento.update(atendimentoId, { checklist: checklistArray });
+    }
   };
 
   const handleProdutoObservacao = (index, observacao) => {
