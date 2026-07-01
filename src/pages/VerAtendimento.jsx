@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { 
   ArrowLeft,
+  ArrowRightLeft,
   Car,
   User,
   ClipboardCheck,
@@ -50,6 +51,7 @@ import AdicionarItemOrcamento from '../components/orcamento/AdicionarItemOrcamen
 import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import ItemOrcamentoComEncomenda from '../components/orcamento/ItemOrcamentoComEncomenda';
 import OrcamentoWhatsAppModal from '../components/orcamento/OrcamentoWhatsAppModal';
+import TransferirUnidadeModal from '../components/atendimento/TransferirUnidadeModal';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -122,6 +124,7 @@ export default function VerAtendimento() {
   const [showImpressaoQueixa, setShowImpressaoQueixa] = useState(false);
   const [showEditarDados, setShowEditarDados] = useState(false);
   const [showOrcamentoWhatsApp, setShowOrcamentoWhatsApp] = useState(false);
+  const [showTransferirUnidade, setShowTransferirUnidade] = useState(false);
   const [obsServico, setObsServico] = useState('');
   const obsServicoTimer = React.useRef(null);
 
@@ -704,6 +707,18 @@ export default function VerAtendimento() {
             <span className="text-xs">OS Técnica</span>
           </div>
         </Button>
+        {isAdmin && (
+          <Button
+            variant="outline"
+            className="h-auto py-3 border-blue-300 text-blue-700 hover:bg-blue-50"
+            onClick={() => setShowTransferirUnidade(true)}
+          >
+            <div className="flex flex-col items-center gap-1">
+              <ArrowRightLeft className="w-5 h-5" />
+              <span className="text-xs">Transferir</span>
+            </div>
+          </Button>
+        )}
       </div>
 
         <Tabs defaultValue="resumo">
@@ -1925,6 +1940,12 @@ export default function VerAtendimento() {
           onClose={() => setShowOrcamentoWhatsApp(false)}
         />
       )}
+
+      <TransferirUnidadeModal
+        atendimento={atendimento}
+        open={showTransferirUnidade}
+        onClose={() => setShowTransferirUnidade(false)}
+      />
 
       {showLinkDialog && (
         <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
