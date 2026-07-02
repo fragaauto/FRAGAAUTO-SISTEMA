@@ -209,14 +209,19 @@ export default function VerAtendimento() {
   const pendingQueixaRef = React.useRef(null);
   const pendingChecklistRef = React.useRef(null);
 
+  const localItensQueixaRef = React.useRef(null);
   const handleUpdateItemQueixa = (index, updatedItem) => {
-    // Cancela timeout anterior para evitar múltiplas chamadas simultâneas
     if (pendingQueixaRef.current) clearTimeout(pendingQueixaRef.current);
-    // Atualiza o array localmente primeiro
-    const novosItens = [...(atendimento.itens_queixa || [])];
-    novosItens[index] = updatedItem;
+    // Mantém cópia local para não perder edições antes do cache atualizar
+    if (!localItensQueixaRef.current) {
+      localItensQueixaRef.current = [...(atendimento.itens_queixa || [])];
+    }
+    localItensQueixaRef.current[index] = updatedItem;
+    const novosItens = [...localItensQueixaRef.current];
     pendingQueixaRef.current = setTimeout(() => {
-      updateMutation.mutate({ itens_queixa: novosItens });
+      updateMutation.mutate({ itens_queixa: novosItens }, {
+        onSuccess: () => { localItensQueixaRef.current = null; }
+      });
     }, 300);
   };
 
@@ -420,11 +425,14 @@ export default function VerAtendimento() {
     setItensOrcamentoEdit(prev => prev.filter((_, i) => i !== index));
   };
 
+  const localItensChecklistRef = React.useRef(null);
   const handleUpdateItemChecklist = (index, updatedItem) => {
-    // Cancela timeout anterior para evitar múltiplas chamadas simultâneas
     if (pendingChecklistRef.current) clearTimeout(pendingChecklistRef.current);
-    const novosItens = [...(atendimento.itens_orcamento || [])];
-    novosItens[index] = updatedItem;
+    if (!localItensChecklistRef.current) {
+      localItensChecklistRef.current = [...(atendimento.itens_orcamento || [])];
+    }
+    localItensChecklistRef.current[index] = updatedItem;
+    const novosItens = [...localItensChecklistRef.current];
     
     const subtotal = novosItens.reduce((acc, item) => acc + (item.valor_total || 0), 0);
     const valor_final = subtotal - (atendimento.desconto || 0);
@@ -442,6 +450,8 @@ export default function VerAtendimento() {
         subtotal,
         valor_final,
         historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
+      }, {
+        onSuccess: () => { localItensChecklistRef.current = null; }
       });
     }, 300);
   };
