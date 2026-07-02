@@ -24,7 +24,7 @@ function gerarTextoOrcamento(atendimento, config) {
     const total = Number(item.valor_total || 0);
     let precoStr;
     if (desc > 0) {
-      precoStr = `~R$ ${bruto.toFixed(2)}~ → *R$ ${total.toFixed(2)}* _(desc. R$ ${desc.toFixed(2)})_`;
+      precoStr = `R$ ${bruto.toFixed(2)} - com desconto: *R$ ${total.toFixed(2)}*`;
     } else {
       precoStr = `*R$ ${total.toFixed(2)}*`;
     }
@@ -59,7 +59,7 @@ function gerarTextoOrcamento(atendimento, config) {
       const bruto = Number(item.quantidade || 0) * Number(item.valor_unitario || 0);
       const desc = Number(item.desconto_item || 0);
       const total = Number(item.valor_total || 0);
-      const precoStr = desc > 0 ? `~R$ ${bruto.toFixed(2)}~ → *R$ ${total.toFixed(2)}* _(desc. R$ ${desc.toFixed(2)})_` : `*R$ ${total.toFixed(2)}*`;
+      const precoStr = desc > 0 ? `R$ ${bruto.toFixed(2)} - com desconto: *R$ ${total.toFixed(2)}*` : `*R$ ${total.toFixed(2)}*`;
       let linha = `${statusEmoji} ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = ${precoStr}`;
       if (item.observacao_item) linha += `\n  _📝 ${item.observacao_item}_`;
       linhas.push(linha);
@@ -82,7 +82,7 @@ function gerarTextoOrcamento(atendimento, config) {
       const bruto = Number(item.quantidade || 0) * Number(item.valor_unitario || 0);
       const desc = Number(item.desconto_item || 0);
       const total = Number(item.valor_total || 0);
-      const precoStr = desc > 0 ? `~R$ ${bruto.toFixed(2)}~ → *R$ ${total.toFixed(2)}* _(desc. R$ ${desc.toFixed(2)})_` : `*R$ ${total.toFixed(2)}*`;
+      const precoStr = desc > 0 ? `R$ ${bruto.toFixed(2)} - com desconto: *R$ ${total.toFixed(2)}*` : `*R$ ${total.toFixed(2)}*`;
       let linha = `${statusEmoji} ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = ${precoStr}`;
       if (item.observacao_item) linha += `\n  _📝 ${item.observacao_item}_`;
       const fotoUrl = item.foto_url || (atendimento.checklist || []).find(c => c.item === item.item_checklist || c.item === item.nome)?.foto_url;
