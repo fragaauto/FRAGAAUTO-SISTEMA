@@ -1,15 +1,17 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Award, FileSpreadsheet, FileDown, Filter, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Users, Award, FileSpreadsheet, FileDown, Filter, ChevronDown, ChevronUp, Eye, ArrowRightLeft, Trash2, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { base44 } from '@/api/base44Client';
+import { queryClientInstance } from '@/lib/query-client';
 
 export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '' }) {
   const [filtroTecnico, setFiltroTecnico] = useState('todos');
@@ -22,6 +24,63 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
   const [filtroDataFim, setFiltroDataFim] = useState(hojeStr);
   const [tecnicoExpandido, setTecnicoExpandido] = useState(null);
   const [incluirDetalhes, setIncluirDetalhes] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [editandoKey, setEditandoKey] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me()
+      .then(u => setIsAdmin(u?.role === 'admin'))
+      .catch(() => setIsAdmin(false));
+  }, []);
+
+  // Mapa nome -> id de todos os técnicos conhecidos (para transferência)
+  const tecnicosComId = useMemo(() => {
+    const map = {};
+    atendimentos.forEach(a => {
+      (a.tecnicos_responsaveis || []).forEach(t => { if (t.nome) map[t.nome] = t.id || t.nome; });
+      if (a.tecnico) a.tecnico.split(',').map(s => s.trim()).forEach(n => { if (n && !map[n]) map[n] = n; });
+      [...(a.itens_queixa || []), ...(a.itens_orcamento || [])].forEach(item => {
+        (item.tecnicos || []).forEach(t => { if (t.nome) map[t.nome] = t.id || t.nome; });
+      });
+    });
+    return map;
+  }, [atendimentos]);
+
+  // Transferir ou remover atribuição de técnico em um item (admin)
+  const atualizarTecnicoItem = async (srv, acao) => {
+    const srvKey = `${srv.atendimentoId}-${srv.itemSource}-${srv.itemIndex}-${srv.tecnicoId}`;
+    setEditandoKey(srvKey);
+    try {
+      const atendimento = atendimentos.find(a => a.id === srv.atendimentoId);
+      if (!atendimento) { toast.error('Atendimento não encontrado'); return; }
+      const campo = srv.itemSource === 'queixa' ? 'itens_queixa' : 'itens_orcamento';
+      const itens = JSON.parse(JSON.stringify(atendimento[campo] || []));
+      const item = itens[srv.itemIndex];
+      if (!item) { toast.error('Item não encontrado'); return; }
+      // Se o item não tinha técnicos próprios (veio do fallback do atendimento), materializa
+      if (!item.tecnicos || item.tecnicos.length === 0) {
+        item.tecnicos = (atendimento.tecnicos_responsaveis || []).map(t => ({ id: t.id || t.nome, nome: t.nome }));
+        if (item.tecnicos.length === 0 && atendimento.tecnico) {
+          item.tecnicos = atendimento.tecnico.split(',').map(s => s.trim()).filter(s => s).map(s => ({ id: s, nome: s }));
+        }
+      }
+      if (acao === '__remover__') {
+        item.tecnicos = item.tecnicos.filter(t => (t.id || t.nome) !== srv.tecnicoId);
+      } else {
+        const novoId = tecnicosComId[acao] || acao;
+        item.tecnicos = item.tecnicos.map(t =>
+          (t.id || t.nome) === srv.tecnicoId ? { id: novoId, nome: acao } : t
+        );
+      }
+      await base44.entities.Atendimento.update(srv.atendimentoId, { [campo]: itens });
+      await queryClientInstance.invalidateQueries({ queryKey: ['atendimentos'] });
+      toast.success(acao === '__remover__' ? 'Atribuição removida' : 'Técnico transferido');
+    } catch (e) {
+      toast.error('Erro: ' + (e.message || e));
+    } finally {
+      setEditandoKey(null);
+    }
+  };
   
   // Nota: O relatório captura os nomes dos técnicos diretamente dos atendimentos (a.tecnicos_responsaveis ou itens_*.tecnicos)
   // Não é necessário buscar listas de usuarios/funcionarios aqui, pois os dados já estão salvos no atendimento
@@ -85,15 +144,15 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
       if (tecnicosResponsaveis.length === 0) return;
 
-      // Todos os itens do atendimento (sem filtrar por aprovação — conta tudo que foi executado)
-      const todosItens = [
-        ...(a.itens_queixa || []),
-        ...(a.itens_orcamento || []),
+      // Itens do atendimento com identificação de origem (para transferência entre técnicos)
+      const itensComSource = [
+        ...(a.itens_queixa || []).map((item, index) => ({ item, source: 'queixa', index })),
+        ...(a.itens_orcamento || []).map((item, index) => ({ item, source: 'orcamento', index })),
       ];
 
       // Valor bruto total do atendimento para calcular % de taxa de pagamento
       const valorBrutoAtendimento = Number(a.valor_final) || Number(a.subtotal) ||
-        todosItens.reduce((s, i) => s + (Number(i.valor_total) || 0), 0);
+        itensComSource.reduce((s, e) => s + (Number(e.item.valor_total) || 0), 0);
 
       // Taxa de pagamento efetiva (percentual sobre o total)
       let percTaxaPagamento = 0;
@@ -114,7 +173,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         if (!acumPorTecnico[nome]) acumPorTecnico[nome] = { valorBruto: 0, servicos: [] };
       };
 
-      if (todosItens.length === 0) {
+      if (itensComSource.length === 0) {
         // Sem itens: atribui o valor_final dividido entre técnicos responsáveis
         const valorPorTec = valorBrutoAtendimento / tecnicosResponsaveis.length;
         tecnicosResponsaveis.forEach(t => {
@@ -129,8 +188,9 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       } else {
         // Para cada item, distribui o valor entre os técnicos atribuídos ao item
         // Se o item não tem técnico específico, distribui entre os técnicos responsáveis do atendimento
-        todosItens.forEach(item => {
-          const tecnicosItem = item.tecnicos?.length > 0 ? item.tecnicos : tecnicosResponsaveis;
+        itensComSource.forEach(({ item, source, index }) => {
+          const temTecnicosItem = item.tecnicos?.length > 0;
+          const tecnicosItem = temTecnicosItem ? item.tecnicos : tecnicosResponsaveis;
           const valorItem = Number(item.valor_total) || 0;
           const valorPorTec = valorItem / tecnicosItem.length;
           const nomesTecnicosItem = tecnicosItem.map(t => t.nome);
@@ -151,6 +211,10 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
                 ? nomesTecnicosItem.filter(n => n !== tec.nome).join(', ')
                 : null,
               data: a.data_entrada || a.created_date,
+              itemSource: source,
+              itemIndex: index,
+              tecnicoId: tec.id || tec.nome,
+              tecnicoNome: tec.nome,
             });
           });
         });
@@ -387,7 +451,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         </div>
       )}
 
-      {semTecnicoConcluidos.length > 0 && (
+      {isAdmin && semTecnicoConcluidos.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
           ⚠️ <strong>{semTecnicoConcluidos.length} atendimento(s) CONCLUÍDOS sem técnico atribuído</strong> — R$ {valorSemTecnicoConcluido.toLocaleString('pt-BR', {minimumFractionDigits:2})} não estão sendo contabilizados na produção. Acesse esses atendimentos e atribua o técnico responsável para que o valor apareça aqui.
           {totalSemTecnico.length > semTecnicoConcluidos.length && (
@@ -496,6 +560,29 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
                               )}
                             </div>
                           </div>
+                          {isAdmin && srv.itemSource && (() => {
+                            const srvKey = `${srv.atendimentoId}-${srv.itemSource}-${srv.itemIndex}-${srv.tecnicoId}`;
+                            return (
+                              <div className="mt-2 pt-2 border-t border-slate-200 flex items-center gap-2 flex-wrap">
+                                <span className="text-xs text-slate-600 font-medium">Técnico: {srv.tecnicoNome}</span>
+                                <Select onValueChange={(nome) => atualizarTecnicoItem(srv, nome)} disabled={editandoKey === srvKey}>
+                                  <SelectTrigger className="h-7 text-xs w-44 gap-1">
+                                    <ArrowRightLeft className="w-3 h-3" />
+                                    <span className="text-slate-400">Transferir para...</span>
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Object.keys(tecnicosComId).filter(n => n !== srv.tecnicoNome).map(nome => (
+                                      <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50" disabled={editandoKey === srvKey} onClick={() => atualizarTecnicoItem(srv, '__remover__')}>
+                                  <Trash2 className="w-3 h-3" /> Remover
+                                </Button>
+                                {editandoKey === srvKey && <Loader2 className="w-3 h-3 animate-spin text-orange-500" />}
+                              </div>
+                            );
+                          })()}
                         </div>
                       ))}
                     </div>
