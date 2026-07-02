@@ -1353,7 +1353,10 @@ export default function VerAtendimento() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowOrcamentoWhatsApp(true)}
+                onClick={async () => {
+                  await queryClient.refetchQueries(['atendimento', id]);
+                  setShowOrcamentoWhatsApp(true);
+                }}
                 className="border-green-500 text-green-700 hover:bg-green-50"
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
