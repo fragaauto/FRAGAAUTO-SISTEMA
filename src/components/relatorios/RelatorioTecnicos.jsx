@@ -63,9 +63,25 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
     atendimentosFiltrados.forEach(a => {
       // Técnicos responsáveis do atendimento (fallback legado)
-      const tecnicosResponsaveis = a.tecnicos_responsaveis?.length > 0
+      let tecnicosResponsaveis = a.tecnicos_responsaveis?.length > 0
         ? a.tecnicos_responsaveis
         : (a.tecnico ? a.tecnico.split(',').map(t => ({ nome: t.trim(), id: t.trim() })).filter(t => t.nome) : []);
+
+      // Se não há técnicos no nível do atendimento, coleta dos itens (orçamento/queixa)
+      if (tecnicosResponsaveis.length === 0) {
+        const todosItensFallback = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
+        const nomesVistos = new Set();
+        const tecnicosItens = [];
+        todosItensFallback.forEach(item => {
+          (item.tecnicos || []).forEach(tec => {
+            if (tec.nome && !nomesVistos.has(tec.nome)) {
+              nomesVistos.add(tec.nome);
+              tecnicosItens.push({ nome: tec.nome, id: tec.id || tec.nome });
+            }
+          });
+        });
+        tecnicosResponsaveis = tecnicosItens;
+      }
 
       if (tecnicosResponsaveis.length === 0) return;
 
@@ -193,7 +209,10 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
   const totalLiquido = dadosTecnicos.reduce((sum, t) => sum + t.valorLiquidoTotal, 0);
   const totalSemTecnico = atendimentosFiltradosPorData.filter(a => {
     const t = a.tecnicos_responsaveis?.length > 0 ? a.tecnicos_responsaveis : (a.tecnico ? a.tecnico.split(',').map(n=>({nome:n.trim()})).filter(n=>n.nome) : []);
-    return t.length === 0;
+    if (t.length > 0) return false;
+    // Verifica técnicos nos itens
+    const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
+    return !todosItens.some(i => i.tecnicos?.length > 0);
   });
   const semTecnicoConcluidos = totalSemTecnico.filter(a => a.status === 'concluido');
   const valorSemTecnico = totalSemTecnico.reduce((s,a)=>s+(Number(a.valor_final)||0),0);
