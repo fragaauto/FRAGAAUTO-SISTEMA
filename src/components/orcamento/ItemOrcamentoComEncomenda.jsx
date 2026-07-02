@@ -23,9 +23,12 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
   const [mostrarModalTecnico, setMostrarModalTecnico] = useState(false);
   // Estado local para refletir imediatamente os valores editados
   const [localItem, setLocalItem] = useState(item);
+  const editingRef = React.useRef(false);
 
   React.useEffect(() => {
-    setLocalItem(item);
+    if (!editingRef.current) {
+      setLocalItem(item);
+    }
   }, [item]);
 
   // Sincroniza se o item externo mudar (ex: recarregar página)
@@ -53,9 +56,12 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
 
   const handleDescontoChange = (e) => {
     const value = e.target.value;
+    // Mantém o valor digitado como string enquanto edita
     const desconto_item = value === '' ? 0 : parseFloat(value) || 0;
     const updated = { ...localItem, sob_encomenda: sobEncomendaLocal, desconto_item, valor_total: calcTotal(localItem.quantidade, localItem.valor_unitario, desconto_item) };
-    setLocalItem(updated); onUpdate(updated);
+    editingRef.current = true;
+    setLocalItem({ ...updated, _desconto_raw: value });
+    onUpdate(updated);
   };
 
   const handleAtribuirTecnico = (tecnicos) => {
@@ -196,9 +202,10 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
               <span className="text-xs text-slate-500 mb-1">Desconto (R$)</span>
               <Input
                 type="number" step="0.01" min="0"
-                value={localItem.desconto_item ?? ''}
+                value={localItem._desconto_raw !== undefined ? localItem._desconto_raw : (localItem.desconto_item ?? '')}
                 onChange={handleDescontoChange}
-                onFocus={(e) => e.target.select()}
+                onFocus={() => { editingRef.current = true; }}
+                onBlur={() => { editingRef.current = false; setLocalItem(prev => { const {_desconto_raw, ...rest} = prev; return rest; }); }}
                 placeholder="0,00"
                 className="w-28 h-10"
               />
