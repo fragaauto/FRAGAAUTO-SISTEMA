@@ -9,41 +9,38 @@ export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = fal
   const [mostrarModalTecnico, setMostrarModalTecnico] = useState(false);
   const handleQuantidadeChange = (e) => {
     const value = e.target.value;
-    // Se estiver vazio, manter vazio temporariamente
     if (value === '') {
-      onUpdate({
-        ...item,
-        quantidade: '',
-        valor_total: 0
-      });
+      onUpdate({ ...item, quantidade: '', valor_total: 0 });
       return;
     }
-    // Converter para número e garantir mínimo de 1
     const quantidade = Math.max(1, parseInt(value) || 1);
-    onUpdate({
-      ...item,
-      quantidade,
-      valor_total: quantidade * item.valor_unitario
-    });
+    const desconto_item = Number(item.desconto_item) || 0;
+    const bruto = quantidade * (item.valor_unitario || 0);
+    onUpdate({ ...item, quantidade, valor_total: Math.max(0, bruto - desconto_item) });
   };
 
   const handleValorChange = (e) => {
     const value = e.target.value;
-    // Permitir vazio temporariamente
     if (value === '') {
-      onUpdate({
-        ...item,
-        valor_unitario: '',
-        valor_total: 0
-      });
+      onUpdate({ ...item, valor_unitario: '', valor_total: 0 });
       return;
     }
     const valor_unitario = parseFloat(value) || 0;
-    onUpdate({
-      ...item,
-      valor_unitario,
-      valor_total: (item.quantidade || 0) * valor_unitario
-    });
+    const desconto_item = Number(item.desconto_item) || 0;
+    const bruto = (item.quantidade || 0) * valor_unitario;
+    onUpdate({ ...item, valor_unitario, valor_total: Math.max(0, bruto - desconto_item) });
+  };
+
+  const handleDescontoItemChange = (e) => {
+    const value = e.target.value;
+    if (value === '') {
+      const bruto = (item.quantidade || 0) * (item.valor_unitario || 0);
+      onUpdate({ ...item, desconto_item: '', valor_total: bruto });
+      return;
+    }
+    const desconto_item = parseFloat(value) || 0;
+    const bruto = (item.quantidade || 0) * (item.valor_unitario || 0);
+    onUpdate({ ...item, desconto_item, valor_total: Math.max(0, bruto - desconto_item) });
   };
 
   const handleAtribuirTecnico = (tecnicos) => {
@@ -138,6 +135,23 @@ export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = fal
           />
         </div>
         
+        <div className="flex flex-col">
+          <span className="text-xs text-slate-500 mb-1">Desconto (R$)</span>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            value={item.desconto_item ?? ''}
+            onChange={handleDescontoItemChange}
+            onFocus={(e) => e.target.select()}
+            onBlur={(e) => {
+              if (e.target.value === '') handleDescontoItemChange({ target: { value: '0' } });
+            }}
+            className="w-28 h-10"
+            placeholder="0,00"
+          />
+        </div>
+
         <div className="flex flex-col">
           <span className="text-xs text-slate-500 mb-1">Total</span>
           <div className="h-10 px-3 flex items-center bg-green-50 border border-green-200 rounded-md font-semibold text-green-700 min-w-[100px]">
