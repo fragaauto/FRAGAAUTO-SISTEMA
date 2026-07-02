@@ -12,7 +12,7 @@ export default function AtribuirTecnicoRapido({ atendimento, onClose }) {
 
   const { data: funcionarios = [], isLoading } = useQuery({
     queryKey: ['funcionarios'],
-    queryFn: () => base44.entities.Funcionario.list(),
+    queryFn: () => base44.entities.Funcionario.filter({ status: 'ativo' }),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -29,10 +29,11 @@ export default function AtribuirTecnicoRapido({ atendimento, onClose }) {
   });
 
   const toggle = (func) => {
+    const nome = func.nome_completo || func.nome;
     setSelecionados(prev => {
       const existe = prev.find(t => t.id === func.id);
       if (existe) return prev.filter(t => t.id !== func.id);
-      return [...prev, { id: func.id, nome: func.nome }];
+      return [...prev, { id: func.id, nome }];
     });
   };
 
@@ -71,8 +72,8 @@ export default function AtribuirTecnicoRapido({ atendimento, onClose }) {
                       : 'border-slate-200 hover:border-slate-300 text-slate-700'
                   }`}
                 >
-                  {func.nome}
-                  {func.cargo && <span className="text-xs text-slate-400 ml-2">· {func.cargo}</span>}
+                  {func.nome_completo || func.nome}
+                  {func.funcao_nome && <span className="text-xs text-slate-400 ml-2">· {func.funcao_nome}</span>}
                 </button>
               );
             })}
