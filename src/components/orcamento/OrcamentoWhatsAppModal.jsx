@@ -19,7 +19,16 @@ function gerarTextoOrcamento(atendimento, config) {
   const pendentes = todosItens.filter(i => !i.status_aprovacao || i.status_aprovacao === 'pendente');
 
   const formatarItem = (item) => {
-    let linha = `• ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = *R$ ${Number(item.valor_total || 0).toFixed(2)}*`;
+    const bruto = (Number(item.quantidade || 0)) * (Number(item.valor_unitario || 0));
+    const desc = Number(item.desconto_item || 0);
+    const total = Number(item.valor_total || 0);
+    let precoStr;
+    if (desc > 0) {
+      precoStr = `~R$ ${bruto.toFixed(2)}~ → *R$ ${total.toFixed(2)}* _(desc. R$ ${desc.toFixed(2)})_`;
+    } else {
+      precoStr = `*R$ ${total.toFixed(2)}*`;
+    }
+    let linha = `• ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = ${precoStr}`;
     if (item.observacao_item) linha += `\n  _📝 ${item.observacao_item}_`;
     return linha;
   };
@@ -47,13 +56,18 @@ function gerarTextoOrcamento(atendimento, config) {
     linhas.push('');
     itensQueixa.forEach(item => {
       const statusEmoji = item.status_aprovacao === 'aprovado' ? '✅' : item.status_aprovacao === 'reprovado' ? '❌' : '⏳';
-      let linha = `${statusEmoji} ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = *R$ ${Number(item.valor_total || 0).toFixed(2)}*`;
+      const bruto = Number(item.quantidade || 0) * Number(item.valor_unitario || 0);
+      const desc = Number(item.desconto_item || 0);
+      const total = Number(item.valor_total || 0);
+      const precoStr = desc > 0 ? `~R$ ${bruto.toFixed(2)}~ → *R$ ${total.toFixed(2)}* _(desc. R$ ${desc.toFixed(2)})_` : `*R$ ${total.toFixed(2)}*`;
+      let linha = `${statusEmoji} ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = ${precoStr}`;
       if (item.observacao_item) linha += `\n  _📝 ${item.observacao_item}_`;
       linhas.push(linha);
     });
-    if (atendimento.subtotal_queixa > 0) {
+    const subtotalQueixa = itensQueixa.reduce((a, i) => a + Number(i.valor_total || 0), 0);
+    if (subtotalQueixa > 0) {
       linhas.push('');
-      linhas.push(`   Subtotal queixa: *R$ ${Number(atendimento.subtotal_queixa).toFixed(2)}*`);
+      linhas.push(`   Subtotal queixa: *R$ ${subtotalQueixa.toFixed(2)}*`);
     }
   }
 
@@ -65,16 +79,20 @@ function gerarTextoOrcamento(atendimento, config) {
     linhas.push('');
     itensChecklist.forEach(item => {
       const statusEmoji = item.status_aprovacao === 'aprovado' ? '✅' : item.status_aprovacao === 'reprovado' ? '❌' : '⏳';
-      let linha = `${statusEmoji} ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = *R$ ${Number(item.valor_total || 0).toFixed(2)}*`;
+      const bruto = Number(item.quantidade || 0) * Number(item.valor_unitario || 0);
+      const desc = Number(item.desconto_item || 0);
+      const total = Number(item.valor_total || 0);
+      const precoStr = desc > 0 ? `~R$ ${bruto.toFixed(2)}~ → *R$ ${total.toFixed(2)}* _(desc. R$ ${desc.toFixed(2)})_` : `*R$ ${total.toFixed(2)}*`;
+      let linha = `${statusEmoji} ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = ${precoStr}`;
       if (item.observacao_item) linha += `\n  _📝 ${item.observacao_item}_`;
-      // Buscar foto: pode estar no item do orçamento OU no item do checklist (pelo nome do item)
       const fotoUrl = item.foto_url || (atendimento.checklist || []).find(c => c.item === item.item_checklist || c.item === item.nome)?.foto_url;
       if (fotoUrl) linha += `\n  📸 *Ver foto:* ${fotoUrl}`;
       linhas.push(linha);
     });
-    if (atendimento.subtotal_checklist > 0) {
+    const subtotalChecklist = itensChecklist.reduce((a, i) => a + Number(i.valor_total || 0), 0);
+    if (subtotalChecklist > 0) {
       linhas.push('');
-      linhas.push(`   Subtotal diagnóstico: *R$ ${Number(atendimento.subtotal_checklist).toFixed(2)}*`);
+      linhas.push(`   Subtotal diagnóstico: *R$ ${subtotalChecklist.toFixed(2)}*`);
     }
   }
 
@@ -107,13 +125,16 @@ function gerarTextoOrcamento(atendimento, config) {
     linhas.push('━━━━━━━━━━━━━━━━━━━━━━');
   }
 
-  // Totais
+  // Totais — valor_total de cada item já inclui desconto_item
+  const totalGeral = todosItens.reduce((a, i) => a + Number(i.valor_total || 0), 0);
+  const descontoGlobal = Number(atendimento.desconto || 0);
+  const valorFinal = Math.max(0, totalGeral - descontoGlobal);
   linhas.push('');
-  if (atendimento.desconto > 0) {
-    linhas.push(`💰 Subtotal: R$ ${Number(atendimento.subtotal || 0).toFixed(2)}`);
-    linhas.push(`🎁 Desconto: - R$ ${Number(atendimento.desconto).toFixed(2)}`);
+  if (descontoGlobal > 0) {
+    linhas.push(`💰 Subtotal: R$ ${totalGeral.toFixed(2)}`);
+    linhas.push(`🎁 Desconto adicional: - R$ ${descontoGlobal.toFixed(2)}`);
   }
-  linhas.push(`💵 *TOTAL GERAL: R$ ${Number(atendimento.valor_final || 0).toFixed(2)}*`);
+  linhas.push(`💵 *TOTAL GERAL: R$ ${valorFinal.toFixed(2)}*`);
   if (temDecisoes) {
     const totalAprov = aprovados.reduce((a, i) => a + Number(i.valor_total || 0), 0);
     linhas.push(`✅ *Total autorizado: R$ ${totalAprov.toFixed(2)}*`);

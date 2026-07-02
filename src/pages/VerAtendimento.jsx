@@ -246,7 +246,7 @@ export default function VerAtendimento() {
       ...item,
       quantidade: Number(item.quantidade) || 0,
       valor_unitario: Number(item.valor_unitario) || 0,
-      valor_total: (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0)
+      valor_total: Math.max(0, (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0) - (Number(item.desconto_item) || 0))
     }));
 
     const subtotal_queixa = itensAtualizados.reduce((acc, item) => acc + (item.valor_total || 0), 0);
@@ -303,7 +303,8 @@ export default function VerAtendimento() {
     if (field === 'quantidade' || field === 'valor_unitario') {
       const quantidade = novosItens[index].quantidade === '' ? 0 : Number(novosItens[index].quantidade);
       const valorUnitario = Number(novosItens[index].valor_unitario) || 0;
-      novosItens[index].valor_total = quantidade * valorUnitario;
+      const desc = Number(novosItens[index].desconto_item) || 0;
+      novosItens[index].valor_total = Math.max(0, quantidade * valorUnitario - desc);
     }
     setItensQueixaEdit(novosItens);
   };
@@ -363,7 +364,7 @@ export default function VerAtendimento() {
     // CRÍTICO: Recalcular todos os totais corretamente
     const itensAtualizados = itensOrcamentoEdit.map(item => ({
       ...item,
-      valor_total: (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0)
+      valor_total: Math.max(0, (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0) - (Number(item.desconto_item) || 0))
     }));
 
     const { subtotal_queixa, subtotal_checklist, subtotal, valor_final } = calcularSubtotais(
@@ -409,7 +410,8 @@ export default function VerAtendimento() {
     if (field === 'quantidade' || field === 'valor_unitario') {
       const quantidade = novosItens[index].quantidade === '' ? 0 : Number(novosItens[index].quantidade);
       const valorUnitario = Number(novosItens[index].valor_unitario) || 0;
-      novosItens[index].valor_total = quantidade * valorUnitario;
+      const desc = Number(novosItens[index].desconto_item) || 0;
+      novosItens[index].valor_total = Math.max(0, quantidade * valorUnitario - desc);
     }
     setItensOrcamentoEdit(novosItens);
   };

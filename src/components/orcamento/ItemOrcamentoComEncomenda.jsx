@@ -27,18 +27,26 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
     setSobEncomendaLocal(!!item.sob_encomenda);
   }, [item.sob_encomenda]);
 
+  const calcTotal = (qtd, unit, desc) => Math.max(0, (qtd || 0) * (unit || 0) - (desc || 0));
+
   const handleQuantidadeChange = (e) => {
     const value = e.target.value;
     if (value === '') { onUpdate({ ...item, sob_encomenda: sobEncomendaLocal, quantidade: '', valor_total: 0 }); return; }
     const quantidade = Math.max(1, parseInt(value) || 1);
-    onUpdate({ ...item, sob_encomenda: sobEncomendaLocal, quantidade, valor_total: quantidade * item.valor_unitario });
+    onUpdate({ ...item, sob_encomenda: sobEncomendaLocal, quantidade, valor_total: calcTotal(quantidade, item.valor_unitario, item.desconto_item) });
   };
 
   const handleValorChange = (e) => {
     const value = e.target.value;
     if (value === '') { onUpdate({ ...item, sob_encomenda: sobEncomendaLocal, valor_unitario: '', valor_total: 0 }); return; }
     const valor_unitario = parseFloat(value) || 0;
-    onUpdate({ ...item, sob_encomenda: sobEncomendaLocal, valor_unitario, valor_total: (item.quantidade || 0) * valor_unitario });
+    onUpdate({ ...item, sob_encomenda: sobEncomendaLocal, valor_unitario, valor_total: calcTotal(item.quantidade, valor_unitario, item.desconto_item) });
+  };
+
+  const handleDescontoChange = (e) => {
+    const value = e.target.value;
+    const desconto_item = value === '' ? 0 : parseFloat(value) || 0;
+    onUpdate({ ...item, sob_encomenda: sobEncomendaLocal, desconto_item, valor_total: calcTotal(item.quantidade, item.valor_unitario, desconto_item) });
   };
 
   const handleAtribuirTecnico = (tecnicos) => {
@@ -147,6 +155,9 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
           <div className="flex items-center gap-4 flex-wrap text-sm text-slate-600">
             <span><span className="text-slate-400">Qtd:</span> {item.quantidade}</span>
             <span><span className="text-slate-400">Unit.:</span> R$ {item.valor_unitario?.toFixed(2)}</span>
+            {item.desconto_item > 0 && (
+              <span className="text-red-500">Desc: -R$ {Number(item.desconto_item).toFixed(2)}</span>
+            )}
             <span className="font-semibold text-green-700">Total: R$ {item.valor_total?.toFixed(2)}</span>
           </div>
         ) : (
@@ -169,6 +180,17 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
                 value={item.valor_unitario}
                 onChange={handleValorChange}
                 onFocus={(e) => e.target.select()}
+                className="w-28 h-10"
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs text-slate-500 mb-1">Desconto (R$)</span>
+              <Input
+                type="number" step="0.01" min="0"
+                value={item.desconto_item ?? ''}
+                onChange={handleDescontoChange}
+                onFocus={(e) => e.target.select()}
+                placeholder="0,00"
                 className="w-28 h-10"
               />
             </div>
