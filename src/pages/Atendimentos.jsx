@@ -339,7 +339,14 @@ export default function Atendimentos() {
     window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  const semTecnico = (a) => a.status === 'concluido' && !a.tecnicos_responsaveis?.length && !a.tecnico;
+  const semTecnico = (a) => {
+    if (a.status !== 'concluido') return false;
+    if (a.tecnicos_responsaveis?.length || a.tecnico) return false;
+    // Considera técnicos atribuídos nos itens (queixa + orçamento)
+    const itens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
+    const temTecnicosEmItens = itens.some(i => i.tecnicos?.length);
+    return !temTecnicosEmItens;
+  };
 
   return (
     <>
