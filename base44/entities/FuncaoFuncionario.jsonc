@@ -46,6 +46,21 @@
       "default": true,
       "description": "Se pode ver o item de menu Novo Atendimento"
     },
+    "pode_ver_bot_novo_atendimento": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se pode ver o bot\u00e3o Novo Atendimento no topo da Home"
+    },
+    "pode_ver_bot_atendimentos": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se pode ver o bot\u00e3o Ver Atendimentos no topo da Home"
+    },
+    "pode_ver_bot_assistente_whatsapp": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se pode ver o bot\u00e3o Assistente no WhatsApp no topo da Home"
+    },
     "pode_acessar_manual": {
       "type": "boolean",
       "default": true,
