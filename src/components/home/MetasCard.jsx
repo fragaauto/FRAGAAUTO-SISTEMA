@@ -115,7 +115,7 @@ export default function MetasCard() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Target className="w-5 h-5 text-blue-600" />
-              <h2 className="text-base font-bold text-slate-800">Metas de Vendas</h2>
+              <h2 className="text-base font-bold text-slate-800">Metas Gerais da Loja</h2>
             </div>
             <Link
               to={createPageUrl('Configuracoes')}
