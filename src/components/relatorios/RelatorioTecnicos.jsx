@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Award, FileSpreadsheet, FileDown, Filter, ChevronDown, ChevronUp, Eye, ArrowRightLeft, Trash2, Loader2, Lock } from 'lucide-react';
+import { Users, Award, FileSpreadsheet, FileDown, Filter, ChevronDown, ChevronUp, Eye, ArrowRightLeft, Trash2, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
@@ -424,12 +424,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
               <Input type="date" value={filtroDataFim} onChange={e => setFiltroDataFim(e.target.value)} className="h-9" />
             </div>
           </div>
-          {periodoFixo && (
-            <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
-              <Lock className="w-3.5 h-3.5" />
-              Sua produção é limitada ao período de {format(new Date(periodoFixo.inicio + 'T00:00:00'), 'dd/MM/yyyy')} a {format(new Date(periodoFixo.fim + 'T00:00:00'), 'dd/MM/yyyy')}. Filtros fora desse intervalo não retornam registros.
-            </div>
-          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Técnico</Label>
