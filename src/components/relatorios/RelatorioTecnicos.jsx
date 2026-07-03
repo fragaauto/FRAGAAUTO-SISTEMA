@@ -123,9 +123,15 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
   const atendimentosFiltradosPorData = useMemo(() => {
     // Sempre filtra por data — padrão é o mês atual
-    if (!filtroDataInicio && !filtroDataFim) return atendimentos;
     return atendimentos.filter(a => {
       const dataAtendimento = new Date(a.data_entrada || a.created_date);
+      // Período fixo pré-configurado: limite máximo de visualização (hard boundary)
+      if (periodoFixo) {
+        const fInicio = new Date(periodoFixo.inicio + 'T00:00:00');
+        if (dataAtendimento < fInicio) return false;
+        const fFim = new Date(periodoFixo.fim + 'T23:59:59');
+        if (dataAtendimento > fFim) return false;
+      }
       if (filtroDataInicio) {
         const inicio = new Date(filtroDataInicio + 'T00:00:00');
         if (dataAtendimento < inicio) return false;
@@ -136,7 +142,17 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       }
       return true;
     });
-  }, [atendimentos, filtroDataInicio, filtroDataFim]);
+  }, [atendimentos, filtroDataInicio, filtroDataFim, periodoFixo]);
+
+  // Detecta se o período selecionado pelo usuário está totalmente fora do período fixo
+  const foraDoPeriodoFixo = periodoFixo && (() => {
+    const uIni = filtroDataInicio ? new Date(filtroDataInicio + 'T00:00:00') : null;
+    const uFim = filtroDataFim ? new Date(filtroDataFim + 'T23:59:59') : null;
+    const fIni = new Date(periodoFixo.inicio + 'T00:00:00');
+    const fFim = new Date(periodoFixo.fim + 'T23:59:59');
+    if (uIni && uFim) return uFim < fIni || uIni > fFim;
+    return false;
+  })();
 
   const dadosTecnicos = useMemo(() => {
     const tecnicos = {};
@@ -289,8 +305,8 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       <Card>
         <CardContent className="py-16 text-center">
           <Users className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-          <p className="text-slate-500">{modoPessoal ? 'Você ainda não tem atendimentos atribuídos no período selecionado' : 'Nenhum atendimento com técnico atribuído no período'}</p>
-          {!modoPessoal && <p className="text-sm text-slate-400 mt-1">Atribua técnicos nos atendimentos para ver a produção</p>}
+          <p className="text-slate-500">{foraDoPeriodoFixo ? 'Não há registros nesse período' : (modoPessoal ? 'Você ainda não tem atendimentos atribuídos no período selecionado' : 'Nenhum atendimento com técnico atribuído no período')}</p>
+          {!modoPessoal && !foraDoPeriodoFixo && <p className="text-sm text-slate-400 mt-1">Atribua técnicos nos atendimentos para ver a produção</p>}
         </CardContent>
       </Card>
     );
@@ -401,17 +417,17 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div>
               <Label className="text-xs">Data Início</Label>
-              <Input type="date" value={filtroDataInicio} onChange={e => setFiltroDataInicio(e.target.value)} className="h-9" disabled={!!periodoFixo} />
+              <Input type="date" value={filtroDataInicio} onChange={e => setFiltroDataInicio(e.target.value)} className="h-9" />
             </div>
             <div>
               <Label className="text-xs">Data Fim</Label>
-              <Input type="date" value={filtroDataFim} onChange={e => setFiltroDataFim(e.target.value)} className="h-9" disabled={!!periodoFixo} />
+              <Input type="date" value={filtroDataFim} onChange={e => setFiltroDataFim(e.target.value)} className="h-9" />
             </div>
           </div>
           {periodoFixo && (
             <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
               <Lock className="w-3.5 h-3.5" />
-              Período fixo definido pelo administrador: {format(new Date(periodoFixo.inicio + 'T00:00:00'), 'dd/MM/yyyy')} a {format(new Date(periodoFixo.fim + 'T00:00:00'), 'dd/MM/yyyy')}
+              Sua produção é limitada ao período de {format(new Date(periodoFixo.inicio + 'T00:00:00'), 'dd/MM/yyyy')} a {format(new Date(periodoFixo.fim + 'T00:00:00'), 'dd/MM/yyyy')}. Filtros fora desse intervalo não retornam registros.
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
