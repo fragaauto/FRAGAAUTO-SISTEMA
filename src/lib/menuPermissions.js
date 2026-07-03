@@ -34,6 +34,8 @@ export function filtrarItensMenu(items, { user, funcoes, modulosAtivos }) {
     if (item.path === 'ManualTreinamento') return funcao?.pode_acessar_manual !== false;
     if (item.path === 'Configuracoes') return funcao?.pode_acessar_configuracoes === true;
     if (item.path === 'Usuarios') return funcao?.pode_acessar_usuarios === true;
+    if (item.path === 'Atendimentos') return funcao?.pode_ver_menu_atendimentos !== false;
+    if (item.path === 'NovoAtendimento') return funcao?.pode_ver_menu_novo_atendimento !== false;
 
     // Itens sem módulo definido (exceto Home, já tratado) ficam ocultos
     if (!item.modulo) return false;

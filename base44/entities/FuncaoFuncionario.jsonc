@@ -36,6 +36,16 @@
       "default": true,
       "description": "Se pode ver o card de Agenda do dia na p\u00e1gina inicial"
     },
+    "pode_ver_menu_atendimentos": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se pode ver o item de menu Atendimentos"
+    },
+    "pode_ver_menu_novo_atendimento": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se pode ver o item de menu Novo Atendimento"
+    },
     "pode_acessar_manual": {
       "type": "boolean",
       "default": true,
