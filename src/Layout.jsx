@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { TODOS_MODULOS } from '@/components/modulos';
+import { filtrarItensMenu } from '@/lib/menuPermissions';
 import AguardandoAprovacao from '@/components/AguardandoAprovacao';
 import SeletorUnidade from '@/components/SeletorUnidade';
 
@@ -120,49 +121,7 @@ export default function Layout({ children, currentPageName }) {
   }
 
   // Filtra itens do menu conforme módulos ativos, permissões do usuário e role
-  const itensFiltrados = NAV_ITEMS.filter(item => {
-    // Admin tem acesso total
-    if (user?.role === 'admin') {
-      if (item.apenasAdmin) return true;
-      if (!item.modulo) return true;
-      if (!modulosAtivos || modulosAtivos.length === 0) return true;
-      const modulo = TODOS_MODULOS.find(m => m.id === item.modulo);
-      if (modulo?.essencial) return true;
-      return modulosAtivos.includes(item.modulo);
-    }
-
-    // Apenas admin pode acessar
-    if (item.apenasAdmin) return false;
-
-    // Home sempre visível
-    if (item.path === 'Home') return true;
-
-    // Obter função do usuário
-    const funcao = user?.funcao_id ? funcoes.find(f => f.id === user.funcao_id) : null;
-
-    // Páginas controladas por flags específicas da função (acesso restrito por padrão)
-    if (item.path === 'ManualTreinamento') return funcao?.pode_acessar_manual !== false;
-    if (item.path === 'Configuracoes') return funcao?.pode_acessar_configuracoes === true;
-    if (item.path === 'Usuarios') return funcao?.pode_acessar_usuarios === true;
-
-    // Itens sem módulo definido (exceto Home, já tratado) ficam ocultos
-    if (!item.modulo) return false;
-
-    const modulo = TODOS_MODULOS.find(m => m.id === item.modulo);
-    // Módulo essencial (atendimentos) sempre visível
-    if (modulo?.essencial) return true;
-    // Se o sistema desativou este módulo, esconde
-    if (modulosAtivos && modulosAtivos.length > 0 && !modulosAtivos.includes(item.modulo)) return false;
-
-    // Permissão: usuário sobrescreve a função
-    let modulosPermitidos = user?.modulos_liberados || [];
-    if (modulosPermitidos.length === 0 && funcao) {
-      modulosPermitidos = funcao.modulos_liberados || [];
-    }
-    // Sem permissão configurada → esconde (exceto essencial, já tratado acima)
-    if (modulosPermitidos.length === 0) return false;
-    return modulosPermitidos.includes(item.modulo);
-  });
+  const itensFiltrados = filtrarItensMenu(NAV_ITEMS, { user, funcoes, modulosAtivos });
 
   const NavLinks = ({ onNavigate }) => (
     <div className="space-y-1">

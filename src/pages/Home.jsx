@@ -39,6 +39,7 @@ import RotinaHojeCard from '../components/rotina/RotinaHojeCard';
 import MetasCard from '../components/home/MetasCard';
 import { useUnidade } from '@/lib/UnidadeContext';
 import SeletorUnidade from '@/components/SeletorUnidade';
+import { filtrarItensMenu } from '@/lib/menuPermissions';
 
 const UNIDADE_LAVA_JATO_ID = '69ea76b72f920804f5d68eac';
 const AGENTE_AUTO_PORTAS = 'atendimento_whatsapp';
@@ -76,8 +77,22 @@ export default function Home() {
   const agenteName = unidadeAtual?.id === UNIDADE_LAVA_JATO_ID ? AGENTE_LAVA_JATO : AGENTE_AUTO_PORTAS;
 
   useEffect(() => {
-    base44.auth.isAuthenticated().then(setIsLoggedIn).catch(() => setIsLoggedIn(false));
-    base44.auth.me().then(setUser).catch(() => setUser(null));
+    let mounted = true;
+    base44.auth.isAuthenticated().then((v) => mounted && setIsLoggedIn(v)).catch(() => mounted && setIsLoggedIn(false));
+    base44.auth.me()
+      .then(async (authUser) => {
+        if (!mounted) return;
+        // Busca o registro completo para garantir campos customizados (funcao_id, modulos_liberados)
+        try {
+          const full = await base44.entities.User.filter({ id: authUser.id });
+          const merged = (full && full.length) ? { ...authUser, ...full[0] } : authUser;
+          if (mounted) setUser(merged);
+        } catch {
+          if (mounted) setUser(authUser);
+        }
+      })
+      .catch(() => mounted && setUser(null));
+    return () => { mounted = false; };
   }, []);
   const [dataEspecifica, setDataEspecifica] = useState({ from: null, to: null });
 
@@ -172,103 +187,131 @@ export default function Home() {
     title: 'Novo Atendimento',
     description: 'Iniciar checklist técnico completo do veículo e gerar orçamento.',
     href: createPageUrl('NovoAtendimento'),
-    color: 'bg-orange-500'
+    color: 'bg-orange-500',
+    path: 'NovoAtendimento',
+    modulo: 'atendimentos'
   },
   {
     icon: FileText,
     title: 'Atendimentos',
     description: 'Visualizar histórico de atendimentos e orçamentos gerados.',
     href: createPageUrl('Atendimentos'),
-    color: 'bg-blue-500'
+    color: 'bg-blue-500',
+    path: 'Atendimentos',
+    modulo: 'atendimentos'
   },
   {
     icon: Package,
     title: 'Produtos e Serviços',
     description: 'Gerenciar catálogo de produtos e serviços disponíveis.',
     href: createPageUrl('Produtos'),
-    color: 'bg-green-500'
+    color: 'bg-green-500',
+    path: 'Produtos',
+    modulo: 'estoque'
   },
   {
     icon: Users,
     title: 'Clientes',
     description: 'Cadastro e histórico de clientes atendidos.',
     href: createPageUrl('Clientes'),
-    color: 'bg-purple-500'
+    color: 'bg-purple-500',
+    path: 'Clientes',
+    modulo: 'clientes'
   },
   {
     icon: Calendar,
     title: 'Agenda',
     description: 'Visualizar e gerenciar serviços agendados.',
     href: createPageUrl('Agenda'),
-    color: 'bg-cyan-500'
+    color: 'bg-cyan-500',
+    path: 'Agenda',
+    modulo: 'agenda'
   },
   {
     icon: TrendingUp,
     title: 'Financeiro',
     description: 'Fluxo de caixa, contas a pagar e a receber.',
     href: createPageUrl('Financeiro'),
-    color: 'bg-emerald-600'
+    color: 'bg-emerald-600',
+    path: 'Financeiro',
+    modulo: 'financeiro'
   },
   {
     icon: Package,
     title: 'Compras',
     description: 'Gestão de compras, fornecedores e NF-e.',
     href: createPageUrl('Compras'),
-    color: 'bg-indigo-500'
+    color: 'bg-indigo-500',
+    path: 'Compras',
+    modulo: 'estoque'
   },
   {
     icon: TrendingUp,
     title: 'Remarketing',
     description: 'Campanhas e follow-up de serviços reprovados.',
     href: createPageUrl('Remarketing'),
-    color: 'bg-pink-500'
+    color: 'bg-pink-500',
+    path: 'Remarketing',
+    modulo: 'remarketing'
   },
   {
     icon: FileText,
     title: 'Relatórios',
     description: 'Relatórios completos de desempenho e faturamento.',
     href: createPageUrl('Relatorios'),
-    color: 'bg-violet-500'
+    color: 'bg-violet-500',
+    path: 'Relatorios',
+    modulo: 'relatorios'
   },
   {
     icon: ClipboardCheck,
     title: 'Checklist',
     description: 'Gerenciar itens e categorias do checklist técnico.',
     href: createPageUrl('GerenciarChecklist'),
-    color: 'bg-amber-500'
+    color: 'bg-amber-500',
+    path: 'GerenciarChecklist',
+    modulo: 'checklist'
   },
   {
     icon: Users,
     title: 'Usuários',
     description: 'Gerenciar usuários e permissões de acesso.',
     href: createPageUrl('Usuarios'),
-    color: 'bg-slate-600'
+    color: 'bg-slate-600',
+    path: 'Usuarios',
+    modulo: null
   },
   {
     icon: FileText,
     title: 'Treinamentos',
     description: 'Guia passo a passo do fluxo de atendimento para colaboradores.',
     href: createPageUrl('ManualTreinamento'),
-    color: 'bg-slate-700'
+    color: 'bg-slate-700',
+    path: 'ManualTreinamento',
+    modulo: null
   }];
 
-
-  const NAV_ITEMS = [
-    { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento' },
-    { name: 'Atendimentos', icon: FileText, path: 'Atendimentos' },
-    { name: 'Financeiro', icon: TrendingUp, path: 'Financeiro' },
-    { name: 'Clientes', icon: Users, path: 'Cadastros' },
-    { name: 'Agenda', icon: Calendar, path: 'Agenda' },
-    { name: 'Remarketing', icon: TrendingUp, path: 'Remarketing' },
-    { name: 'Relatórios', icon: FileText, path: 'Relatorios' },
-    { name: 'Produtos', icon: Package, path: 'Produtos' },
-    { name: 'Compras', icon: Package, path: 'Compras' },
-    { name: 'Rotina Diária', icon: ClipboardCheck, path: 'RotinaDiaria' },
-    { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas' },
-    { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist' },
-    { name: 'Usuários', icon: Users, path: 'Usuarios' },
-    { name: 'Configurações', icon: Wrench, path: 'Configuracoes' },
-  ];
+  const modulosAtivos = configs[0]?.modulos_ativos ?? null;
+  const navItemsFiltrados = filtrarItensMenu(
+    [
+      { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento', modulo: 'atendimentos' },
+      { name: 'Atendimentos', icon: FileText, path: 'Atendimentos', modulo: 'atendimentos' },
+      { name: 'Financeiro', icon: TrendingUp, path: 'Financeiro', modulo: 'financeiro' },
+      { name: 'Clientes', icon: Users, path: 'Cadastros', modulo: 'clientes' },
+      { name: 'Agenda', icon: Calendar, path: 'Agenda', modulo: 'agenda' },
+      { name: 'Remarketing', icon: TrendingUp, path: 'Remarketing', modulo: 'remarketing' },
+      { name: 'Relatórios', icon: FileText, path: 'Relatorios', modulo: 'relatorios' },
+      { name: 'Produtos', icon: Package, path: 'Produtos', modulo: 'estoque' },
+      { name: 'Compras', icon: Package, path: 'Compras', modulo: 'estoque' },
+      { name: 'Rotina Diária', icon: ClipboardCheck, path: 'RotinaDiaria', modulo: 'rotina' },
+      { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas', modulo: 'ferramentas' },
+      { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist', modulo: 'checklist' },
+      { name: 'Usuários', icon: Users, path: 'Usuarios', modulo: null },
+      { name: 'Configurações', icon: Wrench, path: 'Configuracoes', modulo: null },
+    ],
+    { user, funcoes, modulosAtivos }
+  );
+  const featuresFiltrados = filtrarItensMenu(features, { user, funcoes, modulosAtivos });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50">
@@ -297,7 +340,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="p-4 space-y-1" style={{ flex: 1, overflowY: 'scroll', WebkitOverflowScrolling: 'touch' }}>
-                  {NAV_ITEMS.map((item) => (
+                  {navItemsFiltrados.map((item) => (
                     <Link
                       key={item.path}
                       to={createPageUrl(item.path)}
@@ -438,11 +481,11 @@ export default function Home() {
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {features.map((feature, index) =>
+          {featuresFiltrados.map((feature, index) =>
           <FeatureCard
-            key={feature.title}
-            {...feature}
-            delay={0.1 * index} />
+          key={feature.title}
+          {...feature}
+          delay={0.1 * index} />
 
           )}
         </div>
