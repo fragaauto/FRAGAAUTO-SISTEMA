@@ -455,7 +455,7 @@ export default function Home() {
 
               <div className="relative">
                 <div className="w-64 h-64 bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-full absolute blur-3xl" />
-                <div className="relative bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
+                <div className="relative backdrop-blur-sm rounded-3xl p-8 border border-white/20 bg-[#2a1e58]">
                   {logoUrl ?
                   <img src={logoUrl} alt="Logo" className="w-48 h-48 object-contain rounded-2xl" /> :
 
