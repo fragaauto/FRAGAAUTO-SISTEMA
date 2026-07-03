@@ -375,7 +375,7 @@ export default function Home() {
       </div>
 
       {/* Hero Section */}
-      <div className="from-slate-900 via-slate-800 to-slate-900 text-white bg-[hsl(var(--sidebar-ring))]">
+      <div className="from-slate-900 via-slate-800 to-slate-900 text-white bg-[#2a1e59]">
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-20">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
