@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { base44 } from '@/api/base44Client';
 import { queryClientInstance } from '@/lib/query-client';
+import { useQuery } from '@tanstack/react-query';
+import { useUnidade } from '@/lib/UnidadeContext';
 
 export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '' }) {
   const [filtroTecnico, setFiltroTecnico] = useState('todos');
@@ -33,18 +35,29 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       .catch(() => setIsAdmin(false));
   }, []);
 
-  // Mapa nome -> id de todos os técnicos conhecidos (para transferência)
+  // Funcionários ativos (para listar todos os técnicos possíveis na transferência)
+  const { unidadeAtual } = useUnidade();
+  const { data: funcionarios = [] } = useQuery({
+    queryKey: ['funcionarios', unidadeAtual?.id],
+    queryFn: () => base44.entities.Funcionario.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Mapa nome -> id de todos os técnicos conhecidos (funcionários ativos + técnicos já presentes nos atendimentos)
   const tecnicosComId = useMemo(() => {
     const map = {};
+    (funcionarios || [])
+      .filter(f => (f.status || 'ativo') === 'ativo' && f.nome_completo)
+      .forEach(f => { map[f.nome_completo] = f.id; });
     atendimentos.forEach(a => {
-      (a.tecnicos_responsaveis || []).forEach(t => { if (t.nome) map[t.nome] = t.id || t.nome; });
+      (a.tecnicos_responsaveis || []).forEach(t => { if (t.nome && !map[t.nome]) map[t.nome] = t.id || t.nome; });
       if (a.tecnico) a.tecnico.split(',').map(s => s.trim()).forEach(n => { if (n && !map[n]) map[n] = n; });
       [...(a.itens_queixa || []), ...(a.itens_orcamento || [])].forEach(item => {
-        (item.tecnicos || []).forEach(t => { if (t.nome) map[t.nome] = t.id || t.nome; });
+        (item.tecnicos || []).forEach(t => { if (t.nome && !map[t.nome]) map[t.nome] = t.id || t.nome; });
       });
     });
     return map;
-  }, [atendimentos]);
+  }, [atendimentos, funcionarios]);
 
   // Transferir ou remover atribuição de técnico em um item (admin)
   const atualizarTecnicoItem = async (srv, acao) => {
