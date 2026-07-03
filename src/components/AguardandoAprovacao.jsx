@@ -2,8 +2,16 @@ import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { Clock, LogOut, Wrench } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { useQuery } from '@tanstack/react-query';
 
 export default function AguardandoAprovacao({ user }) {
+  const { data: configs = [] } = useQuery({
+    queryKey: ['configuracoes'],
+    queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const logoUrl = configs[0]?.logo_url;
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
@@ -11,10 +19,14 @@ export default function AguardandoAprovacao({ user }) {
           <Clock className="w-10 h-10 text-orange-500" />
         </div>
         <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-            <Wrench className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-slate-800 text-lg">Fraga Auto</span>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="h-10 w-10 object-contain rounded-lg" />
+          ) : (
+            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+              <Wrench className="w-4 h-4 text-white" />
+            </div>
+          )}
+          <span className="font-bold text-slate-800 text-lg">{configs[0]?.nome_empresa || 'Fraga Auto'}</span>
         </div>
         <h1 className="text-2xl font-bold text-slate-800 mb-3">Aguardando Aprovação</h1>
         <p className="text-slate-600 mb-2">

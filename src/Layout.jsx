@@ -193,7 +193,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
         <Link to={createPageUrl('Home')} className="flex items-center gap-2">
-          <img src="/logo.png" alt="Fraga Auto" className="w-8 h-8 rounded-lg object-cover" onError={(e) => {
+          <img src={configs[0]?.logo_url || '/logo.png'} alt="Fraga Auto" className="w-8 h-8 rounded-lg object-cover" onError={(e) => {
             e.target.style.display = 'none';
             e.target.nextElementSibling.style.display = 'flex';
           }} />
@@ -214,7 +214,7 @@ export default function Layout({ children, currentPageName }) {
             <SheetContent side="left" className="w-72 p-0" style={{display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100dvh'}}>
               <div className="p-4 border-b border-slate-200" style={{flexShrink: 0}}>
                 <div className="flex items-center gap-2">
-                  <img src="/logo.png" alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
+                  <img src={configs[0]?.logo_url || '/logo.png'} alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
                     e.target.style.display = 'none';
                     e.target.nextElementSibling.style.display = 'flex';
                   }} />
@@ -240,7 +240,7 @@ export default function Layout({ children, currentPageName }) {
         <div className="flex flex-col bg-white border-r border-slate-200 h-screen">
           <div className="p-4 border-b border-slate-200 flex-shrink-0">
             <Link to={createPageUrl('Home')} className="flex items-center gap-3 mb-3">
-              <img src="/logo.png" alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
+              <img src={configs[0]?.logo_url || '/logo.png'} alt="Fraga Auto" className="w-10 h-10 rounded-xl object-cover" onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextElementSibling.style.display = 'flex';
               }} />
