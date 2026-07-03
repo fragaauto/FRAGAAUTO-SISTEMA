@@ -26,6 +26,7 @@ import { useQuery } from '@tanstack/react-query';
 import { TODOS_MODULOS } from '@/components/modulos';
 import { filtrarItensMenu } from '@/lib/menuPermissions';
 import AguardandoAprovacao from '@/components/AguardandoAprovacao';
+import AcessoForaHorario from '@/components/AcessoForaHorario';
 import SeletorUnidade from '@/components/SeletorUnidade';
 
 // Todos os itens de navegação com módulo associado
@@ -118,6 +119,29 @@ export default function Layout({ children, currentPageName }) {
   // Mostrar tela de aguardando aprovação se usuário não for admin e não estiver aprovado
   if (user && user.role !== 'admin' && !user.aprovado && !isPaginaPublica) {
     return <AguardandoAprovacao user={user} />;
+  }
+
+  // Restrição de horário de acesso (não se aplica a admins)
+  const configAcesso = configs[0];
+  if (user && user.role !== 'admin' && !isPaginaPublica && configAcesso?.restringir_horario_acesso) {
+    const agora = new Date();
+    const dia = agora.getDay();
+    const diasPermitidos = configAcesso.dias_acesso_permitidos;
+    const diaBloqueado = Array.isArray(diasPermitidos) && diasPermitidos.length > 0 && !diasPermitidos.includes(dia);
+    let horarioBloqueado = false;
+    const inicio = configAcesso.horario_acesso_inicio;
+    const fim = configAcesso.horario_acesso_fim;
+    if (inicio && fim) {
+      const minAgora = agora.getHours() * 60 + agora.getMinutes();
+      const [hi, mi] = inicio.split(':').map(Number);
+      const [hf, mf] = fim.split(':').map(Number);
+      const minInicio = hi * 60 + mi;
+      const minFim = hf * 60 + mf;
+      horarioBloqueado = minAgora < minInicio || minAgora > minFim;
+    }
+    if (diaBloqueado || horarioBloqueado) {
+      return <AcessoForaHorario inicio={inicio} fim={fim} dias={diasPermitidos} diaBloqueado={diaBloqueado} />;
+    }
   }
 
   // Filtra itens do menu conforme módulos ativos, permissões do usuário e role

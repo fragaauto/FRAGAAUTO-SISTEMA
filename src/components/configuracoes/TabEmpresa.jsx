@@ -4,9 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, Loader2, Building2 } from 'lucide-react';
+import { Save, Loader2, Building2, Clock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { Switch } from "@/components/ui/switch";
+
+const DIAS_SEMANA = [
+  { id: 0, nome: 'Dom' },
+  { id: 1, nome: 'Seg' },
+  { id: 2, nome: 'Ter' },
+  { id: 3, nome: 'Qua' },
+  { id: 4, nome: 'Qui' },
+  { id: 5, nome: 'Sex' },
+  { id: 6, nome: 'Sáb' }
+];
 
 export default function TabEmpresa({ formData, onChange, onSave, isSaving }) {
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -89,6 +100,60 @@ export default function TabEmpresa({ formData, onChange, onSave, isSaving }) {
             <Input value={formData.whatsapp_atendimento} onChange={e => onChange('whatsapp_atendimento', e.target.value)} placeholder="5511999999999" />
             <p className="text-xs text-slate-500 mt-1">Apenas números com código do país (ex: 5511999999999)</p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-orange-500" />
+            Controle de Horário de Acesso
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+            <div>
+              <Label>Restringir acesso por horário</Label>
+              <p className="text-xs text-slate-500">Usuários comuns só acessam no horário e dias permitidos. Administradores sempre têm acesso.</p>
+            </div>
+            <Switch checked={!!formData.restringir_horario_acesso} onCheckedChange={v => onChange('restringir_horario_acesso', v)} />
+          </div>
+          {formData.restringir_horario_acesso && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Horário Início</Label>
+                  <Input type="time" value={formData.horario_acesso_inicio || ''} onChange={e => onChange('horario_acesso_inicio', e.target.value)} />
+                </div>
+                <div>
+                  <Label>Horário Fim</Label>
+                  <Input type="time" value={formData.horario_acesso_fim || ''} onChange={e => onChange('horario_acesso_fim', e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label className="mb-2 block">Dias Permitidos</Label>
+                <div className="flex flex-wrap gap-2">
+                  {DIAS_SEMANA.map(d => {
+                    const ativo = (formData.dias_acesso_permitidos || []).includes(d.id);
+                    return (
+                      <button
+                        type="button"
+                        key={d.id}
+                        onClick={() => {
+                          const current = formData.dias_acesso_permitidos || [];
+                          onChange('dias_acesso_permitidos', ativo ? current.filter(x => x !== d.id) : [...current, d.id]);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${ativo ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-700 border-slate-300 hover:border-orange-400'}`}
+                      >
+                        {d.nome}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Deixe todos desmarcados para permitir todos os dias.</p>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
