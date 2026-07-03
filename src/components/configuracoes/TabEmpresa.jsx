@@ -119,40 +119,42 @@ export default function TabEmpresa({ formData, onChange, onSave, isSaving }) {
             <Switch checked={!!formData.restringir_horario_acesso} onCheckedChange={v => onChange('restringir_horario_acesso', v)} />
           </div>
           {formData.restringir_horario_acesso && (
-            <>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Horário Início</Label>
-                  <Input type="time" value={formData.horario_acesso_inicio || ''} onChange={e => onChange('horario_acesso_inicio', e.target.value)} />
-                </div>
-                <div>
-                  <Label>Horário Fim</Label>
-                  <Input type="time" value={formData.horario_acesso_fim || ''} onChange={e => onChange('horario_acesso_fim', e.target.value)} />
-                </div>
-              </div>
-              <div>
-                <Label className="mb-2 block">Dias Permitidos</Label>
-                <div className="flex flex-wrap gap-2">
-                  {DIAS_SEMANA.map(d => {
-                    const ativo = (formData.dias_acesso_permitidos || []).includes(d.id);
-                    return (
-                      <button
-                        type="button"
-                        key={d.id}
-                        onClick={() => {
-                          const current = formData.dias_acesso_permitidos || [];
-                          onChange('dias_acesso_permitidos', ativo ? current.filter(x => x !== d.id) : [...current, d.id]);
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${ativo ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-700 border-slate-300 hover:border-orange-400'}`}
-                      >
-                        {d.nome}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-slate-500 mt-1">Deixe todos desmarcados para permitir todos os dias.</p>
-              </div>
-            </>
+            <div className="space-y-2">
+              <Label className="mb-1 block">Horário por dia da semana</Label>
+              <p className="text-xs text-slate-500 mb-2">Ative os dias e defina o horário permitido. Dias desativados ficam bloqueados.</p>
+              {DIAS_SEMANA.map(d => {
+                const entry = (formData.horarios_acesso || []).find(h => h.dia === d.id);
+                const ativo = !!entry;
+                return (
+                  <div key={d.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg flex-wrap">
+                    <div className="flex items-center gap-2 w-28 shrink-0">
+                      <Switch checked={ativo} onCheckedChange={v => {
+                        const current = formData.horarios_acesso || [];
+                        if (v) {
+                          onChange('horarios_acesso', [...current, { dia: d.id, inicio: '08:00', fim: '18:00' }]);
+                        } else {
+                          onChange('horarios_acesso', current.filter(h => h.dia !== d.id));
+                        }
+                      }} />
+                      <span className="font-medium text-slate-700">{d.nome}</span>
+                    </div>
+                    {ativo && (
+                      <div className="flex items-center gap-2 ml-auto">
+                        <Input type="time" value={entry?.inicio || ''} onChange={e => {
+                          const current = formData.horarios_acesso || [];
+                          onChange('horarios_acesso', current.map(h => h.dia === d.id ? { ...h, inicio: e.target.value } : h));
+                        }} className="w-32" />
+                        <span className="text-slate-400">até</span>
+                        <Input type="time" value={entry?.fim || ''} onChange={e => {
+                          const current = formData.horarios_acesso || [];
+                          onChange('horarios_acesso', current.map(h => h.dia === d.id ? { ...h, fim: e.target.value } : h));
+                        }} className="w-32" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>

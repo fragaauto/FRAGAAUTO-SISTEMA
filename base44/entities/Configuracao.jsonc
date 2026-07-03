@@ -245,30 +245,28 @@
     "restringir_horario_acesso": {
       "type": "boolean",
       "default": false,
-      "description": "Se verdadeiro, usu\u00e1rios comuns s\u00f3 acessam o sistema no hor\u00e1rio permitido"
+      "description": "Se verdadeiro, usu\u00e1rios comuns s\u00f3 acessam o sistema no hor\u00e1rio permitido por dia da semana"
     },
-    "horario_acesso_inicio": {
-      "type": "string",
-      "description": "Hor\u00e1rio inicial permitido (HH:MM)"
-    },
-    "horario_acesso_fim": {
-      "type": "string",
-      "description": "Hor\u00e1rio final permitido (HH:MM)"
-    },
-    "dias_acesso_permitidos": {
+    "horarios_acesso": {
       "type": "array",
-      "description": "Dias da semana permitidos (0=Dom..6=S\u00e1b). Vazio = todos os dias",
+      "description": "Hor\u00e1rios permitidos por dia da semana (0=Dom..6=S\u00e1b). Dias ausentes ficam bloqueados.",
       "items": {
-        "type": "number"
+        "type": "object",
+        "properties": {
+          "dia": {
+            "type": "number"
+          },
+          "inicio": {
+            "type": "string",
+            "description": "Hor\u00e1rio inicial (HH:MM)"
+          },
+          "fim": {
+            "type": "string",
+            "description": "Hor\u00e1rio final (HH:MM)"
+          }
+        }
       },
-      "default": [
-        1,
-        2,
-        3,
-        4,
-        5,
-        6
-      ]
+      "default": []
     },
     "lembrete_checklist_ativo": {
       "type": "boolean",

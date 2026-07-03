@@ -126,21 +126,21 @@ export default function Layout({ children, currentPageName }) {
   if (user && user.role !== 'admin' && !isPaginaPublica && configAcesso?.restringir_horario_acesso) {
     const agora = new Date();
     const dia = agora.getDay();
-    const diasPermitidos = configAcesso.dias_acesso_permitidos;
-    const diaBloqueado = Array.isArray(diasPermitidos) && diasPermitidos.length > 0 && !diasPermitidos.includes(dia);
-    let horarioBloqueado = false;
-    const inicio = configAcesso.horario_acesso_inicio;
-    const fim = configAcesso.horario_acesso_fim;
-    if (inicio && fim) {
+    const horarios = Array.isArray(configAcesso.horarios_acesso) ? configAcesso.horarios_acesso : [];
+    const diaConfig = horarios.find(h => h.dia === dia);
+    let bloqueado = false;
+    if (!diaConfig) {
+      bloqueado = true;
+    } else if (diaConfig.inicio && diaConfig.fim) {
       const minAgora = agora.getHours() * 60 + agora.getMinutes();
-      const [hi, mi] = inicio.split(':').map(Number);
-      const [hf, mf] = fim.split(':').map(Number);
+      const [hi, mi] = diaConfig.inicio.split(':').map(Number);
+      const [hf, mf] = diaConfig.fim.split(':').map(Number);
       const minInicio = hi * 60 + mi;
       const minFim = hf * 60 + mf;
-      horarioBloqueado = minAgora < minInicio || minAgora > minFim;
+      bloqueado = minAgora < minInicio || minAgora > minFim;
     }
-    if (diaBloqueado || horarioBloqueado) {
-      return <AcessoForaHorario inicio={inicio} fim={fim} dias={diasPermitidos} diaBloqueado={diaBloqueado} />;
+    if (bloqueado) {
+      return <AcessoForaHorario inicio={diaConfig?.inicio} fim={diaConfig?.fim} dia={dia} />;
     }
   }
 
