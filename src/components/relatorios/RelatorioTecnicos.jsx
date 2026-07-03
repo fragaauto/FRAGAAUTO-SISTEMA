@@ -469,6 +469,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
             Incluir detalhes dos serviços nos relatórios (Excel/PDF)
           </Label>
         </div>
+        {isAdmin && (
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={exportarExcel}>
             <FileSpreadsheet className="w-4 h-4 mr-2" />Excel / CSV
@@ -477,8 +478,9 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
             <FileDown className="w-4 h-4 mr-2" />PDF
           </Button>
         </div>
+        )}
       </div>
-      {totalImpostos > 0 && (
+      {isAdmin && totalImpostos > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
           Impostos configurados: <strong>{totalImpostos}%</strong> já descontados do valor líquido.
         </div>
@@ -492,12 +494,14 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           )}
         </div>
       )}
+      {isAdmin && (
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Técnicos no período</p><p className="text-3xl font-bold text-blue-600 mt-1">{dadosTecnicos.length}</p></CardContent></Card>
         <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Total Produção Bruta</p><p className="text-2xl font-bold text-green-600 mt-1">R$ {totalBruto.toFixed(2)}</p></CardContent></Card>
         <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Total Líquido (c/ impostos)</p><p className="text-2xl font-bold text-emerald-600 mt-1">R$ {totalLiquido.toFixed(2)}</p></CardContent></Card>
         <Card><CardContent className="pt-5"><p className="text-sm text-slate-500">Média por Técnico</p><p className="text-2xl font-bold text-orange-600 mt-1">R$ {dadosTecnicos.length > 0 ? (totalBruto / dadosTecnicos.length).toFixed(2) : '0.00'}</p></CardContent></Card>
       </div>
+      )}
 
       <Card>
         <CardHeader>
