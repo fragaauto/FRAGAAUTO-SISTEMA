@@ -21,7 +21,23 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
       )
     : null;
 
-  const gerarPDFA4 = () => {
+  const carregarLogoBase64 = async (url) => {
+    if (!url) return null;
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  const gerarPDFA4 = async () => {
     const doc = new jsPDF();
     const o = orcamento;
     const pageW = doc.internal.pageSize.getWidth();
@@ -35,11 +51,23 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
     doc.setFillColor(234, 88, 12);
     doc.rect(0, 32, pageW, 6, 'F');
 
+    // Logo da empresa (se existir)
+    const logoBase64 = await carregarLogoBase64(config?.logo_url);
+    const nomeEmpresaX = logoBase64 ? 44 : 14;
+    if (logoBase64) {
+      try {
+        const fmt = logoBase64.includes('image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(logoBase64, fmt, 14, 6, 24, 24);
+      } catch {
+        // ignora se não conseguir adicionar a imagem
+      }
+    }
+
     // Nome da empresa
     doc.setFont(undefined, 'bold');
     doc.setFontSize(20);
     doc.setTextColor(255, 255, 255);
-    doc.text(empresa, 14, 16);
+    doc.text(empresa, nomeEmpresaX, 16);
 
     // Subtítulo / contato no header
     doc.setFontSize(8);
@@ -277,6 +305,7 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
         </style>
       </head>
       <body>
+        ${config?.logo_url ? `<div class="center" style="margin-bottom:4px;"><img src="${config.logo_url}" style="max-height:50px;max-width:180px;object-fit:contain;" /></div>` : ''}
         <div class="center bold" style="font-size:14px;">${empresa}</div>
         ${enderecoEmpresa ? `<div class="center small">${enderecoEmpresa}</div>` : ''}
         ${telefoneEmpresa ? `<div class="center small">Tel: ${telefoneEmpresa}</div>` : ''}

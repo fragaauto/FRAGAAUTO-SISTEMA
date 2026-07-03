@@ -78,13 +78,14 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
           
           <div class="header">
             <div class="header-left">
-              <h1>FRAGA AUTO PORTAS</h1>
+              ${configs?.logo_url ? `<img src="${configs.logo_url}" alt="Logo" style="max-height:70px;max-width:220px;object-fit:contain;margin-bottom:8px" />` : ''}
+              <h1>${configs?.nome_empresa || 'FRAGA AUTO PORTAS'}</h1>
               <p>Especialista em Manutenção de Portas e Acessórios Automotivos</p>
             </div>
             <div class="header-right">
-              <p>📍 Endereço da oficina</p>
-              <p>📞 (XX) XXXXX-XXXX</p>
-              <p>📧 contato@fragaauto.com.br</p>
+              ${configs?.endereco ? `<p>📍 ${configs.endereco}</p>` : ''}
+              ${configs?.telefone ? `<p>📞 ${configs.telefone}</p>` : ''}
+              ${configs?.email ? `<p>📧 ${configs.email}</p>` : ''}
             </div>
           </div>
 
@@ -241,7 +242,7 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
               <div class="signature"><div class="signature-line"><p>Técnico Responsável</p><small>${tecnicosLabel}</small></div></div>
               <div class="signature"><div class="signature-line"><p>Cliente</p><small>${atendimento.cliente_nome || ''}</small></div></div>
             </div>
-            <p style="text-align:center;color:#94a3b8;font-size:11px;margin-top:20px">Orçamento válido por 7 dias • Fraga Auto Portas © ${new Date().getFullYear()}</p>
+            <p style="text-align:center;color:#94a3b8;font-size:11px;margin-top:20px">Orçamento válido por 7 dias • ${configs?.nome_empresa || 'Fraga Auto Portas'} © ${new Date().getFullYear()}</p>
           </div>
         </body>
       </html>
