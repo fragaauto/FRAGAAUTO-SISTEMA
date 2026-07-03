@@ -32,14 +32,14 @@ const NAV_ITEMS = [
   { name: 'Home', icon: Home, path: 'Home', modulo: null },
   { name: 'Novo Atendimento', icon: ClipboardCheck, path: 'NovoAtendimento', modulo: 'atendimentos' },
   { name: 'Atendimentos', icon: FileText, path: 'Atendimentos', modulo: 'atendimentos' },
-  { name: 'Controle de Encomendas', icon: Package, path: 'ControleEncomendas', modulo: null },
+  { name: 'Controle de Encomendas', icon: Package, path: 'ControleEncomendas', modulo: 'encomendas' },
   { name: 'Marketing Direto', icon: TrendingUp, path: 'Remarketing', modulo: 'remarketing' },
   { name: 'Relatórios', icon: FileText, path: 'Relatorios', modulo: 'relatorios' },
   { name: 'Produtos', icon: Package, path: 'Produtos', modulo: 'estoque' },
   { name: 'Cadastros', icon: Users, path: 'Cadastros', modulo: 'clientes' },
   { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist', modulo: 'checklist' },
   { name: 'Agenda', icon: Calendar, path: 'Agenda', modulo: 'agenda' },
-  { name: 'Rotina Diária', icon: ClipboardCheck, path: 'RotinaDiaria', modulo: null },
+  { name: 'Rotina Diária', icon: ClipboardCheck, path: 'RotinaDiaria', modulo: 'rotina' },
   { name: 'Financeiro', icon: TrendingUp, path: 'Financeiro', modulo: 'financeiro' },
   { name: 'Compras', icon: Package, path: 'Compras', modulo: 'estoque' },
   { name: 'Configurações', icon: Wrench, path: 'Configuracoes', modulo: null },
@@ -47,7 +47,7 @@ const NAV_ITEMS = [
   { name: 'Gerenciar Plano', icon: Shield, path: 'GerenciarPlano', modulo: null, apenasAdmin: true },
   { name: 'Base de Conhecimento IA', icon: Sparkles, path: 'BaseConhecimentoIA', modulo: null, apenasAdmin: true },
   { name: 'Treinamentos', icon: FileText, path: 'ManualTreinamento', modulo: null },
-  { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas', modulo: null },
+  { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas', modulo: 'ferramentas' },
 ];
 
 
@@ -122,16 +122,19 @@ export default function Layout({ children, currentPageName }) {
     // Apenas admin pode acessar
     if (item.apenasAdmin) return false;
 
+    // Home sempre visível
+    if (item.path === 'Home') return true;
+
     // Obter função do usuário
     const funcao = user?.funcao_id ? funcoes.find(f => f.id === user.funcao_id) : null;
 
-    // Controles especiais de páginas específicas pela função
-    if (item.path === 'ManualTreinamento' && funcao?.pode_acessar_manual === false) return false;
-    if (item.path === 'Configuracoes' && funcao?.pode_acessar_configuracoes === false) return false;
-    if (item.path === 'Usuarios' && funcao?.pode_acessar_usuarios === false) return false;
+    // Páginas controladas por flags específicas da função (acesso restrito por padrão)
+    if (item.path === 'ManualTreinamento') return funcao?.pode_acessar_manual !== false;
+    if (item.path === 'Configuracoes') return funcao?.pode_acessar_configuracoes === true;
+    if (item.path === 'Usuarios') return funcao?.pode_acessar_usuarios === true;
 
-    // Itens sem módulo (Home e outras páginas gerais)
-    if (!item.modulo) return true;
+    // Itens sem módulo definido (exceto Home, já tratado) ficam ocultos
+    if (!item.modulo) return false;
 
     // Verifica se módulo está ativo no sistema
     if (!modulosAtivos || modulosAtivos.length === 0) return true;

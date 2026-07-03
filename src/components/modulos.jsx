@@ -51,6 +51,27 @@ export const TODOS_MODULOS = [
     paginas: ['Remarketing'],
   },
   {
+    id: 'encomendas',
+    nome: 'Controle de Encomendas',
+    descricao: 'Gestão de peças encomendadas e status de entrega',
+    icone: '📦',
+    paginas: ['ControleEncomendas'],
+  },
+  {
+    id: 'ferramentas',
+    nome: 'Controle de Ferramentas',
+    descricao: 'Gestão de ferramentas, kits e insumos',
+    icone: '🧰',
+    paginas: ['ControleFerramentas'],
+  },
+  {
+    id: 'rotina',
+    nome: 'Rotina Diária',
+    descricao: 'Tarefas rotineiras e checklists diários',
+    icone: '🔁',
+    paginas: ['RotinaDiaria'],
+  },
+  {
     id: 'relatorios',
     nome: 'Relatórios & Dashboard',
     descricao: 'Relatórios gerenciais e dashboard de métricas',

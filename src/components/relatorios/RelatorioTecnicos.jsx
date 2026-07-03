@@ -15,7 +15,7 @@ import { queryClientInstance } from '@/lib/query-client';
 import { useQuery } from '@tanstack/react-query';
 import { useUnidade } from '@/lib/UnidadeContext';
 
-export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '' }) {
+export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '', modoPessoal = false, usuarioLogado = null }) {
   const [filtroTecnico, setFiltroTecnico] = useState('todos');
   const [filtroProduto, setFiltroProduto] = useState('');
   // Default: primeiro dia do mês atual até hoje
@@ -58,6 +58,20 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     });
     return map;
   }, [atendimentos, funcionarios]);
+
+  // Modo pessoal: identificar o técnico correspondente ao usuário logado e travar o filtro nele
+  const nomeTecnicoUsuario = useMemo(() => {
+    if (!modoPessoal || !usuarioLogado) return null;
+    const func = (funcionarios || []).find(f => f.email && f.email.toLowerCase() === (usuarioLogado.email || '').toLowerCase());
+    return func?.nome_completo || usuarioLogado.full_name || null;
+  }, [modoPessoal, usuarioLogado, funcionarios]);
+
+  useEffect(() => {
+    if (modoPessoal && nomeTecnicoUsuario) setFiltroTecnico(nomeTecnicoUsuario);
+  }, [modoPessoal, nomeTecnicoUsuario]);
+
+  // Controles administrativos (edição/transferência de técnicos) só fora do modo pessoal
+  const podeEditarTecnicos = isAdmin && !modoPessoal;
 
   // Transferir ou remover atribuição de técnico em um item (admin)
   const atualizarTecnicoItem = async (srv, acao) => {
@@ -275,8 +289,8 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       <Card>
         <CardContent className="py-16 text-center">
           <Users className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-          <p className="text-slate-500">Nenhum atendimento com técnico atribuído no período</p>
-          <p className="text-sm text-slate-400 mt-1">Atribua técnicos nos atendimentos para ver a produção</p>
+          <p className="text-slate-500">{modoPessoal ? 'Você ainda não tem atendimentos atribuídos no período selecionado' : 'Nenhum atendimento com técnico atribuído no período'}</p>
+          {!modoPessoal && <p className="text-sm text-slate-400 mt-1">Atribua técnicos nos atendimentos para ver a produção</p>}
         </CardContent>
       </Card>
     );
@@ -397,17 +411,23 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Técnico</Label>
-              <Select value={filtroTecnico} onValueChange={setFiltroTecnico}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos os técnicos</SelectItem>
-                  {listaTecnicos.map(nome => (
-                    <SelectItem key={nome} value={nome}>{nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {modoPessoal ? (
+                <div className="h-10 px-3 flex items-center rounded-md border bg-slate-50 text-sm font-medium text-slate-700">
+                  {nomeTecnicoUsuario || 'Você'}
+                </div>
+              ) : (
+                <Select value={filtroTecnico} onValueChange={setFiltroTecnico}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os técnicos</SelectItem>
+                    {listaTecnicos.map(nome => (
+                      <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div>
               <Label className="text-xs">Produto/Serviço</Label>
@@ -421,7 +441,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           </div>
           {(filtroTecnico !== 'todos' || filtroProduto) && (
             <div className="flex gap-2 flex-wrap">
-              {filtroTecnico !== 'todos' && (
+              {!modoPessoal && filtroTecnico !== 'todos' && (
                 <Badge variant="outline" className="gap-1">
                   Técnico: {filtroTecnico}
                   <button onClick={() => setFiltroTecnico('todos')} className="ml-1 hover:text-red-600">×</button>
@@ -464,7 +484,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         </div>
       )}
 
-      {isAdmin && semTecnicoConcluidos.length > 0 && (
+      {podeEditarTecnicos && semTecnicoConcluidos.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
           ⚠️ <strong>{semTecnicoConcluidos.length} atendimento(s) CONCLUÍDOS sem técnico atribuído</strong> — R$ {valorSemTecnicoConcluido.toLocaleString('pt-BR', {minimumFractionDigits:2})} não estão sendo contabilizados na produção. Acesse esses atendimentos e atribua o técnico responsável para que o valor apareça aqui.
           {totalSemTecnico.length > semTecnicoConcluidos.length && (
@@ -573,7 +593,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
                               )}
                             </div>
                           </div>
-                          {isAdmin && srv.itemSource && (() => {
+                          {podeEditarTecnicos && srv.itemSource && (() => {
                             const srvKey = `${srv.atendimentoId}-${srv.itemSource}-${srv.itemIndex}-${srv.tecnicoId}`;
                             return (
                               <div className="mt-2 pt-2 border-t border-slate-200 flex items-center gap-2 flex-wrap">

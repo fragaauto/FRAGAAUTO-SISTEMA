@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { FileSpreadsheet, Calendar, CheckCircle, XCircle, DollarSign, FileText, Users, TrendingUp, Package, FileDown, Search, X } from 'lucide-react';
+import { FileSpreadsheet, Calendar, CheckCircle, XCircle, DollarSign, FileText, Users, TrendingUp, Package, FileDown, Search, X, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import RelatorioProdutos from '@/components/relatorios/RelatorioProdutos';
@@ -24,6 +24,15 @@ export default function Relatorios() {
   const { data: configs = [] } = useQuery({
     queryKey: ['configuracoes'],
     queryFn: () => base44.entities.Configuracao.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const [user, setUser] = useState(null);
+  useEffect(() => { base44.auth.me().then(setUser).catch(() => setUser(null)); }, []);
+  const { data: funcoes = [] } = useQuery({
+    queryKey: ['funcoes'],
+    queryFn: () => base44.entities.FuncaoFuncionario.list(),
+    enabled: !!user,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -175,7 +184,24 @@ export default function Relatorios() {
     });
   }, [atendimentos, periodo, dataEspecifica]);
 
+  const isAdmin = user?.role === 'admin';
+  const funcaoUsuario = user?.funcao_id ? funcoes.find(f => f.id === user.funcao_id) : null;
+  const podeVerRelatorioProprio = !!funcaoUsuario?.pode_ver_relatorio_proprio;
+  // Usuários comuns só veem seu próprio relatório de produção; admin vê tudo.
+  const verApenasProprio = !isAdmin && podeVerRelatorioProprio;
+
+  // Aguarda carregar o usuário antes de decidir permissões
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
   if (!paginaPermitida(modulosAtivos, 'Relatorios')) return <ModuloBloqueado nomeModulo="Relatórios" />;
+  // Não-admin sem permissão de ver próprio relatório não acessa relatórios
+  if (!isAdmin && !podeVerRelatorioProprio) return <ModuloBloqueado nomeModulo="Relatórios" />;
 
   const labelPeriodo = periodo === 'especifica'
     ? (dataEspecifica.from ? (dataEspecifica.to ? `${format(dataEspecifica.from, 'dd/MM/yyyy')} - ${format(dataEspecifica.to, 'dd/MM/yyyy')}` : format(dataEspecifica.from, 'dd/MM/yyyy')) : 'Data específica')
@@ -273,7 +299,8 @@ export default function Relatorios() {
         </div>
       </div>
 
-      {/* Painel de filtros adicionais */}
+      {/* Painel de filtros adicionais (oculto no modo pessoal) */}
+      {!verApenasProprio && (
       <div className="bg-slate-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex flex-wrap items-center gap-3">
@@ -315,8 +342,12 @@ export default function Relatorios() {
           </div>
         </div>
       </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 py-6">
+        {verApenasProprio ? (
+          <RelatorioTecnicos atendimentos={atendimentos} config={config} labelPeriodo={labelPeriodo} modoPessoal usuarioLogado={user} />
+        ) : (
         <Tabs defaultValue="geral">
           <TabsList className="mb-6">
             <TabsTrigger value="geral" className="flex items-center gap-2"><FileText className="w-4 h-4" />Geral</TabsTrigger>
@@ -386,6 +417,7 @@ export default function Relatorios() {
             <RelatorioTecnicos atendimentos={atendimentos} config={config} labelPeriodo={labelPeriodo} />
           </TabsContent>
         </Tabs>
+        )}
       </div>
     </div>
   );
