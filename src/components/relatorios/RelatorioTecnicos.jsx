@@ -300,15 +300,89 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     return Array.from(nomes).sort();
   }, [atendimentos]);
 
+  const filtrosBlock = (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Filter className="w-4 h-4" />
+          Filtros
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+          <div>
+            <Label className="text-xs">Data Início</Label>
+            <Input type="date" value={filtroDataInicio} onChange={e => setFiltroDataInicio(e.target.value)} className="h-9" />
+          </div>
+          <div>
+            <Label className="text-xs">Data Fim</Label>
+            <Input type="date" value={filtroDataFim} onChange={e => setFiltroDataFim(e.target.value)} className="h-9" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Técnico</Label>
+            {modoPessoal ? (
+              <div className="h-10 px-3 flex items-center rounded-md border bg-slate-50 text-sm font-medium text-slate-700">
+                {nomeTecnicoUsuario || 'Você'}
+              </div>
+            ) : (
+              <Select value={filtroTecnico} onValueChange={setFiltroTecnico}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os técnicos</SelectItem>
+                  {listaTecnicos.map(nome => (
+                    <SelectItem key={nome} value={nome}>{nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <div>
+            <Label className="text-xs">Produto/Serviço</Label>
+            <Input
+              placeholder="Buscar por nome do serviço..."
+              value={filtroProduto}
+              onChange={e => setFiltroProduto(e.target.value)}
+              className="h-10"
+            />
+          </div>
+        </div>
+        {(filtroTecnico !== 'todos' || filtroProduto) && (
+          <div className="flex gap-2 flex-wrap">
+            {!modoPessoal && filtroTecnico !== 'todos' && (
+              <Badge variant="outline" className="gap-1">
+                Técnico: {filtroTecnico}
+                <button onClick={() => setFiltroTecnico('todos')} className="ml-1 hover:text-red-600">×</button>
+              </Badge>
+            )}
+            {filtroProduto && (
+              <Badge variant="outline" className="gap-1">
+                Serviço: {filtroProduto}
+                <button onClick={() => setFiltroProduto('')} className="ml-1 hover:text-red-600">×</button>
+              </Badge>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   if (dadosTecnicos.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-16 text-center">
-          <Users className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-          <p className="text-slate-500">{foraDoPeriodoFixo ? 'Não há registros nesse período' : (modoPessoal ? 'Você ainda não tem atendimentos atribuídos no período selecionado' : 'Nenhum atendimento com técnico atribuído no período')}</p>
-          {!modoPessoal && !foraDoPeriodoFixo && <p className="text-sm text-slate-400 mt-1">Atribua técnicos nos atendimentos para ver a produção</p>}
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        {filtrosBlock}
+        <Card>
+          <CardContent className="py-16 text-center">
+            <Users className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+            <p className="text-slate-500">{foraDoPeriodoFixo ? 'Não há registros nesse período' : (modoPessoal ? 'Você ainda não tem atendimentos atribuídos no período selecionado' : 'Nenhum atendimento com técnico atribuído no período')}</p>
+            {!modoPessoal && !foraDoPeriodoFixo && <p className="text-sm text-slate-400 mt-1">Atribua técnicos nos atendimentos para ver a produção</p>}
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -405,75 +479,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
   return (
     <div className="space-y-6">
-      {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Filter className="w-4 h-4" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            <div>
-              <Label className="text-xs">Data Início</Label>
-              <Input type="date" value={filtroDataInicio} onChange={e => setFiltroDataInicio(e.target.value)} className="h-9" />
-            </div>
-            <div>
-              <Label className="text-xs">Data Fim</Label>
-              <Input type="date" value={filtroDataFim} onChange={e => setFiltroDataFim(e.target.value)} className="h-9" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Técnico</Label>
-              {modoPessoal ? (
-                <div className="h-10 px-3 flex items-center rounded-md border bg-slate-50 text-sm font-medium text-slate-700">
-                  {nomeTecnicoUsuario || 'Você'}
-                </div>
-              ) : (
-                <Select value={filtroTecnico} onValueChange={setFiltroTecnico}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os técnicos</SelectItem>
-                    {listaTecnicos.map(nome => (
-                      <SelectItem key={nome} value={nome}>{nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            <div>
-              <Label className="text-xs">Produto/Serviço</Label>
-              <Input
-                placeholder="Buscar por nome do serviço..."
-                value={filtroProduto}
-                onChange={e => setFiltroProduto(e.target.value)}
-                className="h-10"
-              />
-            </div>
-          </div>
-          {(filtroTecnico !== 'todos' || filtroProduto) && (
-            <div className="flex gap-2 flex-wrap">
-              {!modoPessoal && filtroTecnico !== 'todos' && (
-                <Badge variant="outline" className="gap-1">
-                  Técnico: {filtroTecnico}
-                  <button onClick={() => setFiltroTecnico('todos')} className="ml-1 hover:text-red-600">×</button>
-                </Badge>
-              )}
-              {filtroProduto && (
-                <Badge variant="outline" className="gap-1">
-                  Serviço: {filtroProduto}
-                  <button onClick={() => setFiltroProduto('')} className="ml-1 hover:text-red-600">×</button>
-                </Badge>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {filtrosBlock}
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
