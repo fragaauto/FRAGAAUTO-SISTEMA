@@ -44,11 +44,12 @@ export function filtrarItensMenu(items, { user, funcoes, modulosAtivos }) {
     // Se o sistema desativou este módulo, esconde
     if (modulosAtivos && modulosAtivos.length > 0 && !modulosAtivos.includes(item.modulo)) return false;
 
-    // Permissão: usuário sobrescreve a função
-    let modulosPermitidos = user?.modulos_liberados || [];
-    if (modulosPermitidos.length === 0 && funcao) {
-      modulosPermitidos = funcao.modulos_liberados || [];
-    }
+    // Permissão: a função define o baseline e o usuário pode receber módulos extras.
+    // O usuário sempre tem PELO MENOS os módulos da função (união), nunca menos.
+    let modulosPermitidos = [];
+    if (funcao) modulosPermitidos = funcao.modulos_liberados || [];
+    const userMods = user?.modulos_liberados || [];
+    modulosPermitidos = [...new Set([...modulosPermitidos, ...userMods])];
     // Sem permissão configurada → esconde (exceto essencial, já tratado acima)
     if (modulosPermitidos.length === 0) return false;
     return modulosPermitidos.includes(item.modulo);
