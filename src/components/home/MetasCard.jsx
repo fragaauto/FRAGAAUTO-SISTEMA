@@ -105,7 +105,12 @@ export default function MetasCard() {
 
   const agora = new Date();
   const faturadoDia = calcularFaturamento(lancamentos, startOfDay(agora), endOfDay(agora));
-  const faturadoSemana = calcularFaturamento(lancamentos, startOfWeek(agora, { weekStartsOn: 1 }), endOfWeek(agora, { weekStartsOn: 1 }));
+  const inicioSemana = startOfWeek(agora, { weekStartsOn: 1 });
+  const fimSemana = endOfWeek(agora, { weekStartsOn: 1 });
+  const inicioMes = startOfMonth(agora);
+  // Limita a semana aos dias dentro do mês corrente
+  const inicioSemanaNoMes = inicioSemana < inicioMes ? inicioMes : inicioSemana;
+  const faturadoSemana = calcularFaturamento(lancamentos, inicioSemanaNoMes, fimSemana);
   const faturadoMes = calcularFaturamento(lancamentos, startOfMonth(agora), endOfMonth(agora));
 
   return (
