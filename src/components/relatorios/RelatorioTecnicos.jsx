@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Award, FileSpreadsheet, FileDown, Filter, ChevronDown, ChevronUp, Eye, ArrowRightLeft, Trash2, Loader2 } from 'lucide-react';
+import { Users, Award, FileSpreadsheet, FileDown, Filter, ChevronDown, ChevronUp, Eye, ArrowRightLeft, Trash2, Loader2, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
@@ -15,15 +15,15 @@ import { queryClientInstance } from '@/lib/query-client';
 import { useQuery } from '@tanstack/react-query';
 import { useUnidade } from '@/lib/UnidadeContext';
 
-export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '', modoPessoal = false, usuarioLogado = null }) {
+export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '', modoPessoal = false, usuarioLogado = null, periodoFixo = null }) {
   const [filtroTecnico, setFiltroTecnico] = useState('todos');
   const [filtroProduto, setFiltroProduto] = useState('');
-  // Default: primeiro dia do mês atual até hoje
+  // Default: primeiro dia do mês atual até hoje, exceto quando há período fixo pré-configurado
   const hoje = new Date();
   const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10);
   const hojeStr = hoje.toISOString().slice(0, 10);
-  const [filtroDataInicio, setFiltroDataInicio] = useState(primeiroDiaMes);
-  const [filtroDataFim, setFiltroDataFim] = useState(hojeStr);
+  const [filtroDataInicio, setFiltroDataInicio] = useState(periodoFixo?.inicio || primeiroDiaMes);
+  const [filtroDataFim, setFiltroDataFim] = useState(periodoFixo?.fim || hojeStr);
   const [tecnicoExpandido, setTecnicoExpandido] = useState(null);
   const [incluirDetalhes, setIncluirDetalhes] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -401,13 +401,19 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div>
               <Label className="text-xs">Data Início</Label>
-              <Input type="date" value={filtroDataInicio} onChange={e => setFiltroDataInicio(e.target.value)} className="h-9" />
+              <Input type="date" value={filtroDataInicio} onChange={e => setFiltroDataInicio(e.target.value)} className="h-9" disabled={!!periodoFixo} />
             </div>
             <div>
               <Label className="text-xs">Data Fim</Label>
-              <Input type="date" value={filtroDataFim} onChange={e => setFiltroDataFim(e.target.value)} className="h-9" />
+              <Input type="date" value={filtroDataFim} onChange={e => setFiltroDataFim(e.target.value)} className="h-9" disabled={!!periodoFixo} />
             </div>
           </div>
+          {periodoFixo && (
+            <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+              <Lock className="w-3.5 h-3.5" />
+              Período fixo definido pelo administrador: {format(new Date(periodoFixo.inicio + 'T00:00:00'), 'dd/MM/yyyy')} a {format(new Date(periodoFixo.fim + 'T00:00:00'), 'dd/MM/yyyy')}
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Técnico</Label>

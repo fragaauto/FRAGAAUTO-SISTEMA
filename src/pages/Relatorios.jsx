@@ -190,6 +190,11 @@ export default function Relatorios() {
   // Usuários comuns só veem seu próprio relatório de produção; admin vê tudo.
   const verApenasProprio = !isAdmin && podeVerRelatorioProprio;
 
+  // Período fixo (pré-configurado) para visualização da produção individual
+  const periodoFixoConfig = (config.restringir_periodo_producao_proprio && verApenasProprio && config.periodo_producao_proprio_inicio)
+    ? { inicio: config.periodo_producao_proprio_inicio, fim: config.periodo_producao_proprio_fim || config.periodo_producao_proprio_inicio }
+    : null;
+
   // Aguarda carregar o usuário antes de decidir permissões
   if (!user) {
     return (
@@ -346,7 +351,7 @@ export default function Relatorios() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         {verApenasProprio ? (
-          <RelatorioTecnicos atendimentos={atendimentos} config={config} labelPeriodo={labelPeriodo} modoPessoal usuarioLogado={user} />
+          <RelatorioTecnicos atendimentos={atendimentos} config={config} labelPeriodo={labelPeriodo} modoPessoal usuarioLogado={user} periodoFixo={periodoFixoConfig} />
         ) : (
         <Tabs defaultValue="geral">
           <TabsList className="mb-6">

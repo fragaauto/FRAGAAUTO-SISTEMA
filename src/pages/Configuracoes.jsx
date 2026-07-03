@@ -58,6 +58,9 @@ const DEFAULT_FORM = {
   dias_validade_oferta: 7,
   oferta_padrao_remarketing: '',
   condicao_pagamento_remarketing: '',
+  restringir_periodo_producao_proprio: false,
+  periodo_producao_proprio_inicio: '',
+  periodo_producao_proprio_fim: '',
   lembrete_checklist_ativo: false,
   lembrete_checklist_intervalo: 30,
   lembrete_checklist_whatsapp: '',
@@ -241,7 +244,7 @@ export default function Configuracoes() {
         </TabsContent>
 
         <TabsContent value="metas">
-          <TabMetas />
+          <TabMetas {...commonProps} />
         </TabsContent>
       </Tabs>
     </div>

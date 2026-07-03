@@ -5,9 +5,10 @@ import { useUnidade } from '@/lib/UnidadeContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Target, Save, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Target, Save, Plus, Trash2, ChevronDown, ChevronUp, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Switch } from "@/components/ui/switch";
 
 const META_VAZIA = { nome: '', meta_dia: '', meta_semana: '', meta_mes: '' };
 
@@ -104,7 +105,7 @@ function MetaForm({ meta, idx, onChange, onDelete, onSave, isSaving }) {
   );
 }
 
-export default function TabMetas() {
+export default function TabMetas({ formData, onChange, onSave, isSaving }) {
   const { unidadeAtual } = useUnidade();
   const queryClient = useQueryClient();
 
@@ -187,6 +188,53 @@ export default function TabMetas() {
           Metas de faturamento — {unidadeAtual?.nome}
         </div>
         Crie até quantas metas quiser. Cada meta aparece como um card separado na tela inicial.
+      </div>
+
+      {/* Controle de período da produção individual */}
+      <div className="border border-slate-200 rounded-xl bg-white p-4 space-y-3">
+        <div className="flex items-center gap-2 font-semibold text-slate-800">
+          <Lock className="w-4 h-4 text-orange-500" />
+          Período de visualização da produção individual
+        </div>
+        <p className="text-sm text-slate-500">
+          Quando ativado, usuários comuns (com permissão de ver próprio relatório) só conseguem visualizar a produção dentro deste período fixo. Administradores não são afetados.
+        </p>
+        <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+          <div>
+            <Label className="font-medium">Restringir período da produção individual</Label>
+            <p className="text-xs text-slate-500">Trava o período visível para usuários comuns</p>
+          </div>
+          <Switch
+            checked={!!formData?.restringir_periodo_producao_proprio}
+            onCheckedChange={v => onChange('restringir_periodo_producao_proprio', v)}
+          />
+        </div>
+        {formData?.restringir_periodo_producao_proprio && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Data inicial</Label>
+              <Input
+                type="date"
+                value={formData?.periodo_producao_proprio_inicio || ''}
+                onChange={e => onChange('periodo_producao_proprio_inicio', e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Data final</Label>
+              <Input
+                type="date"
+                value={formData?.periodo_producao_proprio_fim || ''}
+                onChange={e => onChange('periodo_producao_proprio_fim', e.target.value)}
+              />
+            </div>
+          </div>
+        )}
+        <div className="flex justify-end pt-2 border-t">
+          <Button onClick={onSave} disabled={isSaving} className="bg-orange-500 hover:bg-orange-600 text-white gap-2 text-sm" size="sm">
+            <Save className="w-3.5 h-3.5" />
+            {isSaving ? 'Salvando...' : 'Salvar período'}
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
