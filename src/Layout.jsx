@@ -61,10 +61,22 @@ export default function Layout({ children, currentPageName }) {
   const [authLoading, setAuthLoading] = React.useState(true);
 
   React.useEffect(() => {
+    let mounted = true;
     base44.auth.me()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setAuthLoading(false));
+      .then(async (authUser) => {
+        if (!mounted) return;
+        // Busca o registro completo para garantir campos customizados (funcao_id, modulos_liberados, aprovado)
+        try {
+          const full = await base44.entities.User.filter({ id: authUser.id });
+          const merged = (full && full.length) ? { ...authUser, ...full[0] } : authUser;
+          if (mounted) setUser(merged);
+        } catch {
+          if (mounted) setUser(authUser);
+        }
+      })
+      .catch(() => mounted && setUser(null))
+      .finally(() => mounted && setAuthLoading(false));
+    return () => { mounted = false; };
   }, []);
 
   const { data: configs = [] } = useQuery({
@@ -136,22 +148,19 @@ export default function Layout({ children, currentPageName }) {
     // Itens sem módulo definido (exceto Home, já tratado) ficam ocultos
     if (!item.modulo) return false;
 
-    // Verifica se módulo está ativo no sistema
-    if (!modulosAtivos || modulosAtivos.length === 0) return true;
     const modulo = TODOS_MODULOS.find(m => m.id === item.modulo);
+    // Módulo essencial (atendimentos) sempre visível
     if (modulo?.essencial) return true;
-    if (!modulosAtivos.includes(item.modulo)) return false;
+    // Se o sistema desativou este módulo, esconde
+    if (modulosAtivos && modulosAtivos.length > 0 && !modulosAtivos.includes(item.modulo)) return false;
 
-    // Determina módulos permitidos: primeiro do usuário, depois da função
+    // Permissão: usuário sobrescreve a função
     let modulosPermitidos = user?.modulos_liberados || [];
-    
     if (modulosPermitidos.length === 0 && funcao) {
       modulosPermitidos = funcao.modulos_liberados || [];
     }
-
-    // Se não tem restrição nem na função nem no usuário, libera
-    if (modulosPermitidos.length === 0) return true;
-    
+    // Sem permissão configurada → esconde (exceto essencial, já tratado acima)
+    if (modulosPermitidos.length === 0) return false;
     return modulosPermitidos.includes(item.modulo);
   });
 
