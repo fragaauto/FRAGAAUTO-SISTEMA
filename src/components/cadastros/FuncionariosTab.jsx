@@ -44,7 +44,8 @@ export default function FuncionariosTab() {
 
   const [funcaoForm, setFuncaoForm] = useState({
     nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false,
-    pode_ver_dashboards: true, pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false,
+    pode_ver_dashboards: true, pode_ver_metas: true, pode_ver_agenda: true,
+    pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false,
     abas_atendimento: ['lista', 'novo'],
     abas_os: ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'],
     percentual_comissao: 0, meta_mensal: 0, regra_premiacao: ''
@@ -97,8 +98,8 @@ export default function FuncionariosTab() {
   });
 
   const openFuncaoModal = (f = null) => {
-    if (f) { setEditingFuncao(f); setFuncaoForm({ nome: f.nome, descricao: f.descricao || '', modulos_liberados: f.modulos_liberados || [], pode_ver_relatorio_proprio: f.pode_ver_relatorio_proprio || false, pode_ver_dashboards: f.pode_ver_dashboards !== false, pode_acessar_manual: f.pode_acessar_manual !== false, pode_acessar_configuracoes: f.pode_acessar_configuracoes || false, pode_acessar_usuarios: f.pode_acessar_usuarios || false, abas_atendimento: f.abas_atendimento || ['lista', 'novo'], abas_os: f.abas_os || ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'], percentual_comissao: f.percentual_comissao || 0, meta_mensal: f.meta_mensal || 0, regra_premiacao: f.regra_premiacao || '' }); }
-    else { setEditingFuncao(null); setFuncaoForm({ nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false, pode_ver_dashboards: true, pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false, abas_atendimento: ['lista', 'novo'], abas_os: ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'], percentual_comissao: 0, meta_mensal: 0, regra_premiacao: '' }); }
+    if (f) { setEditingFuncao(f); setFuncaoForm({ nome: f.nome, descricao: f.descricao || '', modulos_liberados: f.modulos_liberados || [], pode_ver_relatorio_proprio: f.pode_ver_relatorio_proprio || false, pode_ver_dashboards: f.pode_ver_dashboards !== false, pode_ver_metas: f.pode_ver_metas !== false, pode_ver_agenda: f.pode_ver_agenda !== false, pode_acessar_manual: f.pode_acessar_manual !== false, pode_acessar_configuracoes: f.pode_acessar_configuracoes || false, pode_acessar_usuarios: f.pode_acessar_usuarios || false, abas_atendimento: f.abas_atendimento || ['lista', 'novo'], abas_os: f.abas_os || ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'], percentual_comissao: f.percentual_comissao || 0, meta_mensal: f.meta_mensal || 0, regra_premiacao: f.regra_premiacao || '' }); }
+    else { setEditingFuncao(null); setFuncaoForm({ nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false, pode_ver_dashboards: true, pode_ver_metas: true, pode_ver_agenda: true, pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false, abas_atendimento: ['lista', 'novo'], abas_os: ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'], percentual_comissao: 0, meta_mensal: 0, regra_premiacao: '' }); }
     setShowFuncaoModal(true);
   };
   const closeFuncaoModal = () => { setShowFuncaoModal(false); setEditingFuncao(null); };
@@ -438,6 +439,20 @@ export default function FuncionariosTab() {
                   <p className="text-xs text-slate-500">Exibe estatísticas na página inicial</p>
                 </div>
                 <Switch checked={funcaoForm.pode_ver_dashboards} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_ver_dashboards: v }))} />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div>
+                  <Label>Pode ver card de Metas na Home</Label>
+                  <p className="text-xs text-slate-500">Exibe o card de Metas de Vendas na página inicial</p>
+                </div>
+                <Switch checked={funcaoForm.pode_ver_metas} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_ver_metas: v }))} />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div>
+                  <Label>Pode ver card de Agenda na Home</Label>
+                  <p className="text-xs text-slate-500">Exibe o card de Agenda do dia na página inicial</p>
+                </div>
+                <Switch checked={funcaoForm.pode_ver_agenda} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_ver_agenda: v }))} />
               </div>
               <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                 <div>

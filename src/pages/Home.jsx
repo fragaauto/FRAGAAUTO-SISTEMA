@@ -313,6 +313,11 @@ export default function Home() {
   );
   const featuresFiltrados = filtrarItensMenu(features, { user, funcoes, modulosAtivos });
 
+  const isAdminUser = user?.role === 'admin';
+  const funcaoUsuario = user?.funcao_id ? funcoes.find(f => f.id === user.funcao_id) : null;
+  const podeVerMetas = isAdminUser || (user?.pode_ver_metas !== undefined ? user.pode_ver_metas : funcaoUsuario?.pode_ver_metas !== false);
+  const podeVerAgenda = isAdminUser || (user?.pode_ver_agenda !== undefined ? user.pode_ver_agenda : funcaoUsuario?.pode_ver_agenda !== false);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50">
 
@@ -455,15 +460,17 @@ export default function Home() {
       </div>
 
       {/* Metas de Vendas */}
-      <MetasCard />
+      {podeVerMetas && <MetasCard />}
 
       {/* Rotina Diária do Dia */}
       <RotinaHojeCard />
 
       {/* Agenda */}
+      {podeVerAgenda && (
       <div className="max-w-6xl mx-auto px-4 pt-4 pb-2">
         <AgendaHoje />
       </div>
+      )}
 
       {/* Features Grid */}
       <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">

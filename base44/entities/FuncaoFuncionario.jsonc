@@ -26,6 +26,16 @@
       "default": true,
       "description": "Se pode ver a vis\u00e3o geral e dashboards na p\u00e1gina inicial"
     },
+    "pode_ver_metas": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se pode ver o card de Metas de Vendas na p\u00e1gina inicial"
+    },
+    "pode_ver_agenda": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se pode ver o card de Agenda do dia na p\u00e1gina inicial"
+    },
     "pode_acessar_manual": {
       "type": "boolean",
       "default": true,
