@@ -50,7 +50,8 @@ export default function FuncionariosTab() {
     pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false,
     abas_atendimento: ['lista', 'novo'],
     abas_os: ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'],
-    percentual_comissao: 0, meta_mensal: 0, regra_premiacao: ''
+    percentual_comissao: 0, meta_mensal: 0, regra_premiacao: '',
+    sujeito_a_restricao_horario: true
   });
 
   const { data: funcoes = [], isLoading: loadingFuncoes } = useQuery({
@@ -100,8 +101,8 @@ export default function FuncionariosTab() {
   });
 
   const openFuncaoModal = (f = null) => {
-    if (f) { setEditingFuncao(f); setFuncaoForm({ nome: f.nome, descricao: f.descricao || '', modulos_liberados: f.modulos_liberados || [], pode_ver_relatorio_proprio: f.pode_ver_relatorio_proprio || false, pode_ver_dashboards: f.pode_ver_dashboards !== false, pode_ver_metas: f.pode_ver_metas !== false, pode_ver_agenda: f.pode_ver_agenda !== false, pode_ver_menu_atendimentos: f.pode_ver_menu_atendimentos !== false, pode_ver_menu_novo_atendimento: f.pode_ver_menu_novo_atendimento !== false, pode_ver_bot_novo_atendimento: f.pode_ver_bot_novo_atendimento !== false, pode_ver_bot_atendimentos: f.pode_ver_bot_atendimentos !== false, pode_ver_bot_assistente_whatsapp: f.pode_ver_bot_assistente_whatsapp !== false, pode_acessar_manual: f.pode_acessar_manual !== false, pode_acessar_configuracoes: f.pode_acessar_configuracoes || false, pode_acessar_usuarios: f.pode_acessar_usuarios || false, abas_atendimento: f.abas_atendimento || ['lista', 'novo'], abas_os: f.abas_os || ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'], percentual_comissao: f.percentual_comissao || 0, meta_mensal: f.meta_mensal || 0, regra_premiacao: f.regra_premiacao || '' }); }
-    else { setEditingFuncao(null); setFuncaoForm({ nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false, pode_ver_dashboards: true, pode_ver_metas: true, pode_ver_agenda: true, pode_ver_menu_atendimentos: true, pode_ver_menu_novo_atendimento: true, pode_ver_bot_novo_atendimento: true, pode_ver_bot_atendimentos: true, pode_ver_bot_assistente_whatsapp: true, pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false, abas_atendimento: ['lista', 'novo'], abas_os: ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'], percentual_comissao: 0, meta_mensal: 0, regra_premiacao: '' }); }
+    if (f) { setEditingFuncao(f); setFuncaoForm({ nome: f.nome, descricao: f.descricao || '', modulos_liberados: f.modulos_liberados || [], pode_ver_relatorio_proprio: f.pode_ver_relatorio_proprio || false, pode_ver_dashboards: f.pode_ver_dashboards !== false, pode_ver_metas: f.pode_ver_metas !== false, pode_ver_agenda: f.pode_ver_agenda !== false, pode_ver_menu_atendimentos: f.pode_ver_menu_atendimentos !== false, pode_ver_menu_novo_atendimento: f.pode_ver_menu_novo_atendimento !== false, pode_ver_bot_novo_atendimento: f.pode_ver_bot_novo_atendimento !== false, pode_ver_bot_atendimentos: f.pode_ver_bot_atendimentos !== false, pode_ver_bot_assistente_whatsapp: f.pode_ver_bot_assistente_whatsapp !== false, pode_acessar_manual: f.pode_acessar_manual !== false, pode_acessar_configuracoes: f.pode_acessar_configuracoes || false, pode_acessar_usuarios: f.pode_acessar_usuarios || false, abas_atendimento: f.abas_atendimento || ['lista', 'novo'], abas_os: f.abas_os || ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'], percentual_comissao: f.percentual_comissao || 0, meta_mensal: f.meta_mensal || 0, regra_premiacao: f.regra_premiacao || '', sujeito_a_restricao_horario: f.sujeito_a_restricao_horario !== false }); }
+    else { setEditingFuncao(null); setFuncaoForm({ nome: '', descricao: '', modulos_liberados: [], pode_ver_relatorio_proprio: false, pode_ver_dashboards: true, pode_ver_metas: true, pode_ver_agenda: true, pode_ver_menu_atendimentos: true, pode_ver_menu_novo_atendimento: true, pode_ver_bot_novo_atendimento: true, pode_ver_bot_atendimentos: true, pode_ver_bot_assistente_whatsapp: true, pode_acessar_manual: true, pode_acessar_configuracoes: false, pode_acessar_usuarios: false, abas_atendimento: ['lista', 'novo'], abas_os: ['queixa', 'checklist', 'orcamento', 'autorizacao', 'pagamento'], percentual_comissao: 0, meta_mensal: 0, regra_premiacao: '', sujeito_a_restricao_horario: true }); }
     setShowFuncaoModal(true);
   };
   const closeFuncaoModal = () => { setShowFuncaoModal(false); setEditingFuncao(null); };
@@ -518,6 +519,13 @@ export default function FuncionariosTab() {
                   <p className="text-xs text-slate-500">Gerenciar usuários e permissões</p>
                 </div>
                 <Switch checked={funcaoForm.pode_acessar_usuarios} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_acessar_usuarios: v }))} />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                <div>
+                  <Label>Sujeito à restrição de horário de acesso</Label>
+                  <p className="text-xs text-slate-500">Se ativado, esta função só acessa o sistema nos horários permitidos (configurado em Configurações). Desative para isentar este cargo.</p>
+                </div>
+                <Switch checked={funcaoForm.sujeito_a_restricao_horario} onCheckedChange={v => setFuncaoForm(p => ({ ...p, sujeito_a_restricao_horario: v }))} />
               </div>
             </div>
             <div>

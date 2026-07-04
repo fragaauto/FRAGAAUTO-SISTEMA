@@ -122,9 +122,11 @@ export default function Layout({ children, currentPageName }) {
     return <AguardandoAprovacao user={user} />;
   }
 
-  // Restrição de horário de acesso (não se aplica a admins)
+  // Restrição de horário de acesso: aplicada apenas se a função do usuário estiver marcada como sujeita (admins sempre isentos)
   const configAcesso = configs[0];
-  if (user && user.role !== 'admin' && !isPaginaPublica && configAcesso?.restringir_horario_acesso) {
+  const funcaoUsuario = (funcoes || []).find(f => f.id === user?.funcao_id);
+  const isentoRestricaoHorario = user?.role === 'admin' || (funcaoUsuario && funcaoUsuario.sujeito_a_restricao_horario === false);
+  if (user && !isentoRestricaoHorario && !isPaginaPublica && configAcesso?.restringir_horario_acesso) {
     const agora = new Date();
     const dia = agora.getDay();
     const horarios = Array.isArray(configAcesso.horarios_acesso) ? configAcesso.horarios_acesso : [];
