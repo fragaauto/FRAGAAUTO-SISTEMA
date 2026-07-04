@@ -11,14 +11,11 @@ import { TODOS_MODULOS } from '@/components/modulos';
 export function filtrarItensMenu(items, { user, funcoes, modulosAtivos }) {
   if (!items) return [];
   return items.filter(item => {
-    // Admin tem acesso total
+    // Admin tem acesso total a todos os módulos (o gating por modulos_ativos
+    // aplica-se apenas a não-admins; admin sempre vê para poder gerenciar).
     if (user?.role === 'admin') {
       if (item.apenasAdmin) return true;
-      if (!item.modulo) return true;
-      const modulo = TODOS_MODULOS.find(m => m.id === item.modulo);
-      if (modulo?.essencial) return true;
-      if (!modulosAtivos || modulosAtivos.length === 0) return true;
-      return modulosAtivos.includes(item.modulo);
+      return true;
     }
 
     // Apenas admin pode acessar
