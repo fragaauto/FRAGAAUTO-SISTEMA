@@ -108,6 +108,28 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       setEditandoKey(null);
     }
   };
+
+  // Atualizar a data de execução de um item (admin)
+  const atualizarDataExecucao = async (srv, dataIso) => {
+    const srvKey = `${srv.atendimentoId}-${srv.itemSource}-${srv.itemIndex}-data`;
+    setEditandoKey(srvKey);
+    try {
+      const atendimento = atendimentos.find(a => a.id === srv.atendimentoId);
+      if (!atendimento) { toast.error('Atendimento não encontrado'); return; }
+      const campo = srv.itemSource === 'queixa' ? 'itens_queixa' : 'itens_orcamento';
+      const itens = JSON.parse(JSON.stringify(atendimento[campo] || []));
+      const item = itens[srv.itemIndex];
+      if (!item) { toast.error('Item não encontrado'); return; }
+      item.data_execucao = dataIso || null;
+      await base44.entities.Atendimento.update(srv.atendimentoId, { [campo]: itens });
+      await queryClientInstance.invalidateQueries({ queryKey: ['atendimentos'] });
+      toast.success('Data de execução salva');
+    } catch (e) {
+      toast.error('Erro: ' + (e.message || e));
+    } finally {
+      setEditandoKey(null);
+    }
+  };
   
   // Nota: O relatório captura os nomes dos técnicos diretamente dos atendimentos (a.tecnicos_responsaveis ou itens_*.tecnicos)
   // Não é necessário buscar listas de usuarios/funcionarios aqui, pois os dados já estão salvos no atendimento
@@ -226,6 +248,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
             atendimentoId: a.id, numeroOS: a.numero_os, placa: a.placa,
             cliente: a.cliente_nome, servico: 'Atendimento geral',
             valorTecnico: valorPorTec, data: a.data_entrada || a.created_date,
+            dataExecucao: a.data_entrada || a.created_date,
           });
         });
       } else {
@@ -254,6 +277,8 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
                 ? nomesTecnicosItem.filter(n => n !== tec.nome).join(', ')
                 : null,
               data: a.data_entrada || a.created_date,
+              dataExecucao: item.data_execucao || a.data_entrada || a.created_date,
+              dataExecucaoInput: item.data_execucao || '',
               itemSource: source,
               itemIndex: index,
               tecnicoId: tec.id || tec.nome,
@@ -407,7 +432,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       if (incluirDetalhes && t.servicos && t.servicos.length > 0) {
         linhas.push(';;OS;Placa;Cliente;Serviço;Qtd;Valor Técnico;Compartilhado;Data');
         t.servicos.forEach(srv => {
-          const dataFormatada = srv.data ? (() => { try { return format(new Date(srv.data), 'dd/MM/yyyy'); } catch { return ''; } })() : '';
+          const dataFormatada = srv.dataExecucao ? (() => { try { return format(new Date(srv.dataExecucao), 'dd/MM/yyyy'); } catch { return ''; } })() : '';
           linhas.push([
             '',
             '',
@@ -460,7 +485,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         
         t.servicos.forEach((srv, srvIdx) => {
           if (y > 275) { doc.addPage(); y = 14; }
-          const dataFormatada = srv.data ? (() => { try { return format(new Date(srv.data), 'dd/MM/yy'); } catch { return ''; } })() : '';
+          const dataFormatada = srv.dataExecucao ? (() => { try { return format(new Date(srv.dataExecucao), 'dd/MM/yy'); } catch { return ''; } })() : '';
           const compartilhado = srv.compartilhadoCom ? ` (c/ ${srv.compartilhadoCom.substring(0, 15)})` : '';
           const linha = `  OS#${srv.numeroOS || ''} ${srv.placa || ''} - ${(srv.servico || '').substring(0, 30)} ${srv.quantidade > 1 ? 'x'+srv.quantidade : ''} R$ ${(srv.valorTecnico || 0).toFixed(2)}${compartilhado}`;
           doc.text(linha, 16, y);
@@ -599,11 +624,11 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
                                   Compartilhado com: {srv.compartilhadoCom}
                                 </p>
                               )}
-                              {srv.data && (
+                              {srv.dataExecucao && (
                                 <p className="text-slate-400 mt-1">
-                                  {(() => {
+                                  Executado em: {(() => {
                                     try {
-                                      return format(new Date(srv.data), 'dd/MM/yyyy');
+                                      return format(new Date(srv.dataExecucao), 'dd/MM/yyyy');
                                     } catch {
                                       return '';
                                     }
@@ -625,6 +650,15 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
                             return (
                               <div className="mt-2 pt-2 border-t border-slate-200 flex items-center gap-2 flex-wrap">
                                 <span className="text-xs text-slate-600 font-medium">Técnico: {srv.tecnicoNome}</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-slate-500">Execução:</span>
+                                  <Input
+                                    type="date"
+                                    className="h-7 text-xs w-36"
+                                    value={srv.dataExecucaoInput || ''}
+                                    onChange={(e) => atualizarDataExecucao(srv, e.target.value)}
+                                  />
+                                </div>
                                 <Select onValueChange={(nome) => atualizarTecnicoItem(srv, nome)} disabled={editandoKey === srvKey}>
                                   <SelectTrigger className="h-7 text-xs w-44 gap-1">
                                     <ArrowRightLeft className="w-3 h-3" />

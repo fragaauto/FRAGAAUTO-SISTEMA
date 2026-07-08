@@ -162,6 +162,11 @@
                 }
               }
             }
+          },
+          "data_execucao": {
+            "type": "string",
+            "format": "date",
+            "description": "Data em que o servi\u00e7o foi executado"
           }
         }
       }
@@ -288,6 +293,11 @@
                 }
               }
             }
+          },
+          "data_execucao": {
+            "type": "string",
+            "format": "date",
+            "description": "Data em que o servi\u00e7o foi executado"
           }
         }
       }
