@@ -114,7 +114,8 @@ export default function Produtos() {
     estoque_minimo: 0,
     estoque_desejado: 0,
     localizacao_estoque: '',
-    fornecedores: []
+    fornecedores: [],
+    fotos: []
   });
 
   const { data: produtosBrutos = [], isLoading } = useQuery({
@@ -155,6 +156,14 @@ export default function Produtos() {
       return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
     });
   }, [produtosBrutos, unidadeAtual]);
+
+  const categoriaLabel = (c) => CATEGORIAS.find(x => x.value === c)?.label || c;
+
+  const categoriasFiltro = useMemo(() => {
+    const set = new Set();
+    produtos.forEach(p => { if (p.categoria) set.add(p.categoria); });
+    return Array.from(set).sort();
+  }, [produtos]);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Produto.create(data),
@@ -320,7 +329,8 @@ export default function Produtos() {
         estoque_minimo: produto.estoque_minimo ?? 0,
         estoque_desejado: produto.estoque_desejado ?? 0,
         localizacao_estoque: produto.localizacao_estoque || '',
-        fornecedores: produto.fornecedores || []
+        fornecedores: produto.fornecedores || [],
+        fotos: produto.fotos || []
       });
     } else {
       setEditingProduto(null);
@@ -339,7 +349,8 @@ export default function Produtos() {
         controla_estoque: false,
         estoque_atual: 0,
         estoque_minimo: 0,
-        estoque_desejado: 0
+        estoque_desejado: 0,
+        fotos: []
       });
     }
     setShowModal(true);
@@ -365,7 +376,8 @@ export default function Produtos() {
         estoque_minimo: 0,
         estoque_desejado: 0,
         localizacao_estoque: '',
-        fornecedores: []
+        fornecedores: [],
+        fotos: []
       });
       };
 
@@ -688,14 +700,8 @@ export default function Produtos() {
           }
           
           // Validações COM AVISO (permite importação)
-          const categoria = (values[categoriaIdx]?.trim() || 'outros').toLowerCase();
-          const categoriasValidas = CATEGORIAS.map(c => c.value);
-          
-          let categoriaFinal = categoria;
-          if (!categoriasValidas.includes(categoria)) {
-            avisos.push(`Categoria "${categoria}" não encontrada, será usado "outros"`);
-            categoriaFinal = 'outros';
-          }
+          const categoria = (values[categoriaIdx]?.trim() || 'outros');
+          const categoriaFinal = categoria;
           
           if (!values[descricaoIdx]?.trim()) {
             avisos.push('Sem descrição');
@@ -1182,8 +1188,8 @@ export default function Produtos() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas categorias</SelectItem>
-              {CATEGORIAS.map(cat => (
-                <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+              {categoriasFiltro.map(cat => (
+                <SelectItem key={cat} value={cat}>{categoriaLabel(cat)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -1358,7 +1364,7 @@ export default function Produtos() {
                          </div>
                          <div className="flex items-center gap-2 flex-wrap">
                           <Badge className={getCategoriaColor(produto.categoria)}>
-                            {produto.categoria}
+                            {categoriaLabel(produto.categoria)}
                           </Badge>
                           {produto.unidade && produto.unidade !== 'unidade' && (
                             <Badge variant="outline" className="text-xs">{produto.unidade}</Badge>

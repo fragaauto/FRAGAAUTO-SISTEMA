@@ -16,17 +16,7 @@
     },
     "categoria": {
       "type": "string",
-      "enum": [
-        "eletrica",
-        "portas",
-        "acessorios",
-        "estetica",
-        "seguranca",
-        "vidros",
-        "limpeza",
-        "outros"
-      ],
-      "description": "Categoria do produto"
+      "description": "Categoria do produto (texto livre \u2014 pode ser criada livremente)"
     },
     "unidade": {
       "type": "string",
@@ -64,6 +54,30 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "fotos": {
+      "type": "array",
+      "description": "Fotos do produto",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL p\u00fablica da foto"
+          },
+          "descricao": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o ou legenda da foto"
+          },
+          "data_upload": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usuario": {
+            "type": "string"
+          }
+        }
       }
     },
     "ativo": {

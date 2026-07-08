@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ImagePlus, X, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { toast } from "sonner";
 
 const CATEGORIAS = [
   { value: 'eletrica', label: 'Elétrica' },
@@ -26,6 +27,44 @@ export default function FormularioProduto({ formData, setFormData, atualizarMode
     queryFn: () => base44.entities.Fornecedor.list(),
     staleTime: 5 * 60 * 1000
   });
+
+  const { data: produtosLista = [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list('', 3000),
+    staleTime: 5 * 60 * 1000
+  });
+
+  const categoriasExistentes = useMemo(() => {
+    const set = new Set(CATEGORIAS.map(c => c.label));
+    (produtosLista || []).forEach(p => { if (p.categoria) set.add(p.categoria); });
+    return Array.from(set).sort();
+  }, [produtosLista]);
+
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+
+  const handleUploadFoto = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploadingFoto(true);
+    try {
+      const novas = [];
+      for (const file of files) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        novas.push({ url: file_url, descricao: '', data_upload: new Date().toISOString(), usuario: 'Sistema' });
+      }
+      setFormData({ ...formData, fotos: [...(formData.fotos || []), ...novas] });
+      toast.success(`${novas.length} foto(s) adicionada(s)`);
+    } catch (err) {
+      toast.error('Erro ao enviar foto: ' + (err.message || err));
+    } finally {
+      setUploadingFoto(false);
+      e.target.value = '';
+    }
+  };
+
+  const removerFoto = (idx) => {
+    setFormData({ ...formData, fotos: (formData.fotos || []).filter((_, i) => i !== idx) });
+  };
 
   const adicionarFornecedor = () => {
     setFormData({
@@ -86,19 +125,21 @@ export default function FormularioProduto({ formData, setFormData, atualizarMode
       </div>
       <div>
         <Label>Categoria *</Label>
-        <Select
-          value={formData.categoria}
-          onValueChange={(value) => setFormData({ ...formData, categoria: value })}
-        >
-          <SelectTrigger className="h-12">
-            <SelectValue placeholder="Selecione" />
-          </SelectTrigger>
-          <SelectContent>
-            {CATEGORIAS.map(cat => (
-              <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Input
+          list="lista-categorias-produto"
+          value={formData.categoria || ''}
+          onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+          placeholder="Selecione ou digite uma nova categoria"
+          className="h-12"
+        />
+        <datalist id="lista-categorias-produto">
+          {categoriasExistentes.map(cat => (
+            <option key={cat} value={cat} />
+          ))}
+        </datalist>
+        <p className="text-xs text-slate-500 mt-1">
+          Digite para criar uma nova categoria ou escolha uma existente.
+        </p>
       </div>
       <div>
         <Label>Unidade</Label>
@@ -141,6 +182,52 @@ export default function FormularioProduto({ formData, setFormData, atualizarMode
           placeholder="Observações sobre o produto..."
           className="min-h-[60px]"
         />
+      </div>
+
+      {/* Fotos do Produto */}
+      <div className="space-y-3 p-4 bg-slate-50 border rounded-lg">
+        <div className="flex items-center justify-between">
+          <Label className="font-semibold">Fotos do Produto</Label>
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleUploadFoto}
+              className="hidden"
+              id="upload-foto-produto"
+              disabled={uploadingFoto}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => document.getElementById('upload-foto-produto')?.click()}
+              disabled={uploadingFoto}
+            >
+              {uploadingFoto ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <ImagePlus className="w-3 h-3 mr-1" />}
+              Adicionar fotos
+            </Button>
+          </div>
+        </div>
+        {(formData.fotos?.length > 0) ? (
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {formData.fotos.map((foto, idx) => (
+              <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border">
+                <img src={foto.url} alt={foto.descricao || 'Foto'} className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removerFoto(idx)}
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-slate-500 text-center py-2">Nenhuma foto adicionada</p>
+        )}
       </div>
 
       {/* Localização e Fornecedores */}
