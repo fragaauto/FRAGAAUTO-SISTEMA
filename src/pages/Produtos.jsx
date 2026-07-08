@@ -97,6 +97,7 @@ export default function Produtos() {
   const [pendingImport, setPendingImport] = useState(null);
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [showAvisos, setShowAvisos] = useState(false);
+  const [fotoViewer, setFotoViewer] = useState({ fotos: [], index: 0 });
   const [formData, setFormData] = useState({
     codigo: '',
     nome: '',
@@ -1352,9 +1353,17 @@ export default function Produtos() {
                           className="w-4 h-4 cursor-pointer"
                           onClick={(e) => e.stopPropagation()}
                         />
-                        <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
-                          <Package className="w-6 h-6 text-slate-600" />
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => produto.fotos?.length && setFotoViewer({ fotos: produto.fotos, index: 0 })}
+                          className="w-12 h-12 bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center shrink-0"
+                        >
+                          {produto.fotos?.length > 0 ? (
+                            <img src={produto.fotos[0].url} alt={produto.nome} className="w-full h-full object-cover" />
+                          ) : (
+                            <Package className="w-6 h-6 text-slate-600" />
+                          )}
+                        </button>
                         <div>
                          <div className="flex items-center gap-2 mb-1">
                            <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
@@ -1823,6 +1832,22 @@ export default function Produtos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {fotoViewer.fotos.length > 0 && (
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4" onClick={() => setFotoViewer({ fotos: [], index: 0 })}>
+          <button className="absolute top-4 right-4 text-white text-3xl leading-none w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-full" onClick={(e) => { e.stopPropagation(); setFotoViewer({ fotos: [], index: 0 }); }}>×</button>
+          {fotoViewer.fotos.length > 1 && (
+            <>
+              <button className="absolute left-4 text-white text-4xl w-12 h-12 flex items-center justify-center hover:bg-white/10 rounded-full" onClick={(e) => { e.stopPropagation(); setFotoViewer(v => ({ ...v, index: (v.index - 1 + v.fotos.length) % v.fotos.length })); }}>‹</button>
+              <button className="absolute right-4 text-white text-4xl w-12 h-12 flex items-center justify-center hover:bg-white/10 rounded-full" onClick={(e) => { e.stopPropagation(); setFotoViewer(v => ({ ...v, index: (v.index + 1) % v.fotos.length })); }}>›</button>
+            </>
+          )}
+          <img src={fotoViewer.fotos[fotoViewer.index].url} alt="Foto do produto" className="max-w-full max-h-full object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
+          {fotoViewer.fotos.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm bg-black/40 px-3 py-1 rounded-full">{fotoViewer.index + 1} / {fotoViewer.fotos.length}</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
