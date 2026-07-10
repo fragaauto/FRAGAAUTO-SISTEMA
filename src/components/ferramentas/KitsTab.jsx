@@ -37,9 +37,9 @@ export default function KitsTab() {
   });
 
   const openNew = () => { setForm({ codigo: '', nome: '', ferramentas: [], responsavel_atual_id: '', responsavel_atual_nome: '', status: 'Disponível' }); setEditId(null); setModal(true); };
-  const openEdit = (k) => { setForm({ ...k, ferramentas: k.ferramentas || [] }); setEditId(k.id); setModal(true); };
+  const openEdit = (k) => { setForm({ ...k, ferramentas: (k.ferramentas || []).map((f, i) => ({ ...f, _uid: f._uid ?? (Date.now() + i + Math.random()) })) }); setEditId(k.id); setModal(true); };
   const duplicar = (k) => {
-    setForm({ codigo: k.codigo ? k.codigo + '-COPIA' : '', nome: k.nome + ' (Cópia)', ferramentas: k.ferramentas || [], responsavel_atual_id: '', responsavel_atual_nome: '', status: 'Disponível' });
+    setForm({ codigo: k.codigo ? k.codigo + '-COPIA' : '', nome: k.nome + ' (Cópia)', ferramentas: (k.ferramentas || []).map((f, i) => ({ ...f, _uid: f._uid ?? (Date.now() + i + Math.random()) })), responsavel_atual_id: '', responsavel_atual_nome: '', status: 'Disponível' });
     setEditId(null);
     setModal(true);
   };
