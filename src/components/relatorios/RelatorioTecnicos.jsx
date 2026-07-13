@@ -229,8 +229,11 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       if (tecnicosResponsaveis.length === 0) return;
 
       // Itens do atendimento com identificação de origem (para transferência entre técnicos)
+      // Evita duplicação: se um serviço existe na queixa e no orçamento, contabiliza apenas no orçamento (orçamento = orçamento final)
+      const nomesOrcamento = new Set((a.itens_orcamento || []).map(i => i.nome).filter(Boolean));
       const itensComSource = [
-        ...(a.itens_queixa || []).map((item, index) => ({ item, source: 'queixa', index })),
+        ...(a.itens_queixa || []).map((item, index) => ({ item, source: 'queixa', index }))
+          .filter(e => !(e.item.nome && nomesOrcamento.has(e.item.nome))),
         ...(a.itens_orcamento || []).map((item, index) => ({ item, source: 'orcamento', index })),
       ];
 
@@ -250,6 +253,22 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       // Fator líquido: aplica impostos e taxas de pagamento
       const fatorLiquido = (1 - totalImpostos / 100) * (1 - percTaxaPagamento / 100);
 
+      // Razão de pagamento: a produção só contabiliza o que efetivamente entrou no caixa
+      // (atendimentos não pagos não geram produção; pagamentos parciais são contabilizados proporcionalmente)
+      const valorFinalPago = Number(a.valor_final_pago) || 0;
+      const baseBrutaItens = itensComSource.length > 0
+        ? itensComSource.reduce((s, e) => s + (Number(e.item.valor_total) || 0), 0)
+        : valorBrutoAtendimento;
+      let razaoPagamento;
+      if (a.status_pagamento === 'pendente' || a.status_pagamento === 'rascunho' || !a.status_pagamento) {
+        razaoPagamento = 0;
+      } else if (valorFinalPago > 0 && baseBrutaItens > 0) {
+        razaoPagamento = Math.min(1, valorFinalPago / baseBrutaItens);
+      } else {
+        // Pago/parcial/faturado sem valor_final_pago registrado: considera completo
+        razaoPagamento = 1;
+      }
+
       // Acumulador por técnico para este atendimento
       const acumPorTecnico = {}; // key: nome do técnico
 
@@ -260,6 +279,9 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       // Retorno de serviço: deduz o valor dos serviços com garantia da produção dos técnicos originais
       if (a.retorno_servico) {
         const origem = a.atendimento_origem_id ? atendimentoById[a.atendimento_origem_id] : null;
+        // Só desconta a garantia se a OS de origem foi paga (teve produção contabilizada)
+        const origemFoiPago = origem && origem.status_pagamento && origem.status_pagamento !== 'pendente';
+        if (!origemFoiPago) return;
         let garantias = a.servicos_garantia || [];
         // Se nenhum serviço foi selecionado, deduz todos os serviços da OS de origem
         if (garantias.length === 0 && origem) {
@@ -307,8 +329,8 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       }
 
       if (itensComSource.length === 0) {
-        // Sem itens: atribui o valor_final dividido entre técnicos responsáveis
-        const valorPorTec = valorBrutoAtendimento / tecnicosResponsaveis.length;
+        // Sem itens: atribui o valor_final dividido entre técnicos responsáveis (limitado ao que foi pago)
+        const valorPorTec = (valorBrutoAtendimento * razaoPagamento) / tecnicosResponsaveis.length;
         tecnicosResponsaveis.forEach(t => {
           garantirTecnico(t.nome);
           acumPorTecnico[t.nome].valorBruto += valorPorTec;
@@ -326,7 +348,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           const temTecnicosItem = item.tecnicos?.length > 0;
           const tecnicosItem = temTecnicosItem ? item.tecnicos : tecnicosResponsaveis;
           const valorItem = Number(item.valor_total) || 0;
-          const valorPorTec = valorItem / tecnicosItem.length;
+          const valorPorTec = (valorItem * razaoPagamento) / tecnicosItem.length;
           const nomesTecnicosItem = tecnicosItem.map(t => t.nome);
 
           tecnicosItem.forEach(tec => {
@@ -339,7 +361,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
               cliente: a.cliente_nome,
               servico: item.nome,
               quantidade: item.quantidade || 1,
-              valorTotal: valorItem,
+              valorTotal: valorItem * razaoPagamento,
               valorTecnico: valorPorTec,
               compartilhadoCom: tecnicosItem.length > 1
                 ? nomesTecnicosItem.filter(n => n !== tec.nome).join(', ')
