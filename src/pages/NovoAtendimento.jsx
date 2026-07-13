@@ -75,6 +75,7 @@ export default function NovoAtendimento() {
     retorno_servico: false,
     atendimento_origem_id: '',
     atendimento_origem_numero: '',
+    servicos_garantia: [],
     cliente_nome: '',
     cliente_telefone: '',
     placa: '',
@@ -283,6 +284,32 @@ export default function NovoAtendimento() {
     toast.success(`Cliente ${cliente.nome} selecionado`);
   };
 
+  const origemAtendimento = formData.atendimento_origem_id
+    ? todosAtendimentos.find(a => a.id === formData.atendimento_origem_id) || null
+    : null;
+
+  const handleToggleServicoGarantia = (it, checked) => {
+    setFormData(prev => {
+      const key = it._key;
+      const exists = prev.servicos_garantia.some(s => s.key === key);
+      if (checked && !exists) {
+        return { ...prev, servicos_garantia: [...prev.servicos_garantia, {
+          key,
+          produto_id: it.produto_id || '',
+          nome: it.nome,
+          valor_total: Number(it.valor_total) || 0,
+          item_origem: it._source,
+          item_index: it._index,
+          tecnicos: it.tecnicos || [],
+        }] };
+      }
+      if (!checked && exists) {
+        return { ...prev, servicos_garantia: prev.servicos_garantia.filter(s => s.key !== key) };
+      }
+      return prev;
+    });
+  };
+
   const handleChecklistChange = (itemId, value) => {
     setFormData(prev => ({
       ...prev,
@@ -419,6 +446,7 @@ export default function NovoAtendimento() {
       retorno_servico: formData.retorno_servico || false,
       atendimento_origem_id: formData.atendimento_origem_id || '',
       atendimento_origem_numero: formData.atendimento_origem_numero || null,
+      servicos_garantia: formData.servicos_garantia || [],
       cliente_nome: formData.cliente_nome || '',
       cliente_telefone: formData.cliente_telefone || '',
       cliente_cpf: formData.cliente_cpf || '',
@@ -681,13 +709,15 @@ export default function NovoAtendimento() {
                 ativo={formData.retorno_servico}
                 onToggle={(checked) => {
                   if (!checked) {
-                    setFormData(prev => ({ ...prev, retorno_servico: false, atendimento_origem_id: '', atendimento_origem_numero: '' }));
+                    setFormData(prev => ({ ...prev, retorno_servico: false, atendimento_origem_id: '', atendimento_origem_numero: '', servicos_garantia: [] }));
                   } else {
                     handleInputChange('retorno_servico', true);
                   }
                 }}
                 atendimentos={todosAtendimentos}
-                origemNumero={formData.atendimento_origem_numero}
+                origem={origemAtendimento}
+                servicosGarantia={formData.servicos_garantia}
+                onToggleServico={handleToggleServicoGarantia}
                 onSelectOrigem={(a) => {
                   setClienteSelecionado(null);
                   setBuscaNome(a.cliente_nome || '');
@@ -696,6 +726,7 @@ export default function NovoAtendimento() {
                     retorno_servico: true,
                     atendimento_origem_id: a.id,
                     atendimento_origem_numero: a.numero_os,
+                    servicos_garantia: [],
                     cliente_nome: a.cliente_nome || prev.cliente_nome,
                     cliente_telefone: a.cliente_telefone || prev.cliente_telefone,
                     cliente_cpf: a.cliente_cpf || prev.cliente_cpf,

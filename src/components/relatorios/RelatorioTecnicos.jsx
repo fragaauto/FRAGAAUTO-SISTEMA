@@ -146,8 +146,6 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
   const atendimentosFiltradosPorData = useMemo(() => {
     // Sempre filtra por data — padrão é o mês atual
     return atendimentos.filter(a => {
-      // Retornos de serviço (garantia) não contabilizam produção para o técnico responsável
-      if (a.retorno_servico) return false;
       const dataAtendimento = new Date(a.data_entrada || a.created_date);
       // Período fixo pré-configurado: limite máximo de visualização (hard boundary)
       if (periodoFixo) {
@@ -183,7 +181,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
     const atendimentosFiltrados = atendimentosFiltradosPorData.filter(a => {
       if (!filtroProduto) return true;
-      const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
+      const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || []), ...(a.servicos_garantia || [])];
       return todosItens.some(item => item.nome?.toLowerCase().includes(filtroProduto.toLowerCase()));
     });
 
@@ -239,6 +237,45 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
       const garantirTecnico = (nome) => {
         if (!acumPorTecnico[nome]) acumPorTecnico[nome] = { valorBruto: 0, servicos: [] };
       };
+
+      // Retorno de serviço: deduz o valor dos serviços com garantia da produção dos técnicos originais
+      if (a.retorno_servico) {
+        const garantias = a.servicos_garantia || [];
+        garantias.forEach(g => {
+          const techs = (g.tecnicos || []).filter(t => t.nome);
+          if (techs.length === 0) return;
+          const valorGarantia = Number(g.valor_total) || 0;
+          const valorPorTec = valorGarantia / techs.length;
+          techs.forEach(tec => {
+            garantirTecnico(tec.nome);
+            acumPorTecnico[tec.nome].valorBruto -= valorPorTec;
+            acumPorTecnico[tec.nome].servicos.push({
+              atendimentoId: a.id,
+              numeroOS: a.numero_os,
+              placa: a.placa,
+              cliente: a.cliente_nome,
+              servico: `↩ Retorno/Garantia — ${g.nome || 'Serviço'} (OS origem #${a.atendimento_origem_numero || '?'})`,
+              quantidade: 1,
+              valorTotal: -valorGarantia,
+              valorTecnico: -valorPorTec,
+              data: a.data_entrada || a.created_date,
+              dataExecucao: a.data_entrada || a.created_date,
+              isGarantia: true,
+              tecnicoId: tec.id || tec.nome,
+              tecnicoNome: tec.nome,
+            });
+          });
+        });
+        Object.entries(acumPorTecnico).forEach(([nome, dados]) => {
+          if (!tecnicos[nome]) {
+            tecnicos[nome] = { nome, qtdAtendimentos: 0, valorBrutoTotal: 0, valorLiquidoTotal: 0, atendimentosConcluidos: 0, servicos: [] };
+          }
+          tecnicos[nome].valorBrutoTotal += dados.valorBruto;
+          tecnicos[nome].valorLiquidoTotal += dados.valorBruto * fatorLiquido;
+          tecnicos[nome].servicos.push(...dados.servicos);
+        });
+        return;
+      }
 
       if (itensComSource.length === 0) {
         // Sem itens: atribui o valor_final dividido entre técnicos responsáveis
@@ -322,6 +359,9 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         if (item.tecnicos?.length > 0) {
           item.tecnicos.forEach(tec => nomes.add(tec.nome));
         }
+      });
+      (a.servicos_garantia || []).forEach(g => {
+        (g.tecnicos || []).forEach(tec => { if (tec.nome) nomes.add(tec.nome); });
       });
     });
     return Array.from(nomes).sort();
@@ -416,6 +456,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
   const totalBruto = dadosTecnicos.reduce((sum, t) => sum + t.valorBrutoTotal, 0);
   const totalLiquido = dadosTecnicos.reduce((sum, t) => sum + t.valorLiquidoTotal, 0);
   const totalSemTecnico = atendimentosFiltradosPorData.filter(a => {
+    if (a.retorno_servico) return false;
     const t = a.tecnicos_responsaveis?.length > 0 ? a.tecnicos_responsaveis : (a.tecnico ? a.tecnico.split(',').map(n=>({nome:n.trim()})).filter(n=>n.nome) : []);
     if (t.length > 0) return false;
     // Verifica técnicos nos itens
