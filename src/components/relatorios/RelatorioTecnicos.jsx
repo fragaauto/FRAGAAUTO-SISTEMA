@@ -146,6 +146,8 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
   const atendimentosFiltradosPorData = useMemo(() => {
     // Sempre filtra por data — padrão é o mês atual
     return atendimentos.filter(a => {
+      // Retornos de serviço (garantia) não contabilizam produção para o técnico responsável
+      if (a.retorno_servico) return false;
       const dataAtendimento = new Date(a.data_entrada || a.created_date);
       // Período fixo pré-configurado: limite máximo de visualização (hard boundary)
       if (periodoFixo) {

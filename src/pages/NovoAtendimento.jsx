@@ -47,6 +47,7 @@ import ModalCadastroProduto from '../components/produtos/ModalCadastroProduto';
 import BuscarClienteModal from '../components/atendimento/BuscarClienteModal';
 import ModalCadastrarCliente from '../components/atendimento/ModalCadastrarCliente';
 import ChecklistAssistente from '../components/checklist/ChecklistAssistente';
+import RetornoServicoCard from '../components/atendimento/RetornoServicoCard';
 import { useUnidade } from '@/lib/UnidadeContext';
 
 export default function NovoAtendimento() {
@@ -71,6 +72,9 @@ export default function NovoAtendimento() {
   
   const [formData, setFormData] = useState({
     venda_direta: false,
+    retorno_servico: false,
+    atendimento_origem_id: '',
+    atendimento_origem_numero: '',
     cliente_nome: '',
     cliente_telefone: '',
     placa: '',
@@ -412,6 +416,9 @@ export default function NovoAtendimento() {
       unidade_id: unidadeAtual?.id || null,
       numero_os: novoNumeroOs,
       venda_direta: formData.venda_direta || false,
+      retorno_servico: formData.retorno_servico || false,
+      atendimento_origem_id: formData.atendimento_origem_id || '',
+      atendimento_origem_numero: formData.atendimento_origem_numero || null,
       cliente_nome: formData.cliente_nome || '',
       cliente_telefone: formData.cliente_telefone || '',
       cliente_cpf: formData.cliente_cpf || '',
@@ -668,6 +675,38 @@ export default function NovoAtendimento() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Retorno de Serviço */}
+              <RetornoServicoCard
+                ativo={formData.retorno_servico}
+                onToggle={(checked) => {
+                  if (!checked) {
+                    setFormData(prev => ({ ...prev, retorno_servico: false, atendimento_origem_id: '', atendimento_origem_numero: '' }));
+                  } else {
+                    handleInputChange('retorno_servico', true);
+                  }
+                }}
+                atendimentos={todosAtendimentos}
+                origemNumero={formData.atendimento_origem_numero}
+                onSelectOrigem={(a) => {
+                  setClienteSelecionado(null);
+                  setBuscaNome(a.cliente_nome || '');
+                  setFormData(prev => ({
+                    ...prev,
+                    retorno_servico: true,
+                    atendimento_origem_id: a.id,
+                    atendimento_origem_numero: a.numero_os,
+                    cliente_nome: a.cliente_nome || prev.cliente_nome,
+                    cliente_telefone: a.cliente_telefone || prev.cliente_telefone,
+                    cliente_cpf: a.cliente_cpf || prev.cliente_cpf,
+                    cliente_endereco: a.cliente_endereco || prev.cliente_endereco,
+                    placa: a.placa || prev.placa,
+                    modelo: a.modelo || prev.modelo,
+                    marca: a.marca || prev.marca,
+                    ano: a.ano || prev.ano,
+                  }));
+                }}
+              />
 
               {/* Vehicle */}
               {!formData.venda_direta && (
