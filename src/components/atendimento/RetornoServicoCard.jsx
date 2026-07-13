@@ -63,7 +63,7 @@ export default function RetornoServicoCard({
               Retorno de Serviço (Garantia)
             </label>
             <p className="text-xs text-slate-500 mt-1">
-              Marque quando este atendimento é um retorno/garantia. Selecione qual serviço da OS de origem deu garantia — seu valor será descontado da produção do técnico responsável.
+              Marque quando este atendimento é um retorno/garantia. Selecione qual serviço da OS de origem deu garantia — seu valor será descontado da produção do técnico responsável. Se não selecionar nenhum, o valor total da OS de origem será descontado.
             </p>
           </div>
         </div>

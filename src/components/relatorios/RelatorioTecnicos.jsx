@@ -59,6 +59,25 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     return map;
   }, [atendimentos, funcionarios]);
 
+  // Mapa de atendimentos por id (para resolver técnicos da OS de origem em retornos/garantia)
+  const atendimentoById = useMemo(() => {
+    const map = {};
+    atendimentos.forEach(a => { map[a.id] = a; });
+    return map;
+  }, [atendimentos]);
+
+  const resolverTechsOrigem = (a) => {
+    const origem = a.atendimento_origem_id ? atendimentoById[a.atendimento_origem_id] : null;
+    if (!origem) return [];
+    if ((origem.tecnicos_responsaveis || []).length > 0) {
+      return origem.tecnicos_responsaveis.map(t => ({ id: t.id || t.nome, nome: t.nome })).filter(t => t.nome);
+    }
+    if (origem.tecnico) {
+      return origem.tecnico.split(',').map(s => s.trim()).filter(s => s).map(s => ({ id: s, nome: s }));
+    }
+    return [];
+  };
+
   // Modo pessoal: identificar o técnico correspondente ao usuário logado e travar o filtro nele
   const nomeTecnicoUsuario = useMemo(() => {
     if (!modoPessoal || !usuarioLogado) return null;
@@ -240,9 +259,19 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
       // Retorno de serviço: deduz o valor dos serviços com garantia da produção dos técnicos originais
       if (a.retorno_servico) {
-        const garantias = a.servicos_garantia || [];
+        const origem = a.atendimento_origem_id ? atendimentoById[a.atendimento_origem_id] : null;
+        let garantias = a.servicos_garantia || [];
+        // Se nenhum serviço foi selecionado, deduz todos os serviços da OS de origem
+        if (garantias.length === 0 && origem) {
+          garantias = [
+            ...((origem.itens_queixa || []).map(it => ({ nome: it.nome, valor_total: it.valor_total, tecnicos: it.tecnicos || [] }))),
+            ...((origem.itens_orcamento || []).map(it => ({ nome: it.nome, valor_total: it.valor_total, tecnicos: it.tecnicos || [] }))),
+          ].filter(it => it.nome);
+        }
+        const origemTechs = resolverTechsOrigem(a);
         garantias.forEach(g => {
-          const techs = (g.tecnicos || []).filter(t => t.nome);
+          let techs = (g.tecnicos || []).filter(t => t.nome);
+          if (techs.length === 0) techs = origemTechs;
           if (techs.length === 0) return;
           const valorGarantia = Number(g.valor_total) || 0;
           const valorPorTec = valorGarantia / techs.length;
@@ -360,9 +389,15 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
           item.tecnicos.forEach(tec => nomes.add(tec.nome));
         }
       });
+      const origemTechsGarantia = a.retorno_servico ? resolverTechsOrigem(a) : [];
       (a.servicos_garantia || []).forEach(g => {
-        (g.tecnicos || []).forEach(tec => { if (tec.nome) nomes.add(tec.nome); });
+        let techs = (g.tecnicos || []).filter(t => t.nome);
+        if (techs.length === 0) techs = origemTechsGarantia;
+        techs.forEach(tec => { if (tec.nome) nomes.add(tec.nome); });
       });
+      if (a.retorno_servico && !(a.servicos_garantia || []).length) {
+        origemTechsGarantia.forEach(tec => { if (tec.nome) nomes.add(tec.nome); });
+      }
     });
     return Array.from(nomes).sort();
   }, [atendimentos]);
