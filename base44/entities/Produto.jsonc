@@ -31,7 +31,20 @@
     },
     "valor": {
       "type": "number",
-      "description": "Valor unit\u00e1rio de venda"
+      "description": "Valor unit\u00e1rio de venda (equivale ao m\u00ednimo da faixa quando usar_faixa_preco for true)"
+    },
+    "usar_faixa_preco": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se true, o servi\u00e7o utiliza faixa de pre\u00e7o (valor_minimo at\u00e9 valor_maximo) em vez de valor fixo"
+    },
+    "valor_minimo": {
+      "type": "number",
+      "description": "Valor m\u00ednimo da faixa de pre\u00e7o (servi\u00e7os com valor vari\u00e1vel conforme dificuldade)"
+    },
+    "valor_maximo": {
+      "type": "number",
+      "description": "Valor m\u00e1ximo da faixa de pre\u00e7o (servi\u00e7os com valor vari\u00e1vel conforme dificuldade)"
     },
     "custo": {
       "type": "number",

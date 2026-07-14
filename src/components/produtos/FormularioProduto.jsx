@@ -158,17 +158,58 @@ export default function FormularioProduto({ formData, setFormData, atualizarMode
           </SelectContent>
         </Select>
       </div>
-      <div>
-        <Label>Valor *</Label>
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          value={formData.valor}
-          onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-          placeholder="0.00"
-          className="h-12"
-        />
+      <div className="space-y-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="flex items-center gap-3">
+          <Checkbox
+            id="usar-faixa-preco"
+            checked={!!formData.usar_faixa_preco}
+            onCheckedChange={(checked) => setFormData({ ...formData, usar_faixa_preco: checked })}
+          />
+          <label htmlFor="usar-faixa-preco" className="font-medium cursor-pointer text-sm">
+            Usar faixa de preço (serviços com valor variável conforme dificuldade)
+          </label>
+        </div>
+        {formData.usar_faixa_preco ? (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Valor Mínimo (R$) *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.valor_minimo}
+                onChange={(e) => setFormData({ ...formData, valor_minimo: e.target.value })}
+                placeholder="0.00"
+                className="h-12"
+              />
+            </div>
+            <div>
+              <Label>Valor Máximo (R$) *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.valor_maximo}
+                onChange={(e) => setFormData({ ...formData, valor_maximo: e.target.value })}
+                placeholder="0.00"
+                className="h-12"
+              />
+            </div>
+          </div>
+        ) : (
+          <div>
+            <Label>Valor (R$) *</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.valor}
+              onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+              placeholder="0.00"
+              className="h-12"
+            />
+          </div>
+        )}
       </div>
       <div>
         <Label>Descrição</Label>

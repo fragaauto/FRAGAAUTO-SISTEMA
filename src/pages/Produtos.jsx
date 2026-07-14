@@ -104,6 +104,9 @@ export default function Produtos() {
     categoria: '',
     unidade: 'unidade',
     valor: '',
+    usar_faixa_preco: false,
+    valor_minimo: '',
+    valor_maximo: '',
     descricao: '',
     vantagens: '',
     desvantagens: '',
@@ -319,6 +322,9 @@ export default function Produtos() {
         categoria: produto.categoria,
         unidade: produto.unidade || 'unidade',
         valor: produto.valor,
+        usar_faixa_preco: produto.usar_faixa_preco || false,
+        valor_minimo: produto.valor_minimo ?? '',
+        valor_maximo: produto.valor_maximo ?? '',
         descricao: produto.descricao || '',
         vantagens: produto.vantagens || '',
         desvantagens: produto.desvantagens || '',
@@ -341,6 +347,9 @@ export default function Produtos() {
         categoria: '',
         unidade: 'unidade',
         valor: '',
+    usar_faixa_preco: false,
+    valor_minimo: '',
+    valor_maximo: '',
         descricao: '',
         vantagens: '',
         desvantagens: '',
@@ -366,6 +375,9 @@ export default function Produtos() {
         categoria: '',
         unidade: 'unidade',
         valor: '',
+    usar_faixa_preco: false,
+    valor_minimo: '',
+    valor_maximo: '',
         descricao: '',
         vantagens: '',
         desvantagens: '',
@@ -419,14 +431,31 @@ export default function Produtos() {
   };
 
   const handleSave = () => {
-    if (!formData.codigo || !formData.nome || !formData.categoria || !formData.valor) {
-      toast.error('Preencha todos os campos obrigatórios (código, nome, categoria, valor)');
+    if (!formData.codigo || !formData.nome || !formData.categoria) {
+      toast.error('Preencha todos os campos obrigatórios (código, nome, categoria)');
+      return;
+    }
+    if (formData.usar_faixa_preco) {
+      const min = parseFloat(formData.valor_minimo);
+      const max = parseFloat(formData.valor_maximo);
+      if (!min || !max || min <= 0 || max <= 0) {
+        toast.error('Informe o valor mínimo e o máximo da faixa de preço');
+        return;
+      }
+      if (min > max) {
+        toast.error('O valor mínimo não pode ser maior que o máximo');
+        return;
+      }
+    } else if (!formData.valor) {
+      toast.error('Informe o valor do produto');
       return;
     }
 
     const data = {
       ...formData,
-      valor: parseFloat(formData.valor),
+      valor: formData.usar_faixa_preco ? parseFloat(formData.valor_minimo) : parseFloat(formData.valor),
+      valor_minimo: formData.usar_faixa_preco ? parseFloat(formData.valor_minimo) : null,
+      valor_maximo: formData.usar_faixa_preco ? parseFloat(formData.valor_maximo) : null,
       ...(!editingProduto && { unidade_id: unidadeAtual?.id || null })
     };
 
@@ -1392,7 +1421,11 @@ export default function Produtos() {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          {listaAtiva ? (
+                          {produto.usar_faixa_preco ? (
+                            <p className="font-bold text-green-600 text-lg">
+                              R$ {(produto.valor_minimo || 0).toFixed(2)} – R$ {(produto.valor_maximo || 0).toFixed(2)}
+                            </p>
+                          ) : listaAtiva ? (
                             <>
                               <p className="font-bold text-orange-600 text-lg">
                                 R$ {getPrecoLista(produto).toFixed(2)}

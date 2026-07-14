@@ -33,8 +33,8 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
       codigo_produto: produto.codigo || '',
       nome: produto.nome,
       quantidade: 1,
-      valor_unitario: Number(produto.valor) || 0,
-      valor_total: Number(produto.valor) || 0,
+      valor_unitario: Number(produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor) || 0,
+      valor_total: Number(produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor) || 0,
       vantagens: produto.vantagens || '',
       desvantagens: produto.desvantagens || '',
       status_aprovacao: 'pendente',
@@ -127,7 +127,11 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
                       {p.codigo && <span className="text-slate-400 mr-1">{p.codigo} -</span>}
                       {p.nome}
                     </span>
-                    <span className="text-green-700 font-semibold text-xs ml-2 whitespace-nowrap">R$ {p.valor?.toFixed(2)}</span>
+                    <span className="text-green-700 font-semibold text-xs ml-2 whitespace-nowrap">
+                      {p.usar_faixa_preco
+                        ? `R$ ${(p.valor_minimo || 0).toFixed(2)} – R$ ${(p.valor_maximo || 0).toFixed(2)}`
+                        : `R$ ${p.valor?.toFixed(2)}`}
+                    </span>
                   </button>
                 ))}
               </div>
