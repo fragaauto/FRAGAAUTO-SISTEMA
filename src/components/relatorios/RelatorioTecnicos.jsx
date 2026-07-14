@@ -93,32 +93,21 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
   const podeEditarTecnicos = isAdmin && !modoPessoal;
 
   // Transferir ou remover atribuição de técnico em um item (admin)
+  // Transferir ou remover técnico de um item (admin) — via função backend (service-role)
   const atualizarTecnicoItem = async (srv, acao) => {
     const srvKey = `${srv.atendimentoId}-${srv.itemSource}-${srv.itemIndex}-${srv.tecnicoId}`;
     setEditandoKey(srvKey);
     try {
-      const atendimento = atendimentos.find(a => a.id === srv.atendimentoId);
-      if (!atendimento) { toast.error('Atendimento não encontrado'); return; }
-      const campo = srv.itemSource === 'queixa' ? 'itens_queixa' : 'itens_orcamento';
-      const itens = JSON.parse(JSON.stringify(atendimento[campo] || []));
-      const item = itens[srv.itemIndex];
-      if (!item) { toast.error('Item não encontrado'); return; }
-      // Se o item não tinha técnicos próprios (veio do fallback do atendimento), materializa
-      if (!item.tecnicos || item.tecnicos.length === 0) {
-        item.tecnicos = (atendimento.tecnicos_responsaveis || []).map(t => ({ id: t.id || t.nome, nome: t.nome }));
-        if (item.tecnicos.length === 0 && atendimento.tecnico) {
-          item.tecnicos = atendimento.tecnico.split(',').map(s => s.trim()).filter(s => s).map(s => ({ id: s, nome: s }));
-        }
-      }
-      if (acao === '__remover__') {
-        item.tecnicos = item.tecnicos.filter(t => (t.id || t.nome) !== srv.tecnicoId);
-      } else {
-        const novoId = tecnicosComId[acao] || acao;
-        item.tecnicos = item.tecnicos.map(t =>
-          (t.id || t.nome) === srv.tecnicoId ? { id: novoId, nome: acao } : t
-        );
-      }
-      await base44.entities.Atendimento.update(srv.atendimentoId, { [campo]: itens });
+      const operacao = acao === '__remover__' ? 'remover' : 'transferir';
+      const res = await base44.functions.invoke('atualizarItemTecnicoOS', {
+        atendimentoId: srv.atendimentoId,
+        itemSource: srv.itemSource,
+        itemIndex: srv.itemIndex,
+        operacao,
+        tecnicoId: srv.tecnicoId,
+        novoNome: operacao === 'transferir' ? acao : undefined
+      });
+      if (res?.data?.error) throw new Error(res.data.error);
       await queryClientInstance.invalidateQueries({ queryKey: ['atendimentos'] });
       toast.success(acao === '__remover__' ? 'Atribuição removida' : 'Técnico transferido');
     } catch (e) {
@@ -128,19 +117,19 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     }
   };
 
-  // Atualizar a data de execução de um item (admin)
+  // Atualizar a data de execução de um item (admin) — via função backend (service-role)
   const atualizarDataExecucao = async (srv, dataIso) => {
     const srvKey = `${srv.atendimentoId}-${srv.itemSource}-${srv.itemIndex}-data`;
     setEditandoKey(srvKey);
     try {
-      const atendimento = atendimentos.find(a => a.id === srv.atendimentoId);
-      if (!atendimento) { toast.error('Atendimento não encontrado'); return; }
-      const campo = srv.itemSource === 'queixa' ? 'itens_queixa' : 'itens_orcamento';
-      const itens = JSON.parse(JSON.stringify(atendimento[campo] || []));
-      const item = itens[srv.itemIndex];
-      if (!item) { toast.error('Item não encontrado'); return; }
-      item.data_execucao = dataIso || null;
-      await base44.entities.Atendimento.update(srv.atendimentoId, { [campo]: itens });
+      const res = await base44.functions.invoke('atualizarItemTecnicoOS', {
+        atendimentoId: srv.atendimentoId,
+        itemSource: srv.itemSource,
+        itemIndex: srv.itemIndex,
+        operacao: 'data_execucao',
+        dataExecucao: dataIso || null
+      });
+      if (res?.data?.error) throw new Error(res.data.error);
       await queryClientInstance.invalidateQueries({ queryKey: ['atendimentos'] });
       toast.success('Data de execução salva');
     } catch (e) {
