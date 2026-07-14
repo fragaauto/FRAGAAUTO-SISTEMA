@@ -681,7 +681,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-slate-800">R$ {tecnico.valorLiquidoTotal.toFixed(2)}</p>
-                      <p className="text-xs text-slate-400">Bruto: R$ {tecnico.valorBrutoTotal.toFixed(2)}</p>
+                      {isAdmin && <p className="text-xs text-slate-400">Bruto: R$ {tecnico.valorBrutoTotal.toFixed(2)}</p>}
                     </div>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-2">
