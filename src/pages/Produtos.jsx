@@ -613,10 +613,14 @@ export default function Produtos() {
       const descricaoIdx = getHeaderIndex(['descricao', 'descrição', 'description', 'obs', 'observacao', 'observação']);
       const vantagensIdx = getHeaderIndex(['vantagens', 'beneficios', 'benefícios', 'vantagens_de_fazer', 'vantagens_fazer']);
       const desvantagensIdx = getHeaderIndex(['desvantagens', 'riscos', 'desvantagens_nao_fazer', 'desvantagens_de_nao_fazer']);
+      const usarFaixaIdx = getHeaderIndex(['usar_faixa_preco', 'usar_faixa', 'faixa_preco', 'faixa']);
+      const valorMinIdx = getHeaderIndex(['valor_minimo', 'valor_min', 'preco_minimo', 'preço_minimo', 'minimo']);
+      const valorMaxIdx = getHeaderIndex(['valor_maximo', 'valor_max', 'preco_maximo', 'preço_maximo', 'maximo']);
 
       // Validação de colunas obrigatórias
-      if (codigoIdx === -1 || nomeIdx === -1 || valorIdx === -1) {
-        toast.error('❌ Arquivo inválido: colunas obrigatórias "codigo", "nome" e "valor" não encontradas');
+      const temFaixaCols = valorMinIdx !== -1 && valorMaxIdx !== -1;
+      if (codigoIdx === -1 || nomeIdx === -1 || (valorIdx === -1 && !temFaixaCols)) {
+        toast.error('❌ Arquivo inválido: colunas obrigatórias "codigo", "nome" e "valor" (ou "valor_minimo"/"valor_maximo") não encontradas');
         console.error('Headers esperados:', ['codigo', 'nome', 'valor']);
         console.error('Headers encontrados:', rawHeaders);
         return null;
@@ -717,16 +721,50 @@ export default function Produtos() {
             continue;
           }
           
-          const valor = parseFloat(valorStr?.replace(',', '.'));
-          if (!valor || valor <= 0) {
-            errosCriticos.push({ 
-              linha: lineNumber, 
-              codigo, 
-              nome,
-              erro: `Valor inválido: "${valorStr}"`,
-              motivo: 'O valor deve ser um número maior que zero (ex: 150.00 ou 89,90)'
-            });
-            continue;
+          const usarFaixaRaw = (usarFaixaIdx !== -1 ? (values[usarFaixaIdx] || '') : '').trim().toLowerCase();
+          const usarFaixa = ['sim', 'yes', 'true', '1', 'x'].includes(usarFaixaRaw);
+          const valorMinParse = valorMinIdx !== -1 ? parseFloat((values[valorMinIdx] || '').toString().replace(',', '.')) : NaN;
+          const valorMaxParse = valorMaxIdx !== -1 ? parseFloat((values[valorMaxIdx] || '').toString().replace(',', '.')) : NaN;
+
+          let valor;
+          let valorMinimoFinal = null;
+          let valorMaximoFinal = null;
+          if (usarFaixa) {
+            if (!valorMinParse || valorMinParse <= 0 || !valorMaxParse || valorMaxParse <= 0) {
+              errosCriticos.push({
+                linha: lineNumber,
+                codigo,
+                nome,
+                erro: 'Faixa de preço incompleta',
+                motivo: 'Quando usar_faixa_preco=sim, informe valor_minimo e valor_maximo maiores que zero'
+              });
+              continue;
+            }
+            if (valorMinParse > valorMaxParse) {
+              errosCriticos.push({
+                linha: lineNumber,
+                codigo,
+                nome,
+                erro: 'Faixa de preço inválida',
+                motivo: 'valor_minimo não pode ser maior que valor_maximo'
+              });
+              continue;
+            }
+            valor = valorMinParse;
+            valorMinimoFinal = valorMinParse;
+            valorMaximoFinal = valorMaxParse;
+          } else {
+            valor = parseFloat(valorStr?.replace(',', '.'));
+            if (!valor || valor <= 0) {
+              errosCriticos.push({
+                linha: lineNumber,
+                codigo,
+                nome,
+                erro: `Valor inválido: "${valorStr}"`,
+                motivo: 'O valor deve ser um número maior que zero (ex: 150.00 ou 89,90)'
+              });
+              continue;
+            }
           }
           
           // Validações COM AVISO (permite importação)
@@ -771,6 +809,9 @@ export default function Produtos() {
             categoria: categoriaFinal,
             unidade: unidadeFinal,
             valor,
+            usar_faixa_preco: usarFaixa,
+            valor_minimo: valorMinimoFinal,
+            valor_maximo: valorMaximoFinal,
             custo,
             controla_estoque: controlaEstoque,
             estoque_atual: estoqueAtual,
@@ -887,6 +928,9 @@ export default function Produtos() {
           nome: nomeIdx !== -1 ? rawHeaders[nomeIdx] : null,
           categoria: categoriaIdx !== -1 ? rawHeaders[categoriaIdx] : null,
           valor: valorIdx !== -1 ? rawHeaders[valorIdx] : null,
+          usar_faixa_preco: usarFaixaIdx !== -1 ? rawHeaders[usarFaixaIdx] : null,
+          valor_minimo: valorMinIdx !== -1 ? rawHeaders[valorMinIdx] : null,
+          valor_maximo: valorMaxIdx !== -1 ? rawHeaders[valorMaxIdx] : null,
           descricao: descricaoIdx !== -1 ? rawHeaders[descricaoIdx] : null,
           vantagens: vantagensIdx !== -1 ? rawHeaders[vantagensIdx] : null,
           desvantagens: desvantagensIdx !== -1 ? rawHeaders[desvantagensIdx] : null
@@ -1081,16 +1125,17 @@ export default function Produtos() {
 
   const downloadTemplate = () => {
     const wb = XLSX.utils.book_new();
-    const headers = ['codigo', 'nome', 'categoria', 'unidade', 'valor', 'custo', 'controla_estoque', 'estoque_atual', 'estoque_minimo', 'localizacao_estoque', 'fornecedor', 'codigo_fornecedor', 'descricao', 'vantagens', 'desvantagens'];
+    const headers = ['codigo', 'nome', 'categoria', 'unidade', 'valor', 'usar_faixa_preco', 'valor_minimo', 'valor_maximo', 'custo', 'controla_estoque', 'estoque_atual', 'estoque_minimo', 'localizacao_estoque', 'fornecedor', 'codigo_fornecedor', 'descricao', 'vantagens', 'desvantagens'];
     const rows = [
-      ['P001', 'Troca de motor de vidro elétrico', 'eletrica', 'unidade', 150.00, 80.00, 'sim', 5, 2, 'Prateleira A3', 'Auto Peças Silva', 'MVE-2024', 'Serviço completo de substituição', 'Restaura o funcionamento completo do vidro', 'Vidro pode travar aberto ou fechado'],
-      ['P002', 'Regulagem de fechadura', 'portas', 'unidade', 89.90, 0, 'não', 0, 0, '', '', '', 'Ajuste e lubrificação', 'Melhora o fechamento da porta', 'Porta pode não fechar corretamente'],
-      ['P003', 'Kit película solar completo', 'estetica', 'kit', 350.00, 120.00, 'sim', 10, 3, 'Gaveta 5', 'Películas Center', 'KIT-SOLAR-PRO', 'Proteção UV e privacidade', 'Reduz calor e protege o interior', 'Exposição prolongada danifica bancos e painel'],
-      ['P004', 'Par de maçanetas externas', 'portas', 'par', 120.00, 60.00, 'sim', 8, 2, 'Estante B2', 'Importados BR', 'MAC-EXT-2024', 'Reposição de peças originais', 'Melhora estética e funcionalidade', 'Maçaneta quebrada impede abertura da porta'],
+      ['P001', 'Troca de motor de vidro elétrico', 'eletrica', 'unidade', 150.00, 'nao', '', '', 80.00, 'sim', 5, 2, 'Prateleira A3', 'Auto Peças Silva', 'MVE-2024', 'Serviço completo de substituição', 'Restaura o funcionamento completo do vidro', 'Vidro pode travar aberto ou fechado'],
+      ['P002', 'Regulagem de fechadura', 'portas', 'unidade', 89.90, 'nao', '', '', 0, 'não', 0, 0, '', '', '', 'Ajuste e lubrificação', 'Melhora o fechamento da porta', 'Porta pode não fechar corretamente'],
+      ['P003', 'Kit película solar completo', 'estetica', 'kit', 350.00, 'nao', '', '', 120.00, 'sim', 10, 3, 'Gaveta 5', 'Películas Center', 'KIT-SOLAR-PRO', 'Proteção UV e privacidade', 'Reduz calor e protege o interior', 'Exposição prolongada danifica bancos e painel'],
+      ['P004', 'Par de maçanetas externas', 'portas', 'par', 120.00, 'nao', '', '', 60.00, 'sim', 8, 2, 'Estante B2', 'Importados BR', 'MAC-EXT-2024', 'Reposição de peças originais', 'Melhora estética e funcionalidade', 'Maçaneta quebrada impede abertura da porta'],
+      ['P005', 'Reparo de motor de porta (conforme dificuldade)', 'portas', 'unidade', 80.00, 'sim', 80.00, 250.00, 0, 'não', 0, 0, '', '', '', 'Reparo interno do motor/maçaneta', 'Restaura o funcionamento da porta', 'Porta pode parar de abrir/fechar'],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     // Largura das colunas
-    ws['!cols'] = headers.map((h, i) => ({ wch: [8, 40, 12, 10, 8, 8, 16, 14, 15, 20, 25, 20, 35, 50, 50][i] || 20 }));
+    ws['!cols'] = headers.map((h, i) => ({ wch: [8, 40, 12, 10, 8, 14, 12, 12, 8, 16, 14, 15, 20, 25, 20, 35, 50, 50][i] || 20 }));
     XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
     // Aba de instruções
     const wsInfo = XLSX.utils.aoa_to_sheet([
@@ -1101,7 +1146,10 @@ export default function Produtos() {
       ['nome', 'Sim', 'Texto livre', 'Motor de vidro elétrico'],
       ['categoria', 'Sim', 'eletrica | portas | acessorios | estetica | seguranca | vidros | limpeza | outros', 'eletrica'],
       ['unidade', 'Não', 'unidade | par | jogo | kit', 'unidade'],
-      ['valor', 'Sim', 'Número (preço de venda)', '150.00'],
+      ['valor', 'Sim (se não usar faixa)', 'Número (preço de venda fixo)', '150.00'],
+      ['usar_faixa_preco', 'Não', 'sim | não (default não). Quando sim, usa valor_minimo e valor_maximo', 'sim'],
+      ['valor_minimo', 'Sim se usar_faixa_preco=sim', 'Número (menor preço da faixa)', '80.00'],
+      ['valor_maximo', 'Sim se usar_faixa_preco=sim', 'Número (maior preço da faixa)', '250.00'],
       ['custo', 'Não', 'Número (custo de compra)', '80.00'],
       ['controla_estoque', 'Não', 'sim | não', 'sim'],
       ['estoque_atual', 'Não', 'Número inteiro', '5'],
