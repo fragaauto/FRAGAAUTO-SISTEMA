@@ -492,14 +492,13 @@ export default function Produtos() {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           
-          // Converter para CSV mantendo UTF-8
-          const csvText = XLSX.utils.sheet_to_csv(worksheet, { 
-            FS: ';', 
-            RS: '\n',
-            blankrows: false // Ignorar linhas vazias
+          // Ler direto como matriz de células (preserva quebras de linha dentro das células)
+          const rows = XLSX.utils.sheet_to_json(worksheet, {
+            header: 1,
+            defval: '',
+            blankrows: false
           });
-          
-          lines = csvText.split('\n').filter(line => line.trim());
+          lines = rows.filter(r => Array.isArray(r) && r.some(c => c != null && String(c).trim() !== ''));
           console.log(`✅ Excel processado: ${lines.length} linhas`);
         } catch (excelError) {
           console.error('❌ Erro ao processar Excel:', excelError);
@@ -537,6 +536,9 @@ export default function Produtos() {
       // Parser CSV robusto que respeita aspas e vírgulas dentro de campos
       // CRÍTICO: Preservar UTF-8 - não fazer nenhuma conversão de encoding
       const parseCSVLine = (line) => {
+        if (Array.isArray(line)) {
+          return line.map(c => c == null ? '' : String(c));
+        }
         const result = [];
         let current = '';
         let inQuotes = false;
