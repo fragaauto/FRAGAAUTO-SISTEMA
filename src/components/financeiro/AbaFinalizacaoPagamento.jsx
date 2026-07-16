@@ -67,22 +67,15 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     return p?.taxa_percentual || 0;
   };
 
-  // Buscar técnicos: usuários com login + funcionários cadastrados manualmente
-  const { data: usuariosTec = [] } = useQuery({
-    queryKey: ['tecnicos_usuarios'],
-    queryFn: () => base44.entities.User.list(),
-    staleTime: 5 * 60 * 1000,
-  });
+  // Buscar técnicos: apenas funcionários cadastrados na aba Funcionários (menu Cadastros)
   const { data: funcionariosTec = [] } = useQuery({
     queryKey: ['tecnicos_funcionarios'],
     queryFn: () => base44.entities.Funcionario.list(),
     staleTime: 5 * 60 * 1000,
   });
-  // Mesclar ambas as listas
-  const tecnicos = [
-    ...usuariosTec.filter(u => u.full_name).map(u => ({ id: u.id, full_name: u.full_name, email: u.email })),
-    ...funcionariosTec.filter(f => f.status === 'ativo').map(f => ({ id: f.id, full_name: f.nome_completo, email: null })),
-  ];
+  const tecnicos = funcionariosTec
+    .filter(f => f.status === 'ativo')
+    .map(f => ({ id: f.id, full_name: f.nome_completo, email: null }));
 
   // Somente itens aprovados pelo cliente vão para o pagamento
   const itensAprovadosQueixa = (atendimento.itens_queixa || []).filter(i => i.status_aprovacao === 'aprovado');
@@ -516,7 +509,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
           {!jaLancado && (
             <>
               {tecnicos.length === 0 ? (
-                <p className="text-xs text-slate-500">Nenhum funcionário cadastrado. Convide funcionários no menu Cadastros.</p>
+                <p className="text-xs text-slate-500">Nenhum funcionário cadastrado. Cadastre funcionários no menu Cadastros → Funcionários.</p>
               ) : (
                 <div className="flex flex-wrap gap-1">
                   {tecnicos.filter(t => !tecnicosSelecionados.find(s => s.id === t.id)).map(t => (

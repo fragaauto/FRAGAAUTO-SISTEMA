@@ -11,23 +11,16 @@ export default function AtribuirTecnicoModal({ item, onConfirm, onClose }) {
     item.tecnicos?.length > 0 ? item.tecnicos : []
   );
 
-  const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios'],
-    queryFn: () => base44.entities.User.list(),
-    staleTime: 5 * 60 * 1000,
-  });
-
   const { data: funcionarios = [] } = useQuery({
     queryKey: ['funcionarios_atribuicao'],
     queryFn: () => base44.entities.Funcionario.list(),
     staleTime: 5 * 60 * 1000,
   });
 
-  // Mesclar usuários e funcionários ativos (usuários vinculados a um funcionário aparecem apenas como funcionário)
-  const tecnicos = [
-    ...usuarios.filter(u => !funcionarios.some(f => f.usuario_id === u.id)).map(u => ({ id: u.id, nome: u.full_name || u.email, tipo: 'usuario' })),
-    ...funcionarios.filter(f => f.status === 'ativo').map(f => ({ id: f.id, nome: f.nome_completo, tipo: 'funcionario' }))
-  ];
+  // Apenas funcionários cadastrados na aba Funcionários (menu Cadastros)
+  const tecnicos = funcionarios
+    .filter(f => f.status === 'ativo')
+    .map(f => ({ id: f.id, nome: f.nome_completo, tipo: 'funcionario' }));
 
   const toggleTecnico = (tecnico) => {
     const existe = tecnicosSelecionados.find(t => t.id === tecnico.id);
@@ -63,7 +56,7 @@ export default function AtribuirTecnicoModal({ item, onConfirm, onClose }) {
 
           {tecnicos.length === 0 ? (
             <p className="text-sm text-slate-500 text-center py-4">
-              Nenhum funcionário cadastrado. Convide funcionários no menu Usuários.
+              Nenhum funcionário cadastrado. Cadastre funcionários no menu Cadastros → Funcionários.
             </p>
           ) : (
             <div className="space-y-3">
