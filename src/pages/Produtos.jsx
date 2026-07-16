@@ -283,14 +283,13 @@ export default function Produtos() {
 
   const filteredProdutos = produtos
     .filter(p => {
-      const termo = search.trim().toLowerCase();
-      const matchSearch = !termo ||
-        p.nome?.toLowerCase().includes(termo) ||
-        p.codigo?.toLowerCase().includes(termo) ||
-        p.descricao?.toLowerCase().includes(termo) ||
-        p.categoria?.toLowerCase().includes(termo) ||
-        (categoriaLabel(p.categoria))?.toLowerCase().includes(termo) ||
-        (p.modelos_compativeis || []).some(m => String(m || '').toLowerCase().includes(termo));
+      const termos = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      const campos = [
+        p.nome, p.codigo, p.descricao, p.categoria, categoriaLabel(p.categoria),
+        ...(p.modelos_compativeis || []).map(m => String(m || ''))
+      ].map(c => String(c || '').toLowerCase());
+      const matchSearch = termos.length === 0 ||
+        termos.every(termo => campos.some(c => c.includes(termo)));
       const matchCategoria = categoriaFilter === 'all' || p.categoria === categoriaFilter;
       return matchSearch && matchCategoria;
     })
