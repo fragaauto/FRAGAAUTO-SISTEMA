@@ -38,7 +38,7 @@ export default function FuncionariosTab() {
   const [editingFuncionario, setEditingFuncionario] = useState(null);
   const [funcionarioForm, setFuncionarioForm] = useState({
     nome_completo: '', cpf: '', telefone: '', email: '', data_nascimento: '', endereco: '',
-    funcao_id: '', data_admissao: '', status: 'ativo', login_usuario: '', senha_hash: '', observacoes: ''
+    funcao_id: '', data_admissao: '', status: 'ativo', login_usuario: '', senha_hash: '', observacoes: '', usuario_id: ''
   });
   const [senhaVisivel, setSenhaVisivel] = useState('');
 
@@ -164,7 +164,7 @@ export default function FuncionariosTab() {
         nome_completo: f.nome_completo || '', cpf: f.cpf || '', telefone: f.telefone || '', email: f.email || '',
         data_nascimento: f.data_nascimento || '', endereco: f.endereco || '', funcao_id: f.funcao_id || '',
         data_admissao: f.data_admissao || '', status: f.status || 'ativo', login_usuario: f.login_usuario || '',
-        senha_hash: '', observacoes: f.observacoes || ''
+        senha_hash: '', observacoes: f.observacoes || '', usuario_id: f.usuario_id || ''
       });
       setSenhaVisivel('');
     } else {
@@ -172,7 +172,7 @@ export default function FuncionariosTab() {
       setFuncionarioForm({
         nome_completo: '', cpf: '', telefone: '', email: '', data_nascimento: '', endereco: '',
         funcao_id: '', data_admissao: new Date().toISOString().split('T')[0], status: 'ativo',
-        login_usuario: '', senha_hash: '', observacoes: ''
+        login_usuario: '', senha_hash: '', observacoes: '', usuario_id: ''
       });
       setSenhaVisivel('');
     }
@@ -246,6 +246,7 @@ export default function FuncionariosTab() {
             <div className="space-y-2">
               {funcionariosPaginados.map(f => {
                 const funcao = funcoes.find(fn => fn.id === f.funcao_id);
+                const linkedUser = usuarios.find(u => u.id === f.usuario_id);
                 const statusColors = { ativo: 'bg-green-100 text-green-700', inativo: 'bg-red-100 text-red-700', ferias: 'bg-blue-100 text-blue-700', afastado: 'bg-yellow-100 text-yellow-700' };
                 return (
                   <Card key={f.id} className="hover:shadow-sm transition-all">
@@ -268,6 +269,9 @@ export default function FuncionariosTab() {
                             </div>
                             {f.login_usuario && (
                               <p className="text-xs text-blue-600 mt-1">🔑 Login: {f.login_usuario}</p>
+                            )}
+                            {linkedUser && (
+                              <p className="text-xs mt-1"><Badge className="bg-blue-100 text-blue-700">👤 Login vinculado: {linkedUser.email}</Badge></p>
                             )}
                           </div>
                         </div>
@@ -726,15 +730,28 @@ export default function FuncionariosTab() {
               </div>
             </div>
             <div className="border-t pt-4">
-              <h3 className="font-semibold text-slate-700 mb-2">Dados de Login (Opcional - Apenas Referência)</h3>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 flex gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="text-xs text-amber-700">
-                  <p className="font-semibold mb-1">⚠️ Login não funcional neste cadastro</p>
-                  <p>Funcionários cadastrados aqui podem ser atribuídos a serviços e aparecer nos relatórios, mas <strong>não podem fazer login no sistema</strong>.</p>
-                  <p className="mt-1">Para acesso ao sistema, convide-os na aba "Usuários (Login)" através do email.</p>
+              <h3 className="font-semibold text-slate-700 mb-2">Vincular Usuário (Login)</h3>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 flex gap-2">
+                <Shield className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-blue-700">
+                  <p className="font-semibold mb-1">Acessar o sistema e ver a própria produção</p>
+                  <p>Vincule um usuário (login) a este funcionário para que ele consiga acessar o sistema e ver seus próprios resultados de produção no Relatório de Técnicos.</p>
                 </div>
               </div>
+              <div className="mb-4">
+                <Label>Usuário (Login)</Label>
+                <Select value={funcionarioForm.usuario_id || '__sem_vinculo__'} onValueChange={v => setFuncionarioForm(p => ({ ...p, usuario_id: v === '__sem_vinculo__' ? '' : v }))}>
+                  <SelectTrigger><SelectValue placeholder="Sem vínculo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__sem_vinculo__">Sem vínculo</SelectItem>
+                    {usuarios
+                      .filter(u => u.role !== 'admin')
+                      .filter(u => u.id === funcionarioForm.usuario_id || !funcionarios.some(f => f.usuario_id === u.id))
+                      .map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email} — {u.email}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <h4 className="text-sm font-medium text-slate-600 mb-2">Login interno (apenas referência)</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label>Usuário (apenas registro)</Label><Input value={funcionarioForm.login_usuario} onChange={e => setFuncionarioForm(p => ({ ...p, login_usuario: e.target.value }))} placeholder="usuario123" /></div>
                 <div><Label>Senha (apenas registro)</Label><Input type="text" value={senhaVisivel} onChange={e => setSenhaVisivel(e.target.value)} placeholder={editingFuncionario ? "Deixe vazio para não alterar" : "Digite a senha"} /></div>

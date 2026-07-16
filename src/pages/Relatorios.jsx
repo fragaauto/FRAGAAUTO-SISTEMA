@@ -419,7 +419,14 @@ export default function Relatorios() {
           </TabsContent>
 
           <TabsContent value="tecnicos">
-            <RelatorioTecnicos atendimentos={atendimentos} config={config} labelPeriodo={labelPeriodo} />
+            <RelatorioTecnicos
+              atendimentos={atendimentos}
+              config={config}
+              labelPeriodo={labelPeriodo}
+              modoPessoal={verApenasProprio}
+              usuarioLogado={user}
+              periodoFixo={periodoFixoConfig}
+            />
           </TabsContent>
         </Tabs>
         )}

@@ -81,7 +81,8 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
   // Modo pessoal: identificar o técnico correspondente ao usuário logado e travar o filtro nele
   const nomeTecnicoUsuario = useMemo(() => {
     if (!modoPessoal || !usuarioLogado) return null;
-    const func = (funcionarios || []).find(f => f.email && f.email.toLowerCase() === (usuarioLogado.email || '').toLowerCase());
+    const func = (funcionarios || []).find(f => f.usuario_id === usuarioLogado.id)
+      || (funcionarios || []).find(f => f.email && f.email.toLowerCase() === (usuarioLogado.email || '').toLowerCase());
     return func?.nome_completo || usuarioLogado.full_name || null;
   }, [modoPessoal, usuarioLogado, funcionarios]);
 

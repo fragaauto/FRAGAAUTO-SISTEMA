@@ -52,11 +52,15 @@
     },
     "login_usuario": {
       "type": "string",
-      "description": "Nome de usu\u00e1rio para login interno"
+      "description": "Nome de usu\u00e1rio para login interno (apenas refer\u00eancia)"
     },
     "senha_hash": {
       "type": "string",
-      "description": "Senha criptografada (hash)"
+      "description": "Senha criptografada (hash) \u2014 apenas refer\u00eancia interna"
+    },
+    "usuario_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio (login) vinculado a este funcion\u00e1rio. Permite que o usu\u00e1rio acesse seus pr\u00f3prios resultados de produ\u00e7\u00e3o."
     },
     "observacoes": {
       "type": "string",

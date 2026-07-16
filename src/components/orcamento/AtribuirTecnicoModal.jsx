@@ -23,9 +23,9 @@ export default function AtribuirTecnicoModal({ item, onConfirm, onClose }) {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Mesclar usuários e funcionários ativos
+  // Mesclar usuários e funcionários ativos (usuários vinculados a um funcionário aparecem apenas como funcionário)
   const tecnicos = [
-    ...usuarios.map(u => ({ id: u.id, nome: u.full_name || u.email, tipo: 'usuario' })),
+    ...usuarios.filter(u => !funcionarios.some(f => f.usuario_id === u.id)).map(u => ({ id: u.id, nome: u.full_name || u.email, tipo: 'usuario' })),
     ...funcionarios.filter(f => f.status === 'ativo').map(f => ({ id: f.id, nome: f.nome_completo, tipo: 'funcionario' }))
   ];
 
