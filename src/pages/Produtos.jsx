@@ -283,8 +283,14 @@ export default function Produtos() {
 
   const filteredProdutos = produtos
     .filter(p => {
-      const matchSearch = p.nome?.toLowerCase().includes(search.toLowerCase()) || 
-                          p.codigo?.toLowerCase().includes(search.toLowerCase());
+      const termo = search.trim().toLowerCase();
+      const matchSearch = !termo ||
+        p.nome?.toLowerCase().includes(termo) ||
+        p.codigo?.toLowerCase().includes(termo) ||
+        p.descricao?.toLowerCase().includes(termo) ||
+        p.categoria?.toLowerCase().includes(termo) ||
+        (categoriaLabel(p.categoria))?.toLowerCase().includes(termo) ||
+        (p.modelos_compativeis || []).some(m => String(m || '').toLowerCase().includes(termo));
       const matchCategoria = categoriaFilter === 'all' || p.categoria === categoriaFilter;
       return matchSearch && matchCategoria;
     })
