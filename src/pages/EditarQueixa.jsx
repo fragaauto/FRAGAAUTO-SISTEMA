@@ -18,6 +18,7 @@ import {
   Search
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { filtrarProdutos } from '@/lib/produtoSearch';
 
 export default function EditarQueixa() {
   const navigate = useNavigate();
@@ -209,11 +210,9 @@ export default function EditarQueixa() {
     );
   }
 
-  const produtosFiltrados = produtos.filter(p => {
-    if (!searchProduto) return false;
-    const search = searchProduto.toLowerCase();
-    return p.nome?.toLowerCase().includes(search) || p.codigo?.toLowerCase().includes(search);
-  });
+  const produtosFiltrados = searchProduto
+    ? filtrarProdutos(produtos, searchProduto)
+    : [];
 
   return (
     <ErrorBoundary>

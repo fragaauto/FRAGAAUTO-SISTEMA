@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Trash2, Search, UserPlus, CheckCircle2 } from 'lucide-react';
 import { toast } from "sonner";
+import { filtrarProdutos } from '@/lib/produtoSearch';
 
 export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose, onSaved }) {
   const isEdit = !!orcamento;
@@ -73,11 +74,8 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
   };
 
   // Busca de produtos
-  const produtosFiltrados = busca.length >= 2
-    ? produtos.filter(p => {
-        const s = busca.toLowerCase();
-        return p.nome?.toLowerCase().includes(s) || p.codigo?.toLowerCase().includes(s);
-      }).slice(0, 8)
+  const produtosFiltrados = busca.trim().length >= 2
+    ? filtrarProdutos(produtos, busca).slice(0, 8)
     : [];
 
   const adicionarProduto = (p) => {

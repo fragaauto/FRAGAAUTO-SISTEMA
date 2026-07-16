@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Package } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { matchProduto } from '@/lib/produtoSearch';
 
 const CATEGORIA_COLORS = {
   eletrica: 'bg-yellow-100 text-yellow-800',
@@ -22,8 +23,7 @@ export default function SeletorProdutos({ open, onClose, produtos, onSelect }) {
   const [categoriaFilter, setCategoriaFilter] = useState('');
 
   const filteredProdutos = produtos.filter(p => {
-    const matchSearch = p.nome.toLowerCase().includes(search.toLowerCase()) ||
-                        p.codigo?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = matchProduto(p, search);
     const matchCategoria = !categoriaFilter || p.categoria === categoriaFilter;
     return matchSearch && matchCategoria && p.ativo !== false;
   });

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Trash2, Save, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
+import { filtrarProdutos } from '@/lib/produtoSearch';
 
 export default function AdicionarItemOrcamento({ atendimento, produtos, user, onSave, isLoading }) {
   const [search, setSearch] = useState('');
@@ -18,11 +19,8 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
 
   const itensOrcamentoExistentes = atendimento?.itens_orcamento || [];
 
-  const produtosFiltrados = search.length >= 2
-    ? produtos.filter(p => {
-        const s = search.toLowerCase();
-        return (p.nome?.toLowerCase().includes(s) || p.codigo?.toLowerCase().includes(s)) && p.ativo !== false;
-      }).slice(0, 10)
+  const produtosFiltrados = search.trim().length >= 2
+    ? filtrarProdutos(produtos, search).filter(p => p.ativo !== false).slice(0, 10)
     : [];
 
   const adicionarItem = (produto) => {

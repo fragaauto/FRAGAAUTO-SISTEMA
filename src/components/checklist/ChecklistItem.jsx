@@ -14,6 +14,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { matchProduto } from '@/lib/produtoSearch';
 
 const STATUS_CONFIG = {
   ok: { icon: CheckCircle2, color: 'bg-green-500 hover:bg-green-600', textColor: 'text-green-600' },
@@ -415,11 +416,7 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
                     {searchProduto && (
                       <div className="max-h-48 overflow-y-auto space-y-1 border rounded-lg p-2 bg-white">
                         {produtosDisponiveis
-                          .filter(p => {
-                            const search = searchProduto.toLowerCase();
-                            return p.nome?.toLowerCase().includes(search) ||
-                                   p.codigo?.toLowerCase().includes(search);
-                          })
+                          .filter(p => matchProduto(p, searchProduto))
                           .map(p => (
                             <button
                               key={p.id}
@@ -440,11 +437,7 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
                             </button>
                           ))}
                         {produtosDisponiveis
-                          .filter(p => {
-                            const search = searchProduto.toLowerCase();
-                            return p.nome?.toLowerCase().includes(search) ||
-                                   p.codigo?.toLowerCase().includes(search);
-                          }).length === 0 && (
+                          .filter(p => matchProduto(p, searchProduto)).length === 0 && (
                           <p className="text-center py-2 text-slate-500 text-sm">
                             Nenhum produto encontrado
                           </p>
