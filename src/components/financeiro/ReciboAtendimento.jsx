@@ -263,36 +263,36 @@ export default function ReciboAtendimento({ atendimento, config }) {
           {logoUrl && (
             <img src={logoUrl} alt="Logo" className="h-14 object-contain mx-auto mb-1" />
           )}
-          <p className="font-bold text-slate-800 text-sm tracking-wide">{nomeEmpresa}</p>
-          {config?.cnpj && <p className="text-slate-500">CNPJ: {config.cnpj}</p>}
-          {config?.endereco && <p className="text-slate-500">{config.endereco}</p>}
-          {config?.telefone && <p className="text-slate-500">Tel: {config.telefone}</p>}
+          <p className="font-bold text-black font-bold text-sm tracking-wide">{nomeEmpresa}</p>
+          {config?.cnpj && <p className="text-black font-medium">CNPJ: {config.cnpj}</p>}
+          {config?.endereco && <p className="text-black font-medium">{config.endereco}</p>}
+          {config?.telefone && <p className="text-black font-medium">Tel: {config.telefone}</p>}
         </div>
 
         {/* OS + Data */}
         <div className="space-y-0.5">
-          {osNum && <div className="flex justify-between"><span className="text-slate-500">Nº OS:</span><span className="font-mono font-bold text-slate-700">{osNum}</span></div>}
-          <div className="flex justify-between"><span className="text-slate-500">Data:</span><span className="font-medium text-slate-700">{fmtData(dataServico)}</span></div>
+          {osNum && <div className="flex justify-between"><span className="text-black font-medium">Nº OS:</span><span className="font-mono font-bold text-black font-bold">{osNum}</span></div>}
+          <div className="flex justify-between"><span className="text-black font-medium">Data:</span><span className="font-medium text-black font-bold">{fmtData(dataServico)}</span></div>
         </div>
 
         <div className="border-t border-green-200" />
 
         {/* Cliente */}
         <div className="space-y-0.5">
-          <p className="font-semibold text-slate-600 uppercase text-xs">Cliente</p>
-          <div className="flex justify-between"><span className="text-slate-500">Nome:</span><span className="font-medium text-slate-700">{atendimento.cliente_nome || '-'}</span></div>
-          {atendimento.cliente_telefone && <div className="flex justify-between"><span className="text-slate-500">Tel:</span><span className="text-slate-700">{atendimento.cliente_telefone}</span></div>}
-          {atendimento.cliente_cpf && <div className="flex justify-between"><span className="text-slate-500">CPF/CNPJ:</span><span className="text-slate-700">{atendimento.cliente_cpf}</span></div>}
+          <p className="font-semibold text-black font-semibold uppercase text-xs">Cliente</p>
+          <div className="flex justify-between"><span className="text-black font-medium">Nome:</span><span className="font-medium text-black font-bold">{atendimento.cliente_nome || '-'}</span></div>
+          {atendimento.cliente_telefone && <div className="flex justify-between"><span className="text-black font-medium">Tel:</span><span className="text-black font-bold">{atendimento.cliente_telefone}</span></div>}
+          {atendimento.cliente_cpf && <div className="flex justify-between"><span className="text-black font-medium">CPF/CNPJ:</span><span className="text-black font-bold">{atendimento.cliente_cpf}</span></div>}
         </div>
 
         <div className="border-t border-green-200" />
 
         {/* Veículo */}
         <div className="space-y-0.5">
-          <p className="font-semibold text-slate-600 uppercase text-xs">Veículo</p>
-          <div className="flex justify-between"><span className="text-slate-500">Placa:</span><span className="font-bold text-slate-700">{atendimento.placa || '-'}</span></div>
-          <div className="flex justify-between"><span className="text-slate-500">Modelo:</span><span className="text-slate-700">{atendimento.marca ? `${atendimento.marca} ` : ''}{atendimento.modelo || '-'}{atendimento.ano ? ` (${atendimento.ano})` : ''}</span></div>
-          {atendimento.km_atual && <div className="flex justify-between"><span className="text-slate-500">KM:</span><span className="text-slate-700">{atendimento.km_atual}</span></div>}
+          <p className="font-semibold text-black font-semibold uppercase text-xs">Veículo</p>
+          <div className="flex justify-between"><span className="text-black font-medium">Placa:</span><span className="font-bold text-black font-bold">{atendimento.placa || '-'}</span></div>
+          <div className="flex justify-between"><span className="text-black font-medium">Modelo:</span><span className="text-black font-bold">{atendimento.marca ? `${atendimento.marca} ` : ''}{atendimento.modelo || '-'}{atendimento.ano ? ` (${atendimento.ano})` : ''}</span></div>
+          {atendimento.km_atual && <div className="flex justify-between"><span className="text-black font-medium">KM:</span><span className="text-black font-bold">{atendimento.km_atual}</span></div>}
         </div>
 
         {/* Itens com responsáveis e observações */}
@@ -300,21 +300,21 @@ export default function ReciboAtendimento({ atendimento, config }) {
           <>
             <div className="border-t border-green-200" />
             <div className="space-y-2">
-              <p className="font-semibold text-slate-600 uppercase text-xs">Serviços / Produtos</p>
+              <p className="font-semibold text-black font-semibold uppercase text-xs">Serviços / Produtos</p>
               {itensSemDuplicata.map((item, idx) => {
                 const resp = getResponsaveisItem(item);
                 const obsItem = item.observacao_item || '';
                 return (
                   <div key={idx} className="bg-white rounded border border-green-100 p-1.5 space-y-0.5">
-                    <div className="flex justify-between text-slate-700 font-medium">
+                    <div className="flex justify-between text-black font-bold font-medium">
                       <span>{item.nome}{item.quantidade > 1 ? ` (${item.quantidade}x)` : ''}</span>
                       <span className="ml-2 shrink-0">{fmtMoeda(item.valor_total)}</span>
                     </div>
                     {resp && (
-                      <div className="text-slate-500 text-xs">🔧 {resp}</div>
+                      <div className="text-black font-medium text-xs">🔧 {resp}</div>
                     )}
                     {obsItem && (
-                      <div className="text-slate-500 text-xs italic">📝 {obsItem}</div>
+                      <div className="text-black font-medium text-xs italic">📝 {obsItem}</div>
                     )}
                   </div>
                 );
@@ -340,9 +340,9 @@ export default function ReciboAtendimento({ atendimento, config }) {
         {/* Formas de pagamento */}
         {formas.length > 0 && (
           <div className="space-y-1">
-            <p className="font-semibold text-slate-500">Pagamento:</p>
+            <p className="font-semibold text-black font-medium">Pagamento:</p>
             {formas.map((f, idx) => (
-              <div key={idx} className="flex justify-between text-slate-600">
+              <div key={idx} className="flex justify-between text-black font-semibold">
                 <Badge variant="outline" className="text-xs py-0 h-5">{FORMA_LABEL[f.forma] || f.forma}</Badge>
                 <span>{fmtMoeda(f.valor)}</span>
               </div>
@@ -350,34 +350,34 @@ export default function ReciboAtendimento({ atendimento, config }) {
           </div>
         )}
         {!formas.length && formaUnica && (
-          <div className="flex justify-between text-slate-600">
-            <span className="text-slate-500">Pagamento:</span>
+          <div className="flex justify-between text-black font-semibold">
+            <span className="text-black font-medium">Pagamento:</span>
             <Badge variant="outline" className="text-xs py-0 h-5">{FORMA_LABEL[formaUnica] || formaUnica}</Badge>
           </div>
         )}
 
         {/* Técnico(s) */}
         {tecnicosResp.length > 0 && (
-          <div className="flex justify-between text-slate-600">
-            <span className="text-slate-500">Técnico(s):</span>
+          <div className="flex justify-between text-black font-semibold">
+            <span className="text-black font-medium">Técnico(s):</span>
             <span className="text-right">{tecnicosResp.map(t => t.nome).join(', ')}</span>
           </div>
         )}
         {!tecnicosResp.length && atendimento.tecnico && (
-          <div className="flex justify-between text-slate-600">
-            <span className="text-slate-500">Técnico:</span>
+          <div className="flex justify-between text-black font-semibold">
+            <span className="text-black font-medium">Técnico:</span>
             <span>{atendimento.tecnico}</span>
           </div>
         )}
 
         {/* Observações */}
         {obsCliente && (
-          <div className="p-2 bg-white border border-green-200 rounded text-slate-600">
+          <div className="p-2 bg-white border border-green-200 rounded text-black font-semibold">
             <span className="font-semibold">Obs / Garantia: </span>{obsCliente}
           </div>
         )}
         {obsInterna && (
-          <div className="p-2 bg-white border border-green-200 rounded text-slate-600">
+          <div className="p-2 bg-white border border-green-200 rounded text-black font-semibold">
             <span className="font-semibold">Obs. Técnica: </span>{obsInterna}
           </div>
         )}
