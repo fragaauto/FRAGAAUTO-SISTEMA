@@ -108,7 +108,7 @@ export default function NovoAtendimento() {
 
   const { data: clientesBrutos = [] } = useQuery({
     queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list('-created_date', 500),
+    queryFn: () => base44.entities.Cliente.list('-created_date', 100000),
     staleTime: 5 * 60 * 1000
   });
 
