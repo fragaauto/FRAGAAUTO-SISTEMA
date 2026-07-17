@@ -52,6 +52,8 @@ import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import ItemOrcamentoComEncomenda from '../components/orcamento/ItemOrcamentoComEncomenda';
 import OrcamentoWhatsAppModal from '../components/orcamento/OrcamentoWhatsAppModal';
 import TransferirUnidadeModal from '../components/atendimento/TransferirUnidadeModal';
+import AlertaEstoqueBaixo, { estoqueBaixo } from '../components/atendimento/AlertaEstoqueBaixo';
+import BadgeEstoqueBaixo from '../components/atendimento/BadgeEstoqueBaixo';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -127,6 +129,8 @@ export default function VerAtendimento() {
   const [showTransferirUnidade, setShowTransferirUnidade] = useState(false);
   const [obsServico, setObsServico] = useState('');
   const obsServicoTimer = React.useRef(null);
+  const [produtoAlerta, setProdutoAlerta] = useState(null);
+  const [alertaQtd, setAlertaQtd] = useState(1);
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -352,6 +356,10 @@ export default function VerAtendimento() {
     setSearchProdutoQueixa('');
     toast.success(`${produto.nome} adicionado à queixa`);
     console.log('✅ [ADICIONAR PRODUTO QUEIXA] Produto adicionado:', novoItem);
+    if (estoqueBaixo(produto)) {
+      setAlertaQtd(1);
+      setProdutoAlerta(produto);
+    }
   };
 
   const iniciarEdicaoOrcamento = () => {
@@ -1049,7 +1057,10 @@ export default function VerAtendimento() {
                         {itensQueixaEdit.map((item, idx) => (
                           <div key={idx} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                             <div className="flex items-start justify-between mb-3">
-                              <p className="font-medium">{item.nome}</p>
+                              <div>
+                                <p className="font-medium">{item.nome}</p>
+                                <BadgeEstoqueBaixo produto={produtos.find(p => p.id === item.produto_id)} onClick={setProdutoAlerta} className="mt-1" />
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -1187,6 +1198,7 @@ export default function VerAtendimento() {
                                 <p className="text-sm text-slate-500">
                                   {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
                                 </p>
+                                <BadgeEstoqueBaixo produto={produtos.find(p => p.id === item.produto_id)} onClick={setProdutoAlerta} className="mt-1" />
                               </div>
                               <p className="font-bold text-green-600">
                                 R$ {item.valor_total?.toFixed(2)}
@@ -1461,6 +1473,7 @@ export default function VerAtendimento() {
                 <CardContent className="space-y-3">
                   {atendimento.itens_queixa.map((item, idx) => (
                     <div key={idx} className="space-y-2">
+                      <BadgeEstoqueBaixo produto={produtos.find(p => p.id === item.produto_id)} onClick={setProdutoAlerta} />
                       <ItemOrcamentoComEncomenda
                         item={item}
                         readOnly={pagamentoLancado}
@@ -1520,6 +1533,7 @@ export default function VerAtendimento() {
                   <CardContent className="space-y-3">
                     {atendimento.itens_orcamento.map((item, idx) => (
                       <div key={idx} className="space-y-2">
+                        <BadgeEstoqueBaixo produto={produtos.find(p => p.id === item.produto_id)} onClick={setProdutoAlerta} />
                         <ItemOrcamentoComEncomenda
                           item={item}
                           readOnly={pagamentoLancado}
@@ -1970,6 +1984,13 @@ export default function VerAtendimento() {
         atendimento={atendimento}
         open={showTransferirUnidade}
         onClose={() => setShowTransferirUnidade(false)}
+      />
+
+      <AlertaEstoqueBaixo
+        produto={produtoAlerta}
+        quantidade={alertaQtd}
+        open={!!produtoAlerta}
+        onClose={() => setProdutoAlerta(null)}
       />
 
       {showLinkDialog && (

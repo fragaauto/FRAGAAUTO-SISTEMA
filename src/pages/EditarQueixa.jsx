@@ -20,6 +20,7 @@ import {
 import ErrorBoundary from '../components/ErrorBoundary';
 import { filtrarProdutos } from '@/lib/produtoSearch';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
+import BadgeEstoqueBaixo from '@/components/atendimento/BadgeEstoqueBaixo';
 
 export default function EditarQueixa() {
   const navigate = useNavigate();
@@ -281,6 +282,7 @@ export default function EditarQueixa() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-3">
                       <p className="font-medium text-slate-800">{item.nome}</p>
+                      <BadgeEstoqueBaixo produto={produtos.find(p => p.id === item.produto_id)} onClick={setProdutoAlerta} />
                       
                       <div className="grid grid-cols-2 gap-3">
                         <div>

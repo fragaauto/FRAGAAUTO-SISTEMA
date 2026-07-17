@@ -8,6 +8,7 @@ import { Search, Plus, Trash2, Save, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { filtrarProdutos } from '@/lib/produtoSearch';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
+import BadgeEstoqueBaixo from '@/components/atendimento/BadgeEstoqueBaixo';
 
 export default function AdicionarItemOrcamento({ atendimento, produtos, user, onSave, isLoading }) {
   const [search, setSearch] = useState('');
@@ -161,7 +162,10 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
                 <div key={idx} className="p-3 bg-white border border-slate-200 rounded-lg space-y-2">
                   <div className="flex items-center justify-between">
                     {item.produto_id ? (
-                      <p className="text-sm font-medium text-slate-800">{item.nome}</p>
+                      <div>
+                        <p className="text-sm font-medium text-slate-800">{item.nome}</p>
+                        <BadgeEstoqueBaixo produto={produtos.find(p => p.id === item.produto_id)} onClick={setProdutoAlerta} className="mt-1" />
+                      </div>
                     ) : (
                       <Input
                         className="text-sm h-8 flex-1 mr-2"
