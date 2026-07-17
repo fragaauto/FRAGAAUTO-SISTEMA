@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { filtrarProdutos } from '@/lib/produtoSearch';
+import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 
 export default function EditarQueixa() {
   const navigate = useNavigate();
@@ -32,6 +33,8 @@ export default function EditarQueixa() {
   const [itensQueixa, setItensQueixa] = useState([]);
   const [searchProduto, setSearchProduto] = useState('');
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [produtoAlerta, setProdutoAlerta] = useState(null);
+  const [alertaQtd, setAlertaQtd] = useState(1);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -116,6 +119,10 @@ export default function EditarQueixa() {
 
     setItensQueixa([...itensQueixa, novoItem]);
     setSearchProduto('');
+    if (estoqueBaixo(produto)) {
+      setAlertaQtd(1);
+      setProdutoAlerta(produto);
+    }
   };
 
   const handleRemoveProduto = (index) => {
@@ -391,6 +398,12 @@ export default function EditarQueixa() {
           </div>
         </div>
       </div>
+      <AlertaEstoqueBaixo
+        produto={produtoAlerta}
+        quantidade={alertaQtd}
+        open={!!produtoAlerta}
+        onClose={() => setProdutoAlerta(null)}
+      />
     </ErrorBoundary>
   );
 }

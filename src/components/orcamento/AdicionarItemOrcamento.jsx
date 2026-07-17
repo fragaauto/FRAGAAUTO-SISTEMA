@@ -7,11 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Trash2, Save, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { filtrarProdutos } from '@/lib/produtoSearch';
+import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 
 export default function AdicionarItemOrcamento({ atendimento, produtos, user, onSave, isLoading }) {
   const [search, setSearch] = useState('');
   const [itensLocais, setItensLocais] = useState([]);
   const [aberto, setAberto] = useState(false);
+  const [produtoAlerta, setProdutoAlerta] = useState(null);
+  const [alertaQtd, setAlertaQtd] = useState(1);
 
   const pagamentoLancado = !!atendimento?.status_pagamento;
 
@@ -41,6 +44,10 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
       origem: 'manual',
     }]);
     setSearch('');
+    if (estoqueBaixo(produto)) {
+      setAlertaQtd(1);
+      setProdutoAlerta(produto);
+    }
   };
 
   const adicionarItemLivre = () => {
@@ -219,6 +226,12 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
           )}
         </CardContent>
       )}
+      <AlertaEstoqueBaixo
+        produto={produtoAlerta}
+        quantidade={alertaQtd}
+        open={!!produtoAlerta}
+        onClose={() => setProdutoAlerta(null)}
+      />
     </Card>
   );
 }

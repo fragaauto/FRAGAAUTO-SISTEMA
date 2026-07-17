@@ -15,6 +15,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { matchProduto } from '@/lib/produtoSearch';
+import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 
 const STATUS_CONFIG = {
   ok: { icon: CheckCircle2, color: 'bg-green-500 hover:bg-green-600', textColor: 'text-green-600' },
@@ -27,6 +28,8 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
   const [showProdutos, setShowProdutos] = useState(false);
   const [searchProduto, setSearchProduto] = useState('');
   const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [produtoAlerta, setProdutoAlerta] = useState(null);
+  const [alertaQtd, setAlertaQtd] = useState(1);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const currentStatus = value?.status || 'nao_verificado';
@@ -91,6 +94,10 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
       categoria: item.categoria,
       produtos: novosProdutos
     });
+    if (estoqueBaixo(produto)) {
+      setAlertaQtd(1);
+      setProdutoAlerta(produto);
+    }
   };
 
   const handleRemoveProduto = (index) => {
@@ -451,6 +458,12 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
           )}
         </div>
       </div>
+      <AlertaEstoqueBaixo
+        produto={produtoAlerta}
+        quantidade={alertaQtd}
+        open={!!produtoAlerta}
+        onClose={() => setProdutoAlerta(null)}
+      />
     </div>
   );
 }
