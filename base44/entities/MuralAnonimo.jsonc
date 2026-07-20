@@ -1,0 +1,63 @@
+{
+  "name": "MuralAnonimo",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade (opcional, preenchido automaticamente)"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "comentario",
+        "queixa",
+        "reclamacao",
+        "sugestao"
+      ],
+      "default": "comentario",
+      "description": "Tipo do registro: coment\u00e1rio, queixa, reclama\u00e7\u00e3o ou sugest\u00e3o"
+    },
+    "categoria": {
+      "type": "string",
+      "description": "Categoria/assunto opcional para organizar o registro"
+    },
+    "mensagem": {
+      "type": "string",
+      "description": "Conte\u00fado an\u00f4nimo enviado pelo usu\u00e1rio"
+    },
+    "lida": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a administra\u00e7\u00e3o j\u00e1 visualizou o registro"
+    },
+    "respondido": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se a administra\u00e7\u00e3o j\u00e1 respondeu ao registro"
+    },
+    "resposta_admin": {
+      "type": "string",
+      "description": "Resposta/parecer da administra\u00e7\u00e3o"
+    },
+    "data_resposta": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "respondido_por": {
+      "type": "string",
+      "description": "E-mail do administrador que respondeu"
+    },
+    "arquivado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o registro foi arquivado pela administra\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "tipo",
+    "mensagem"
+  ],
+  "rls": {
+    "read": {}
+  }
+}

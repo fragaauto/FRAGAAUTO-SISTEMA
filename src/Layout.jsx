@@ -16,7 +16,8 @@ import {
   Shield,
   Loader2,
   LogOut,
-  ShoppingBag
+  ShoppingBag,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -50,6 +51,7 @@ const NAV_ITEMS = [
   { name: 'Base de Conhecimento IA', icon: Sparkles, path: 'BaseConhecimentoIA', modulo: null, apenasAdmin: true },
   { name: 'Treinamentos', icon: FileText, path: 'ManualTreinamento', modulo: null },
   { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas', modulo: 'ferramentas' },
+  { name: 'Mural Anônimo', icon: MessageSquare, path: 'MuralAnonimo', modulo: null },
 ];
 
 
@@ -95,6 +97,14 @@ export default function Layout({ children, currentPageName }) {
     queryFn: () => base44.entities.FuncaoFuncionario.list(),
     enabled: !!user && user.role !== 'admin',
   });
+
+  const { data: muralNaoLidos = [] } = useQuery({
+    queryKey: ['mural-nao-lidos'],
+    queryFn: () => base44.entities.MuralAnonimo.filter({ lida: false }),
+    enabled: !!user && user.role === 'admin',
+    staleTime: 30 * 1000,
+  });
+  const muralNaoLidosCount = muralNaoLidos.length;
 
   const isPaginaPublica = PAGINAS_PUBLICAS.includes(currentPageName);
 
@@ -168,6 +178,11 @@ export default function Layout({ children, currentPageName }) {
           >
             <item.icon className="w-5 h-5" />
             {item.name}
+            {item.path === 'MuralAnonimo' && user?.role === 'admin' && muralNaoLidosCount > 0 && (
+              <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                {muralNaoLidosCount}
+              </span>
+            )}
           </Link>
         );
       })}
