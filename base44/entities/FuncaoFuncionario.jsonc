@@ -76,6 +76,11 @@
       "default": false,
       "description": "Se pode acessar Usu\u00e1rios"
     },
+    "pode_ver_mural_anonimo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se pode acessar o Mural An\u00f4nimo (enviar e, para admins, gerenciar registros)"
+    },
     "abas_atendimento": {
       "type": "array",
       "description": "Abas do menu Atendimentos que esta fun\u00e7\u00e3o pode acessar",

@@ -33,6 +33,7 @@ export function filtrarItensMenu(items, { user, funcoes, modulosAtivos }) {
     if (item.path === 'Usuarios') return funcao?.pode_acessar_usuarios === true;
     if (item.path === 'Atendimentos') return funcao?.pode_ver_menu_atendimentos !== false;
     if (item.path === 'NovoAtendimento') return funcao?.pode_ver_menu_novo_atendimento !== false;
+    if (item.path === 'MuralAnonimo') return funcao?.pode_ver_mural_anonimo !== false;
 
     // Itens sem módulo definido (exceto Home, já tratado) ficam ocultos
     if (!item.modulo) return false;

@@ -47,6 +47,15 @@ export default function MuralAnonimo() {
 
   const isAdmin = user?.role === 'admin';
 
+  const { data: funcoes = [] } = useQuery({
+    queryKey: ['funcoes'],
+    queryFn: () => base44.entities.FuncaoFuncionario.list(),
+    enabled: !!user && !isAdmin,
+    staleTime: 60 * 1000
+  });
+  const funcaoUsuario = (funcoes || []).find(f => f.id === user?.funcao_id);
+  const acessoMural = isAdmin || (funcaoUsuario?.pode_ver_mural_anonimo !== false);
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.MuralAnonimo.create(data),
     onSuccess: () => {
@@ -117,6 +126,20 @@ export default function MuralAnonimo() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
+  if (!acessoMural) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Card className="max-w-md text-center">
+          <CardContent className="pt-8 space-y-3">
+            <ShieldCheck className="w-10 h-10 text-slate-300 mx-auto" />
+            <p className="font-semibold text-slate-700">Acesso restrito</p>
+            <p className="text-sm text-slate-500">Sua função não possui permissão para acessar o Mural Anônimo.</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
