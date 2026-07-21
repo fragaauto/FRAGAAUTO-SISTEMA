@@ -84,7 +84,7 @@ export default function MetasCard() {
 
   const { data: lancamentosBrutos = [] } = useQuery({
     queryKey: ['lancamentos_metas_todos'],
-    queryFn: () => base44.entities.LancamentoFinanceiro.filter({ tipo: 'entrada' }, '-data_lancamento', 1000),
+    queryFn: () => base44.entities.LancamentoFinanceiro.filter({ tipo: 'entrada' }, '-data_lancamento', 5000),
     staleTime: 2 * 60 * 1000,
     enabled: !!unidadeAtual,
   });
