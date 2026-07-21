@@ -11,7 +11,7 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
   const [modo, setModo] = useState('a4'); // 'a4' ou 'cupom'
   const printRef = useRef();
 
-  const empresa = config?.nome_empresa || 'Empresa';
+  const empresa = config?.nome_empresa || 'FRAGA AUTO';
   const telefoneEmpresa = config?.telefone || '';
   const enderecoEmpresa = config?.endereco || '';
   const dataValidade = orcamento.validade_dias
@@ -67,7 +67,8 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
     doc.setFont(undefined, 'bold');
     doc.setFontSize(20);
     doc.setTextColor(255, 255, 255);
-    doc.text(empresa, nomeEmpresaX, 16);
+    const empresaMaxW = (pageW - 70) - nomeEmpresaX - 6;
+    doc.text(doc.splitTextToSize(empresa, empresaMaxW), nomeEmpresaX, 16);
 
     // Subtítulo / contato no header
     doc.setFontSize(8);
@@ -78,7 +79,8 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
     if (config?.whatsapp_atendimento) contatoItems.push(`WhatsApp: ${config.whatsapp_atendimento}`);
     if (config?.instagram) contatoItems.push(`@${config.instagram.replace('@','')}`);
     if (config?.site) contatoItems.push(config.site);
-    doc.text(contatoItems.join('   |   '), 14, 28);
+    const contatoMaxW = (pageW - 70) - 14 - 6;
+    doc.text(doc.splitTextToSize(contatoItems.join('   |   '), contatoMaxW), 14, 28);
 
     // Badge "ORÇAMENTO" no lado direito do header
     doc.setFillColor(255, 255, 255);
@@ -244,9 +246,12 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
       finalY += 18;
     }
 
-    // ── ASSINATURAS ──────────────────────────────────────────────────
-    finalY += 14;
-    if (finalY > pageH - 40) { doc.addPage(); finalY = 20; }
+    // ── ASSINATURAS (no fim da página) ───────────────────────────────
+    const sigYAlvo = pageH - 34;
+    if (finalY + 14 > sigYAlvo) {
+      doc.addPage();
+    }
+    const sigY = pageH - 34;
 
     doc.setDrawColor(203, 213, 225);
     doc.setTextColor(100, 116, 139);
@@ -254,13 +259,13 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
     doc.setFontSize(8.5);
 
     // Linha cliente
-    doc.line(14, finalY, 90, finalY);
-    doc.text('Assinatura do Cliente', 52, finalY + 5, { align: 'center' });
-    doc.text(o.cliente_nome || '', 52, finalY + 10, { align: 'center' });
+    doc.line(14, sigY, 90, sigY);
+    doc.text('Assinatura do Cliente', 52, sigY + 5, { align: 'center' });
+    doc.text(o.cliente_nome || '', 52, sigY + 10, { align: 'center' });
 
     // Linha empresa
-    doc.line(110, finalY, pageW - 14, finalY);
-    doc.text(`Responsável — ${empresa}`, (110 + pageW - 14) / 2, finalY + 5, { align: 'center' });
+    doc.line(110, sigY, pageW - 14, sigY);
+    doc.text(`Responsável — ${empresa}`, (110 + pageW - 14) / 2, sigY + 5, { align: 'center' });
 
     // ── RODAPÉ ───────────────────────────────────────────────────────
     doc.setFillColor(30, 41, 59);
