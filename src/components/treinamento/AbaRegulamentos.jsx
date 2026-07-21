@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Download, Upload, Loader2, Trash2, AlertTriangle } from 'lucide-react';
+import { FileText, Download, Upload, Loader2, Trash2, AlertTriangle, Eye } from 'lucide-react';
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function AbaRegulamentos({ isAdmin }) {
   const queryClient = useQueryClient();
@@ -15,6 +16,7 @@ export default function AbaRegulamentos({ isAdmin }) {
   const [descricao, setDescricao] = useState('');
   const [arquivo, setArquivo] = useState(null);
   const [enviando, setEnviando] = useState(false);
+  const [visualizando, setVisualizando] = useState(null);
 
   const { data: regulamentos = [], isLoading } = useQuery({
     queryKey: ['regulamentos'],
@@ -116,12 +118,19 @@ export default function AbaRegulamentos({ isAdmin }) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <a href={r.file_url} target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline" size="sm">
-                      <Download className="w-4 h-4 mr-1" />
-                      Visualizar / Baixar
+                  {isAdmin ? (
+                    <a href={r.file_url} target="_blank" rel="noopener noreferrer" download>
+                      <Button variant="outline" size="sm">
+                        <Download className="w-4 h-4 mr-1" />
+                        Baixar
+                      </Button>
+                    </a>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => setVisualizando(r)}>
+                      <Eye className="w-4 h-4 mr-1" />
+                      Visualizar
                     </Button>
-                  </a>
+                  )}
                   {isAdmin && (
                     <Button variant="ghost" size="icon" className="text-red-500" onClick={() => deleteMutation.mutate(r.id)}>
                       <Trash2 className="w-4 h-4" />
@@ -140,6 +149,25 @@ export default function AbaRegulamentos({ isAdmin }) {
           <p className="text-sm text-amber-700">A administração ainda não publicou nenhum regulamento.</p>
         </div>
       )}
+
+      <Dialog open={!!visualizando} onOpenChange={(open) => !open && setVisualizando(null)}>
+        <DialogContent className="max-w-4xl w-full h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-red-500" />
+              {visualizando?.titulo}
+            </DialogTitle>
+          </DialogHeader>
+          {visualizando?.file_url && (
+            <iframe
+              src={visualizando.file_url}
+              title={visualizando.titulo}
+              className="w-full flex-1 rounded-lg border border-slate-200"
+              style={{ minHeight: 0 }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
