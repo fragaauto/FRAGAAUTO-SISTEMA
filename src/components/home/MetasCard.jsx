@@ -14,7 +14,7 @@ function calcularFaturamento(lancamentos, de, ate) {
   return lancamentos
     .filter(l => {
       if (l.estornado) return false;
-      const dataRef = l.data_lancamento;
+      const dataRef = l.data_lancamento || l.created_date;
       if (!dataRef) return false;
       const data = new Date(dataRef);
       return data >= de && data <= ate;
