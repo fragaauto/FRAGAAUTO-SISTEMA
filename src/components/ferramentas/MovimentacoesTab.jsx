@@ -16,7 +16,7 @@ export default function MovimentacoesTab() {
   const [modal, setModal] = useState(false);
   const [search, setSearch] = useState('');
   const [tipoFilter, setTipoFilter] = useState('all');
-  const [form, setForm] = useState({ tipo: 'Retirada', item_tipo: 'Ferramenta', ferramenta_id: '', kit_id: '', responsavel_id: '', responsavel_nome: '', observacao: '', assinatura: '', fotos: [] });
+  const [form, setForm] = useState({ tipo: 'Retirada', item_tipo: 'Ferramenta', ferramenta_id: '', kit_id: '', epi_id: '', epi_nome: '', responsavel_id: '', responsavel_nome: '', observacao: '', assinatura: '', fotos: [] });
   const canvasRef = useRef();
   const [drawing, setDrawing] = useState(false);
   const [uploadingFoto, setUploadingFoto] = useState(false);
@@ -26,7 +26,10 @@ export default function MovimentacoesTab() {
   const { data: movs = [], isLoading } = useQuery({ queryKey: ['movimentacoes'], queryFn: () => base44.entities.MovimentacaoFerramenta.list('-data_hora', 200) });
   const { data: ferramentas = [] } = useQuery({ queryKey: ['ferramentas'], queryFn: () => base44.entities.Ferramenta.list() });
   const { data: kits = [] } = useQuery({ queryKey: ['kits'], queryFn: () => base44.entities.KitFerramentas.list() });
+  const { data: epis = [] } = useQuery({ queryKey: ['epis'], queryFn: () => base44.entities.EPI.list() });
   const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: () => base44.entities.User.list() });
+  const [currentUser, setCurrentUser] = useState(null);
+  useEffect(() => { base44.auth.me().then(setCurrentUser).catch(() => {}); }, []);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -43,6 +46,25 @@ export default function MovimentacoesTab() {
           : { status: 'Disponível', responsavel_atual_id: '', responsavel_atual_nome: '' };
         await base44.entities.KitFerramentas.update(data.kit_id, update);
       }
+      // EPI: atualiza estoque e registra na Ficha de EPI do funcionário
+      if (data.item_tipo === 'EPI' && data.epi_id) {
+        const epi = epis.find(e => e.id === data.epi_id);
+        const atual = epi?.estoque_disponivel ?? 0;
+        const novaDisp = data.tipo === 'Retirada' ? Math.max(0, atual - 1) : atual + 1;
+        await base44.entities.EPI.update(data.epi_id, { estoque_disponivel: novaDisp });
+        await base44.entities.FichaEPI.create({
+          funcionario_id: data.responsavel_id,
+          funcionario_nome: data.responsavel_nome,
+          epi_id: data.epi_id,
+          epi_nome: data.epi_nome,
+          epi_codigo: epi?.codigo || '',
+          tipo: data.tipo === 'Retirada' ? 'entrega' : 'devolucao',
+          data: new Date().toISOString(),
+          assinatura: data.assinatura,
+          observacao: data.observacao,
+          usuario_registro_nome: currentUser?.full_name || data.responsavel_nome
+        });
+      }
       // Finaliza devolução
       if (data.tipo === 'Devolução' && data.item_tipo === 'Ferramenta' && data.ferramenta_id) {
         const open = movs.find(m => m.tipo === 'Retirada' && m.status === 'Aberto' && m.ferramenta_id === data.ferramenta_id);
@@ -50,10 +72,10 @@ export default function MovimentacoesTab() {
       }
       return mov;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['movimentacoes'] }); qc.invalidateQueries({ queryKey: ['ferramentas'] }); qc.invalidateQueries({ queryKey: ['kits'] }); setModal(false); resetForm(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['movimentacoes'] }); qc.invalidateQueries({ queryKey: ['ferramentas'] }); qc.invalidateQueries({ queryKey: ['kits'] }); qc.invalidateQueries({ queryKey: ['epis'] }); qc.invalidateQueries({ queryKey: ['fichas-epi'] }); setModal(false); resetForm(); },
   });
 
-  const resetForm = () => setForm({ tipo: 'Retirada', item_tipo: 'Ferramenta', ferramenta_id: '', kit_id: '', responsavel_id: '', responsavel_nome: '', observacao: '', assinatura: '', fotos: [] });
+  const resetForm = () => setForm({ tipo: 'Retirada', item_tipo: 'Ferramenta', ferramenta_id: '', kit_id: '', epi_id: '', epi_nome: '', responsavel_id: '', responsavel_nome: '', observacao: '', assinatura: '', fotos: [] });
 
   const handleFotoUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -94,13 +116,14 @@ export default function MovimentacoesTab() {
   const clearSig = () => { const canvas = canvasRef.current; canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height); setForm(p => ({ ...p, assinatura: '' })); };
 
   const filtered = movs.filter(m => {
-    const matchSearch = !search || m.responsavel_nome?.toLowerCase().includes(search.toLowerCase()) || m.ferramenta_nome?.toLowerCase().includes(search.toLowerCase()) || m.kit_nome?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || m.responsavel_nome?.toLowerCase().includes(search.toLowerCase()) || m.ferramenta_nome?.toLowerCase().includes(search.toLowerCase()) || m.kit_nome?.toLowerCase().includes(search.toLowerCase()) || m.epi_nome?.toLowerCase().includes(search.toLowerCase());
     const matchTipo = tipoFilter === 'all' || m.tipo === tipoFilter;
     return matchSearch && matchTipo;
   });
 
   const ferramentasDisponiveis = form.tipo === 'Retirada' ? ferramentas.filter(f => f.status === 'Disponível') : ferramentas.filter(f => f.status === 'Em uso');
   const kitsDisponiveis = form.tipo === 'Retirada' ? kits.filter(k => k.status === 'Disponível') : kits.filter(k => k.status === 'Em uso');
+  const episDisponiveis = epis.filter(e => e.ativo !== false && (form.tipo !== 'Retirada' || (e.estoque_disponivel ?? 0) > 0));
 
   return (
     <div>
@@ -131,7 +154,7 @@ export default function MovimentacoesTab() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-semibold text-sm text-slate-800">{m.tipo}</span>
-                  <span className="text-sm text-slate-600">{m.ferramenta_nome || m.kit_nome}</span>
+                  <span className="text-sm text-slate-600">{m.ferramenta_nome || m.kit_nome || m.epi_nome}</span>
                   <Badge variant="outline" className={`text-xs ${m.status === 'Aberto' ? 'text-amber-600 border-amber-300' : 'text-green-600 border-green-300'}`}>{m.status}</Badge>
                 </div>
                 <div className="text-xs text-slate-500 mt-0.5">👤 {m.responsavel_nome} · {m.data_hora ? format(new Date(m.data_hora), 'dd/MM/yy HH:mm') : ''}</div>
@@ -162,11 +185,12 @@ export default function MovimentacoesTab() {
               </div>
               <div>
                 <Label>Item</Label>
-                <Select value={form.item_tipo} onValueChange={v => setForm(p => ({ ...p, item_tipo: v, ferramenta_id: '', kit_id: '' }))}>
+                <Select value={form.item_tipo} onValueChange={v => setForm(p => ({ ...p, item_tipo: v, ferramenta_id: '', kit_id: '', epi_id: '', epi_nome: '' }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Ferramenta">Ferramenta</SelectItem>
                     <SelectItem value="Kit">Kit</SelectItem>
+                    <SelectItem value="EPI">EPI</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -182,7 +206,7 @@ export default function MovimentacoesTab() {
                   </SelectContent>
                 </Select>
               </div>
-            ) : (
+            ) : form.item_tipo === 'Kit' ? (
               <div>
                 <Label>Kit ({form.tipo === 'Retirada' ? 'disponíveis' : 'em uso'})</Label>
                 <Select value={form.kit_id} onValueChange={v => { const k = kits.find(x => x.id === v); setForm(p => ({ ...p, kit_id: v, kit_nome: k?.nome || '' })); }}>
@@ -191,6 +215,18 @@ export default function MovimentacoesTab() {
                     {kitsDisponiveis.map(k => <SelectItem key={k.id} value={k.id}>{k.nome}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+            ) : (
+              <div>
+                <Label>EPI {form.tipo === 'Retirada' ? '(disponíveis)' : ''}</Label>
+                <Select value={form.epi_id} onValueChange={v => { const e = epis.find(x => x.id === v); setForm(p => ({ ...p, epi_id: v, epi_nome: e?.nome || '' })); }}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar EPI..." /></SelectTrigger>
+                  <SelectContent>
+                    {episDisponiveis.map(e => <SelectItem key={e.id} value={e.id}>{e.codigo} - {e.nome}{e.ca ? ` (CA ${e.ca})` : ''}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {form.tipo === 'Retirada' && <p className="text-xs text-slate-400 mt-1">A assinatura confirma o recebimento do EPI e será registrada na Ficha de EPI do funcionário.</p>}
+                {form.tipo === 'Devolução' && <p className="text-xs text-slate-400 mt-1">A assinatura confirma a devolução do EPI e será registrada na Ficha de EPI do funcionário.</p>}
               </div>
             )}
 
@@ -257,7 +293,7 @@ export default function MovimentacoesTab() {
             <Button
               className="w-full bg-orange-500 hover:bg-orange-600 text-white"
               onClick={() => saveMutation.mutate(form)}
-              disabled={!form.assinatura || !form.responsavel_id || (!form.ferramenta_id && !form.kit_id) || saveMutation.isPending}
+              disabled={!form.assinatura || !form.responsavel_id || (!form.ferramenta_id && !form.kit_id && !form.epi_id) || saveMutation.isPending}
             >
               {saveMutation.isPending ? 'Salvando...' : 'Confirmar'}
             </Button>

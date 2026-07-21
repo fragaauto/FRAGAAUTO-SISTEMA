@@ -17,7 +17,8 @@
       "type": "string",
       "enum": [
         "Ferramenta",
-        "Kit"
+        "Kit",
+        "EPI"
       ]
     },
     "ferramenta_id": {
@@ -31,6 +32,14 @@
     },
     "kit_nome": {
       "type": "string"
+    },
+    "epi_id": {
+      "type": "string",
+      "description": "ID do EPI (quando item_tipo = EPI)"
+    },
+    "epi_nome": {
+      "type": "string",
+      "description": "Nome do EPI (quando item_tipo = EPI)"
     },
     "responsavel_id": {
       "type": "string"

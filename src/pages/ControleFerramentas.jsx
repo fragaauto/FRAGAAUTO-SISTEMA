@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Wrench, Package, ArrowLeftRight, Droplets, BarChart2, AlertTriangle, History } from 'lucide-react';
+import { Wrench, Package, ArrowLeftRight, Droplets, BarChart2, AlertTriangle, History, HardHat, FileSignature } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import FerraamentasTab from '@/components/ferramentas/FerramentasTab';
@@ -9,6 +9,8 @@ import MovimentacoesTab from '@/components/ferramentas/MovimentacoesTab';
 import InsumosTab from '@/components/ferramentas/InsumosTab';
 import ConsumoTab from '@/components/ferramentas/ConsumoTab';
 import HistoricoKitsTab from '@/components/ferramentas/HistoricoKitsTab';
+import EPITab from '@/components/ferramentas/EPITab';
+import FichaEPITab from '@/components/ferramentas/FichaEPITab';
 
 export default function ControleFerramentas() {
   const [tab, setTab] = useState('ferramentas');
@@ -70,6 +72,12 @@ export default function ControleFerramentas() {
           <TabsTrigger value="movimentacoes" className="flex items-center gap-1.5 text-xs sm:text-sm">
             <ArrowLeftRight className="w-4 h-4" /> Movimentações
           </TabsTrigger>
+          <TabsTrigger value="epis" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <HardHat className="w-4 h-4" /> EPIs
+          </TabsTrigger>
+          <TabsTrigger value="ficha-epi" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <FileSignature className="w-4 h-4" /> Ficha de EPI
+          </TabsTrigger>
           <TabsTrigger value="insumos" className="flex items-center gap-1.5 text-xs sm:text-sm">
             <Droplets className="w-4 h-4" /> Insumos
           </TabsTrigger>
@@ -89,6 +97,12 @@ export default function ControleFerramentas() {
         </TabsContent>
         <TabsContent value="movimentacoes">
           <MovimentacoesTab />
+        </TabsContent>
+        <TabsContent value="epis">
+          <EPITab />
+        </TabsContent>
+        <TabsContent value="ficha-epi">
+          <FichaEPITab />
         </TabsContent>
         <TabsContent value="insumos">
           <InsumosTab />

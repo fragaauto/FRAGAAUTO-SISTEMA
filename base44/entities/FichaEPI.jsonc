@@ -1,0 +1,65 @@
+{
+  "name": "FichaEPI",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade"
+    },
+    "funcionario_id": {
+      "type": "string",
+      "description": "ID do funcion\u00e1rio que recebeu/devolveu o EPI"
+    },
+    "funcionario_nome": {
+      "type": "string",
+      "description": "Nome do funcion\u00e1rio"
+    },
+    "epi_id": {
+      "type": "string",
+      "description": "ID do EPI"
+    },
+    "epi_nome": {
+      "type": "string",
+      "description": "Nome do EPI (cache)"
+    },
+    "epi_codigo": {
+      "type": "string",
+      "description": "C\u00f3digo do EPI (cache)"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "entrega",
+        "devolucao",
+        "termo"
+      ],
+      "default": "entrega",
+      "description": "Tipo do registro: entrega, devolu\u00e7\u00e3o ou termo de recebimento"
+    },
+    "data": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora do registro"
+    },
+    "assinatura": {
+      "type": "string",
+      "description": "Assinatura digital base64 do funcion\u00e1rio"
+    },
+    "termo_texto": {
+      "type": "string",
+      "description": "Texto do termo declarado pelo funcion\u00e1rio"
+    },
+    "observacao": {
+      "type": "string"
+    },
+    "usuario_registro_nome": {
+      "type": "string",
+      "description": "Nome do usu\u00e1rio que registrou"
+    }
+  },
+  "required": [
+    "funcionario_nome",
+    "epi_nome",
+    "tipo"
+  ]
+}
