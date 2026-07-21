@@ -43,7 +43,7 @@ export default function FluxoCaixaTab({ filtroData }) {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.LancamentoFinanceiro.delete(id),
-    onSuccess: () => { toast.success('Movimentação excluída'); qc.invalidateQueries(['lancamentos-todos']); },
+    onSuccess: () => { toast.success('Movimentação excluída'); qc.invalidateQueries(['lancamentos-todos']); qc.invalidateQueries(['lancamentos_metas_todos']); },
     onError: () => toast.error('Erro ao excluir'),
   });
 
@@ -55,6 +55,7 @@ export default function FluxoCaixaTab({ filtroData }) {
       toast.success(`${selecionados.size} lançamento(s) excluído(s)`);
       setSelecionados(new Set());
       qc.invalidateQueries(['lancamentos-todos']);
+      qc.invalidateQueries(['lancamentos_metas_todos']);
     } catch {
       toast.error('Erro ao excluir lançamentos');
     } finally {
@@ -488,12 +489,12 @@ export default function FluxoCaixaTab({ filtroData }) {
         )}
       </div>
 
-      <NovoLancamentoModal open={showNovo} onClose={() => setShowNovo(false)} onSaved={() => { setShowNovo(false); qc.invalidateQueries(['lancamentos-todos']); }} />
+      <NovoLancamentoModal open={showNovo} onClose={() => setShowNovo(false)} onSaved={() => { setShowNovo(false); qc.invalidateQueries(['lancamentos-todos']); qc.invalidateQueries(['lancamentos_metas_todos']); }} />
       {editando && (
         <EditarLancamentoModal
           lancamento={editando}
           onClose={() => setEditando(null)}
-          onSaved={() => { setEditando(null); qc.invalidateQueries(['lancamentos-todos']); }}
+          onSaved={() => { setEditando(null); qc.invalidateQueries(['lancamentos-todos']); qc.invalidateQueries(['lancamentos_metas_todos']); }}
         />
       )}
     </div>

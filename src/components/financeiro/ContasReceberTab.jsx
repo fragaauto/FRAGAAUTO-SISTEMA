@@ -81,6 +81,7 @@ export default function ContasReceberTab({ filtroData }) {
         forma_pagamento: formaPagamento || conta.forma_pagamento || 'pix',
         conta_receber_id: conta.id,
         atendimento_id: conta.atendimento_id || null,
+        unidade_id: conta.unidade_id || null,
         data_lancamento: agora,
         categoria: 'servico',
       });
@@ -97,6 +98,9 @@ export default function ContasReceberTab({ filtroData }) {
       qc.invalidateQueries(['contas-receber']);
       qc.invalidateQueries(['atendimentos']);
       qc.invalidateQueries(['atendimento']);
+      qc.invalidateQueries(['lancamentos-todos']);
+      qc.invalidateQueries(['lancamentos_metas_todos']);
+      qc.invalidateQueries(['lancamentos']);
       setSelecionada(null);
     },
   });

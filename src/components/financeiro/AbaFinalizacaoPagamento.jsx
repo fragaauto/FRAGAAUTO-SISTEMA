@@ -369,6 +369,9 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     onSuccess: () => {
       toast.success('✅ Lançado no caixa com sucesso!');
       queryClient.invalidateQueries(['atendimento']);
+      queryClient.invalidateQueries(['lancamentos-todos']);
+      queryClient.invalidateQueries(['lancamentos_metas_todos']);
+      queryClient.invalidateQueries(['lancamentos']);
       onUpdate?.();
       navigate(createPageUrl('Atendimentos'));
     },
@@ -428,6 +431,9 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     onSuccess: () => {
       toast.success('Estorno realizado! Atendimento reaberto para edição.');
       queryClient.invalidateQueries(['atendimento']);
+      queryClient.invalidateQueries(['lancamentos-todos']);
+      queryClient.invalidateQueries(['lancamentos_metas_todos']);
+      queryClient.invalidateQueries(['lancamentos']);
       onUpdate?.();
     },
     onError: (e) => toast.error(e.message || 'Erro ao estornar'),
