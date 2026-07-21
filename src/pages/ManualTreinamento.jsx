@@ -1,13 +1,14 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Download, BookOpen, CheckCircle2, AlertTriangle, Info, Star, ChevronRight, Youtube, FileImage } from 'lucide-react';
+import { ArrowLeft, Download, BookOpen, CheckCircle2, AlertTriangle, Info, Star, ChevronRight, Youtube, FileImage, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import AbaVideos from '../components/treinamento/AbaVideos';
 import AbaConteudos from '../components/treinamento/AbaConteudos';
+import AbaRegulamentos from '../components/treinamento/AbaRegulamentos';
 
 const ETAPAS = [
   {
@@ -424,8 +425,8 @@ ${ETAPAS.map((e) => `
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold text-slate-800">Treinamentos</h1>
-              <p className="text-sm text-slate-500">Fluxo completo de atendimento</p>
+              <h1 className="text-xl font-bold text-slate-800">Treinamentos e Regulamentos</h1>
+              <p className="text-sm text-slate-500">Manual, vídeos e regulamentos internos</p>
             </div>
           </div>
           <Button onClick={handleGerarPDF} className="bg-orange-500 hover:bg-orange-600">
@@ -450,6 +451,10 @@ ${ETAPAS.map((e) => `
               <FileImage className="w-4 h-4" />
               Outros Conteúdos
             </TabsTrigger>
+            <TabsTrigger value="regulamentos" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Regulamentos
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="videos">
@@ -458,6 +463,10 @@ ${ETAPAS.map((e) => `
 
           <TabsContent value="conteudos">
             <AbaConteudos isAdmin={isAdmin} />
+          </TabsContent>
+
+          <TabsContent value="regulamentos">
+            <AbaRegulamentos isAdmin={isAdmin} />
           </TabsContent>
 
           <TabsContent value="manual">

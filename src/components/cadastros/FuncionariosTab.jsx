@@ -506,8 +506,8 @@ export default function FuncionariosTab() {
               </div>
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                 <div>
-                  <Label>Pode acessar Manual de Treinamento</Label>
-                  <p className="text-xs text-slate-500">Acesso ao manual de procedimentos</p>
+                  <Label>Pode acessar Treinamentos e Regulamentos</Label>
+                  <p className="text-xs text-slate-500">Acesso ao manual, vídeos e regulamentos internos</p>
                 </div>
                 <Switch checked={funcaoForm.pode_acessar_manual} onCheckedChange={v => setFuncaoForm(p => ({ ...p, pode_acessar_manual: v }))} />
               </div>
