@@ -30,7 +30,8 @@ import {
   TrendingUp,
   Calendar,
   LogOut,
-  Menu } from
+  Menu,
+  MessageSquare } from
 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { motion } from 'framer-motion';
@@ -307,6 +308,7 @@ export default function Home() {
     { name: 'Controle de Ferramentas', icon: Wrench, path: 'ControleFerramentas', modulo: 'ferramentas' },
     { name: 'Checklist', icon: ClipboardCheck, path: 'GerenciarChecklist', modulo: 'checklist' },
     { name: 'Usuários', icon: Users, path: 'Usuarios', modulo: null },
+    { name: 'Mural Anônimo', icon: MessageSquare, path: 'MuralAnonimo', modulo: null },
     { name: 'Configurações', icon: Wrench, path: 'Configuracoes', modulo: null }],
 
     { user, funcoes, modulosAtivos }
