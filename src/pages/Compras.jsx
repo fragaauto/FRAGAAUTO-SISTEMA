@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Package, AlertTriangle, Check, Loader2, FileText, ShoppingBag, RefreshCw, Plus, X, Pencil } from 'lucide-react';
+import { ShoppingCart, Package, AlertTriangle, Check, Loader2, FileText, ShoppingBag, RefreshCw, Plus, X, Pencil, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ListaComprasTab from '../components/compras/ListaComprasTab';
@@ -60,6 +60,7 @@ export default function Compras() {
   const [qtdAdicionar, setQtdAdicionar] = useState(1);
   const [salvandoItemLista, setSalvandoItemLista] = useState(false);
 
+  const [buscaEstoque, setBuscaEstoque] = useState('');
   const [corrigindoProduto, setCorrigindoProduto] = useState(null);
   const [novoEstoque, setNovoEstoque] = useState(0);
   const [novoMinimo, setNovoMinimo] = useState(0);
@@ -214,8 +215,17 @@ export default function Compras() {
 
         {tab === 'estoque' && (
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-slate-500">{estoqueBaixo.length} produto(s) com estoque baixo</p>
+            <div className="flex justify-between items-center gap-3">
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Buscar por nome, código ou categoria..."
+                  value={buscaEstoque}
+                  onChange={e => setBuscaEstoque(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+              <p className="text-sm text-slate-500 whitespace-nowrap">{estoqueBaixo.length} produto(s) com estoque baixo</p>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -245,7 +255,15 @@ export default function Compras() {
                 <p className="font-semibold">Estoque em dia!</p>
               </div>
             ) : (
-              estoqueBaixo.map(prod => {
+              estoqueBaixo
+              .filter(p => {
+                const b = buscaEstoque.trim().toLowerCase();
+                if (!b) return true;
+                return (p.nome || '').toLowerCase().includes(b)
+                  || (p.codigo || '').toLowerCase().includes(b)
+                  || (p.categoria || '').toLowerCase().includes(b);
+              })
+              .map(prod => {
                 const qtdFalta = Math.max(0, (prod.estoque_desejado || prod.estoque_minimo || 0) - (prod.estoque_atual || 0));
                 return (
                   <Card key={prod.id} className={`border-2 ${(prod.estoque_atual || 0) <= 0 ? 'border-red-200 bg-red-50' : 'border-orange-200 bg-orange-50'}`}>
