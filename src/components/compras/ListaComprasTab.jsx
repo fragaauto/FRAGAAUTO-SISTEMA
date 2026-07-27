@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Package, Check, Loader2, Trash2, Search, Edit, ChevronDown, ChevronUp, ShoppingBag, X, Printer, Share2, Save, MapPin, Tag, Building2 } from 'lucide-react';
+import { Plus, Package, Check, Loader2, Trash2, Search, Edit, ChevronDown, ChevronUp, ShoppingBag, X, Printer, Share2, Save, MapPin, Tag, Building2, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -457,6 +457,11 @@ function ListaCard({ lista, produtos, onRefetchProdutos }) {
     onSuccess: () => { toast.success('Lista concluída!'); qc.invalidateQueries(['listas-compras']); },
   });
 
+  const reabrirMutation = useMutation({
+    mutationFn: () => base44.entities.ListaCompras.update(lista.id, { status: 'aberta' }),
+    onSuccess: () => { toast.success('Lista reaberta!'); qc.invalidateQueries(['listas-compras']); },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => base44.entities.ListaCompras.delete(lista.id),
     onSuccess: () => { toast.success('Lista excluída'); qc.invalidateQueries(['listas-compras']); },
@@ -542,7 +547,7 @@ function ListaCard({ lista, produtos, onRefetchProdutos }) {
                 </div>
               )}
 
-              {lista.status !== 'concluida' && (
+              {lista.status !== 'concluida' ? (
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => setEditando(true)} className="flex-1 gap-1">
                     <Edit className="w-3.5 h-3.5" /> Editar Itens
@@ -550,6 +555,13 @@ function ListaCard({ lista, produtos, onRefetchProdutos }) {
                   <Button size="sm" onClick={() => fecharMutation.mutate()} disabled={fecharMutation.isPending} className="bg-green-600 hover:bg-green-700 flex-1">
                     {fecharMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
                     Concluir Lista
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => reabrirMutation.mutate()} disabled={reabrirMutation.isPending} className="flex-1 gap-1">
+                    {reabrirMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RotateCcw className="w-3.5 h-3.5 mr-1" />}
+                    Reabrir Lista
                   </Button>
                 </div>
               )}
