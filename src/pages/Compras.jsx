@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Package, AlertTriangle, Check, Loader2, FileText, ShoppingBag, RefreshCw, Plus, X } from 'lucide-react';
+import { ShoppingCart, Package, AlertTriangle, Check, Loader2, FileText, ShoppingBag, RefreshCw, Plus, X, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ListaComprasTab from '../components/compras/ListaComprasTab';
@@ -59,6 +59,33 @@ export default function Compras() {
   const [listaDestinoId, setListaDestinoId] = useState('');
   const [qtdAdicionar, setQtdAdicionar] = useState(1);
   const [salvandoItemLista, setSalvandoItemLista] = useState(false);
+
+  const [corrigindoProduto, setCorrigindoProduto] = useState(null);
+  const [novoEstoque, setNovoEstoque] = useState(0);
+  const [novoMinimo, setNovoMinimo] = useState(0);
+  const [novoDesejado, setNovoDesejado] = useState(0);
+  const [salvandoCorrecao, setSalvandoCorrecao] = useState(false);
+
+  const abrirCorrecao = (prod) => {
+    setCorrigindoProduto(prod);
+    setNovoEstoque(prod.estoque_atual || 0);
+    setNovoMinimo(prod.estoque_minimo || 0);
+    setNovoDesejado(prod.estoque_desejado || 0);
+  };
+
+  const salvarCorrecaoEstoque = async () => {
+    if (!corrigindoProduto) return;
+    setSalvandoCorrecao(true);
+    await base44.entities.Produto.update(corrigindoProduto.id, {
+      estoque_atual: novoEstoque,
+      estoque_minimo: novoMinimo,
+      estoque_desejado: novoDesejado,
+    });
+    setSalvandoCorrecao(false);
+    toast.success('Estoque corrigido!');
+    qc.invalidateQueries(['produtos-estoque']);
+    setCorrigindoProduto(null);
+  };
 
   const salvarItemNaLista = async () => {
     if (!listaDestinoId) return toast.error('Selecione uma lista');
@@ -236,6 +263,10 @@ export default function Compras() {
                             <p className="text-xs text-slate-500">mín: {prod.estoque_minimo || 0}{prod.estoque_desejado ? ` · desejado: ${prod.estoque_desejado}` : ''}</p>
                             {qtdFalta > 0 && <p className="text-xs text-blue-600 font-semibold">comprar: {qtdFalta}</p>}
                           </div>
+                          <Button size="sm" variant="outline" className="gap-1 text-amber-600 border-amber-200 hover:bg-amber-50 whitespace-nowrap"
+                            onClick={() => abrirCorrecao(prod)}>
+                            <Pencil className="w-3.5 h-3.5" /> Corrigir
+                          </Button>
                           {listasAbertas.length > 0 && (
                             <Button size="sm" variant="outline" className="gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 whitespace-nowrap"
                               onClick={() => { setAdicionandoALista(prod); setQtdAdicionar(qtdFalta > 0 ? qtdFalta : 1); setListaDestinoId(listasAbertas[0]?.id || ''); }}>
@@ -282,6 +313,42 @@ export default function Compras() {
             <Button variant="outline" onClick={() => setAdicionandoALista(null)}>Cancelar</Button>
             <Button onClick={salvarItemNaLista} disabled={salvandoItemLista} className="bg-blue-600 hover:bg-blue-700">
               {salvandoItemLista ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Corrigir Estoque */}
+      <Dialog open={!!corrigindoProduto} onOpenChange={() => setCorrigindoProduto(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-amber-600" />
+              Corrigir Estoque
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm font-medium text-slate-800">{corrigindoProduto?.nome}</p>
+            <p className="text-xs text-slate-500">{corrigindoProduto?.codigo} · {corrigindoProduto?.categoria}</p>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Estoque atual</label>
+              <Input type="number" min={0} value={novoEstoque} onChange={e => setNovoEstoque(parseInt(e.target.value) || 0)} className="mt-1" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium text-slate-700">Mínimo</label>
+                <Input type="number" min={0} value={novoMinimo} onChange={e => setNovoMinimo(parseInt(e.target.value) || 0)} className="mt-1" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">Desejado</label>
+                <Input type="number" min={0} value={novoDesejado} onChange={e => setNovoDesejado(parseInt(e.target.value) || 0)} className="mt-1" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCorrigindoProduto(null)}>Cancelar</Button>
+            <Button onClick={salvarCorrecaoEstoque} disabled={salvandoCorrecao} className="bg-amber-600 hover:bg-amber-700">
+              {salvandoCorrecao ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Salvar
             </Button>
           </DialogFooter>
         </DialogContent>
