@@ -55,6 +55,19 @@ export default function Compras() {
     staleTime: 30 * 1000,
   });
 
+  // Mapa: produto_id -> [{ listaId, listaNome }] em listas abertas
+  const produtoEmListaMap = React.useMemo(() => {
+    const map = {};
+    (listasAbertas || []).forEach(l => {
+      (l.itens || []).forEach(i => {
+        if (i.produto_id) {
+          (map[i.produto_id] = map[i.produto_id] || []).push({ listaId: l.id, listaNome: l.nome });
+        }
+      });
+    });
+    return map;
+  }, [listasAbertas]);
+
   const [adicionandoALista, setAdicionandoALista] = useState(null); // produto sendo adicionado
   const [listaDestinoId, setListaDestinoId] = useState('');
   const [qtdAdicionar, setQtdAdicionar] = useState(1);
@@ -272,6 +285,15 @@ export default function Compras() {
                         <div>
                           <p className="font-semibold text-slate-800">{prod.nome}</p>
                           <p className="text-sm text-slate-500">{prod.codigo} · {prod.categoria}</p>
+                          {(produtoEmListaMap[prod.id] || []).length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {(produtoEmListaMap[prod.id] || []).map((m, i) => (
+                                <span key={i} className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                                  <Check className="w-3 h-3" /> Adicionado à lista: {m.listaNome}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="text-right space-y-0.5">
