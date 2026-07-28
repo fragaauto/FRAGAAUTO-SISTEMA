@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, ImagePlus, X, Loader2 } from 'lucide-react';
+import SeletorComponenteKit from '@/components/produtos/SeletorComponenteKit';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from "sonner";
@@ -470,20 +471,11 @@ export default function FormularioProduto({ formData, setFormData, atualizarMode
                 <div className="grid grid-cols-[1fr_90px] gap-2 items-end">
                   <div>
                     <Label className="text-xs">Produto</Label>
-                    <Select value={comp.produto_id || ''} onValueChange={(v) => selecionarComponente(idx, v)}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Selecione o componente" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {produtosLista
-                          .filter(p => p.id !== formData.id)
-                          .map(p => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.codigo ? `${p.codigo} — ` : ''}{p.nome}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                    <SeletorComponenteKit
+                      produtos={produtosLista.filter(p => p.id !== formData.id)}
+                      value={comp.produto_id}
+                      onSelect={(p) => selecionarComponente(idx, p.id)}
+                    />
                   </div>
                   <div>
                     <Label className="text-xs">Qtd</Label>
