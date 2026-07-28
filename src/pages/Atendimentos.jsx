@@ -4,6 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUnidade } from '@/lib/UnidadeContext';
+import { estornarEstoque } from '@/lib/estoqueComposto';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -315,10 +316,7 @@ export default function Atendimentos() {
     const movimentos = await base44.entities.MovimentoEstoque.filter({ atendimento_id: atendimento.id });
     for (const mov of movimentos) {
       if (mov.tipo === 'saida') {
-        const prod = await base44.entities.Produto.get(mov.produto_id).catch(() => null);
-        if (prod?.controla_estoque) {
-          await base44.entities.Produto.update(mov.produto_id, { estoque_atual: (prod.estoque_atual || 0) + (mov.quantidade || 0) });
-        }
+        await estornarEstoque(mov.produto_id, mov.quantidade || 0);
       }
     }
     await base44.entities.Atendimento.update(atendimento.id, { status_pagamento: null, data_pagamento: null, usuario_pagamento: null });

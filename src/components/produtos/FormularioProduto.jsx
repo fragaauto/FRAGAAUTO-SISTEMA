@@ -99,6 +99,32 @@ export default function FormularioProduto({ formData, setFormData, atualizarMode
     setFormData({ ...formData, fornecedores: novos });
   };
 
+  const adicionarComponente = () => {
+    setFormData({
+      ...formData,
+      composicao: [...(formData.composicao || []), { produto_id: '', produto_nome: '', codigo: '', quantidade: 1 }],
+    });
+  };
+  const removerComponente = (idx) => {
+    setFormData({ ...formData, composicao: (formData.composicao || []).filter((_, i) => i !== idx) });
+  };
+  const atualizarComponente = (idx, campo, valor) => {
+    const novos = [...(formData.composicao || [])];
+    novos[idx] = { ...novos[idx], [campo]: valor };
+    setFormData({ ...formData, composicao: novos });
+  };
+  const selecionarComponente = (idx, produtoId) => {
+    const prod = produtosLista.find(p => p.id === produtoId);
+    const novos = [...(formData.composicao || [])];
+    novos[idx] = {
+      ...novos[idx],
+      produto_id: produtoId,
+      produto_nome: prod?.nome || '',
+      codigo: prod?.codigo || '',
+    };
+    setFormData({ ...formData, composicao: novos });
+  };
+
   return (
     <div className="space-y-4 py-4">
       <div>
@@ -416,6 +442,69 @@ export default function FormularioProduto({ formData, setFormData, atualizarMode
         <p className="text-xs text-slate-500 mt-1">
           Máximo 500 caracteres
         </p>
+      </div>
+
+      {/* Composição (Kit / Pacote) */}
+      <div className="space-y-3 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="font-semibold">Composição (Kit / Pacote)</Label>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Defina os componentes deste produto. Ao vendê-lo em um atendimento, a baixa de estoque será feita em todos os componentes.
+            </p>
+          </div>
+          <Button type="button" size="sm" variant="outline" onClick={adicionarComponente}>
+            <Plus className="w-3 h-3 mr-1" /> Adicionar
+          </Button>
+        </div>
+        {formData.composicao?.length > 0 ? (
+          <div className="space-y-2">
+            {formData.composicao.map((comp, idx) => (
+              <div key={idx} className="bg-white border rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-600">Componente {idx + 1}</span>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => removerComponente(idx)} className="text-red-500">
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-[1fr_90px] gap-2 items-end">
+                  <div>
+                    <Label className="text-xs">Produto</Label>
+                    <Select value={comp.produto_id || ''} onValueChange={(v) => selecionarComponente(idx, v)}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Selecione o componente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {produtosLista
+                          .filter(p => p.id !== formData.id)
+                          .map(p => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.codigo ? `${p.codigo} — ` : ''}{p.nome}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Qtd</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={comp.quantidade}
+                      onChange={(e) => atualizarComponente(idx, 'quantidade', parseFloat(e.target.value) || 1)}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <p className="text-xs text-indigo-700">
+              Este produto é composto. O estoque próprio não será baixado — apenas o estoque dos componentes.
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-slate-500 text-center py-2">Nenhum componente. Este é um produto simples.</p>
+        )}
       </div>
 
       {/* Estoque */}

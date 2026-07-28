@@ -116,6 +116,32 @@
     "localizacao_estoque": {
       "type": "string"
     },
+    "composicao": {
+      "type": "array",
+      "description": "Lista de componentes que comp\u00f5em este produto (kit/pacote). Quando o produto \u00e9 composto, a baixa de estoque ao vend\u00ea-lo \u00e9 feita nos componentes, multiplicada pela quantidade vendida.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "description": "ID do produto componente"
+          },
+          "produto_nome": {
+            "type": "string",
+            "description": "Nome do componente (cache)"
+          },
+          "codigo": {
+            "type": "string",
+            "description": "C\u00f3digo do componente (cache)"
+          },
+          "quantidade": {
+            "type": "number",
+            "default": 1,
+            "description": "Quantidade do componente por unidade do produto composto"
+          }
+        }
+      }
+    },
     "fornecedores": {
       "type": "array",
       "items": {

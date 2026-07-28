@@ -16,6 +16,7 @@ import {
   Wrench, X
 } from 'lucide-react';
 import ReciboAtendimento from './ReciboAtendimento';
+import { baixarEstoque, estornarEstoque } from '@/lib/estoqueComposto';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -267,13 +268,9 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         quantPorProduto[p.produto_id] = (quantPorProduto[p.produto_id] || 0) + (p.quantidade || 1);
       }
 
-      // Buscar produtos que controlam estoque e atualizar
+      // Baixar estoque (produtos compostos baixam dos componentes automaticamente)
       for (const [produtoId, qtd] of Object.entries(quantPorProduto)) {
-        const produtoAtual = await base44.entities.Produto.get(produtoId).catch(() => null);
-        if (produtoAtual?.controla_estoque) {
-          const novoEstoque = Math.max(0, (produtoAtual.estoque_atual || 0) - qtd);
-          await base44.entities.Produto.update(produtoId, { estoque_atual: novoEstoque });
-        }
+        await baixarEstoque(produtoId, qtd);
       }
 
       // Registrar movimentos de estoque
@@ -412,12 +409,9 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
           });
         }
       }
-      // Devolver estoque ao produto
+      // Devolver estoque (produtos compostos devolvem aos componentes automaticamente)
       for (const [produtoId, qtd] of Object.entries(quantEstornarPorProduto)) {
-        const produtoAtual = await base44.entities.Produto.get(produtoId).catch(() => null);
-        if (produtoAtual?.controla_estoque) {
-          await base44.entities.Produto.update(produtoId, { estoque_atual: (produtoAtual.estoque_atual || 0) + qtd });
-        }
+        await estornarEstoque(produtoId, qtd);
       }
 
       // Reabrir atendimento
