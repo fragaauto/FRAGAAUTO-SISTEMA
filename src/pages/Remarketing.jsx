@@ -583,9 +583,14 @@ export default function Remarketing() {
                           )}
                           <div className="mt-2 space-y-1">
                             {(orc.itens || []).map((it, i) => (
-                              <div key={i} className="flex justify-between text-sm bg-blue-50 rounded px-2 py-1">
-                                <span className="text-slate-700">{it.nome}</span>
-                                <span className="font-medium text-blue-600">R$ {(it.valor_total || 0).toFixed(2)}</span>
+                              <div key={i} className="text-sm bg-blue-50 rounded px-2 py-1">
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-slate-700">{it.nome}</span>
+                                  <span className="font-medium text-blue-600 whitespace-nowrap">R$ {(it.valor_total || 0).toFixed(2)}</span>
+                                </div>
+                                {it.observacao && (
+                                  <p className="text-xs text-slate-500 mt-0.5 leading-snug">{it.observacao}</p>
+                                )}
                               </div>
                             ))}
                           </div>

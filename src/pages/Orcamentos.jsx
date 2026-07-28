@@ -187,6 +187,22 @@ export default function Orcamentos() {
                           {o.validade_dias && ` · Válido por ${o.validade_dias} dias`}
                         </p>
 
+                        {o.itens && o.itens.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {o.itens.map((it, i) => (
+                              <div key={i} className="text-xs bg-slate-50 rounded px-2 py-1">
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-slate-700 font-medium">{it.nome}</span>
+                                  <span className="text-slate-600 whitespace-nowrap">R$ {(it.valor_total || 0).toFixed(2)}</span>
+                                </div>
+                                {it.observacao && (
+                                  <p className="text-slate-500 mt-0.5 leading-snug">{it.observacao}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
                         {/* Ações */}
                         <div className="flex flex-wrap gap-2 mt-3">
                           <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setPrintOrcamento(o)}>

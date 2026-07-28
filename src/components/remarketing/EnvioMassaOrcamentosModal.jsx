@@ -19,7 +19,7 @@ function gerarMensagem(orc, config) {
   const dataValidade = format(addDays(new Date(), diasValidade), "dd/MM/yyyy", { locale: ptBR });
 
   const listaItens = (orc.itens || [])
-    .map(i => `• ${i.nome} - R$ ${(i.valor_total || 0).toFixed(2)}`)
+    .map(i => `• ${i.nome}${i.observacao ? `\n   ${i.observacao}` : ''} - R$ ${(i.valor_total || 0).toFixed(2)}`)
     .join('\n');
   const total = orc.total || 0;
 
