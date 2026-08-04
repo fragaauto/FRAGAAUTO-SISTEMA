@@ -81,6 +81,19 @@ export default function TabMarketing({ formData, onChange, onSave, isSaving }) {
           </div>
 
           <div>
+            <Label>Texto Base da Mensagem de Comprovante de Serviço</Label>
+            <Textarea
+              value={formData.mensagem_comprovante || ''}
+              onChange={e => onChange('mensagem_comprovante', e.target.value)}
+              className="min-h-[140px] font-mono text-sm"
+              placeholder={`*Olá {nome}!*\n\nSegue o comprovante do serviço prestado. Obrigado pela preferência! 🙏\n\n🚗 *Veículo:* {veiculo}\n🔧 *OS:* #{numero}\n💰 *Valor:* R$ {valor}\n\n{nome_empresa}`}
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Variáveis: {'{nome}'} {'{veiculo}'} {'{numero}'} {'{valor}'} {'{nome_empresa}'}
+            </p>
+          </div>
+
+          <div>
             <Label>Texto Base da Mensagem de Follow-up de Orçamentos</Label>
             <Textarea
               value={formData.mensagem_orcamento || ''}

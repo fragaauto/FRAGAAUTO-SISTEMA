@@ -47,6 +47,10 @@
       "type": "string",
       "description": "Template de mensagem enviada ao liberar servi\u00e7o (bot\u00e3o Servi\u00e7o Liberado)"
     },
+    "mensagem_comprovante": {
+      "type": "string",
+      "description": "Template de mensagem que acompanha o comprovante de servi\u00e7o enviado por WhatsApp"
+    },
     "formas_pagamento": {
       "type": "array",
       "items": {

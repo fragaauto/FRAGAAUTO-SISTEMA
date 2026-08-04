@@ -1,8 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Printer, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { Printer, MessageCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useUnidade } from '@/lib/UnidadeContext';
+import { toast } from 'sonner';
 
 const FORMA_LABEL = {
   dinheiro: 'Dinheiro',
@@ -25,6 +28,8 @@ function fmtMoeda(val) {
 
 export default function ReciboAtendimento({ atendimento, config }) {
   const reciboRef = useRef(null);
+  const { unidadeAtual } = useUnidade();
+  const [enviando, setEnviando] = useState(false);
 
   const itensAprovados = [
     ...(atendimento.itens_queixa || []).filter(i => i.status_aprovacao === 'aprovado'),
@@ -242,11 +247,53 @@ export default function ReciboAtendimento({ atendimento, config }) {
     win.print();
   };
 
-  const handleWhatsApp = () => {
-    const texto = gerarTextoWhatsApp();
+  const gerarMensagemComprovante = () => {
+    const tpl = config?.mensagem_comprovante || '';
+    if (!tpl) return '';
+    const veiculo = `${atendimento.marca ? atendimento.marca + ' ' : ''}${atendimento.modelo || ''}${atendimento.ano ? ' (' + atendimento.ano + ')' : ''}`.trim() || '-';
+    const valor = fmtMoeda(atendimento.valor_final_pago ?? atendimento.valor_final ?? 0);
+    const numero = atendimento.numero_os ? String(atendimento.numero_os) : '';
+    return tpl
+      .replace(/\{nome\}/g, atendimento.cliente_nome || '')
+      .replace(/\{veiculo\}/g, veiculo)
+      .replace(/\{numero\}/g, numero)
+      .replace(/\{valor\}/g, valor)
+      .replace(/\{nome_empresa\}/g, nomeEmpresa);
+  };
+
+  const handleWhatsApp = async () => {
     const tel = atendimento.cliente_telefone?.replace(/\D/g, '') || '';
-    const prefixo = tel.startsWith('55') ? tel : `55${tel}`;
-    window.open(`https://wa.me/${prefixo}?text=${encodeURIComponent(texto)}`, '_blank');
+    if (!tel) { toast.error('Cliente sem telefone cadastrado'); return; }
+
+    const mensagemPersonalizada = gerarMensagemComprovante();
+    const comprovante = gerarTextoWhatsApp();
+    const mensagemFinal = mensagemPersonalizada ? `${mensagemPersonalizada}\n\n${comprovante}` : comprovante;
+
+    const evolutionConfigurado = config?.evolution_api_url && config?.evolution_api_key && config?.evolution_instance;
+    if (!evolutionConfigurado) {
+      const prefixo = tel.startsWith('55') ? tel : `55${tel}`;
+      window.open(`https://wa.me/${prefixo}?text=${encodeURIComponent(mensagemFinal)}`, '_blank');
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      const res = await base44.functions.invoke('enviarMensagemWhatsApp', {
+        telefone: tel,
+        mensagem: mensagemFinal,
+        unidade_id: unidadeAtual?.id || null,
+      });
+      if (res.data?.ok) {
+        toast.success('Comprovante enviado por WhatsApp!');
+      } else {
+        const errMsg = res.data?.error || 'Erro ao enviar mensagem.';
+        const semWhatsapp = errMsg.includes('exists":false') || errMsg.toLowerCase().includes('not registered');
+        toast.error(semWhatsapp ? 'Este número não possui WhatsApp ativo.' : errMsg);
+      }
+    } catch (e) {
+      toast.error('Erro ao enviar: ' + e.message);
+    }
+    setEnviando(false);
   };
 
   return (
@@ -387,8 +434,9 @@ export default function ReciboAtendimento({ atendimento, config }) {
           <Button size="sm" variant="outline" onClick={handlePrint} className="flex-1 border-slate-300">
             <Printer className="w-3 h-3 mr-1" /> Imprimir
           </Button>
-          <Button size="sm" onClick={handleWhatsApp} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-            <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
+          <Button size="sm" onClick={handleWhatsApp} disabled={enviando} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+            {enviando ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <MessageCircle className="w-3 h-3 mr-1" />}
+            {enviando ? 'Enviando...' : 'WhatsApp'}
           </Button>
         </div>
       </CardContent>
