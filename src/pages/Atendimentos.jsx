@@ -337,6 +337,35 @@ export default function Atendimentos() {
     window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
+  const enviarServicoLiberado = async (atendimento, e) => {
+    e.stopPropagation();
+    const telefone = atendimento.cliente_telefone?.replace(/\D/g, '');
+    if (!telefone) { toast.error('Cliente sem telefone cadastrado'); return; }
+    const nomeEmpresa = config.nome_empresa || 'nossa empresa';
+    const msg = `*Olá ${atendimento.cliente_nome || ''}!*\n\nBoa notícia! 🎉\n\nO serviço do seu veículo está *LIBERADO* e pronto para retirada! ✅\n\n🚗 *Veículo:* ${atendimento.placa || ''} - ${atendimento.modelo || ''}\n${atendimento.numero_os ? `🔧 *OS:* #${String(atendimento.numero_os).padStart(6, '0')}\n` : ''}${atendimento.valor_final ? `💰 *Valor:* R$ ${atendimento.valor_final.toFixed(2)}\n` : ''}\nEstamos te esperando! 🙏\n\n_${nomeEmpresa}_`;
+    const evolutionConfigurado = config.evolution_api_url && config.evolution_api_key && config.evolution_instance;
+    if (evolutionConfigurado) {
+      try {
+        const res = await base44.functions.invoke('enviarMensagemWhatsApp', {
+          telefone,
+          mensagem: msg,
+          unidade_id: unidadeAtual?.id || null,
+        });
+        if (res.data?.ok) {
+          toast.success('Mensagem "Serviço Liberado" enviada com sucesso!');
+        } else {
+          const errMsg = res.data?.error || 'Erro ao enviar.';
+          toast.error(errMsg);
+        }
+      } catch (err) {
+        toast.error('Erro ao enviar: ' + err.message);
+      }
+    } else {
+      window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
+      toast.success('Abrindo WhatsApp...');
+    }
+  };
+
   const semTecnico = (a) => {
     if (a.status !== 'concluido') return false;
     if (a.tecnicos_responsaveis?.length || a.tecnico) return false;
@@ -636,6 +665,9 @@ export default function Atendimentos() {
                           {/* Comprovante para concluído não pago */}
                           {!pago && atendimento.status === 'concluido' &&
                             <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-green-300 text-green-700 hover:bg-green-100 px-2 font-semibold" onClick={(e) => enviarServicoLiberado(atendimento, e)}>
+                                <CheckCircle2 className="w-3 h-3 mr-1" /> Serviço Liberado
+                              </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => {e.stopPropagation();setReciboAtendimento(atendimento);}}>
                                 <FileCheck className="w-3 h-3 mr-1" /> Comprovante
                               </Button>
@@ -674,6 +706,9 @@ export default function Atendimentos() {
                               </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => {e.stopPropagation();setReciboAtendimento(atendimento);}}>
                                 <FileCheck className="w-3 h-3 mr-1" /> Comprovante
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-green-300 text-green-700 hover:bg-green-100 px-2 font-semibold" onClick={(e) => enviarServicoLiberado(atendimento, e)}>
+                                <CheckCircle2 className="w-3 h-3 mr-1" /> Serviço Liberado
                               </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50 px-2" onClick={(e) => enviarWhatsApp(atendimento, e)}>
                                 <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
