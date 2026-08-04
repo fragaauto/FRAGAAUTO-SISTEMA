@@ -343,6 +343,17 @@ export default function Atendimentos() {
     if (!telefone) { toast.error('Cliente sem telefone cadastrado'); return; }
     const nomeEmpresa = config.nome_empresa || 'nossa empresa';
     const msg = `*Olá ${atendimento.cliente_nome || ''}!*\n\nBoa notícia! 🎉\n\nO serviço do seu veículo está *LIBERADO* e pronto para retirada! ✅\n\n🚗 *Veículo:* ${atendimento.placa || ''} - ${atendimento.modelo || ''}\n${atendimento.numero_os ? `🔧 *OS:* #${String(atendimento.numero_os).padStart(6, '0')}\n` : ''}${atendimento.valor_final ? `💰 *Valor:* R$ ${atendimento.valor_final.toFixed(2)}\n` : ''}\nEstamos te esperando! 🙏\n\n_${nomeEmpresa}_`;
+
+    // Alterar status para concluído
+    if (atendimento.status !== 'concluido') {
+      try {
+        await updateStatusMutation.mutateAsync({ id: atendimento.id, status: 'concluido' });
+      } catch {
+        toast.error('Erro ao atualizar status da OS');
+        return;
+      }
+    }
+
     const evolutionConfigurado = config.evolution_api_url && config.evolution_api_key && config.evolution_instance;
     if (evolutionConfigurado) {
       try {
@@ -352,7 +363,7 @@ export default function Atendimentos() {
           unidade_id: unidadeAtual?.id || null,
         });
         if (res.data?.ok) {
-          toast.success('Mensagem "Serviço Liberado" enviada com sucesso!');
+          toast.success('Status atualizado e mensagem enviada!');
         } else {
           const errMsg = res.data?.error || 'Erro ao enviar.';
           toast.error(errMsg);
@@ -362,7 +373,7 @@ export default function Atendimentos() {
       }
     } else {
       window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
-      toast.success('Abrindo WhatsApp...');
+      toast.success('Status atualizado! Abrindo WhatsApp...');
     }
   };
 
@@ -662,12 +673,16 @@ export default function Atendimentos() {
                             </div>
                           )}
 
+                          {/* Botão Serviço Liberado — sempre visível */}
+                          <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                            <Button size="sm" variant="outline" className="h-7 text-xs border-green-300 text-green-700 hover:bg-green-100 px-2 font-semibold" onClick={(e) => enviarServicoLiberado(atendimento, e)}>
+                              <CheckCircle2 className="w-3 h-3 mr-1" /> Serviço Liberado
+                            </Button>
+                          </div>
+
                           {/* Comprovante para concluído não pago */}
                           {!pago && atendimento.status === 'concluido' &&
                             <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                              <Button size="sm" variant="outline" className="h-7 text-xs border-green-300 text-green-700 hover:bg-green-100 px-2 font-semibold" onClick={(e) => enviarServicoLiberado(atendimento, e)}>
-                                <CheckCircle2 className="w-3 h-3 mr-1" /> Serviço Liberado
-                              </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => {e.stopPropagation();setReciboAtendimento(atendimento);}}>
                                 <FileCheck className="w-3 h-3 mr-1" /> Comprovante
                               </Button>
@@ -706,9 +721,6 @@ export default function Atendimentos() {
                               </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => {e.stopPropagation();setReciboAtendimento(atendimento);}}>
                                 <FileCheck className="w-3 h-3 mr-1" /> Comprovante
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-7 text-xs border-green-300 text-green-700 hover:bg-green-100 px-2 font-semibold" onClick={(e) => enviarServicoLiberado(atendimento, e)}>
-                                <CheckCircle2 className="w-3 h-3 mr-1" /> Serviço Liberado
                               </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50 px-2" onClick={(e) => enviarWhatsApp(atendimento, e)}>
                                 <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
