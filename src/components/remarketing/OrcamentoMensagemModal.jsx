@@ -13,36 +13,28 @@ import { useUnidade } from '@/lib/UnidadeContext';
 
 function gerarMensagemOrcamento(orc, config) {
   const nomeEmpresa = config.nome_empresa || 'nossa empresa';
-  const oferta = config.oferta_padrao_remarketing || '';
-  const condicao = config.condicao_pagamento_remarketing || '';
-  const diasValidade = config.dias_validade_oferta || 7;
-  const dataValidade = format(addDays(new Date(), diasValidade), "dd/MM/yyyy", { locale: ptBR });
-
   const listaItens = (orc.itens || [])
     .map(i => `• ${i.nome}${i.observacao ? `\n   ${i.observacao}` : ''} - R$ ${(i.valor_total || 0).toFixed(2)}`)
     .join('\n');
   const total = orc.total || 0;
 
-  // Calcula desconto se oferta contiver percentual (ex: "10% de desconto")
-  const matchPct = oferta.match(/(\d+)\s*%/);
-  const desconto = matchPct ? parseFloat(matchPct[1]) : 0;
-  const totalComDesconto = desconto > 0 ? (total * (1 - desconto / 100)).toFixed(2) : total.toFixed(2);
+  const formasPagamento = (config.formas_pagamento || [])
+    .filter(f => f.ativa)
+    .map(f => f.nome)
+    .join(', ');
 
   let msg = config.mensagem_orcamento
     ? config.mensagem_orcamento
-    : `Olá {nome} 👋\n\nPassando para saber se deseja dar andamento no seu orçamento:\n\n{lista_itens}\n\nTotal: R$ {total}\n\nQualquer dúvida, estou à disposição! 😊\n\n{nome_empresa}`;
+    : `Olá {nome}! 👋\n\nSegue o orçamento do seu veículo:\n\n🔧 {lista_itens}\n\n💰 Valor\n{total}\n\nFormas de Pagamento:\n{formas_pagamento}`;
 
   return msg
     .replace(/\{nome\}/g, orc.cliente_nome || 'Cliente')
     .replace(/\{lista_itens\}/g, listaItens)
     .replace(/\{lista_servicos\}/g, listaItens)
     .replace(/\{total\}/g, total.toFixed(2))
-    .replace(/\{total_com_desconto\}/g, totalComDesconto)
     .replace(/\{nome_empresa\}/g, nomeEmpresa)
     .replace(/\{numero\}/g, orc.numero ? `#${orc.numero}` : '')
-    .replace(/\{oferta\}/g, oferta)
-    .replace(/\{condicao\}/g, condicao)
-    .replace(/\{data_validade\}/g, dataValidade);
+    .replace(/\{formas_pagamento\}/g, formasPagamento);
 }
 
 export default function OrcamentoMensagemModal({ orc, config, onClose }) {
