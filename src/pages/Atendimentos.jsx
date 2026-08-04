@@ -130,6 +130,7 @@ export default function Atendimentos() {
   const [pagina, setPagina] = useState(1);
   const [reciboAtendimento, setReciboAtendimento] = useState(null);
   const [atribuirTecnico, setAtribuirTecnico] = useState(null);
+  const [servicoLiberado, setServicoLiberado] = useState({});
   const POR_PAGINA = 20;
 
   // Busca server-side por data para suportar anos de histórico
@@ -341,6 +342,7 @@ export default function Atendimentos() {
     e.stopPropagation();
     const telefone = atendimento.cliente_telefone?.replace(/\D/g, '');
     if (!telefone) { toast.error('Cliente sem telefone cadastrado'); return; }
+    setServicoLiberado(prev => ({ ...prev, [atendimento.id]: 'enviando' }));
     const nomeEmpresa = config.nome_empresa || 'nossa empresa';
     const msg = `*Olá ${atendimento.cliente_nome || ''}!*\n\nBoa notícia! 🎉\n\nO serviço do seu veículo está *LIBERADO* e pronto para retirada! ✅\n\n🚗 *Veículo:* ${atendimento.placa || ''} - ${atendimento.modelo || ''}\n${atendimento.numero_os ? `🔧 *OS:* #${String(atendimento.numero_os).padStart(6, '0')}\n` : ''}${atendimento.valor_final ? `💰 *Valor:* R$ ${atendimento.valor_final.toFixed(2)}\n` : ''}\nEstamos te esperando! 🙏\n\n_${nomeEmpresa}_`;
 
@@ -350,6 +352,7 @@ export default function Atendimentos() {
         await updateStatusMutation.mutateAsync({ id: atendimento.id, status: 'concluido' });
       } catch {
         toast.error('Erro ao atualizar status da OS');
+        setServicoLiberado(prev => ({ ...prev, [atendimento.id]: 'erro' }));
         return;
       }
     }
@@ -364,16 +367,20 @@ export default function Atendimentos() {
         });
         if (res.data?.ok) {
           toast.success('Status atualizado e mensagem enviada!');
+          setServicoLiberado(prev => ({ ...prev, [atendimento.id]: 'enviado' }));
         } else {
           const errMsg = res.data?.error || 'Erro ao enviar.';
           toast.error(errMsg);
+          setServicoLiberado(prev => ({ ...prev, [atendimento.id]: 'erro' }));
         }
       } catch (err) {
         toast.error('Erro ao enviar: ' + err.message);
+        setServicoLiberado(prev => ({ ...prev, [atendimento.id]: 'erro' }));
       }
     } else {
       window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, '_blank');
       toast.success('Status atualizado! Abrindo WhatsApp...');
+      setServicoLiberado(prev => ({ ...prev, [atendimento.id]: 'enviado' }));
     }
   };
 
@@ -675,9 +682,23 @@ export default function Atendimentos() {
 
                           {/* Botão Serviço Liberado — sempre visível */}
                           <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                            <Button size="sm" variant="outline" className="h-7 text-xs border-green-300 text-green-700 hover:bg-green-100 px-2 font-semibold" onClick={(e) => enviarServicoLiberado(atendimento, e)}>
-                              <CheckCircle2 className="w-3 h-3 mr-1" /> Serviço Liberado
-                            </Button>
+                            {servicoLiberado[atendimento.id] === 'enviando' ? (
+                              <div className="flex items-center gap-2 h-7 px-2">
+                                <Loader2 className="w-3 h-3 animate-spin text-green-600" />
+                                <div className="w-32 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                  <div className="h-full bg-green-500 animate-pulse rounded-full" style={{ width: '100%' }} />
+                                </div>
+                                <span className="text-xs text-slate-500">Enviando...</span>
+                              </div>
+                            ) : servicoLiberado[atendimento.id] === 'enviado' ? (
+                              <Button size="sm" className="h-7 text-xs px-2 font-semibold bg-blue-800 hover:bg-blue-800 text-white border-0">
+                                <CheckCircle2 className="w-3 h-3 mr-1" /> Mensagem Enviada
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-green-300 text-green-700 hover:bg-green-100 px-2 font-semibold" onClick={(e) => enviarServicoLiberado(atendimento, e)}>
+                                <CheckCircle2 className="w-3 h-3 mr-1" /> Serviço Liberado
+                              </Button>
+                            )}
                           </div>
 
                           {/* Comprovante para concluído não pago */}
