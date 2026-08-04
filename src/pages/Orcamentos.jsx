@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, FileText, Loader2, Trash2, Printer, CheckCircle2, XCircle, ClipboardList } from 'lucide-react';
+import { Plus, Search, FileText, Loader2, Trash2, Printer, CheckCircle2, XCircle, ClipboardList, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import MenuAtendimento from '@/components/atendimento/MenuAtendimento';
 import OrcamentoForm from '@/components/orcamentos/OrcamentoForm';
 import OrcamentoPrintModal from '@/components/orcamentos/OrcamentoPrintModal';
+import OrcamentoMensagemModal from '@/components/remarketing/OrcamentoMensagemModal';
 
 const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
 
@@ -34,6 +35,7 @@ export default function Orcamentos() {
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState(null);
   const [printOrcamento, setPrintOrcamento] = useState(null);
+  const [enviarOrcamento, setEnviarOrcamento] = useState(null);
 
   const { data: orcamentosBrutos = [], isLoading } = useQuery({
     queryKey: ['orcamentos_avulsos'],
@@ -205,6 +207,9 @@ export default function Orcamentos() {
 
                         {/* Ações */}
                         <div className="flex flex-wrap gap-2 mt-3">
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => setEnviarOrcamento(o)}>
+                            <Send className="w-3 h-3" /> Enviar WhatsApp
+                          </Button>
                           <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setPrintOrcamento(o)}>
                             <Printer className="w-3 h-3" /> Imprimir
                           </Button>
@@ -296,6 +301,14 @@ export default function Orcamentos() {
           orcamento={printOrcamento}
           config={config}
           onClose={() => setPrintOrcamento(null)}
+        />
+      )}
+
+      {enviarOrcamento && (
+        <OrcamentoMensagemModal
+          orc={enviarOrcamento}
+          config={config}
+          onClose={() => setEnviarOrcamento(null)}
         />
       )}
     </div>
