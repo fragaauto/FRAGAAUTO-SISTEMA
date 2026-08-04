@@ -560,9 +560,15 @@ export default function AprovarOrcamento() {
 
         {/* Queixa inicial */}
         {atendimento.queixa_inicial && (
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardHeader>
-              <CardTitle className="text-blue-700">Queixa Inicial</CardTitle>
+          <Card className="border-blue-300 bg-blue-50/40">
+            <CardHeader className="bg-blue-600/5 border-b-2 border-blue-200 rounded-t-lg">
+              <CardTitle className="text-blue-700 text-xl flex items-center gap-2">
+                <span className="bg-blue-600 text-white rounded-lg w-8 h-8 flex items-center justify-center text-sm font-bold">1</span>
+                Queixa Inicial
+              </CardTitle>
+              <p className="text-sm text-slate-600 mt-2 ml-10">
+                Esta é a reclamação que você nos trouxe quando chegou. Abaixo estão os itens relacionados a ela.
+              </p>
             </CardHeader>
             <CardContent>
               <p className="text-slate-700 whitespace-pre-wrap">{atendimento.queixa_inicial}</p>
@@ -591,10 +597,18 @@ export default function AprovarOrcamento() {
         {/* Itens da Queixa */}
         {itensQueixa.length > 0 && (
           <Card>
-            <CardHeader>
-              <CardTitle className="text-blue-700">Itens da Queixa</CardTitle>
+            <CardHeader className="bg-blue-600/5 border-b-2 border-blue-200 rounded-t-lg">
+              <div className="flex items-start gap-3 flex-wrap">
+                <CardTitle className="text-blue-700 text-xl flex items-center gap-2 whitespace-nowrap">
+                  <span className="bg-blue-600 text-white rounded-lg w-8 h-8 flex items-center justify-center text-sm font-bold">2</span>
+                  Itens da Queixa
+                </CardTitle>
+                <p className="text-sm text-slate-600 flex-1 min-w-[200px] mt-1">
+                  Esses são os itens relacionados à sua queixa inicial, previamente aprovados pessoalmente. Para cada item, escolha <b>Aprovado</b> ou <b>Recusado</b>.
+                </p>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 pt-4">
               {itensQueixa.map(([key, { item, decisao }]) => (
                 <div key={key} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
                   <div className="flex items-start justify-between">
@@ -656,12 +670,20 @@ export default function AprovarOrcamento() {
                   )}
 
                   {/* Itens do Checklist */}
-        {itensChecklist.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-orange-700">Itens do Checklist</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+                  {itensChecklist.length > 0 && (
+                  <Card>
+                  <CardHeader className="bg-orange-600/5 border-b-2 border-orange-200 rounded-t-lg">
+                  <div className="flex items-start gap-3 flex-wrap">
+                  <CardTitle className="text-orange-700 text-xl flex items-center gap-2 whitespace-nowrap">
+                  <span className="bg-orange-500 text-white rounded-lg w-8 h-8 flex items-center justify-center text-sm font-bold">3</span>
+                  Itens do Checklist
+                  </CardTitle>
+                  <p className="text-sm text-slate-600 flex-1 min-w-[200px] mt-1">
+                  Esses são os itens que nossos técnicos identificaram, durante a avaliação do seu veículo, que também precisam de atenção. Caso já queira resolver esses problemas é só clicar em <b>Aprovado</b>; se não, clique em <b>Recusado</b>.
+                  </p>
+                  </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3 pt-4">
               {itensChecklist.map(([key, { item, decisao }]) => (
                 <div key={key} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
                   <div className="flex items-start justify-between">
