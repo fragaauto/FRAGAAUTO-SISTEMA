@@ -309,6 +309,7 @@ export default function Orcamentos() {
           orc={enviarOrcamento}
           config={config}
           onClose={() => setEnviarOrcamento(null)}
+          formatoSimples={true}
         />
       )}
     </div>
