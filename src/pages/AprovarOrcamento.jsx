@@ -604,7 +604,7 @@ export default function AprovarOrcamento() {
                   Itens da Queixa
                 </CardTitle>
                 <p className="text-sm text-slate-600 flex-1 min-w-[200px] mt-1">
-                  Esses são os itens relacionados à sua queixa inicial, previamente aprovados pessoalmente. Para cada item, escolha <b>Aprovado</b> ou <b>Recusado</b>.
+                  Esses são os itens relacionados à sua queixa inicial, previamente aprovados pessoalmente.
                 </p>
               </div>
             </CardHeader>
