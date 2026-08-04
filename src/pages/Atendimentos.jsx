@@ -344,7 +344,13 @@ export default function Atendimentos() {
     if (!telefone) { toast.error('Cliente sem telefone cadastrado'); return; }
     setServicoLiberado(prev => ({ ...prev, [atendimento.id]: 'enviando' }));
     const nomeEmpresa = config.nome_empresa || 'nossa empresa';
-    const msg = `*Olá ${atendimento.cliente_nome || ''}!*\n\nBoa notícia! 🎉\n\nO serviço do seu veículo está *LIBERADO* e pronto para retirada! ✅\n\n🚗 *Veículo:* ${atendimento.placa || ''} - ${atendimento.modelo || ''}\n${atendimento.numero_os ? `🔧 *OS:* #${String(atendimento.numero_os).padStart(6, '0')}\n` : ''}${atendimento.valor_final ? `💰 *Valor:* R$ ${atendimento.valor_final.toFixed(2)}\n` : ''}\nEstamos te esperando! 🙏\n\n_${nomeEmpresa}_`;
+    const tpl = config.mensagem_servico_liberado || `*Olá {nome}!*\n\nBoa notícia! 🎉\n\nO serviço do seu veículo está *LIBERADO* e pronto para retirada! ✅\n\n🚗 *Veículo:* {veiculo}\n🔧 *OS:* #{numero}\n💰 *Valor:* R$ {valor}\n\nEstamos te esperando! 🙏\n\n{nome_empresa}`;
+    const msg = tpl
+      .replace(/{nome}/g, atendimento.cliente_nome || '')
+      .replace(/{veiculo}/g, `${atendimento.placa || ''} - ${atendimento.modelo || ''}`)
+      .replace(/{numero}/g, atendimento.numero_os ? String(atendimento.numero_os).padStart(6, '0') : '')
+      .replace(/{valor}/g, atendimento.valor_final != null ? atendimento.valor_final.toFixed(2) : '')
+      .replace(/{nome_empresa}/g, nomeEmpresa);
 
     // Alterar status para concluído
     if (atendimento.status !== 'concluido') {

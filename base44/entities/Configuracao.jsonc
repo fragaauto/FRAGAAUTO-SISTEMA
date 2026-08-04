@@ -43,6 +43,10 @@
       "type": "string",
       "description": "Template de mensagem para follow-up de or\u00e7amentos"
     },
+    "mensagem_servico_liberado": {
+      "type": "string",
+      "description": "Template de mensagem enviada ao liberar servi\u00e7o (bot\u00e3o Servi\u00e7o Liberado)"
+    },
     "formas_pagamento": {
       "type": "array",
       "items": {

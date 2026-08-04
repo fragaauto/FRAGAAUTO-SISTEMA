@@ -68,6 +68,19 @@ export default function TabMarketing({ formData, onChange, onSave, isSaving }) {
           </div>
 
           <div>
+            <Label>Texto Base da Mensagem de Serviço Liberado</Label>
+            <Textarea
+              value={formData.mensagem_servico_liberado || ''}
+              onChange={e => onChange('mensagem_servico_liberado', e.target.value)}
+              className="min-h-[160px] font-mono text-sm"
+              placeholder={`*Olá {nome}!*\n\nBoa notícia! 🎉\n\nO serviço do seu veículo está *LIBERADO* e pronto para retirada! ✅\n\n🚗 *Veículo:* {veiculo}\n🔧 *OS:* #{numero}\n💰 *Valor:* R$ {valor}\n\nEstamos te esperando! 🙏\n\n{nome_empresa}`}
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Variáveis: {'{nome}'} {'{veiculo}'} {'{numero}'} {'{valor}'} {'{nome_empresa}'}
+            </p>
+          </div>
+
+          <div>
             <Label>Texto Base da Mensagem de Follow-up de Orçamentos</Label>
             <Textarea
               value={formData.mensagem_orcamento || ''}
