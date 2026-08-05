@@ -220,11 +220,17 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
 
       // Itens do atendimento com identificação de origem (para transferência entre técnicos)
       // Evita duplicação: se um serviço existe na queixa e no orçamento, contabiliza apenas no orçamento (orçamento = orçamento final)
+      // Ignora itens de orçamento sem valor (fantasmas gerados do checklist não precificados) ou não aprovados
       const nomesOrcamento = new Set((a.itens_orcamento || []).map(i => i.nome).filter(Boolean));
       const itensComSource = [
         ...(a.itens_queixa || []).map((item, index) => ({ item, source: 'queixa', index }))
           .filter(e => !(e.item.nome && nomesOrcamento.has(e.item.nome))),
-        ...(a.itens_orcamento || []).map((item, index) => ({ item, source: 'orcamento', index })),
+        ...(a.itens_orcamento || []).map((item, index) => ({ item, source: 'orcamento', index }))
+          .filter(e => {
+            const v = Number(e.item.valor_total) || 0;
+            const st = e.item.status_aprovacao;
+            return v > 0 && st !== 'reprovado' && st !== 'pendente';
+          }),
       ];
 
       // Valor bruto total do atendimento para calcular % de taxa de pagamento
