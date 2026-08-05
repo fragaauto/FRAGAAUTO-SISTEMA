@@ -443,7 +443,14 @@ export default function FluxoCaixaTab({ filtroData }) {
                     : <ArrowDownCircle className="w-4 h-4 text-red-500" />}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-800 truncate max-w-[180px]">{l.descricao}</p>
+                  <p className="text-sm font-medium text-slate-800 truncate max-w-[180px]">
+                    {(() => {
+                      const at = atendimentos.find(a => a.id === l.atendimento_id);
+                      const osNum = at?.numero_os ? `OS #${at.numero_os}` : '';
+                      const desc = l.descricao || (at ? 'Atendimento' : '');
+                      return osNum ? `${osNum} — ${desc}` : desc;
+                    })()}
+                  </p>
                   <p className="text-xs text-slate-400">
                     {l.data_lancamento ? format(new Date(l.data_lancamento), 'dd/MM HH:mm') : '-'} · {FORMAS_LABELS[l.forma_pagamento] || l.forma_pagamento}
                   </p>
