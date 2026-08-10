@@ -257,7 +257,7 @@ export default function Atendimentos() {
 
     const matchVendaDireta = !vendaDiretaFilter || a.venda_direta === true;
     return matchSearch && matchStatus && matchDataInicio && matchDataFim && matchProduto && matchVendaDireta;
-  });
+  }).sort((a, b) => (Number(b.numero_os) || 0) - (Number(a.numero_os) || 0));
 
   const totalPaginas = Math.ceil(filteredAtendimentos.length / POR_PAGINA);
   const atendimentosPaginados = filteredAtendimentos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
