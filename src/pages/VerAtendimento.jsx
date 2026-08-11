@@ -52,6 +52,7 @@ import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import ItemOrcamentoComEncomenda from '../components/orcamento/ItemOrcamentoComEncomenda';
 import OrcamentoWhatsAppModal from '../components/orcamento/OrcamentoWhatsAppModal';
 import TransferirUnidadeModal from '../components/atendimento/TransferirUnidadeModal';
+import TransferirChecklistModal from '../components/atendimento/TransferirChecklistModal';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '../components/atendimento/AlertaEstoqueBaixo';
 import BadgeEstoqueBaixo from '../components/atendimento/BadgeEstoqueBaixo';
 import { format } from 'date-fns';
@@ -127,6 +128,7 @@ export default function VerAtendimento() {
   const [showEditarDados, setShowEditarDados] = useState(false);
   const [showOrcamentoWhatsApp, setShowOrcamentoWhatsApp] = useState(false);
   const [showTransferirUnidade, setShowTransferirUnidade] = useState(false);
+  const [showTransferirChecklist, setShowTransferirChecklist] = useState(false);
   const [obsServico, setObsServico] = useState('');
   const obsServicoTimer = React.useRef(null);
   const [produtoAlerta, setProdutoAlerta] = useState(null);
@@ -1283,6 +1285,19 @@ export default function VerAtendimento() {
           </TabsContent>}
 
           {podeVerChecklist && <TabsContent value="checklist" className="space-y-4">
+            {isAdmin && (
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                  onClick={() => setShowTransferirChecklist(true)}
+                >
+                  <ArrowRightLeft className="w-4 h-4 mr-2" />
+                  Transferir Checklist
+                </Button>
+              </div>
+            )}
             {atendimento.checklist?.length === 0 ? (
               <Card className="py-8">
                 <CardContent className="text-center text-slate-500">
@@ -1984,6 +1999,12 @@ export default function VerAtendimento() {
         atendimento={atendimento}
         open={showTransferirUnidade}
         onClose={() => setShowTransferirUnidade(false)}
+      />
+
+      <TransferirChecklistModal
+        atendimento={atendimento}
+        open={showTransferirChecklist}
+        onClose={() => setShowTransferirChecklist(false)}
       />
 
       <AlertaEstoqueBaixo
