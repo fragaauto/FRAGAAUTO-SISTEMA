@@ -225,6 +225,24 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
 
           ${atendimento.observacoes ? `<div style="background:#f8fafc;border-radius:8px;padding:15px;margin-bottom:20px"><h3 style="color:#1e293b;margin-bottom:10px;font-size:16px">OBSERVAÇÕES</h3><p style="color:#64748b;font-size:14px;line-height:1.6;white-space:pre-wrap">${atendimento.observacoes}</p></div>` : ''}
 
+          ${atendimento.fotos?.length > 0 ? `
+            <div style="margin-bottom:20px;page-break-inside:avoid">
+              <h3 style="color:#1e293b;font-size:16px;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #3b82f6">FOTOS DO ATENDIMENTO (${atendimento.fotos.length})</h3>
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+                ${atendimento.fotos.map((foto, idx) => `
+                  <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;page-break-inside:avoid">
+                    <img src="${foto.url}" alt="${foto.descricao || 'Foto ' + (idx + 1)}" style="width:100%;height:200px;object-fit:cover;display:block" />
+                    <div style="padding:8px 10px;background:#f8fafc">
+                      <p style="font-size:12px;color:#475569;font-weight:600;margin:0">${foto.descricao || 'Foto ' + (idx + 1)}</p>
+                      ${foto.usuario ? `<p style="font-size:10px;color:#94a3b8;margin:2px 0 0">Por: ${foto.usuario}</p>` : ''}
+                      ${foto.data_upload ? `<p style="font-size:10px;color:#94a3b8;margin:1px 0 0">${format(new Date(foto.data_upload), 'dd/MM/yyyy HH:mm')}</p>` : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
           ${todosTecnicos.length > 0 ? `<div style="background:#f5f3ff;border-radius:8px;padding:15px;margin-bottom:20px;border-left:4px solid #7c3aed"><h3 style="color:#5b21b6;margin-bottom:8px;font-size:14px">🔧 TÉCNICO(S) RESPONSÁVEL(IS)</h3><p style="color:#4c1d95;font-size:14px;font-weight:600">${todosTecnicos.join(' • ')}</p></div>` : ''}
 
           <div style="border-top:2px solid #e2e8f0;padding-top:20px;margin-top:30px">
