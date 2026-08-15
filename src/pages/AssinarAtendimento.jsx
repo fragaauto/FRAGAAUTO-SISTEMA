@@ -107,6 +107,21 @@ export default function AssinarAtendimento() {
     );
   }
 
+  if (!id) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 px-4">
+        <XCircle className="w-12 h-12 text-amber-400" />
+        <p className="text-slate-700 font-semibold">Link inválido</p>
+        <p className="text-sm text-slate-500 text-center max-w-md">
+          Este link não contém o identificador do atendimento. Acesse pelo link enviado pela oficina via WhatsApp.
+        </p>
+        <p className="text-xs text-slate-400 text-center max-w-md mt-2">
+          Dica: para testar, acesse <code className="bg-slate-200 px-1 rounded">/AssinarAtendimento?id=&lt;ID&gt;</code>
+        </p>
+      </div>
+    );
+  }
+
   if (isError || !atendimento) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 px-4">
