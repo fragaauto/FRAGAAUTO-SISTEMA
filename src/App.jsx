@@ -13,6 +13,7 @@ import ControleEncomendas from './pages/ControleEncomendas';
 import RotinaDiaria from './pages/RotinaDiaria';
 import Orcamentos from './pages/Orcamentos';
 import MuralAnonimo from './pages/MuralAnonimo';
+import AssinarAtendimento from './pages/AssinarAtendimento';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -69,6 +70,7 @@ const AuthenticatedApp = () => {
       <Route path="/RotinaDiaria" element={<LayoutWrapper currentPageName="RotinaDiaria"><RotinaDiaria /></LayoutWrapper>} />
       <Route path="/Orcamentos" element={<LayoutWrapper currentPageName="Orcamentos"><Orcamentos /></LayoutWrapper>} />
       <Route path="/MuralAnonimo" element={<LayoutWrapper currentPageName="MuralAnonimo"><MuralAnonimo /></LayoutWrapper>} />
+      <Route path="/AssinarAtendimento" element={<LayoutWrapper currentPageName="AssinarAtendimento"><AssinarAtendimento /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

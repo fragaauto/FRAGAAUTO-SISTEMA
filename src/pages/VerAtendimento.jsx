@@ -484,6 +484,9 @@ export default function VerAtendimento() {
     toast.warning('Queixa reaberta - assinatura anterior invalidada');
   };
 
+  const [showLinkAssinatura, setShowLinkAssinatura] = useState(false);
+  const [enviandoLinkAssinatura, setEnviandoLinkAssinatura] = useState(false);
+
   const reabrirChecklist = () => {
     const historicoItem = {
       data: new Date().toISOString(),
@@ -709,6 +712,16 @@ export default function VerAtendimento() {
           <div className="flex flex-col items-center gap-1">
             <Share2 className="w-5 h-5" />
             <span className="text-xs">Link Cliente</span>
+          </div>
+        </Button>
+        <Button
+          className="bg-emerald-600 hover:bg-emerald-700 h-auto py-3"
+          onClick={() => setShowLinkAssinatura(true)}
+          disabled={pagamentoLancado}
+        >
+          <div className="flex flex-col items-center gap-1">
+            <PenTool className="w-5 h-5" />
+            <span className="text-xs">Assinar Link</span>
           </div>
         </Button>
         <Button
@@ -2080,6 +2093,89 @@ export default function VerAtendimento() {
                 >
                   <Share2 className="w-4 h-4 mr-2" />
                   Copiar Mensagem e Link
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showLinkAssinatura && (
+        <Dialog open={showLinkAssinatura} onOpenChange={setShowLinkAssinatura}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Enviar Link de Assinatura Digital</DialogTitle>
+              <DialogDescription>
+                O cliente receberá um link no WhatsApp com todos os dados do atendimento, fotos e observações para assinar digitalmente.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {atendimento.assinatura_cliente_atendimento && (
+                <div className="p-3 bg-green-50 border border-green-300 rounded-lg flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                  <p className="text-sm text-green-800">
+                    Cliente já assinou em {format(new Date(atendimento.data_assinatura_atendimento), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}.
+                  </p>
+                </div>
+              )}
+              <div className="p-3 bg-slate-100 rounded-lg">
+                <p className="text-xs text-slate-500 mb-1">Link de assinatura:</p>
+                <p className="text-sm text-slate-700 break-all">
+                  {`${window.location.origin}${createPageUrl('AssinarAtendimento')}?id=${id}`}
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={async () => {
+                    if (!atendimento.cliente_telefone) {
+                      toast.error('Cliente sem telefone cadastrado');
+                      return;
+                    }
+                    setEnviandoLinkAssinatura(true);
+                    try {
+                      const link = `${window.location.origin}${createPageUrl('AssinarAtendimento')}?id=${id}`;
+                      const nomeEmpresa = configs[0]?.nome_empresa || 'Fraga Auto Portas';
+                      const mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n✍️ Você recebeu um link para confirmar e assinar digitalmente o atendimento do seu veículo.\n\n*Veículo:* ${atendimento.placa || ''} - ${atendimento.modelo || ''}\n\n📋 No link você verá todos os dados do atendimento, fotos anexadas (com data e hora) e observações. Após revisar, basta assinar na tela.\n\n🔗 Acesse aqui: ${link}\n\n— ${nomeEmpresa}`;
+                      const res = await base44.functions.invoke('enviarMensagemWhatsApp', {
+                        telefone: atendimento.cliente_telefone.replace(/\D/g, ''),
+                        mensagem,
+                        unidade_id: atendimento.unidade_id || null,
+                      });
+                      if (res.data?.ok) {
+                        toast.success('Link enviado para o cliente via WhatsApp!');
+                        setShowLinkAssinatura(false);
+                      } else {
+                        throw new Error(res.data?.error || 'Erro ao enviar');
+                      }
+                    } catch (err) {
+                      const link = `${window.location.origin}${createPageUrl('AssinarAtendimento')}?id=${id}`;
+                      const mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n✍️ Você recebeu um link para confirmar e assinar digitalmente o atendimento do seu veículo.\n\n*Veículo:* ${atendimento.placa || ''} - ${atendimento.modelo || ''}\n\n🔗 Acesse aqui: ${link}`;
+                      window.open(`https://wa.me/${atendimento.cliente_telefone?.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`, '_blank');
+                      toast.warning('Envio automático indisponível. Abrindo WhatsApp Web...');
+                    } finally {
+                      setEnviandoLinkAssinatura(false);
+                    }
+                  }}
+                  disabled={enviandoLinkAssinatura}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {enviandoLinkAssinatura ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                  )}
+                  Enviar via WhatsApp
+                </Button>
+                <Button
+                  onClick={() => {
+                    const link = `${window.location.origin}${createPageUrl('AssinarAtendimento')}?id=${id}`;
+                    navigator.clipboard.writeText(link);
+                    toast.success('Link copiado!');
+                  }}
+                  variant="outline"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Copiar Link
                 </Button>
               </div>
             </div>

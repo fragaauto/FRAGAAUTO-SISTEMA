@@ -57,7 +57,7 @@ const NAV_ITEMS = [
 
 
 // Páginas acessíveis sem autenticação
-const PAGINAS_PUBLICAS = ['AprovarOrcamento'];
+const PAGINAS_PUBLICAS = ['AprovarOrcamento', 'AssinarAtendimento'];
 
 export default function Layout({ children, currentPageName }) {
   const [open, setOpen] = React.useState(false);

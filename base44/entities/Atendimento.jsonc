@@ -357,6 +357,15 @@
       "type": "string",
       "format": "date-time"
     },
+    "assinatura_cliente_atendimento": {
+      "type": "string",
+      "description": "Assinatura digital do cliente confirmando o atendimento completo (via link p\u00fablico)"
+    },
+    "data_assinatura_atendimento": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora em que o cliente assinou o atendimento via link p\u00fablico"
+    },
     "observacoes": {
       "type": "string"
     },
