@@ -35,11 +35,13 @@ import {
   Plus,
   Sparkles,
   Lock,
-  Wrench
+  Wrench,
+  FileCheck2
 } from 'lucide-react';
 import ItemAprovacao from '../components/aprovacao/ItemAprovacao';
 import AssistenteIAModal from '../components/atendimento/AssistenteIAModal';
 import { gerarPDF } from '../components/atendimento/GerarPDF';
+import { gerarPDFAssinatura } from '../components/atendimento/GerarPDFAssinatura';
 import { calcularSubtotais } from '../components/atendimento/calcularTotais';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
 import OrdemServicoTecnica from '../components/OrdemServicoTecnica';
@@ -486,6 +488,7 @@ export default function VerAtendimento() {
 
   const [showLinkAssinatura, setShowLinkAssinatura] = useState(false);
   const [enviandoLinkAssinatura, setEnviandoLinkAssinatura] = useState(false);
+  const [gerandoPDFAssinatura, setGerandoPDFAssinatura] = useState(false);
 
   const reabrirChecklist = () => {
     const historicoItem = {
@@ -724,6 +727,18 @@ export default function VerAtendimento() {
             <span className="text-xs">Assinar Link</span>
           </div>
         </Button>
+        {atendimento.assinatura_cliente_atendimento && (
+          <Button
+            className="bg-green-700 hover:bg-green-800 h-auto py-3"
+            disabled={gerandoPDFAssinatura}
+            onClick={() => gerarPDFAssinatura(atendimento, configs[0], setGerandoPDFAssinatura, toast)}
+          >
+            <div className="flex flex-col items-center gap-1">
+              {gerandoPDFAssinatura ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileCheck2 className="w-5 h-5" />}
+              <span className="text-xs">PDF Assinado</span>
+            </div>
+          </Button>
+        )}
         <Button
           className="bg-blue-600 hover:bg-blue-700 h-auto py-3"
           onClick={() => setShowImpressaoQueixa(true)}
