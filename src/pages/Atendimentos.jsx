@@ -225,7 +225,7 @@ export default function Atendimentos() {
     setSelecionados([]);
   };
 
-  const osNaoEncontrada = search && !isNaN(search) && atendimentos.every(a => !String(a.numero_os).includes(search));
+  const osNaoEncontrada = search && !isNaN(search) && !atendimentos.some(a => String(a.numero_os) === search.trim());
   useEffect(() => {
     if (osNaoEncontrada && search.length >= 2) {
       buscarOSEspecifica(search);
