@@ -168,34 +168,55 @@ export default function Atendimentos() {
     staleTime: 2 * 60 * 1000
   });
 
-  const [buscandoOS, setBuscandoOS] = useState(false);
-  const [resultadoOSExtra, setResultadoOSExtra] = useState([]);
+  const [resultadosBuscaServer, setResultadosBuscaServer] = useState([]);
+  const [buscandoServer, setBuscandoServer] = useState(false);
 
-  const buscarOSEspecifica = async (numeroOS) => {
-    if (!numeroOS || isNaN(numeroOS)) return;
-    setBuscandoOS(true);
-    try {
-      const resultado = await base44.entities.Atendimento.filter({ numero_os: parseInt(numeroOS) }, '-created_date', 10);
-      setResultadoOSExtra(resultado);
-    } catch (e) {
-      setResultadoOSExtra([]);
+  // Busca server-side: considera TODAS as OS salvas (não apenas os últimos 90 dias)
+  useEffect(() => {
+    if (!search || search.trim().length < 2) {
+      setResultadosBuscaServer([]);
+      return;
     }
-    setBuscandoOS(false);
-  };
+    const termo = search.trim();
+    const timeout = setTimeout(async () => {
+      setBuscandoServer(true);
+      try {
+        const queries = [];
+        if (!isNaN(termo)) {
+          queries.push(base44.entities.Atendimento.filter({ numero_os: parseInt(termo) }, '-created_date', 50));
+        }
+        queries.push(base44.entities.Atendimento.filter({ cliente_nome: { $regex: termo, $options: 'i' } }, '-created_date', 50));
+        queries.push(base44.entities.Atendimento.filter({ placa: { $regex: termo, $options: 'i' } }, '-created_date', 50));
+        queries.push(base44.entities.Atendimento.filter({ modelo: { $regex: termo, $options: 'i' } }, '-created_date', 50));
+        const resultados = await Promise.all(queries);
+        const merged = [];
+        const seen = new Set();
+        for (const list of resultados) {
+          for (const a of list) {
+            if (!seen.has(a.id)) { seen.add(a.id); merged.push(a); }
+          }
+        }
+        setResultadosBuscaServer(merged);
+      } catch {
+        setResultadosBuscaServer([]);
+      }
+      setBuscandoServer(false);
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [search]);
 
   const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
 
   const atendimentos = useMemo(() => {
-    const base = [
-      ...atendimentosBrutos,
-      ...resultadoOSExtra.filter(r => !atendimentosBrutos.find(a => a.id === r.id))
-    ];
+    const base = search.trim().length >= 2
+      ? resultadosBuscaServer
+      : [...atendimentosBrutos];
     if (!unidadeAtual) return base;
     return base.filter((a) => {
       if (a.unidade_id) return a.unidade_id === unidadeAtual.id;
       return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
     });
-  }, [atendimentosBrutos, resultadoOSExtra, unidadeAtual]);
+  }, [atendimentosBrutos, resultadosBuscaServer, unidadeAtual, search]);
 
   const { data: configs = [] } = useQuery({
     queryKey: ['configuracoes'],
@@ -224,15 +245,6 @@ export default function Atendimentos() {
     toast.success(`${selecionados.length} atendimento(s) excluído(s)!`);
     setSelecionados([]);
   };
-
-  const osNaoEncontrada = search && !isNaN(search) && !atendimentos.some(a => String(a.numero_os) === search.trim());
-  useEffect(() => {
-    if (osNaoEncontrada && search.length >= 2) {
-      buscarOSEspecifica(search);
-    } else {
-      setResultadoOSExtra([]);
-    }
-  }, [osNaoEncontrada, search]);
 
   const filteredAtendimentos = atendimentos.filter((a) => {
     const matchSearch = !search ||
@@ -425,10 +437,10 @@ export default function Atendimentos() {
 
       {/* Filters */}
       <div className="max-w-4xl mx-auto px-4 py-4">
-      {!dataInicio && !dataFim && (
+      {!dataInicio && !dataFim && !search && (
         <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex items-center gap-2">
           <Calendar className="w-4 h-4 flex-shrink-0" />
-          Mostrando atendimentos dos últimos 90 dias. Use o filtro de data para buscar períodos anteriores (até 3+ anos).
+          Mostrando atendimentos dos últimos 90 dias. A busca por OS, cliente, placa ou modelo considera todos os registros.
         </div>
       )}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -571,7 +583,7 @@ export default function Atendimentos() {
 
       {/* List */}
       <div className="max-w-4xl mx-auto px-4 pb-8">
-        {isLoading ?
+        {(isLoading || buscandoServer) ?
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
           </div> :
