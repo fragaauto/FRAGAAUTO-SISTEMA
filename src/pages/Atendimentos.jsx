@@ -171,6 +171,22 @@ export default function Atendimentos() {
   const [resultadosBuscaServer, setResultadosBuscaServer] = useState([]);
   const [buscandoServer, setBuscandoServer] = useState(false);
 
+  // Constrói padrão regex insensível a acentos (ex: "tulio" → "t[uúùûü]l[iíìîï]o")
+  const buildAccentPattern = (termo) => {
+    const map = {
+      a: 'aáàâãäAÁÀÂÃÄ', e: 'eéèêëEÉÈÊË', i: 'iíìîïIÍÌÎÏ',
+      o: 'oóòôõöOÓÒÔÕÖ', u: 'uúùûüUÚÙÛÜ', c: 'cçCÇ', n: 'nñNÑ'
+    };
+    return termo.split('').map(ch => {
+      const lower = ch.toLowerCase();
+      if (map[lower]) return '[' + map[lower] + ']';
+      return ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }).join('');
+  };
+
+  // Normaliza string removendo acentos e minificando (para filtro client-side)
+  const normalizeStr = (str) => (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
   // Busca server-side: considera TODAS as OS salvas (não apenas os últimos 90 dias)
   useEffect(() => {
     if (!search || search.trim().length < 2) {
@@ -178,6 +194,7 @@ export default function Atendimentos() {
       return;
     }
     const termo = search.trim();
+    const padrao = buildAccentPattern(termo);
     const timeout = setTimeout(async () => {
       setBuscandoServer(true);
       try {
@@ -185,9 +202,9 @@ export default function Atendimentos() {
         if (!isNaN(termo)) {
           queries.push(base44.entities.Atendimento.filter({ numero_os: parseInt(termo) }, '-created_date', 50));
         }
-        queries.push(base44.entities.Atendimento.filter({ cliente_nome: { $regex: termo, $options: 'i' } }, '-created_date', 50));
-        queries.push(base44.entities.Atendimento.filter({ placa: { $regex: termo, $options: 'i' } }, '-created_date', 50));
-        queries.push(base44.entities.Atendimento.filter({ modelo: { $regex: termo, $options: 'i' } }, '-created_date', 50));
+        queries.push(base44.entities.Atendimento.filter({ cliente_nome: { $regex: padrao, $options: 'i' } }, '-created_date', 50));
+        queries.push(base44.entities.Atendimento.filter({ placa: { $regex: padrao, $options: 'i' } }, '-created_date', 50));
+        queries.push(base44.entities.Atendimento.filter({ modelo: { $regex: padrao, $options: 'i' } }, '-created_date', 50));
         const resultados = await Promise.all(queries);
         const merged = [];
         const seen = new Set();
@@ -247,10 +264,11 @@ export default function Atendimentos() {
   };
 
   const filteredAtendimentos = atendimentos.filter((a) => {
+    const termoNorm = normalizeStr(search);
     const matchSearch = !search ||
-    a.placa?.toLowerCase().includes(search.toLowerCase()) ||
-    a.modelo?.toLowerCase().includes(search.toLowerCase()) ||
-    a.cliente_nome?.toLowerCase().includes(search.toLowerCase()) ||
+    normalizeStr(a.placa).includes(termoNorm) ||
+    normalizeStr(a.modelo).includes(termoNorm) ||
+    normalizeStr(a.cliente_nome).includes(termoNorm) ||
     (a.numero_os && String(a.numero_os).includes(search));
     const matchStatus = statusFilter === 'all' || a.status === statusFilter;
 
