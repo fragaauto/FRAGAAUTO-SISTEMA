@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, Package, Check, Loader2, Trash2, Search, Edit, ChevronDown, ChevronUp, ShoppingBag, X, Printer, Share2, Save, MapPin, Tag, Building2, RotateCcw } from 'lucide-react';
+import EditarProdutoItemCard from './EditarProdutoItemCard';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -153,7 +154,7 @@ function NovaListaModal({ open, onClose, produtos, onSaved }) {
   );
 }
 
-function EditarListaModal({ lista, produtos, onClose, onSaved }) {
+function EditarListaModal({ lista, produtos, onClose, onSaved, onProdutoAtualizado }) {
   const [nome, setNome] = useState(lista.nome || '');
   const [obs, setObs] = useState(lista.observacoes || '');
   const [itens, setItens] = useState(lista.itens ? [...lista.itens] : []);
@@ -235,16 +236,15 @@ function EditarListaModal({ lista, produtos, onClose, onSaved }) {
             {itens.length > 0 ? (
               <div className="space-y-2">
                 {itens.map((it, idx) => (
-                  <div key={idx} className="bg-white border rounded-lg p-2 space-y-2">
-                    <span className="text-sm font-medium block break-words">{it.produto_nome}</span>
-                    <div className="flex gap-2 items-center">
-                      <Input type="number" min={1} value={it.quantidade}
-                        onChange={e => updateItem(idx, 'quantidade', parseInt(e.target.value) || 1)}
-                        className="w-16 text-center h-8 flex-shrink-0" />
-                      <Input value={it.obs || ''} onChange={e => updateItem(idx, 'obs', e.target.value)} placeholder="Obs..." className="flex-1 min-w-0 h-8 text-xs" />
-                      <button onClick={() => setItens(p => p.filter((_, i) => i !== idx))} className="flex-shrink-0"><X className="w-4 h-4 text-red-400" /></button>
-                    </div>
-                  </div>
+                  <EditarProdutoItemCard
+                    key={idx}
+                    it={it}
+                    idx={idx}
+                    produtos={produtos}
+                    onUpdateItem={updateItem}
+                    onRemoveItem={(i) => setItens(p => p.filter((_, idx2) => idx2 !== i))}
+                    onProdutoAtualizado={onProdutoAtualizado}
+                  />
                 ))}
               </div>
             ) : <p className="text-xs text-slate-400 text-center py-2">Nenhum produto do estoque</p>}
@@ -580,6 +580,7 @@ function ListaCard({ lista, produtos, onRefetchProdutos }) {
           produtos={produtos}
           onClose={() => setEditando(false)}
           onSaved={() => { setEditando(false); qc.invalidateQueries(['listas-compras']); }}
+          onProdutoAtualizado={onRefetchProdutos}
         />
       )}
     </>
