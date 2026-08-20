@@ -411,21 +411,21 @@ export default function Compras() {
             <div className="space-y-2">
               <p className="text-sm font-medium text-slate-700">Itens a comprar <span className="text-xs text-slate-400">(edite as quantidades conforme necessário)</span></p>
               {itensLista.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3 bg-slate-50 border rounded-lg p-3">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm text-slate-800">{item.produto_nome}</p>
-                    <p className="text-xs text-slate-400">{item.obs}</p>
+                <div key={idx} className="bg-slate-50 border rounded-lg p-3 space-y-2">
+                  <div>
+                    <p className="font-medium text-sm text-slate-800 break-words">{item.produto_nome}</p>
+                    <p className="text-xs text-slate-400 break-words">{item.obs}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500">Qtd:</span>
+                    <span className="text-xs text-slate-500 flex-shrink-0">Qtd:</span>
                     <Input
                       type="number"
                       min="0"
                       value={item.quantidade}
                       onChange={e => setItensLista(prev => prev.map((it, i) => i === idx ? { ...it, quantidade: parseInt(e.target.value) || 0 } : it))}
-                      className="w-20 h-8 text-center text-sm"
+                      className="w-20 h-8 text-center text-sm flex-shrink-0"
                     />
-                    <button onClick={() => setItensLista(prev => prev.filter((_, i) => i !== idx))}>
+                    <button onClick={() => setItensLista(prev => prev.filter((_, i) => i !== idx))} className="flex-shrink-0">
                       <X className="w-4 h-4 text-red-400 hover:text-red-600" />
                     </button>
                   </div>

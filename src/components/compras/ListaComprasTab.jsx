@@ -105,13 +105,15 @@ function NovaListaModal({ open, onClose, produtos, onSaved }) {
             {itens.length > 0 && (
               <div className="space-y-2">
                 {itens.map((it, idx) => (
-                  <div key={idx} className="flex gap-2 items-center bg-white border rounded-lg p-2">
-                    <span className="text-sm flex-1 truncate font-medium">{it.produto_nome}</span>
-                    <Input type="number" min={1} value={it.quantidade}
-                      onChange={e => updateItem(idx, 'quantidade', parseInt(e.target.value) || 1)}
-                      className="w-16 text-center h-8" />
-                    <Input value={it.obs} onChange={e => updateItem(idx, 'obs', e.target.value)} placeholder="Obs..." className="w-28 h-8 text-xs" />
-                    <button onClick={() => setItens(p => p.filter((_, i) => i !== idx))}><X className="w-4 h-4 text-red-400" /></button>
+                  <div key={idx} className="bg-white border rounded-lg p-2 space-y-2">
+                    <span className="text-sm font-medium block break-words">{it.produto_nome}</span>
+                    <div className="flex gap-2 items-center">
+                      <Input type="number" min={1} value={it.quantidade}
+                        onChange={e => updateItem(idx, 'quantidade', parseInt(e.target.value) || 1)}
+                        className="w-16 text-center h-8 flex-shrink-0" />
+                      <Input value={it.obs} onChange={e => updateItem(idx, 'obs', e.target.value)} placeholder="Obs..." className="flex-1 min-w-0 h-8 text-xs" />
+                      <button onClick={() => setItens(p => p.filter((_, i) => i !== idx))} className="flex-shrink-0"><X className="w-4 h-4 text-red-400" /></button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -121,20 +123,20 @@ function NovaListaModal({ open, onClose, produtos, onSaved }) {
           {/* Produtos não cadastrados */}
           <div className="border rounded-xl p-4 space-y-3 bg-orange-50 border-orange-200">
             <p className="font-semibold text-slate-700 text-sm">✏️ Produtos Não Cadastrados</p>
-            <div className="flex gap-2">
-              <Input value={novoLivre.nome} onChange={e => setNovoLivre(p => ({ ...p, nome: e.target.value }))} placeholder="Nome do produto..." className="flex-1 h-8 text-sm" />
-              <Input type="number" min={1} value={novoLivre.quantidade} onChange={e => setNovoLivre(p => ({ ...p, quantidade: e.target.value }))} className="w-16 text-center h-8 text-sm" />
-              <Input value={novoLivre.obs} onChange={e => setNovoLivre(p => ({ ...p, obs: e.target.value }))} placeholder="Obs..." className="w-28 h-8 text-xs" />
-              <Button size="sm" onClick={addLivre} className="h-8 bg-orange-500 hover:bg-orange-600"><Plus className="w-4 h-4" /></Button>
+            <div className="flex flex-wrap gap-2">
+              <Input value={novoLivre.nome} onChange={e => setNovoLivre(p => ({ ...p, nome: e.target.value }))} placeholder="Nome do produto..." className="flex-1 min-w-[120px] h-8 text-sm" />
+              <Input type="number" min={1} value={novoLivre.quantidade} onChange={e => setNovoLivre(p => ({ ...p, quantidade: e.target.value }))} className="w-16 text-center h-8 text-sm flex-shrink-0" />
+              <Input value={novoLivre.obs} onChange={e => setNovoLivre(p => ({ ...p, obs: e.target.value }))} placeholder="Obs..." className="flex-1 min-w-[100px] h-8 text-xs" />
+              <Button size="sm" onClick={addLivre} className="h-8 bg-orange-500 hover:bg-orange-600 flex-shrink-0"><Plus className="w-4 h-4" /></Button>
             </div>
             {itensLivres.length > 0 && (
               <div className="space-y-1">
                 {itensLivres.map((it, idx) => (
                   <div key={idx} className="flex items-center gap-2 bg-white border border-orange-200 rounded-lg px-2 py-1.5 text-sm">
-                    <span className="flex-1 font-medium">{it.nome}</span>
-                    <span className="text-slate-500 text-xs">x{it.quantidade}</span>
-                    {it.obs && <span className="text-slate-400 text-xs italic">{it.obs}</span>}
-                    <button onClick={() => setItensLivres(p => p.filter((_, i) => i !== idx))}><X className="w-3.5 h-3.5 text-red-400" /></button>
+                    <span className="flex-1 font-medium break-words min-w-0">{it.nome}</span>
+                    <span className="text-slate-500 text-xs flex-shrink-0">x{it.quantidade}</span>
+                    {it.obs && <span className="text-slate-400 text-xs italic break-words min-w-0">{it.obs}</span>}
+                    <button onClick={() => setItensLivres(p => p.filter((_, i) => i !== idx))} className="flex-shrink-0"><X className="w-3.5 h-3.5 text-red-400" /></button>
                   </div>
                 ))}
               </div>
@@ -233,13 +235,15 @@ function EditarListaModal({ lista, produtos, onClose, onSaved }) {
             {itens.length > 0 ? (
               <div className="space-y-2">
                 {itens.map((it, idx) => (
-                  <div key={idx} className="flex gap-2 items-center bg-white border rounded-lg p-2">
-                    <span className="text-sm flex-1 truncate font-medium">{it.produto_nome}</span>
-                    <Input type="number" min={1} value={it.quantidade}
-                      onChange={e => updateItem(idx, 'quantidade', parseInt(e.target.value) || 1)}
-                      className="w-16 text-center h-8" />
-                    <Input value={it.obs || ''} onChange={e => updateItem(idx, 'obs', e.target.value)} placeholder="Obs..." className="w-28 h-8 text-xs" />
-                    <button onClick={() => setItens(p => p.filter((_, i) => i !== idx))}><X className="w-4 h-4 text-red-400" /></button>
+                  <div key={idx} className="bg-white border rounded-lg p-2 space-y-2">
+                    <span className="text-sm font-medium block break-words">{it.produto_nome}</span>
+                    <div className="flex gap-2 items-center">
+                      <Input type="number" min={1} value={it.quantidade}
+                        onChange={e => updateItem(idx, 'quantidade', parseInt(e.target.value) || 1)}
+                        className="w-16 text-center h-8 flex-shrink-0" />
+                      <Input value={it.obs || ''} onChange={e => updateItem(idx, 'obs', e.target.value)} placeholder="Obs..." className="flex-1 min-w-0 h-8 text-xs" />
+                      <button onClick={() => setItens(p => p.filter((_, i) => i !== idx))} className="flex-shrink-0"><X className="w-4 h-4 text-red-400" /></button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -249,18 +253,18 @@ function EditarListaModal({ lista, produtos, onClose, onSaved }) {
           {/* Produtos livres */}
           <div className="border rounded-xl p-4 space-y-3 bg-orange-50 border-orange-200">
             <p className="font-semibold text-slate-700 text-sm">✏️ Produtos Não Cadastrados</p>
-            <div className="flex gap-2">
-              <Input value={novoLivre.nome} onChange={e => setNovoLivre(p => ({ ...p, nome: e.target.value }))} placeholder="Nome do produto..." className="flex-1 h-8 text-sm" />
-              <Input type="number" min={1} value={novoLivre.quantidade} onChange={e => setNovoLivre(p => ({ ...p, quantidade: e.target.value }))} className="w-16 text-center h-8 text-sm" />
-              <Button size="sm" onClick={addLivre} className="h-8 bg-orange-500 hover:bg-orange-600"><Plus className="w-4 h-4" /></Button>
+            <div className="flex flex-wrap gap-2">
+              <Input value={novoLivre.nome} onChange={e => setNovoLivre(p => ({ ...p, nome: e.target.value }))} placeholder="Nome do produto..." className="flex-1 min-w-[120px] h-8 text-sm" />
+              <Input type="number" min={1} value={novoLivre.quantidade} onChange={e => setNovoLivre(p => ({ ...p, quantidade: e.target.value }))} className="w-16 text-center h-8 text-sm flex-shrink-0" />
+              <Button size="sm" onClick={addLivre} className="h-8 bg-orange-500 hover:bg-orange-600 flex-shrink-0"><Plus className="w-4 h-4" /></Button>
             </div>
             {itensLivres.length > 0 ? (
               <div className="space-y-1">
                 {itensLivres.map((it, idx) => (
                   <div key={idx} className="flex items-center gap-2 bg-white border border-orange-200 rounded-lg px-2 py-1.5 text-sm">
-                    <span className="flex-1 font-medium">{it.nome}</span>
-                    <Input type="number" min={1} value={it.quantidade} onChange={e => setItensLivres(prev => prev.map((x, i) => i === idx ? { ...x, quantidade: parseInt(e.target.value) || 1 } : x))} className="w-14 h-7 text-center text-xs" />
-                    <button onClick={() => setItensLivres(p => p.filter((_, i) => i !== idx))}><X className="w-3.5 h-3.5 text-red-400" /></button>
+                    <span className="flex-1 font-medium break-words min-w-0">{it.nome}</span>
+                    <Input type="number" min={1} value={it.quantidade} onChange={e => setItensLivres(prev => prev.map((x, i) => i === idx ? { ...x, quantidade: parseInt(e.target.value) || 1 } : x))} className="w-14 h-7 text-center text-xs flex-shrink-0" />
+                    <button onClick={() => setItensLivres(p => p.filter((_, i) => i !== idx))} className="flex-shrink-0"><X className="w-3.5 h-3.5 text-red-400" /></button>
                   </div>
                 ))}
               </div>
