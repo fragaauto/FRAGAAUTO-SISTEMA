@@ -282,6 +282,8 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
         unidade_id: atendimento.unidade_id,
         produto_id: p.produto_id,
         produto_nome: p.nome,
+        variacao_id: p.variacao_id || null,
+        variacao_nome: p.variacao_nome || null,
         tipo: 'saida',
         quantidade: p.quantidade || 1,
         atendimento_id: atendimento.id,
@@ -397,13 +399,19 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
 
       // Estornar movimentos de estoque e devolver ao saldo do produto
       const movimentos = await base44.entities.MovimentoEstoque.filter({ atendimento_id: atendimento.id });
-      const quantEstornarPorProduto = {};
+      const quantEstornar = {};
       for (const mov of movimentos) {
         if (mov.tipo === 'saida') {
-          quantEstornarPorProduto[mov.produto_id] = (quantEstornarPorProduto[mov.produto_id] || 0) + (mov.quantidade || 0);
+          const key = mov.produto_id + '|' + (mov.variacao_id || '');
+          if (!quantEstornar[key]) {
+            quantEstornar[key] = { produto_id: mov.produto_id, variacao_id: mov.variacao_id || null, qtd: 0 };
+          }
+          quantEstornar[key].qtd += (mov.quantidade || 0);
           await base44.entities.MovimentoEstoque.create({
             produto_id: mov.produto_id,
             produto_nome: mov.produto_nome,
+            variacao_id: mov.variacao_id || null,
+            variacao_nome: mov.variacao_nome || null,
             tipo: 'estorno',
             quantidade: mov.quantidade,
             atendimento_id: atendimento.id,
@@ -413,9 +421,9 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
           });
         }
       }
-      // Devolver estoque (produtos compostos devolvem aos componentes automaticamente)
-      for (const [produtoId, qtd] of Object.entries(quantEstornarPorProduto)) {
-        await estornarEstoque(produtoId, qtd);
+      // Devolver estoque (produtos compostos e variações com composição própria devolvem aos componentes)
+      for (const { produto_id, variacao_id, qtd } of Object.values(quantEstornar)) {
+        await estornarEstoque(produto_id, qtd, variacao_id);
       }
 
       // Reabrir atendimento

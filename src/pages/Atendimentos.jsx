@@ -347,7 +347,7 @@ export default function Atendimentos() {
     const movimentos = await base44.entities.MovimentoEstoque.filter({ atendimento_id: atendimento.id });
     for (const mov of movimentos) {
       if (mov.tipo === 'saida') {
-        await estornarEstoque(mov.produto_id, mov.quantidade || 0);
+        await estornarEstoque(mov.produto_id, mov.quantidade || 0, mov.variacao_id || null);
       }
     }
     await base44.entities.Atendimento.update(atendimento.id, { status_pagamento: null, data_pagamento: null, usuario_pagamento: null });
