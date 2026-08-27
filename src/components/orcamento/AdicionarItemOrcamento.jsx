@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { filtrarProdutos } from '@/lib/produtoSearch';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 import BadgeEstoqueBaixo from '@/components/atendimento/BadgeEstoqueBaixo';
+import SeletorVariacao from '@/components/produtos/SeletorVariacao';
 
 export default function AdicionarItemOrcamento({ atendimento, produtos, user, onSave, isLoading }) {
   const [search, setSearch] = useState('');
@@ -16,6 +17,7 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
   const [aberto, setAberto] = useState(false);
   const [produtoAlerta, setProdutoAlerta] = useState(null);
   const [alertaQtd, setAlertaQtd] = useState(1);
+  const [produtoComVariacao, setProdutoComVariacao] = useState(null);
 
   const pagamentoLancado = !!atendimento?.status_pagamento;
 
@@ -28,20 +30,34 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
     : [];
 
   const adicionarItem = (produto) => {
-    const jaExiste = itensLocais.some(i => i.produto_id === produto.id);
+    if (produto.variacoes?.length > 0) {
+      setProdutoComVariacao(produto);
+      return;
+    }
+    finalizarAdicao(produto, null);
+  };
+
+  const finalizarAdicao = (produto, variacao) => {
+    const jaExiste = itensLocais.some(i => i.produto_id === produto.id && i.variacao_id === (variacao?.id || null));
     if (jaExiste) { toast.error('Produto já adicionado'); return; }
+    const precoBase = variacao
+      ? (variacao.usar_faixa_preco ? (variacao.valor_minimo ?? variacao.valor) : variacao.valor)
+      : (produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor);
+    const valorUnit = Number(precoBase) || 0;
     setItensLocais(prev => [...prev, {
       produto_id: produto.id,
       codigo_produto: produto.codigo || '',
-      nome: produto.nome,
+      nome: produto.nome + (variacao ? ` — ${variacao.nome}` : ''),
       quantidade: 1,
-      valor_unitario: Number(produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor) || 0,
-      valor_total: Number(produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor) || 0,
+      valor_unitario: valorUnit,
+      valor_total: valorUnit,
       vantagens: produto.vantagens || '',
       desvantagens: produto.desvantagens || '',
       status_aprovacao: 'pendente',
       status_servico: 'aguardando_autorizacao',
-      observacao_item: '',
+      observacao_item: variacao?.descricao || '',
+      variacao_id: variacao?.id || '',
+      variacao_nome: variacao?.nome || '',
       origem: 'manual',
     }]);
     setSearch('');
@@ -235,6 +251,15 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
         quantidade={alertaQtd}
         open={!!produtoAlerta}
         onClose={() => setProdutoAlerta(null)}
+      />
+      <SeletorVariacao
+        produto={produtoComVariacao}
+        open={!!produtoComVariacao}
+        onClose={() => setProdutoComVariacao(null)}
+        onSelect={(variacao) => {
+          finalizarAdicao(produtoComVariacao, variacao);
+          setProdutoComVariacao(null);
+        }}
       />
     </Card>
   );

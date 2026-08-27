@@ -93,6 +93,89 @@
         }
       }
     },
+    "variacoes": {
+      "type": "array",
+      "description": "Varia\u00e7\u00f5es deste produto (ex: modelos diferentes, tamanhos, vers\u00f5es). Cada varia\u00e7\u00e3o pode ter pre\u00e7o, composi\u00e7\u00e3o e fotos pr\u00f3prios.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID \u00fanico da varia\u00e7\u00e3o"
+          },
+          "nome": {
+            "type": "string",
+            "description": "Nome da varia\u00e7\u00e3o (ex: Para 2 portas, Para 4 portas)"
+          },
+          "descricao": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o da varia\u00e7\u00e3o \u2014 ser\u00e1 puxada para observa\u00e7\u00f5es do item ao incluir no atendimento"
+          },
+          "valor": {
+            "type": "number",
+            "description": "Valor da varia\u00e7\u00e3o (equivale ao m\u00ednimo da faixa quando usar_faixa_preco for true)"
+          },
+          "usar_faixa_preco": {
+            "type": "boolean",
+            "default": false
+          },
+          "valor_minimo": {
+            "type": "number"
+          },
+          "valor_maximo": {
+            "type": "number"
+          },
+          "composicao": {
+            "type": "array",
+            "description": "Composi\u00e7\u00e3o espec\u00edfica desta varia\u00e7\u00e3o (sobrescreve a composi\u00e7\u00e3o do produto pai)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "produto_id": {
+                  "type": "string"
+                },
+                "produto_nome": {
+                  "type": "string"
+                },
+                "codigo": {
+                  "type": "string"
+                },
+                "quantidade": {
+                  "type": "number",
+                  "default": 1
+                }
+              }
+            }
+          },
+          "fotos": {
+            "type": "array",
+            "description": "Fotos demonstrando a instala\u00e7\u00e3o desta varia\u00e7\u00e3o",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "descricao": {
+                  "type": "string"
+                },
+                "data_upload": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "usuario": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "nome"
+        ]
+      },
+      "default": []
+    },
     "ativo": {
       "type": "boolean",
       "default": true

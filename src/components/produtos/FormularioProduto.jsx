@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, ImagePlus, X, Loader2 } from 'lucide-react';
 import SeletorComponenteKit from '@/components/produtos/SeletorComponenteKit';
+import VariacoesProduto from '@/components/produtos/VariacoesProduto';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from "sonner";
@@ -498,6 +499,9 @@ export default function FormularioProduto({ formData, setFormData, atualizarMode
           <p className="text-xs text-slate-500 text-center py-2">Nenhum componente. Este é um produto simples.</p>
         )}
       </div>
+
+      {/* Variações */}
+      <VariacoesProduto formData={formData} setFormData={setFormData} />
 
       {/* Estoque */}
       <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">

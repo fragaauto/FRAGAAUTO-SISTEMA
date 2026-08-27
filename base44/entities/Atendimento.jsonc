@@ -162,6 +162,14 @@
           "observacao_item": {
             "type": "string"
           },
+          "variacao_id": {
+            "type": "string",
+            "description": "ID da varia\u00e7\u00e3o selecionada do produto"
+          },
+          "variacao_nome": {
+            "type": "string",
+            "description": "Nome da varia\u00e7\u00e3o selecionada"
+          },
           "tecnicos": {
             "type": "array",
             "items": {
@@ -231,6 +239,14 @@
                 },
                 "observacao": {
                   "type": "string"
+                },
+                "variacao_id": {
+                  "type": "string",
+                  "description": "ID da varia\u00e7\u00e3o selecionada do produto"
+                },
+                "variacao_nome": {
+                  "type": "string",
+                  "description": "Nome da varia\u00e7\u00e3o selecionada"
                 }
               }
             }
@@ -292,6 +308,14 @@
           },
           "observacao_item": {
             "type": "string"
+          },
+          "variacao_id": {
+            "type": "string",
+            "description": "ID da varia\u00e7\u00e3o selecionada do produto"
+          },
+          "variacao_nome": {
+            "type": "string",
+            "description": "Nome da varia\u00e7\u00e3o selecionada"
           },
           "tecnicos": {
             "type": "array",

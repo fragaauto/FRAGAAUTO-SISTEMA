@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Package } from 'lucide-react';
+import { Search, Plus, Package, Layers } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { matchProduto } from '@/lib/produtoSearch';
+import SeletorVariacao from '@/components/produtos/SeletorVariacao';
 
 const CATEGORIA_COLORS = {
   eletrica: 'bg-yellow-100 text-yellow-800',
@@ -21,6 +22,7 @@ const CATEGORIA_COLORS = {
 export default function SeletorProdutos({ open, onClose, produtos, onSelect }) {
   const [search, setSearch] = useState('');
   const [categoriaFilter, setCategoriaFilter] = useState('');
+  const [produtoComVariacao, setProdutoComVariacao] = useState(null);
 
   const filteredProdutos = produtos.filter(p => {
     const matchSearch = matchProduto(p, search);
@@ -86,11 +88,25 @@ export default function SeletorProdutos({ open, onClose, produtos, onSelect }) {
             filteredProdutos.map(produto => (
               <button
                 key={produto.id}
-                onClick={() => onSelect(produto)}
+                onClick={() => {
+                  if (produto.variacoes?.length > 0) {
+                    setProdutoComVariacao(produto);
+                  } else {
+                    onSelect(produto);
+                  }
+                }}
                 className="w-full p-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 transition-all text-left"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-800">{produto.nome}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-slate-800">{produto.nome}</p>
+                    {produto.variacoes?.length > 0 && (
+                      <Badge className="bg-emerald-100 text-emerald-800 text-xs flex items-center gap-0.5">
+                        <Layers className="w-3 h-3" />
+                        {produto.variacoes.length} var.
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge className={cn("text-xs capitalize", CATEGORIA_COLORS[produto.categoria])}>
                       {produto.categoria}
@@ -113,6 +129,15 @@ export default function SeletorProdutos({ open, onClose, produtos, onSelect }) {
           )}
         </div>
       </DialogContent>
+      <SeletorVariacao
+        produto={produtoComVariacao}
+        open={!!produtoComVariacao}
+        onClose={() => setProdutoComVariacao(null)}
+        onSelect={(variacao) => {
+          onSelect(produtoComVariacao, variacao);
+          setProdutoComVariacao(null);
+        }}
+      />
     </Dialog>
   );
 }

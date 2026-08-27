@@ -48,6 +48,7 @@ import BuscarClienteModal from '../components/atendimento/BuscarClienteModal';
 import ModalCadastrarCliente from '../components/atendimento/ModalCadastrarCliente';
 import ChecklistAssistente from '../components/checklist/ChecklistAssistente';
 import RetornoServicoCard from '../components/atendimento/RetornoServicoCard';
+import SeletorVariacao from '../components/produtos/SeletorVariacao';
 import { useUnidade } from '@/lib/UnidadeContext';
 
 export default function NovoAtendimento() {
@@ -68,6 +69,7 @@ export default function NovoAtendimento() {
   const [clienteSugestoes, setClienteSugestoes] = useState([]);
   const [showSugestoes, setShowSugestoes] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
+  const [produtoComVariacao, setProdutoComVariacao] = useState(null);
   const nomeInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
@@ -350,28 +352,42 @@ export default function NovoAtendimento() {
     }
   };
 
-  const handleAddProduto = (produto) => {
+  const handleAddProduto = (produto, variacao) => {
+    // Se tem variações e nenhuma foi passada, abre o seletor
+    if (produto.variacoes?.length > 0 && !variacao) {
+      setProdutoComVariacao(produto);
+      return;
+    }
+
     // Verificar se já existe em QUALQUER lugar (queixa, checklist ou orçamento)
-    const jaExisteNaQueixa = formData.itens_queixa.some(i => i.produto_id === produto.id);
+    const jaExisteNaQueixa = formData.itens_queixa.some(i => i.produto_id === produto.id && i.variacao_id === (variacao?.id || null));
     const jaExisteNoChecklist = Object.values(formData.checklist).some(data => 
-      data.produtos?.some(p => p.id === produto.id)
+      data.produtos?.some(p => p.id === produto.id && p.variacao_id === (variacao?.id || null))
     );
-    const jaExisteNoOrcamento = formData.itens_orcamento.some(i => i.produto_id === produto.id);
+    const jaExisteNoOrcamento = formData.itens_orcamento.some(i => i.produto_id === produto.id && i.variacao_id === (variacao?.id || null));
     
     if (jaExisteNaQueixa || jaExisteNoChecklist || jaExisteNoOrcamento) {
       toast.error('Este produto já foi adicionado ao orçamento.');
       return;
     }
 
+    const precoBase = variacao
+      ? (variacao.usar_faixa_preco ? (variacao.valor_minimo ?? variacao.valor) : variacao.valor)
+      : (produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor);
+    const valorUnit = Number(precoBase) || 0;
+
     const newItem = {
       produto_id: produto.id,
       codigo_produto: produto.codigo || '',
-      nome: produto.nome,
+      nome: produto.nome + (variacao ? ` — ${variacao.nome}` : ''),
       quantidade: 1,
-      valor_unitario: produto.valor,
-      valor_total: produto.valor,
+      valor_unitario: valorUnit,
+      valor_total: valorUnit,
       vantagens: produto.vantagens || '',
       desvantagens: produto.desvantagens || '',
+      observacao_item: variacao?.descricao || '',
+      variacao_id: variacao?.id || '',
+      variacao_nome: variacao?.nome || '',
       status_aprovacao: activeTab === 'queixa' ? 'aprovado' : 'pendente'
     };
     
@@ -387,7 +403,7 @@ export default function NovoAtendimento() {
       }));
     }
     setShowProdutoModal(false);
-    toast.success('Produto adicionado ao orçamento');
+    toast.success(variacao ? `Variação "${variacao.nome}" adicionada` : 'Produto adicionado ao orçamento');
   };
 
   const handleUpdateItem = (index, updatedItem) => {
@@ -1345,6 +1361,16 @@ export default function NovoAtendimento() {
         onClose={() => setShowProdutoModal(false)}
         produtos={produtos}
         onSelect={handleAddProduto}
+      />
+
+      <SeletorVariacao
+        produto={produtoComVariacao}
+        open={!!produtoComVariacao}
+        onClose={() => setProdutoComVariacao(null)}
+        onSelect={(variacao) => {
+          handleAddProduto(produtoComVariacao, variacao);
+          setProdutoComVariacao(null);
+        }}
       />
 
       <ModalCadastroProduto
