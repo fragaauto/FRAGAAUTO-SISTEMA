@@ -52,6 +52,7 @@ import FotosAtendimento from '../components/atendimento/FotosAtendimento';
 import AdicionarItemOrcamento from '../components/orcamento/AdicionarItemOrcamento';
 import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import ItemOrcamentoComEncomenda from '../components/orcamento/ItemOrcamentoComEncomenda';
+import SeletorVariacao from '../components/produtos/SeletorVariacao';
 import OrcamentoWhatsAppModal from '../components/orcamento/OrcamentoWhatsAppModal';
 import TransferirUnidadeModal from '../components/atendimento/TransferirUnidadeModal';
 import TransferirChecklistModal from '../components/atendimento/TransferirChecklistModal';
@@ -135,6 +136,7 @@ export default function VerAtendimento() {
   const obsServicoTimer = React.useRef(null);
   const [produtoAlerta, setProdutoAlerta] = useState(null);
   const [alertaQtd, setAlertaQtd] = useState(1);
+  const [produtoComVariacaoQueixa, setProdutoComVariacaoQueixa] = useState(null);
 
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -326,40 +328,50 @@ export default function VerAtendimento() {
     setItensQueixaEdit(prev => prev.filter((_, i) => i !== index));
   };
 
-  const adicionarProdutoQueixa = (produtoId) => {
-    console.log('➕ [ADICIONAR PRODUTO QUEIXA]', produtoId);
-    
+  const adicionarProdutoQueixa = (produtoId, variacao) => {
     const produto = produtos.find(p => p.id === produtoId);
     if (!produto) {
       toast.error('Produto não encontrado');
       return;
     }
-    
-    // Verificar duplicata
-    const jaTem = itensQueixaEdit.some(i => i.produto_id === produto.id);
+
+    // Se tem variações e nenhuma foi passada, abre o seletor
+    if (produto.variacoes?.length > 0 && !variacao) {
+      setProdutoComVariacaoQueixa(produto);
+      return;
+    }
+
+    // Verificar duplicata (mesmo produto + mesma variação)
+    const jaTem = itensQueixaEdit.some(i => i.produto_id === produto.id && (i.variacao_id || '') === (variacao?.id || ''));
     if (jaTem) {
       toast.error('Este produto já está na queixa');
       return;
     }
-    
+
+    const precoBase = variacao
+      ? (variacao.usar_faixa_preco ? (variacao.valor_minimo ?? variacao.valor) : variacao.valor)
+      : (produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor);
+    const valorUnit = Number(precoBase) || 0;
+
     const novoItem = {
       produto_id: produto.id,
       codigo_produto: produto.codigo || '',
-      nome: produto.nome,
+      nome: produto.nome + (variacao ? ` — ${variacao.nome}` : ''),
       quantidade: 1,
-      valor_unitario: Number(produto.valor) || 0,
-      valor_total: Number(produto.valor) || 0,
+      valor_unitario: valorUnit,
+      valor_total: valorUnit,
       vantagens: produto.vantagens || '',
       desvantagens: produto.desvantagens || '',
       status_aprovacao: 'aprovado',
       status_servico: 'aguardando_autorizacao',
-      observacao_item: ''
+      observacao_item: variacao?.descricao || '',
+      variacao_id: variacao?.id || '',
+      variacao_nome: variacao?.nome || ''
     };
-    
+
     setItensQueixaEdit(prev => [...prev, novoItem]);
     setSearchProdutoQueixa('');
     toast.success(`${produto.nome} adicionado à queixa`);
-    console.log('✅ [ADICIONAR PRODUTO QUEIXA] Produto adicionado:', novoItem);
     if (estoqueBaixo(produto)) {
       setAlertaQtd(1);
       setProdutoAlerta(produto);
@@ -1174,12 +1186,19 @@ export default function VerAtendimento() {
                                     onClick={() => adicionarProdutoQueixa(p.id)}
                                     className="w-full text-left p-2 hover:bg-slate-100 rounded text-sm flex items-center justify-between"
                                   >
-                                    <span>
+                                    <span className="flex items-center gap-1.5">
                                       {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
                                       {p.nome}
+                                      {p.variacoes?.length > 0 && (
+                                        <span className="text-xs bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                                          {p.variacoes.length} var.
+                                        </span>
+                                      )}
                                     </span>
                                     <span className="text-green-600 font-semibold text-xs">
-                                      R$ {p.valor?.toFixed(2)}
+                                      {p.usar_faixa_preco
+                                        ? `R$ ${(p.valor_minimo || 0).toFixed(2)} – R$ ${(p.valor_maximo || 0).toFixed(2)}`
+                                        : `R$ ${p.valor?.toFixed(2)}`}
                                     </span>
                                   </button>
                                 ))}
@@ -1222,18 +1241,27 @@ export default function VerAtendimento() {
                       <div className="space-y-3">
                         {atendimento.itens_queixa.map((item, idx) => (
                           <div key={idx} className="space-y-2">
-                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                              <div>
-                                <p className="font-medium">{item.nome}</p>
-                                <p className="text-sm text-slate-500">
-                                  {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)}
-                                </p>
-                                <BadgeEstoqueBaixo produto={produtos.find(p => p.id === item.produto_id)} onClick={setProdutoAlerta} className="mt-1" />
+                            <BadgeEstoqueBaixo produto={produtos.find(p => p.id === item.produto_id)} onClick={setProdutoAlerta} />
+                            <ItemOrcamentoComEncomenda
+                              item={item}
+                              readOnly={pagamentoLancado}
+                              atendimento={atendimento}
+                              onUpdate={(updated) => handleUpdateItemQueixa(idx, updated)}
+                              onRemove={() => {
+                                const novosItens = atendimento.itens_queixa.filter((_, i) => i !== idx);
+                                const subtotal_queixa = novosItens.reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
+                                const subtotal_checklist = (atendimento.itens_orcamento || []).reduce((a, i) => a + (Number(i.valor_total) || 0), 0);
+                                const subtotal = subtotal_queixa + subtotal_checklist;
+                                const valor_final = subtotal - (Number(atendimento.desconto) || 0);
+                                updateMutation.mutate({ itens_queixa: novosItens, subtotal_queixa, subtotal, valor_final });
+                              }}
+                            />
+                            {item.observacao_item && (
+                              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p className="text-xs font-semibold text-blue-800 mb-1">📝 Observações:</p>
+                                <p className="text-sm text-blue-700">{item.observacao_item}</p>
                               </div>
-                              <p className="font-bold text-green-600">
-                                R$ {item.valor_total?.toFixed(2)}
-                              </p>
-                            </div>
+                            )}
                             {item.vantagens && (
                               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                                 <p className="text-xs font-semibold text-green-800 mb-1">✓ Benefícios de realizar:</p>
@@ -2040,6 +2068,16 @@ export default function VerAtendimento() {
         quantidade={alertaQtd}
         open={!!produtoAlerta}
         onClose={() => setProdutoAlerta(null)}
+      />
+
+      <SeletorVariacao
+        produto={produtoComVariacaoQueixa}
+        open={!!produtoComVariacaoQueixa}
+        onClose={() => setProdutoComVariacaoQueixa(null)}
+        onSelect={(variacao) => {
+          if (produtoComVariacaoQueixa) adicionarProdutoQueixa(produtoComVariacaoQueixa.id, variacao);
+          setProdutoComVariacaoQueixa(null);
+        }}
       />
 
       {showLinkDialog && (
