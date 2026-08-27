@@ -21,6 +21,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { filtrarProdutos } from '@/lib/produtoSearch';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 import BadgeEstoqueBaixo from '@/components/atendimento/BadgeEstoqueBaixo';
+import SeletorVariacao from '@/components/produtos/SeletorVariacao';
 
 export default function EditarQueixa() {
   const navigate = useNavigate();
@@ -102,17 +103,31 @@ export default function EditarQueixa() {
     }
   });
 
-  const handleAddProduto = (produtoId) => {
+  const handleAddProduto = (produtoId, variacao) => {
     const produto = produtos.find(p => p.id === produtoId);
     if (!produto) return;
+
+    // Se tem variações e nenhuma foi passada, abre o seletor
+    if (produto.variacoes?.length > 0 && !variacao) {
+      setProdutoComVariacao(produto);
+      return;
+    }
+
+    const precoBase = variacao
+      ? (variacao.usar_faixa_preco ? (variacao.valor_minimo ?? variacao.valor) : variacao.valor)
+      : (produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor);
+    const valorUnit = Number(precoBase) || 0;
 
     const novoItem = {
       produto_id: produto.id,
       codigo_produto: produto.codigo || '',
-      nome: produto.nome,
+      nome: produto.nome + (variacao ? ` — ${variacao.nome}` : ''),
       quantidade: 1,
-      valor_unitario: Number(produto.valor) || 0,
-      observacao_item: '',
+      valor_unitario: valorUnit,
+      valor_total: valorUnit,
+      observacao_item: variacao?.descricao || '',
+      variacao_id: variacao?.id || '',
+      variacao_nome: variacao?.nome || '',
       vantagens: produto.vantagens || '',
       desvantagens: produto.desvantagens || '',
       status_aprovacao: 'aprovado'

@@ -90,6 +90,15 @@ export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = fal
             <span className="text-xs">{item.tecnicos?.length > 0 ? 'Editar' : 'Atribuir'}</span>
           </Button>
         </div>
+
+        {item.variacao_nome && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <Badge className="bg-emerald-100 text-emerald-800 text-xs">Variação: {item.variacao_nome}</Badge>
+          </div>
+        )}
+        {item.observacao_item && (
+          <p className="text-xs text-slate-500 mt-1 italic leading-relaxed">{item.observacao_item}</p>
+        )}
         
         {readOnly ? (
           <div className="flex items-center gap-4 flex-wrap text-sm text-slate-600">
