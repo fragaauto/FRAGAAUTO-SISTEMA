@@ -37,6 +37,7 @@ export default function EditarQueixa() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [produtoAlerta, setProdutoAlerta] = useState(null);
   const [alertaQtd, setAlertaQtd] = useState(1);
+  const [produtoComVariacao, setProdutoComVariacao] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -373,12 +374,19 @@ export default function EditarQueixa() {
                         onClick={() => handleAddProduto(p.id)}
                         className="w-full text-left p-2 hover:bg-slate-100 rounded text-sm flex items-center justify-between"
                       >
-                        <span>
+                        <span className="flex items-center gap-1.5">
                           {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
                           {p.nome}
+                          {p.variacoes?.length > 0 && (
+                            <span className="text-xs bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                              {p.variacoes.length} var.
+                            </span>
+                          )}
                         </span>
                         <span className="text-green-600 font-semibold text-xs">
-                          R$ {p.valor?.toFixed(2)}
+                          {p.usar_faixa_preco
+                            ? `R$ ${(p.valor_minimo || 0).toFixed(2)} – R$ ${(p.valor_maximo || 0).toFixed(2)}`
+                            : `R$ ${p.valor?.toFixed(2)}`}
                         </span>
                       </button>
                     ))}
@@ -420,6 +428,15 @@ export default function EditarQueixa() {
         quantidade={alertaQtd}
         open={!!produtoAlerta}
         onClose={() => setProdutoAlerta(null)}
+      />
+      <SeletorVariacao
+        produto={produtoComVariacao}
+        open={!!produtoComVariacao}
+        onClose={() => setProdutoComVariacao(null)}
+        onSelect={(variacao) => {
+          if (produtoComVariacao) handleAddProduto(produtoComVariacao.id, variacao);
+          setProdutoComVariacao(null);
+        }}
       />
     </ErrorBoundary>
   );

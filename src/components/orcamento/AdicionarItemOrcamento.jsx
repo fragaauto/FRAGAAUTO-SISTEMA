@@ -145,9 +145,14 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
                     onClick={() => adicionarItem(p)}
                     className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center justify-between border-b last:border-b-0"
                   >
-                    <span>
+                    <span className="flex items-center gap-1.5">
                       {p.codigo && <span className="text-slate-400 mr-1">{p.codigo} -</span>}
                       {p.nome}
+                      {p.variacoes?.length > 0 && (
+                        <span className="text-xs bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                          {p.variacoes.length} var.
+                        </span>
+                      )}
                     </span>
                     <span className="text-green-700 font-semibold text-xs ml-2 whitespace-nowrap">
                       {p.usar_faixa_preco

@@ -4,16 +4,26 @@ import { base44 } from '@/api/base44Client';
 export const isComposto = (produto) =>
   Array.isArray(produto?.composicao) && produto.composicao.length > 0;
 
+// Retorna a composição efetiva: se houver variação com composição própria, usa a dela; senão a do produto.
+function getComposicaoEfetiva(produto, variacaoId) {
+  if (variacaoId && produto?.variacoes?.length > 0) {
+    const variacao = produto.variacoes.find(v => v.id === variacaoId);
+    if (variacao?.composicao?.length > 0) return variacao.composicao;
+  }
+  return produto?.composicao;
+}
+
 // Baixa `quantidade` unidades de um produto do estoque.
-// Se o produto for composto (kit/pacote), a baixa é feita em cada componente
+// Se o produto (ou sua variação) for composto (kit/pacote), a baixa é feita em cada componente
 // (multiplicado pela quantidade). Caso contrário, baixa do próprio produto.
 // Não lança erros — apenas ignora produtos inexistentes/não controlados.
-export async function baixarEstoque(produtoId, quantidade) {
+export async function baixarEstoque(produtoId, quantidade, variacaoId = null) {
   const produto = await base44.entities.Produto.get(produtoId).catch(() => null);
   if (!produto) return;
   const qtd = Number(quantidade) || 1;
-  if (isComposto(produto)) {
-    for (const comp of produto.composicao) {
+  const composicao = getComposicaoEfetiva(produto, variacaoId);
+  if (Array.isArray(composicao) && composicao.length > 0) {
+    for (const comp of composicao) {
       if (!comp.produto_id) continue;
       const compProd = await base44.entities.Produto.get(comp.produto_id).catch(() => null);
       const qtdBaixa = (Number(comp.quantidade) || 1) * qtd;
@@ -31,13 +41,14 @@ export async function baixarEstoque(produtoId, quantidade) {
 }
 
 // Estorna (devolve) `quantidade` unidades de um produto ao estoque.
-// Se o produto for composto, devolve aos componentes.
-export async function estornarEstoque(produtoId, quantidade) {
+// Se o produto (ou sua variação) for composto, devolve aos componentes.
+export async function estornarEstoque(produtoId, quantidade, variacaoId = null) {
   const produto = await base44.entities.Produto.get(produtoId).catch(() => null);
   if (!produto) return;
   const qtd = Number(quantidade) || 1;
-  if (isComposto(produto)) {
-    for (const comp of produto.composicao) {
+  const composicao = getComposicaoEfetiva(produto, variacaoId);
+  if (Array.isArray(composicao) && composicao.length > 0) {
+    for (const comp of composicao) {
       if (!comp.produto_id) continue;
       const compProd = await base44.entities.Produto.get(comp.produto_id).catch(() => null);
       const qtdDevolve = (Number(comp.quantidade) || 1) * qtd;

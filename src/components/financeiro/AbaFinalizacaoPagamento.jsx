@@ -262,15 +262,19 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       const itens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
       const pecas = itens.filter(it => it.status_aprovacao === 'aprovado' && it.produto_id);
 
-      // Agrupar por produto_id para somar quantidades
+      // Agrupar por produto_id + variacao_id para somar quantidades
       const quantPorProduto = {};
       for (const p of pecas) {
-        quantPorProduto[p.produto_id] = (quantPorProduto[p.produto_id] || 0) + (p.quantidade || 1);
+        const key = p.produto_id + '|' + (p.variacao_id || '');
+        if (!quantPorProduto[key]) {
+          quantPorProduto[key] = { produto_id: p.produto_id, variacao_id: p.variacao_id || null, qtd: 0 };
+        }
+        quantPorProduto[key].qtd += (p.quantidade || 1);
       }
 
-      // Baixar estoque (produtos compostos baixam dos componentes automaticamente)
-      for (const [produtoId, qtd] of Object.entries(quantPorProduto)) {
-        await baixarEstoque(produtoId, qtd);
+      // Baixar estoque (produtos compostos e variações com composição própria baixam dos componentes)
+      for (const { produto_id, variacao_id, qtd } of Object.values(quantPorProduto)) {
+        await baixarEstoque(produto_id, qtd, variacao_id);
       }
 
       // Registrar movimentos de estoque
