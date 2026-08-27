@@ -66,8 +66,8 @@ export default function EditarQueixa() {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
-    staleTime: 10 * 60 * 1000
+    queryFn: () => base44.entities.Produto.list('', 3000),
+    staleTime: 5 * 60 * 1000
   });
 
   useEffect(() => {

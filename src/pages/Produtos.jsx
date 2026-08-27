@@ -342,7 +342,9 @@ export default function Produtos() {
         estoque_desejado: produto.estoque_desejado ?? 0,
         localizacao_estoque: produto.localizacao_estoque || '',
         fornecedores: produto.fornecedores || [],
-        fotos: produto.fotos || []
+        fotos: produto.fotos || [],
+        composicao: produto.composicao || [],
+        variacoes: produto.variacoes || []
       });
     } else {
       setEditingProduto(null);
