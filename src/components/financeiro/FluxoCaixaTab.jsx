@@ -32,6 +32,7 @@ export default function FluxoCaixaTab({ filtroData }) {
   const qc = useQueryClient();
   const [periodo, setPeriodo] = useState('30');
   const [filtroForma, setFiltroForma] = useState('todos');
+  const [filtroTipo, setFiltroTipo] = useState('todos');
   const [showNovo, setShowNovo] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [dataInicioPers, setDataInicioPers] = useState('');
@@ -151,13 +152,14 @@ export default function FluxoCaixaTab({ filtroData }) {
         ? (!dataInicio || data >= dataInicio) && (!dataFim || data <= dataFim)
         : data >= dataInicio;
     const matchForma = filtroForma === 'todos' || l.forma_pagamento === filtroForma;
+    const matchTipo = filtroTipo === 'todos' || l.tipo === filtroTipo;
     const buscaLower = busca.toLowerCase().trim();
     const matchBusca = !buscaLower
       || (l.descricao || '').toLowerCase().includes(buscaLower)
       || String(l.valor || '').includes(buscaLower)
       || (l.categoria || '').toLowerCase().includes(buscaLower)
       || (l.observacoes || '').toLowerCase().includes(buscaLower);
-    return dentroPeriodo && matchForma && matchBusca;
+    return dentroPeriodo && matchForma && matchTipo && matchBusca;
   });
 
   const entradas = filtrados.filter(l => l.tipo === 'entrada').reduce((s, l) => s + (l.valor || 0), 0);
@@ -314,6 +316,15 @@ export default function FluxoCaixaTab({ filtroData }) {
             />
           </div>
         )}
+
+        <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+          <SelectTrigger className="w-36"><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Entradas e Saídas</SelectItem>
+            <SelectItem value="entrada">Apenas Entradas</SelectItem>
+            <SelectItem value="saida">Apenas Saídas</SelectItem>
+          </SelectContent>
+        </Select>
 
         <Select value={filtroForma} onValueChange={setFiltroForma}>
           <SelectTrigger className="w-36"><SelectValue placeholder="Forma" /></SelectTrigger>
@@ -515,16 +526,19 @@ function EditarLancamentoModal({ lancamento, onClose, onSaved }) {
   const [data, setData] = useState(dataAtual);
   const [observacoes, setObservacoes] = useState(lancamento.observacoes || '');
   const [descricao, setDescricao] = useState(lancamento.descricao || '');
+  const [valor, setValor] = useState(lancamento.valor || 0);
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
     if (!data) return toast.error('Selecione a data');
+    if (!valor || parseFloat(valor) <= 0) return toast.error('Informe um valor válido');
     setSaving(true);
     const dataLancamento = new Date(data + 'T12:00:00').toISOString();
     await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
       data_lancamento: dataLancamento,
       observacoes,
       descricao,
+      valor: parseFloat(valor),
     });
     setSaving(false);
     toast.success('Lançamento atualizado!');
@@ -539,6 +553,10 @@ function EditarLancamentoModal({ lancamento, onClose, onSaved }) {
           <div>
             <Label>Descrição</Label>
             <Input value={descricao} onChange={e => setDescricao(e.target.value)} />
+          </div>
+          <div>
+            <Label>Valor (R$) *</Label>
+            <Input type="number" step="0.01" min="0" value={valor} onChange={e => setValor(e.target.value)} />
           </div>
           <div>
             <Label>Data do Lançamento *</Label>
