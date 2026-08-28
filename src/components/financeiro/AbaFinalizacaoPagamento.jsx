@@ -85,17 +85,11 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Normaliza texto (remove acentos, lowercase)
-  const normalizeText = (text) => (text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-  // Verifica se um item é do tipo peça externa (comprada externamente, não do estoque)
+  // Verifica se um item é do tipo peça externa (flag no cadastro do produto)
   const isPecaExterna = (item) => {
     if (!item) return false;
     const produto = produtos.find(p => p.id === item.produto_id);
-    const categoria = normalizeText(produto?.categoria || '');
-    const nome = normalizeText(item.nome || produto?.nome || '');
-    return categoria.includes('autopecas') || categoria.includes('peca externa') ||
-           nome.includes('autopecas') || nome.includes('encomenda de peca') || nome.includes('peca externa');
+    return !!produto?.peca_externa;
   };
 
   // Verifica se o atendimento possui itens de peça externa

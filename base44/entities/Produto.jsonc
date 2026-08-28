@@ -59,6 +59,11 @@
     "desvantagens": {
       "type": "string"
     },
+    "peca_externa": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se true, este produto representa uma pe\u00e7a externa (comprada fora). Ao inclu\u00ed-lo em um atendimento, ser\u00e1 obrigat\u00f3rio informar o custo da pe\u00e7a externa na aba de pagamento."
+    },
     "aplicacao_universal": {
       "type": "boolean",
       "default": false

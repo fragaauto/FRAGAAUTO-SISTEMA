@@ -239,6 +239,16 @@ export default function FormularioProduto({ formData, setFormData, atualizarMode
           </div>
         )}
       </div>
+      <div className="flex items-center gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <Checkbox
+          id="peca-externa"
+          checked={!!formData.peca_externa}
+          onCheckedChange={(checked) => setFormData({ ...formData, peca_externa: checked })}
+        />
+        <label htmlFor="peca-externa" className="font-medium cursor-pointer text-sm text-yellow-900">
+          🔒 Peça Externa — exige informar custo na finalização do atendimento
+        </label>
+      </div>
       <div>
         <Label>Descrição</Label>
         <Textarea
