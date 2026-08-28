@@ -81,7 +81,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   // Buscar produtos para identificar itens de peça externa
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos-peca-externa'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryFn: () => base44.entities.Produto.list('', 3000),
     staleTime: 5 * 60 * 1000,
   });
 
