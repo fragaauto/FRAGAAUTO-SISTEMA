@@ -78,6 +78,30 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     .filter(f => f.status === 'ativo')
     .map(f => ({ id: f.id, full_name: f.nome_completo, email: null }));
 
+  // Buscar produtos para identificar itens de peça externa
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos-peca-externa'],
+    queryFn: () => base44.entities.Produto.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Normaliza texto (remove acentos, lowercase)
+  const normalizeText = (text) => (text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Verifica se um item é do tipo peça externa (comprada externamente, não do estoque)
+  const isPecaExterna = (item) => {
+    if (!item) return false;
+    const produto = produtos.find(p => p.id === item.produto_id);
+    const categoria = normalizeText(produto?.categoria || '');
+    const nome = normalizeText(item.nome || produto?.nome || '');
+    return categoria.includes('autopecas') || categoria.includes('peca externa') ||
+           nome.includes('autopecas') || nome.includes('encomenda de peca') || nome.includes('peca externa');
+  };
+
+  // Verifica se o atendimento possui itens de peça externa
+  const temPecaExterna = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])]
+    .some(item => isPecaExterna(item));
+
   // Somente itens aprovados pelo cliente vão para o pagamento
   const itensAprovadosQueixa = (atendimento.itens_queixa || []).filter(i => i.status_aprovacao === 'aprovado');
   const itensAprovadosOrcamento = (atendimento.itens_orcamento || []).filter(i => i.status_aprovacao === 'aprovado');
@@ -128,6 +152,13 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     const valorInicial = valorBase - (atendimento.desconto_pagamento || 0);
     return [{ forma: 'pix', valor: Math.max(0, valorInicial), data_lancamento: hojeInit }];
   });
+
+  // Auto-marcar "Sim" em peças externas quando houver itens desse tipo no atendimento
+  React.useEffect(() => {
+    if (temPecaExterna && !jaLancado) {
+      setUsouPecasExternas('sim');
+    }
+  }, [temPecaExterna, jaLancado]);
 
   const desconto = descontoTipo === 'percentual'
     ? (valorBase * descontoValor) / 100
@@ -573,16 +604,22 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
                 <button
                   type="button"
                   onClick={() => { setUsouPecasExternas('nao'); setCustoPecasExternas(0); setDescricaoPecasExternas(''); }}
+                  disabled={temPecaExterna}
                   className={`flex-1 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
                     usouPecasExternas === 'nao'
                       ? 'bg-slate-500 border-slate-500 text-white'
                       : 'border-yellow-300 text-yellow-800 hover:bg-yellow-100'
-                  }`}
+                  } ${temPecaExterna ? 'opacity-40 cursor-not-allowed' : ''}`}
                 >
                   ❌ Não
                 </button>
               </div>
-              {usouPecasExternas === null && (
+              {temPecaExterna && (
+                <p className="text-xs text-yellow-800 font-medium mt-1 bg-yellow-200/60 px-2 py-1.5 rounded">
+                  🔍 Item de peça externa detectado no orçamento — preenchimento do custo é obrigatório para finalizar.
+                </p>
+              )}
+              {usouPecasExternas === null && !temPecaExterna && (
                 <p className="text-xs text-red-600 font-medium mt-1">⚠ Obrigatório informar antes de finalizar</p>
               )}
             </div>
