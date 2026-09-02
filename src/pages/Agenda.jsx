@@ -260,6 +260,20 @@ export default function Agenda() {
     }
   };
 
+  const sincronizarCalendar = async () => {
+    setSincronizando(true);
+    try {
+      const res = await base44.functions.invoke('sincronizarAgendaCalendar', { unidade_id: unidadeAtual?.id || null });
+      const msg = res.data?.message || 'Sincronizado!';
+      toast.success(msg);
+      qc.invalidateQueries(['agendamentos']);
+    } catch (e) {
+      toast.error(e?.response?.data?.error || 'Erro ao sincronizar com Google Calendar');
+    } finally {
+      setSincronizando(false);
+    }
+  };
+
   const labelDia = (dia) => {
     if (isToday(dia)) return 'Hoje';
     if (isTomorrow(dia)) return 'Amanhã';
@@ -281,6 +295,10 @@ export default function Agenda() {
             <Button variant="outline" onClick={sincronizarSheets} disabled={sincronizando}>
               {sincronizando ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
               Sync Sheets
+            </Button>
+            <Button variant="outline" onClick={sincronizarCalendar} disabled={sincronizando}>
+              {sincronizando ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1" />}
+              Sync Calendar
             </Button>
             <Button onClick={() => { setEditando(null); setShowModal(true); }} className="bg-orange-500 hover:bg-orange-600">
               <Plus className="w-4 h-4 mr-1" /> Novo Agendamento

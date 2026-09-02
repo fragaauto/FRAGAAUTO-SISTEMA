@@ -80,17 +80,12 @@ export default function TabIntegracoes({ formData, onChange, setFormData, onSave
             Configure a integração com Google Sheets e/ou Google Calendar para exibir agendamentos.
           </p>
 
-          <div>
-            <Label>🔑 Chave de API do Google (API Key)</Label>
-            <Input
-              value={formData.agenda_google_api_key}
-              onChange={e => onChange('agenda_google_api_key', e.target.value)}
-              placeholder="AIzaSy..."
-              type="password"
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              Crie em <a href="https://console.cloud.google.com/apis/credentials" target="_blank" className="text-blue-500 underline">console.cloud.google.com</a> → Credenciais → Criar Credencial → Chave de API.
-            </p>
+          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <span className="text-lg">✅</span>
+            <div>
+              <p className="text-sm font-semibold text-green-800">Google Calendar conectado via OAuth</p>
+              <p className="text-xs text-green-700">Sua conta do Google está autorizada. Os eventos do calendário serão lidos automaticamente ao sincronizar na página Agenda.</p>
+            </div>
           </div>
 
           <hr />
