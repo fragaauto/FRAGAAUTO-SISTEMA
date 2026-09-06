@@ -1,0 +1,44 @@
+{
+  "name": "Sincronizar Agenda Google Calendar",
+  "description": "Sincroniza automaticamente os eventos do Google Calendar com a agenda do sistema a cada hora",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 1,
+      "interval_unit": "hours",
+      "interval_anchor": "2026-09-02T12:30:46.296000",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "sincronizar_agenda_google_calendar",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "sincronizarAgendaCalendar",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "sincronizarAgendaCalendar"
+  }
+}
