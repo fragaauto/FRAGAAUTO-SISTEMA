@@ -146,6 +146,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Erro disparo em massa:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ ok: false, error: error.message });
   }
 });

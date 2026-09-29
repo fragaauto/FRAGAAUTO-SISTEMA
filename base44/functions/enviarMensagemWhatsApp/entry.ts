@@ -115,6 +115,8 @@ Deno.serve(async (req) => {
     return Response.json({ ok: true, resultado });
 
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // Retorna 200 com ok:false para que o frontend consiga ler a mensagem real do erro
+    // (Evolution API errors, número sem WhatsApp, etc.) em vez de receber um 500 genérico
+    return Response.json({ ok: false, error: error.message });
   }
 });
