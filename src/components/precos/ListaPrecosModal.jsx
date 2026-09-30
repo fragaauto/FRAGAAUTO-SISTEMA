@@ -213,10 +213,12 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
             </div>
           )}
 
-          {/* Configuração SELECIONADOS */}
-          {formData.tipo === 'selecionados' && (
+          {/* Configuração SELECIONADOS / EXCEÇÕES */}
+          {(formData.tipo === 'selecionados' || formData.tipo === 'geral') && (
             <div className="space-y-3">
-              <Label>Produtos ({formData.itens.length} selecionado(s))</Label>
+              <Label>{formData.tipo === 'geral'
+                ? `Exceções / Preços Específicos (${formData.itens.length} produto(s) — opcional, sobrescreve o ajuste geral)`
+                : `Produtos (${formData.itens.length} selecionado(s))`}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input placeholder="Buscar produto..." value={searchProduto} onChange={e => setSearchProduto(e.target.value)} className="pl-9" />

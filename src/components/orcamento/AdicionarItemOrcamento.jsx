@@ -10,8 +10,20 @@ import { filtrarProdutos } from '@/lib/produtoSearch';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 import BadgeEstoqueBaixo from '@/components/atendimento/BadgeEstoqueBaixo';
 import SeletorVariacao from '@/components/produtos/SeletorVariacao';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { useUnidade } from '@/lib/UnidadeContext';
+import { calcularPrecoLista, listasAplicaveisProduto } from '@/lib/listaPrecos';
+import SeletorListaPreco from '@/components/precos/SeletorListaPreco';
 
 export default function AdicionarItemOrcamento({ atendimento, produtos, user, onSave, isLoading }) {
+  const { unidadeAtual } = useUnidade();
+  const { data: listasPrecos = [] } = useQuery({
+    queryKey: ['listas-precos', unidadeAtual?.id],
+    queryFn: () => base44.entities.ListaPrecos.filter({ unidade_id: unidadeAtual?.id }),
+    enabled: !!unidadeAtual?.id,
+    staleTime: 5 * 60 * 1000,
+  });
   const [search, setSearch] = useState('');
   const [itensLocais, setItensLocais] = useState([]);
   const [aberto, setAberto] = useState(false);
@@ -58,6 +70,8 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
       observacao_item: variacao?.descricao || '',
       variacao_id: variacao?.id || '',
       variacao_nome: variacao?.nome || '',
+      lista_preco_id: null,
+      lista_preco_nome: '',
       origem: 'manual',
     }]);
     setSearch('');
@@ -77,6 +91,8 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
       status_aprovacao: 'pendente',
       status_servico: 'aguardando_autorizacao',
       observacao_item: '',
+      lista_preco_id: null,
+      lista_preco_nome: '',
       origem: 'manual',
     }]);
   };
@@ -95,6 +111,35 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
   };
 
   const removerItem = (idx) => setItensLocais(prev => prev.filter((_, i) => i !== idx));
+
+  const aplicarListaPreco = (idx, listaId) => {
+    const item = itensLocais[idx];
+    if (!item || !item.produto_id) return;
+    const produto = produtos.find(p => p.id === item.produto_id);
+    if (!produto) return;
+    if (!listaId) {
+      const variacao = item.variacao_id ? produto.variacoes?.find(v => v.id === item.variacao_id) : null;
+      const precoBase = variacao
+        ? (variacao.usar_faixa_preco ? (variacao.valor_minimo ?? variacao.valor) : variacao.valor)
+        : (produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor);
+      const valorUnit = Number(precoBase) || 0;
+      setItensLocais(prev => {
+        const novo = [...prev];
+        novo[idx] = { ...novo[idx], lista_preco_id: null, lista_preco_nome: '', valor_unitario: valorUnit, valor_total: valorUnit * (novo[idx].quantidade || 1) };
+        return novo;
+      });
+      return;
+    }
+    const lista = listasPrecos.find(l => l.id === listaId);
+    if (!lista) return;
+    const novoPreco = calcularPrecoLista(produto, lista);
+    if (novoPreco == null) return;
+    setItensLocais(prev => {
+      const novo = [...prev];
+      novo[idx] = { ...novo[idx], lista_preco_id: listaId, lista_preco_nome: lista.nome, valor_unitario: novoPreco, valor_total: novoPreco * (novo[idx].quantidade || 1) };
+      return novo;
+    });
+  };
 
   const handleSalvar = () => {
     for (const item of itensLocais) {
@@ -213,6 +258,17 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
                         className="h-8 text-sm" />
                     </div>
                   </div>
+                  {item.produto_id && listasAplicaveisProduto(listasPrecos, produtos.find(p => p.id === item.produto_id)).length > 0 && (
+                    <div className="mt-2">
+                      <Label className="text-xs">Lista de Preço</Label>
+                      <SeletorListaPreco
+                        listas={listasAplicaveisProduto(listasPrecos, produtos.find(p => p.id === item.produto_id))}
+                        value={item.lista_preco_id}
+                        onChange={(listaId) => aplicarListaPreco(idx, listaId)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <Input
                       className="text-xs h-7 flex-1 mr-2"

@@ -188,6 +188,14 @@
             "type": "string",
             "format": "date",
             "description": "Data em que o servi\u00e7o foi executado"
+          },
+          "lista_preco_id": {
+            "type": "string",
+            "description": "ID da lista de pre\u00e7os aplicada a este item"
+          },
+          "lista_preco_nome": {
+            "type": "string",
+            "description": "Nome da lista de pre\u00e7os aplicada"
           }
         }
       }
@@ -335,6 +343,14 @@
             "type": "string",
             "format": "date",
             "description": "Data em que o servi\u00e7o foi executado"
+          },
+          "lista_preco_id": {
+            "type": "string",
+            "description": "ID da lista de pre\u00e7os aplicada a este item"
+          },
+          "lista_preco_nome": {
+            "type": "string",
+            "description": "Nome da lista de pre\u00e7os aplicada"
           }
         }
       }

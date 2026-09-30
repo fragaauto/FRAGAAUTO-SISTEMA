@@ -22,6 +22,8 @@ import { filtrarProdutos } from '@/lib/produtoSearch';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 import BadgeEstoqueBaixo from '@/components/atendimento/BadgeEstoqueBaixo';
 import SeletorVariacao from '@/components/produtos/SeletorVariacao';
+import { calcularPrecoLista, listasAplicaveisProduto } from '@/lib/listaPrecos';
+import SeletorListaPreco from '@/components/precos/SeletorListaPreco';
 
 export default function EditarQueixa() {
   const navigate = useNavigate();
@@ -68,6 +70,13 @@ export default function EditarQueixa() {
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list('', 3000),
     staleTime: 5 * 60 * 1000
+  });
+
+  const { data: listasPrecos = [] } = useQuery({
+    queryKey: ['listas-precos', atendimento?.unidade_id],
+    queryFn: () => base44.entities.ListaPrecos.filter({ unidade_id: atendimento?.unidade_id }),
+    enabled: !!atendimento?.unidade_id,
+    staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -131,6 +140,8 @@ export default function EditarQueixa() {
       variacao_nome: variacao?.nome || '',
       vantagens: produto.vantagens || '',
       desvantagens: produto.desvantagens || '',
+      lista_preco_id: null,
+      lista_preco_nome: '',
       status_aprovacao: 'aprovado'
     };
 
@@ -152,6 +163,31 @@ export default function EditarQueixa() {
       ...novosItens[index],
       [field]: field === 'quantidade' || field === 'valor_unitario' ? Number(value) : value
     };
+    setItensQueixa(novosItens);
+  };
+
+  const aplicarListaPreco = (index, listaId) => {
+    const item = itensQueixa[index];
+    if (!item || !item.produto_id) return;
+    const produto = produtos.find(p => p.id === item.produto_id);
+    if (!produto) return;
+    if (!listaId) {
+      const variacao = item.variacao_id ? produto.variacoes?.find(v => v.id === item.variacao_id) : null;
+      const precoBase = variacao
+        ? (variacao.usar_faixa_preco ? (variacao.valor_minimo ?? variacao.valor) : variacao.valor)
+        : (produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor);
+      const valorUnit = Number(precoBase) || 0;
+      const novosItens = [...itensQueixa];
+      novosItens[index] = { ...novosItens[index], lista_preco_id: null, lista_preco_nome: '', valor_unitario: valorUnit, valor_total: valorUnit * (novosItens[index].quantidade || 1) };
+      setItensQueixa(novosItens);
+      return;
+    }
+    const lista = listasPrecos.find(l => l.id === listaId);
+    if (!lista) return;
+    const novoPreco = calcularPrecoLista(produto, lista);
+    if (novoPreco == null) return;
+    const novosItens = [...itensQueixa];
+    novosItens[index] = { ...novosItens[index], lista_preco_id: listaId, lista_preco_nome: lista.nome, valor_unitario: novoPreco, valor_total: novoPreco * (novosItens[index].quantidade || 1) };
     setItensQueixa(novosItens);
   };
 
@@ -323,6 +359,16 @@ export default function EditarQueixa() {
                           />
                         </div>
                       </div>
+                      {item.produto_id && listasAplicaveisProduto(listasPrecos, produtos.find(p => p.id === item.produto_id)).length > 0 && (
+                        <div className="mt-2">
+                          <Label className="text-xs">Lista de Preço</Label>
+                          <SeletorListaPreco
+                            listas={listasAplicaveisProduto(listasPrecos, produtos.find(p => p.id === item.produto_id))}
+                            value={item.lista_preco_id}
+                            onChange={(listaId) => aplicarListaPreco(idx, listaId)}
+                          />
+                        </div>
+                      )}
 
                       <div>
                         <Label className="text-xs">Observações do Item</Label>
