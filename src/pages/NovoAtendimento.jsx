@@ -145,6 +145,13 @@ export default function NovoAtendimento() {
     staleTime: 10 * 60 * 1000
   });
 
+  const { data: listasPrecos = [] } = useQuery({
+    queryKey: ['listas-precos', unidadeAtual?.id],
+    queryFn: () => base44.entities.ListaPrecos.filter({ unidade_id: unidadeAtual?.id }),
+    enabled: !!unidadeAtual?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => {
       console.log('📤 [CRIAR ATENDIMENTO] Enviando dados:', data);
@@ -1060,6 +1067,8 @@ export default function NovoAtendimento() {
                     <div key={index}>
                       <ItemOrcamento
                         item={item}
+                        listasPrecos={listasPrecos}
+                        produtos={produtos}
                         onUpdate={(updated) => {
                           setFormData(prev => ({
                             ...prev,
@@ -1252,6 +1261,8 @@ export default function NovoAtendimento() {
                             )}
                             <ItemOrcamento
                               item={item}
+                              listasPrecos={listasPrecos}
+                              produtos={produtos}
                               onUpdate={(updated) => handleUpdateItem(index, updated)}
                               onRemove={() => handleRemoveItem(index)}
                             />

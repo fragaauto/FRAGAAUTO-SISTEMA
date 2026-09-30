@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Wrench, Package } from 'lucide-react';
+import { Label } from "@/components/ui/label";
+import { Trash2, Wrench, Package, Tag } from 'lucide-react';
 import AtribuirTecnicoModal from './AtribuirTecnicoModal';
+import SeletorListaPreco from '@/components/precos/SeletorListaPreco';
+import { calcularPrecoLista, listasAplicaveisProduto } from '@/lib/listaPrecos';
 
-export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = false }) {
+export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = false, listasPrecos = [], produtos = [] }) {
   const [mostrarModalTecnico, setMostrarModalTecnico] = useState(false);
   const handleQuantidadeChange = (e) => {
     const value = e.target.value;
@@ -52,6 +55,33 @@ export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = fal
 
   const handleSobEncomendaChange = (checked) => {
     onUpdate({ ...item, sob_encomenda: checked });
+  };
+
+  const produto = item.produto_id ? produtos.find(p => p.id === item.produto_id) : null;
+  const listasAplicaveis = produto ? listasAplicaveisProduto(listasPrecos, produto) : [];
+
+  const handleListaPrecoChange = (listaId) => {
+    if (!produto) return;
+    if (!listaId) {
+      // Reverter para preço padrão
+      const variacao = item.variacao_id ? produto.variacoes?.find(v => v.id === item.variacao_id) : null;
+      const precoBase = variacao
+        ? (variacao.usar_faixa_preco ? (variacao.valor_minimo ?? variacao.valor) : variacao.valor)
+        : (produto.usar_faixa_preco ? (produto.valor_minimo ?? produto.valor) : produto.valor);
+      const valor_unitario = Number(precoBase) || 0;
+      const desconto_item = Number(item.desconto_item) || 0;
+      const bruto = (item.quantidade || 0) * valor_unitario;
+      onUpdate({ ...item, lista_preco_id: null, lista_preco_nome: '', valor_unitario, valor_total: Math.max(0, bruto - desconto_item) });
+      return;
+    }
+    const lista = listasAplicaveis.find(l => l.id === listaId);
+    if (!lista) return;
+    const novoPreco = calcularPrecoLista(produto, lista);
+    if (novoPreco == null) return;
+    const valor_unitario = Number(novoPreco) || 0;
+    const desconto_item = Number(item.desconto_item) || 0;
+    const bruto = (item.quantidade || 0) * valor_unitario;
+    onUpdate({ ...item, lista_preco_id: listaId, lista_preco_nome: lista.nome, valor_unitario, valor_total: Math.max(0, bruto - desconto_item) });
   };
 
   return (
@@ -178,6 +208,21 @@ export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = fal
             <Trash2 className="w-5 h-5" />
           </Button>
         </div>
+        )}
+
+        {!readOnly && listasAplicaveis.length > 0 && (
+          <div className="flex items-center gap-2 mt-1">
+            <Tag className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+            <span className="text-xs text-slate-500">Lista de Preço:</span>
+            <div className="flex-1 max-w-[260px]">
+              <SeletorListaPreco
+                listas={listasAplicaveis}
+                value={item.lista_preco_id}
+                onChange={handleListaPrecoChange}
+                className="h-8 text-xs"
+              />
+            </div>
+          </div>
         )}
 
         {!readOnly && (
