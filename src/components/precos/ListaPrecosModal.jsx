@@ -74,6 +74,28 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
     }
   };
 
+  // Seleciona/deseleciona todos os produtos atualmente FILTRADOS (ex: resultado da busca "máquina de vidro")
+  const todosProdutosFiltradosSelecionados = produtosFiltrados.length > 0 &&
+    produtosFiltrados.every(p => formData.itens.find(i => i.produto_id === p.id));
+
+  const toggleTodosProdutosFiltrados = () => {
+    if (todosProdutosFiltradosSelecionados) {
+      // Remove apenas os produtos filtrados
+      const idsFiltrados = new Set(produtosFiltrados.map(p => p.id));
+      setFormData(p => ({ ...p, itens: p.itens.filter(i => !idsFiltrados.has(i.produto_id)) }));
+    } else {
+      // Adiciona os filtrados que ainda não estão selecionados (sem duplicar)
+      const existentes = new Set(formData.itens.map(i => i.produto_id));
+      const novos = produtosFiltrados
+        .filter(p => !existentes.has(p.id))
+        .map(p => ({
+          produto_id: p.id, produto_nome: p.nome, produto_codigo: p.codigo || '',
+          preco_original: p.valor, preco_customizado: p.valor,
+        }));
+      setFormData(p => ({ ...p, itens: [...p.itens, ...novos] }));
+    }
+  };
+
   const toggleProduto = (produto) => {
     const exists = formData.itens.find(i => i.produto_id === produto.id);
     if (exists) {
@@ -219,6 +241,13 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
               <Label>{formData.tipo === 'geral'
                 ? `Exceções / Preços Específicos (${formData.itens.length} produto(s) — opcional, sobrescreve o ajuste geral)`
                 : `Produtos (${formData.itens.length} selecionado(s))`}</Label>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-slate-400">{produtosFiltrados.length} produto(s) exibido(s){searchProduto ? ' (filtrados)' : ''}</span>
+                <button type="button" onClick={toggleTodosProdutosFiltrados}
+                  className={`text-xs px-3 py-1 rounded-full border transition-all font-medium ${todosProdutosFiltradosSelecionados ? 'bg-orange-500 border-orange-500 text-white' : 'border-slate-300 text-slate-600 hover:border-orange-400 hover:text-orange-600'}`}>
+                  {todosProdutosFiltradosSelecionados ? '✓ Selecionados' : 'Selecionar todos'}
+                </button>
+              </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input placeholder="Buscar produto..." value={searchProduto} onChange={e => setSearchProduto(e.target.value)} className="pl-9" />
@@ -231,12 +260,17 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
                       className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-50 ${selecionado ? 'bg-orange-50' : ''}`}>
                       <div>
                         <p className="text-sm font-medium">{p.nome}</p>
-                        <p className="text-xs text-slate-500">{p.codigo} · R$ {p.valor?.toFixed(2)}</p>
+                        <p className="text-xs text-slate-500">
+                          {p.codigo} · Custo: R$ {(p.custo ?? 0).toFixed(2)} · Venda: R$ {(p.valor ?? 0).toFixed(2)}
+                        </p>
                       </div>
                       {selecionado && <Check className="w-4 h-4 text-orange-500 flex-shrink-0" />}
                     </button>
                   );
                 })}
+                {produtosFiltrados.length === 0 && (
+                  <p className="text-center py-4 text-sm text-slate-400">Nenhum produto encontrado</p>
+                )}
               </div>
 
               {/* Tabela de preços com ajuste em lote */}
@@ -272,16 +306,20 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
 
                   {/* Tabela individual */}
                   <div className="border rounded-lg divide-y">
-                    <div className="px-3 py-2 bg-slate-50 text-xs font-semibold text-slate-600 grid grid-cols-3 gap-2">
+                    <div className="px-3 py-2 bg-slate-50 text-xs font-semibold text-slate-600 grid grid-cols-4 gap-2">
                       <span className="col-span-1">Produto</span>
-                      <span className="text-center">Preço Original</span>
+                      <span className="text-center">Custo</span>
+                      <span className="text-center">Venda Atual</span>
                       <span className="text-right">Preço Customizado</span>
                     </div>
                     {formData.itens.map(item => {
                       const diff = item.preco_customizado - item.preco_original;
                       const diffPct = item.preco_original ? (diff / item.preco_original * 100) : 0;
+                      const produto = produtos.find(pr => pr.id === item.produto_id);
+                      const custoAtual = produto?.custo ?? 0;
+                      const vendaAtual = produto?.valor ?? item.preco_original;
                       return (
-                        <div key={item.produto_id} className="px-3 py-2 grid grid-cols-3 gap-2 items-center">
+                        <div key={item.produto_id} className="px-3 py-2 grid grid-cols-4 gap-2 items-center">
                           <div className="col-span-1 min-w-0">
                             <p className="text-sm font-medium truncate">{item.produto_nome}</p>
                             {diff !== 0 && (
@@ -290,8 +328,11 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
                               </p>
                             )}
                           </div>
-                          <div className="text-center text-sm text-slate-500">
-                            R$ {item.preco_original?.toFixed(2)}
+                          <div className="text-center text-xs text-slate-500">
+                            R$ {custoAtual.toFixed(2)}
+                          </div>
+                          <div className="text-center text-sm text-slate-600">
+                            R$ {vendaAtual.toFixed(2)}
                           </div>
                           <div className="flex items-center gap-1 justify-end">
                             <span className="text-xs text-slate-400">R$</span>
