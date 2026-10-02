@@ -10,9 +10,10 @@
       "type": "string",
       "enum": [
         "entrada",
-        "saida"
+        "saida",
+        "ajuste"
       ],
-      "description": "Tipo do lan\u00e7amento"
+      "description": "Tipo do lan\u00e7amento. 'ajuste' corrige o saldo do caixa sem influenciar totais de entrada (vendas) ou sa\u00edda (gastos); o valor \u00e9 armazenado com sinal (positivo = adiciona, negativo = remove)."
     },
     "descricao": {
       "type": "string"
@@ -61,7 +62,6 @@
   },
   "required": [
     "tipo",
-    "valor",
-    "forma_pagamento"
+    "valor"
   ]
 }

@@ -10,7 +10,8 @@ export default function FluxoCaixaChart({ lancamentos }) {
     const day = l.data_lancamento?.substring(0, 10) || new Date().toISOString().substring(0, 10);
     if (!byDay[day]) byDay[day] = { entradas: 0, saidas: 0 };
     if (l.tipo === 'entrada') byDay[day].entradas += l.valor || 0;
-    else byDay[day].saidas += l.valor || 0;
+    else if (l.tipo === 'saida') byDay[day].saidas += l.valor || 0;
+    // ajustes não entram no gráfico de entradas/saídas
   });
 
   const data = Object.entries(byDay)

@@ -126,8 +126,14 @@ export default function Financeiro() {
 
   const entradas = lancPeriodo.filter(l => l.tipo === 'entrada').reduce((s, l) => s + (l.valor || 0), 0);
   const saidas = lancPeriodo.filter(l => l.tipo === 'saida').reduce((s, l) => s + (l.valor || 0), 0);
-  const saldoAnterior = lancAnteriores.reduce((s, l) => l.tipo === 'entrada' ? s + (l.valor || 0) : s - (l.valor || 0), 0);
-  const saldoAtual = saldoAnterior + entradas - saidas;
+  const ajustes = lancPeriodo.filter(l => l.tipo === 'ajuste').reduce((s, l) => s + (l.valor || 0), 0);
+  const saldoAnterior = lancAnteriores.reduce((s, l) => {
+    if (l.tipo === 'entrada') return s + (l.valor || 0);
+    if (l.tipo === 'saida') return s - (l.valor || 0);
+    if (l.tipo === 'ajuste') return s + (l.valor || 0); // valor já vem com sinal
+    return s;
+  }, 0);
+  const saldoAtual = saldoAnterior + entradas - saidas + ajustes;
 
   const recebPendente = contasReceber.filter(c => c.status === 'pendente' || c.status === 'parcial').reduce((s, c) => s + ((c.valor_total || 0) - (c.valor_pago || 0)), 0);
   const pagarPendente = contasPagar.filter(c => c.status === 'pendente').reduce((s, c) => s + (c.valor || 0), 0);

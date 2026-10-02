@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet, CalendarRange, Pencil, Search } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet, CalendarRange, Pencil, Search, Scale } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -34,6 +34,7 @@ export default function FluxoCaixaTab({ filtroData }) {
   const [filtroForma, setFiltroForma] = useState('todos');
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [showNovo, setShowNovo] = useState(false);
+  const [showAjuste, setShowAjuste] = useState(false);
   const [exportando, setExportando] = useState(false);
   const [dataInicioPers, setDataInicioPers] = useState('');
   const [dataFimPers, setDataFimPers] = useState('');
@@ -164,13 +165,19 @@ export default function FluxoCaixaTab({ filtroData }) {
 
   const entradas = filtrados.filter(l => l.tipo === 'entrada').reduce((s, l) => s + (l.valor || 0), 0);
   const saidas = filtrados.filter(l => l.tipo === 'saida').reduce((s, l) => s + (l.valor || 0), 0);
-  const saldo = entradas - saidas;
+  const ajustes = filtrados.filter(l => l.tipo === 'ajuste').reduce((s, l) => s + (l.valor || 0), 0);
+  const saldo = entradas - saidas + ajustes;
 
   // Saldo anterior: todos os lançamentos ANTES do início do período filtrado
   const anteriores = dataInicio
     ? lancamentos.filter(l => (l.data_lancamento || l.created_date || '') < dataInicio)
     : [];
-  const saldoAnterior = anteriores.reduce((s, l) => s + (l.tipo === 'entrada' ? (l.valor || 0) : -(l.valor || 0)), 0);
+  const saldoAnterior = anteriores.reduce((s, l) => {
+    if (l.tipo === 'entrada') return s + (l.valor || 0);
+    if (l.tipo === 'saida') return s - (l.valor || 0);
+    if (l.tipo === 'ajuste') return s + (l.valor || 0); // valor já vem com sinal
+    return s;
+  }, 0);
   const saldoFinal = saldoAnterior + saldo;
 
   const exportarPDF = async () => {
@@ -225,6 +232,7 @@ export default function FluxoCaixaTab({ filtroData }) {
       doc.setFontSize(10);
       doc.text(`Total Entradas: R$ ${entradas.toFixed(2)}`, 14, finalY);
       doc.text(`Total Saídas: R$ ${saidas.toFixed(2)}`, 14, finalY + 5);
+      if (ajustes !== 0) doc.text(`Ajustes de Saldo: R$ ${ajustes.toFixed(2)}`, 14, finalY + 10);
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
       doc.text(`Saldo: R$ ${saldo.toFixed(2)}`, 14, finalY + 12);
@@ -255,7 +263,7 @@ export default function FluxoCaixaTab({ filtroData }) {
             'CPF/CNPJ': atendimento?.cliente_cpf || '',
             'Categoria': l.categoria || '',
             'Histórico': historico,
-            'Tipo': l.tipo === 'entrada' ? 'C' : 'D',
+            'Tipo': l.tipo === 'entrada' ? 'C' : l.tipo === 'ajuste' ? 'A' : 'D',
             'Valor': (l.valor || 0).toFixed(2),
             'Banco': FORMAS_LABELS[l.forma_pagamento] || l.forma_pagamento || 'Caixa',
             'Período': periodoTexto,
@@ -323,6 +331,7 @@ export default function FluxoCaixaTab({ filtroData }) {
             <SelectItem value="todos">Entradas e Saídas</SelectItem>
             <SelectItem value="entrada">Apenas Entradas</SelectItem>
             <SelectItem value="saida">Apenas Saídas</SelectItem>
+            <SelectItem value="ajuste">Apenas Ajustes</SelectItem>
           </SelectContent>
         </Select>
 
@@ -348,6 +357,9 @@ export default function FluxoCaixaTab({ filtroData }) {
           </Button>
           <Button onClick={exportarExcel} disabled={exportando || filtrados.length === 0} variant="outline" className="gap-1">
             <FileSpreadsheet className="w-4 h-4" /> Excel
+          </Button>
+          <Button onClick={() => setShowAjuste(true)} variant="outline" className="gap-1 border-indigo-300 text-indigo-600 hover:bg-indigo-50">
+            <Scale className="w-4 h-4" /> Ajustar Saldo
           </Button>
           <Button onClick={() => setShowNovo(true)} variant="outline">
             <Plus className="w-4 h-4 mr-1" /> Lançamento Manual
@@ -385,7 +397,9 @@ export default function FluxoCaixaTab({ filtroData }) {
           <CardContent className="p-3">
             <div className="flex items-center gap-1 mb-1"><span className="text-xs text-slate-500 font-semibold">Saldo Final</span></div>
             <p className={`font-bold text-lg ${saldoFinal >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>R$ {saldoFinal.toFixed(2)}</p>
-            <p className="text-xs text-slate-400 mt-0.5">anterior + entradas - saídas</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              anterior + entradas - saídas{ajustes !== 0 ? ` + ajustes (R$ ${ajustes.toFixed(2)})` : ''}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -448,10 +462,12 @@ export default function FluxoCaixaTab({ filtroData }) {
                   onClick={e => e.stopPropagation()}
                   className="w-4 h-4 rounded cursor-pointer flex-shrink-0"
                 />
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${l.tipo === 'entrada' ? 'bg-green-100' : 'bg-red-100'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${l.tipo === 'entrada' ? 'bg-green-100' : l.tipo === 'ajuste' ? 'bg-indigo-100' : 'bg-red-100'}`}>
                   {l.tipo === 'entrada'
                     ? <ArrowUpCircle className="w-4 h-4 text-green-600" />
-                    : <ArrowDownCircle className="w-4 h-4 text-red-500" />}
+                    : l.tipo === 'ajuste'
+                      ? <Scale className="w-4 h-4 text-indigo-600" />
+                      : <ArrowDownCircle className="w-4 h-4 text-red-500" />}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-800 truncate max-w-[180px]">
@@ -474,8 +490,8 @@ export default function FluxoCaixaTab({ filtroData }) {
                 </div>
               </div>
               <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                <p className={`font-bold text-sm ${l.tipo === 'entrada' ? 'text-green-600' : 'text-red-500'}`}>
-                  {l.tipo === 'entrada' ? '+' : '-'} R$ {(l.valor || 0).toFixed(2)}
+                <p className={`font-bold text-sm ${l.tipo === 'entrada' ? 'text-green-600' : l.tipo === 'ajuste' ? 'text-indigo-600' : 'text-red-500'}`}>
+                  {l.tipo === 'entrada' ? '+' : l.tipo === 'ajuste' ? ((l.valor || 0) >= 0 ? '+' : '') : '-'} R$ {Math.abs(l.valor || 0).toFixed(2)}
                 </p>
                 <Button size="icon" variant="ghost" className="w-7 h-7 text-slate-400 hover:text-blue-500" onClick={() => setEditando(l)}>
                   <Pencil className="w-3.5 h-3.5" />
@@ -508,6 +524,7 @@ export default function FluxoCaixaTab({ filtroData }) {
       </div>
 
       <NovoLancamentoModal open={showNovo} onClose={() => setShowNovo(false)} onSaved={() => { setShowNovo(false); qc.invalidateQueries(['lancamentos-todos']); qc.invalidateQueries(['lancamentos_metas_todos']); }} />
+      <AjusteSaldoModal open={showAjuste} onClose={() => setShowAjuste(false)} onSaved={() => { setShowAjuste(false); qc.invalidateQueries(['lancamentos-todos']); qc.invalidateQueries(['lancamentos_metas_todos']); }} />
       {editando && (
         <EditarLancamentoModal
           lancamento={editando}
@@ -625,6 +642,61 @@ function NovoLancamentoModal({ open, onClose, onSaved }) {
           </div>
           <Button onClick={save} disabled={saving} className="w-full">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Salvar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AjusteSaldoModal({ open, onClose, onSaved }) {
+  const { unidadeAtual } = useUnidade();
+  const hoje = new Date().toISOString().split('T')[0];
+  const [direcao, setDirecao] = useState('adicionar'); // adicionar | remover
+  const [valor, setValor] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const [data, setData] = useState(hoje);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    const val = parseFloat(valor);
+    if (isNaN(val) || val <= 0) return toast.error('Informe um valor válido');
+    if (!data) return toast.error('Selecione a data');
+    setSaving(true);
+    const valorComSinal = direcao === 'remover' ? -Math.abs(val) : Math.abs(val);
+    const dataLancamento = new Date(data + 'T12:00:00').toISOString();
+    await base44.entities.LancamentoFinanceiro.create({
+      tipo: 'ajuste',
+      descricao: descricao || (direcao === 'adicionar' ? 'Ajuste de saldo (acréscimo)' : 'Ajuste de saldo (redução)'),
+      valor: valorComSinal,
+      data_lancamento: dataLancamento,
+      unidade_id: unidadeAtual?.id || null,
+      categoria: 'Ajuste de Caixa',
+    });
+    setSaving(false);
+    setValor(''); setDescricao(''); setDirecao('adicionar');
+    onSaved();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Scale className="w-5 h-5 text-indigo-600" /> Ajustar Saldo do Caixa</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-xs text-indigo-700">
+            Este ajuste altera apenas o <strong>saldo do caixa</strong>. Não influencia os totais de <strong>Entradas (vendas)</strong> nem <strong>Saídas (gastos)</strong>.
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" className={`flex-1 ${direcao==='adicionar'?'bg-indigo-600 text-white':''}`} variant={direcao==='adicionar'?'default':'outline'} onClick={() => setDirecao('adicionar')}>+ Adicionar ao saldo</Button>
+            <Button size="sm" className={`flex-1 ${direcao==='remover'?'bg-red-600 text-white':''}`} variant={direcao==='remover'?'default':'outline'} onClick={() => setDirecao('remover')}>− Remover do saldo</Button>
+          </div>
+          <div><Label>Valor (R$) *</Label><Input type="number" step="0.01" min="0" value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" /></div>
+          <div><Label>Descrição (opcional)</Label><Input value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Ex: Correção de saldo, sobra de caixa..." /></div>
+          <div><Label>Data *</Label><Input type="date" value={data} onChange={e => setData(e.target.value)} /></div>
+          <Button onClick={save} disabled={saving} className="w-full bg-indigo-600 hover:bg-indigo-700">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Aplicar Ajuste
           </Button>
         </div>
       </DialogContent>
