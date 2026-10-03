@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
-import { Building2, DollarSign, ClipboardCheck, TrendingUp, Plug, Package, Layers, ListTodo, Target } from 'lucide-react';
+import { Building2, DollarSign, ClipboardCheck, TrendingUp, Plug, Package, Layers, ListTodo, Target, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import TabEmpresa from '@/components/configuracoes/TabEmpresa';
@@ -13,6 +13,7 @@ import TabMarketing from '@/components/configuracoes/TabMarketing';
 import TabIntegracoes from '@/components/configuracoes/TabIntegracoes';
 import TabRotina from '@/components/configuracoes/TabRotina';
 import TabMetas from '@/components/configuracoes/TabMetas';
+import TabConsultasRapidas from '@/components/configuracoes/TabConsultasRapidas';
 import { TODOS_MODULOS } from '@/components/modulos';
 import { useUnidade } from '@/lib/UnidadeContext';
 
@@ -79,6 +80,7 @@ const DEFAULT_FORM = {
   evolution_api_url: '',
   evolution_api_key: '',
   evolution_instance: '',
+  consultas_rapidas: [],
   modulos_ativos: TODOS_MODULOS.map(m => m.id),
 };
 
@@ -205,6 +207,9 @@ export default function Configuracoes() {
           <TabsTrigger value="metas" className="flex items-center gap-1.5">
             <Target className="w-4 h-4" />Metas
           </TabsTrigger>
+          <TabsTrigger value="consultas" className="flex items-center gap-1.5">
+            <Search className="w-4 h-4" />Consultas Rápidas
+          </TabsTrigger>
         </TabsList>
 
         <div className="mb-4">
@@ -247,6 +252,10 @@ export default function Configuracoes() {
 
         <TabsContent value="metas">
           <TabMetas {...commonProps} />
+        </TabsContent>
+
+        <TabsContent value="consultas">
+          <TabConsultasRapidas {...commonProps} />
         </TabsContent>
       </Tabs>
     </div>

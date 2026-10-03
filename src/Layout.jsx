@@ -29,6 +29,7 @@ import { filtrarItensMenu } from '@/lib/menuPermissions';
 import AguardandoAprovacao from '@/components/AguardandoAprovacao';
 import AcessoForaHorario from '@/components/AcessoForaHorario';
 import SeletorUnidade from '@/components/SeletorUnidade';
+import BotaoConsultaFlutuante from '@/components/consulta/BotaoConsultaFlutuante';
 
 // Todos os itens de navegação com módulo associado
 const NAV_ITEMS = [
@@ -285,6 +286,8 @@ export default function Layout({ children, currentPageName }) {
         </main>
       </div>
 
+      {/* Botão flutuante de consultas rápidas */}
+      <BotaoConsultaFlutuante />
 
     </div>
   );

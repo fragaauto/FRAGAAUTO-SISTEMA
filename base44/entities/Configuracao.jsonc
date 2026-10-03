@@ -326,6 +326,32 @@
     "evolution_instance": {
       "type": "string"
     },
+    "consultas_rapidas": {
+      "type": "array",
+      "description": "Consultas r\u00e1pidas dispon\u00edveis no bot\u00e3o flutuante. Cada consulta busca dados de uma planilha Google Sheets publicada em CSV.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID \u00fanico da consulta"
+          },
+          "titulo": {
+            "type": "string",
+            "description": "T\u00edtulo exibido no bot\u00e3o flutuante (ex: Consulta de Encaixe de L\u00e2mpadas)"
+          },
+          "link_csv": {
+            "type": "string",
+            "description": "Link p\u00fablico da planilha Google Sheets em formato CSV"
+          },
+          "ativo": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "default": []
+    },
     "modulos_ativos": {
       "type": "array",
       "items": {
