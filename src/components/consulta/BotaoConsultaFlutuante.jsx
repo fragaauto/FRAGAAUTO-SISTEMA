@@ -42,10 +42,11 @@ export default function BotaoConsultaFlutuante() {
           dados = csvToObjects(text);
           cacheRef.current[consultaSelecionada.id] = dados;
         }
-        const termoLower = termo.trim().toLowerCase();
-        const filtrados = dados.filter(row =>
-          Object.values(row).some(val => String(val || '').toLowerCase().includes(termoLower))
-        );
+        const tokens = termo.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const filtrados = dados.filter(row => {
+          const linhaStr = Object.values(row).map(v => String(v || '').toLowerCase()).join(' ');
+          return tokens.every(tok => linhaStr.includes(tok));
+        });
         setResultados(filtrados);
       } catch (e) {
         setErro(e.message || 'Erro ao buscar dados da planilha');
@@ -198,7 +199,9 @@ export default function BotaoConsultaFlutuante() {
                           {headers.map((h) => {
                             const val = row[h];
                             if (!val) return null;
-                            const isMatch = String(val).toLowerCase().includes(termo.trim().toLowerCase());
+                            const valLower = String(val).toLowerCase();
+                            const tokens = termo.trim().toLowerCase().split(/\s+/).filter(Boolean);
+                            const isMatch = tokens.some(tok => valLower.includes(tok));
                             return (
                               <div key={h} className="flex flex-col py-0.5 text-sm border-b border-slate-50 last:border-0">
                                 <span className="text-xs text-slate-400 font-medium">{h}</span>
