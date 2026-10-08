@@ -18,8 +18,8 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
   const [sobEncomendaLocal, setSobEncomendaLocal] = useState(!!item.sob_encomenda);
   const [showForm, setShowForm] = useState(false);
   const [salvando, setSalvando] = useState(false);
-  const [custoEncomenda, setCustoEncomenda] = useState('');
-  const [descricaoPeca, setDescricaoPeca] = useState(item.nome || '');
+  const [custoEncomenda, setCustoEncomenda] = useState(item.custo_encomenda_valor != null ? String(item.custo_encomenda_valor) : '');
+  const [descricaoPeca, setDescricaoPeca] = useState(item.descricao_peca_encomenda || item.nome || '');
   const [mostrarModalTecnico, setMostrarModalTecnico] = useState(false);
   // Estado local para refletir imediatamente os valores editados
   const [localItem, setLocalItem] = useState(item);
@@ -35,6 +35,20 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
   React.useEffect(() => {
     setSobEncomendaLocal(!!item.sob_encomenda);
   }, [item.sob_encomenda]);
+
+  // Detecta se o produto é do tipo ENCOMENDA DE PEÇA (sob encomenda obrigatório)
+  const isEncomendaPeca = !!(item.nome && item.nome.toUpperCase().includes('ENCOMENDA'));
+
+  // Auto-marcar "Produto sob encomenda" obrigatoriamente para produtos ENCOMENDA DE PEÇA
+  React.useEffect(() => {
+    if (isEncomendaPeca && !sobEncomendaLocal && !readOnly) {
+      setSobEncomendaLocal(true);
+      setDescricaoPeca(item.descricao_peca_encomenda || item.nome || '');
+      setCustoEncomenda(item.custo_encomenda_valor != null ? String(item.custo_encomenda_valor) : '');
+      setShowForm(true);
+      onUpdate({ ...item, sob_encomenda: true });
+    }
+  }, [isEncomendaPeca]);
 
   const calcTotal = (qtd, unit, desc) => Math.max(0, (qtd || 0) * (unit || 0) - (desc || 0));
 
@@ -89,6 +103,11 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
       toast.error('Informe a descrição da peça');
       return;
     }
+    const custo = parseFloat(custoEncomenda) || 0;
+    if (isEncomendaPeca && custo <= 0) {
+      toast.error('Informe o custo da encomenda');
+      return;
+    }
     setSalvando(true);
     try {
       await base44.entities.Encomenda.create({
@@ -109,8 +128,8 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
       });
       toast.success(`📦 Encomenda registrada: ${descricaoPeca}`);
       setShowForm(false);
-      // Salva o item com sob_encomenda: true no atendimento
-      onUpdate({ ...item, sob_encomenda: true });
+      // Salva o item com sob_encomenda: true e dados da encomenda no atendimento
+      onUpdate({ ...item, sob_encomenda: true, descricao_peca_encomenda: descricaoPeca.trim(), custo_encomenda_valor: custo });
     } catch (e) {
       toast.error('Erro ao criar encomenda: ' + e.message);
       // Reverte checkbox se falhar
@@ -227,16 +246,18 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
         )}
 
         {!readOnly && (
-          <label className="flex items-center gap-2 cursor-pointer mt-1 w-fit">
+          <label className={`flex items-center gap-2 mt-1 w-fit ${isEncomendaPeca ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
             <input
               type="checkbox"
               checked={sobEncomendaLocal}
               onChange={handleCheckboxChange}
+              disabled={isEncomendaPeca}
               className="w-4 h-4 accent-orange-500"
             />
             <span className="text-xs text-slate-600 flex items-center gap-1">
               <Package className="w-3 h-3 text-orange-500" />
               Produto sob encomenda
+              {isEncomendaPeca && <span className="text-orange-600 font-medium">(obrigatório)</span>}
             </span>
           </label>
         )}

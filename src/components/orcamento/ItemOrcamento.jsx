@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +56,16 @@ export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = fal
   const handleSobEncomendaChange = (checked) => {
     onUpdate({ ...item, sob_encomenda: checked });
   };
+
+  // Detecta se o produto é do tipo ENCOMENDA DE PEÇA (sob encomenda obrigatório)
+  const isEncomendaPeca = !!(item.nome && item.nome.toUpperCase().includes('ENCOMENDA'));
+
+  // Auto-marcar "Produto sob encomenda" obrigatoriamente para produtos ENCOMENDA DE PEÇA
+  useEffect(() => {
+    if (isEncomendaPeca && !item.sob_encomenda) {
+      onUpdate({ ...item, sob_encomenda: true });
+    }
+  }, []);
 
   const produto = item.produto_id ? produtos.find(p => p.id === item.produto_id) : null;
   const listasAplicaveis = produto ? listasAplicaveisProduto(listasPrecos, produto) : [];
@@ -226,16 +236,18 @@ export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = fal
         )}
 
         {!readOnly && (
-          <label className="flex items-center gap-2 cursor-pointer mt-1 w-fit">
+          <label className={`flex items-center gap-2 mt-1 w-fit ${isEncomendaPeca ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
             <input
               type="checkbox"
               checked={!!item.sob_encomenda}
               onChange={(e) => handleSobEncomendaChange(e.target.checked)}
+              disabled={isEncomendaPeca}
               className="w-4 h-4 accent-orange-500"
             />
             <span className="text-xs text-slate-600 flex items-center gap-1">
               <Package className="w-3 h-3 text-orange-500" />
               Produto sob encomenda
+              {isEncomendaPeca && <span className="text-orange-600 font-medium">(obrigatório)</span>}
             </span>
           </label>
         )}

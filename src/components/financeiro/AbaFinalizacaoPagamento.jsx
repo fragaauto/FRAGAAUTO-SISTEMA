@@ -159,9 +159,21 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     const itens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
     const descricoes = itens
       .filter(item => isPecaExterna(item))
-      .map(item => (item.observacao_item && item.observacao_item.trim()) ? item.observacao_item.trim() : item.nome)
+      .map(item => {
+        if (item.descricao_peca_encomenda && item.descricao_peca_encomenda.trim()) return item.descricao_peca_encomenda.trim();
+        if (item.observacao_item && item.observacao_item.trim()) return item.observacao_item.trim();
+        return item.nome;
+      })
       .filter(d => d);
     return descricoes.join(' | ');
+  }, [atendimento.itens_queixa, atendimento.itens_orcamento, produtos]);
+
+  // Auto-preencher "Valor gasto" com o custo da encomenda dos itens ENCOMENDA DE PEÇA
+  const custoPecasExternasAuto = React.useMemo(() => {
+    const itens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
+    return itens
+      .filter(item => isPecaExterna(item) && item.custo_encomenda_valor != null)
+      .reduce((acc, item) => acc + (parseFloat(item.custo_encomenda_valor) || 0), 0);
   }, [atendimento.itens_queixa, atendimento.itens_orcamento, produtos]);
 
   const lastAutoDescRef = useRef('');
@@ -175,6 +187,17 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       lastAutoDescRef.current = descPecasExternasAuto;
     }
   }, [descPecasExternasAuto, jaLancado]);
+
+  const lastAutoCustoRef = useRef(0);
+  React.useEffect(() => {
+    if (jaLancado) return;
+    if (custoPecasExternasAuto !== lastAutoCustoRef.current) {
+      if (!custoPecasExternas || custoPecasExternas === lastAutoCustoRef.current) {
+        setCustoPecasExternas(custoPecasExternasAuto);
+      }
+      lastAutoCustoRef.current = custoPecasExternasAuto;
+    }
+  }, [custoPecasExternasAuto, jaLancado]);
 
   const desconto = descontoTipo === 'percentual'
     ? (valorBase * descontoValor) / 100
