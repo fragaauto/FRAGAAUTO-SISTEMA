@@ -196,6 +196,18 @@
           "lista_preco_nome": {
             "type": "string",
             "description": "Nome da lista de pre\u00e7os aplicada"
+          },
+          "sob_encomenda": {
+            "type": "boolean",
+            "description": "Se este item \u00e9 um produto sob encomenda"
+          },
+          "descricao_peca_encomenda": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o da pe\u00e7a preenchida no formul\u00e1rio de encomenda"
+          },
+          "custo_encomenda_valor": {
+            "type": "number",
+            "description": "Custo da encomenda preenchido no formul\u00e1rio (transferido para Pe\u00e7as Externas)"
           }
         }
       }
@@ -351,6 +363,18 @@
           "lista_preco_nome": {
             "type": "string",
             "description": "Nome da lista de pre\u00e7os aplicada"
+          },
+          "sob_encomenda": {
+            "type": "boolean",
+            "description": "Se este item \u00e9 um produto sob encomenda"
+          },
+          "descricao_peca_encomenda": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o da pe\u00e7a preenchida no formul\u00e1rio de encomenda"
+          },
+          "custo_encomenda_valor": {
+            "type": "number",
+            "description": "Custo da encomenda preenchido no formul\u00e1rio (transferido para Pe\u00e7as Externas)"
           }
         }
       }
