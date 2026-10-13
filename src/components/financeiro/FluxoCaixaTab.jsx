@@ -145,6 +145,34 @@ export default function FluxoCaixaTab({ filtroData }) {
       ? (dataFimPers ? new Date(dataFimPers + 'T23:59:59').toISOString() : null)
       : null;
 
+  // Saldo anterior via aggregate no servidor (evita truncagem do filter em 5000 registros)
+  const { data: saldoAnteriorCalc = 0 } = useQuery({
+    queryKey: ['saldo-anterior-caixa', dataInicio, unidadeAtual?.id],
+    queryFn: async () => {
+      if (!dataInicio) return 0;
+      const query = { estornado: false, data_lancamento: { $lt: dataInicio } };
+      if (unidadeAtual) {
+        if (unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID) {
+          query.$or = [{ unidade_id: UNIDADE_AUTO_PORTAS_ID }, { unidade_id: null }, { unidade_id: "" }];
+        } else {
+          query.unidade_id = unidadeAtual.id;
+        }
+      }
+      const { rows } = await base44.entities.LancamentoFinanceiro.aggregate({
+        query, groupBy: 'tipo', sum: 'valor'
+      });
+      let saldo = 0;
+      for (const row of rows || []) {
+        if (row.tipo === 'entrada') saldo += row.sum_valor || 0;
+        else if (row.tipo === 'saida') saldo -= row.sum_valor || 0;
+        else if (row.tipo === 'ajuste') saldo += row.sum_valor || 0;
+      }
+      return saldo;
+    },
+    staleTime: 60 * 1000,
+    enabled: !!dataInicio,
+  });
+
   const filtrados = lancamentos.filter(l => {
     const data = l.data_lancamento || l.created_date || '';
     const dentroPeriodo = filtroData
@@ -168,16 +196,7 @@ export default function FluxoCaixaTab({ filtroData }) {
   const ajustes = filtrados.filter(l => l.tipo === 'ajuste').reduce((s, l) => s + (l.valor || 0), 0);
   const saldo = entradas - saidas + ajustes;
 
-  // Saldo anterior: todos os lançamentos ANTES do início do período filtrado
-  const anteriores = dataInicio
-    ? lancamentos.filter(l => (l.data_lancamento || l.created_date || '') < dataInicio)
-    : [];
-  const saldoAnterior = anteriores.reduce((s, l) => {
-    if (l.tipo === 'entrada') return s + (l.valor || 0);
-    if (l.tipo === 'saida') return s - (l.valor || 0);
-    if (l.tipo === 'ajuste') return s + (l.valor || 0); // valor já vem com sinal
-    return s;
-  }, 0);
+  const saldoAnterior = saldoAnteriorCalc || 0;
   const saldoFinal = saldoAnterior + saldo;
 
   const exportarPDF = async () => {

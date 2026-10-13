@@ -117,22 +117,39 @@ export default function Financeiro() {
     return data >= inicioFiltro && data <= fimFiltro;
   });
 
-  // Lançamentos anteriores ao período (para saldo anterior)
-  const lancAnteriores = lancNaoEstornados.filter(l => {
-    if (!inicioFiltro) return false;
-    const data = new Date(l.data_lancamento || l.created_date);
-    return data < inicioFiltro;
+  // Saldo anterior via aggregate no servidor (evita truncagem do list/filter em 1000-5000 registros)
+  const { data: saldoAnteriorCalc = 0 } = useQuery({
+    queryKey: ['saldo-anterior-dashboard', inicioFiltro?.toISOString(), unidadeAtual?.id],
+    queryFn: async () => {
+      if (!inicioFiltro) return 0;
+      const dataInicioISO = inicioFiltro.toISOString();
+      const query = { estornado: false, data_lancamento: { $lt: dataInicioISO } };
+      if (unidadeAtual) {
+        if (unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID) {
+          query.$or = [{ unidade_id: UNIDADE_AUTO_PORTAS_ID }, { unidade_id: null }, { unidade_id: "" }];
+        } else {
+          query.unidade_id = unidadeAtual.id;
+        }
+      }
+      const { rows } = await base44.entities.LancamentoFinanceiro.aggregate({
+        query, groupBy: 'tipo', sum: 'valor'
+      });
+      let saldo = 0;
+      for (const row of rows || []) {
+        if (row.tipo === 'entrada') saldo += row.sum_valor || 0;
+        else if (row.tipo === 'saida') saldo -= row.sum_valor || 0;
+        else if (row.tipo === 'ajuste') saldo += row.sum_valor || 0;
+      }
+      return saldo;
+    },
+    staleTime: 60 * 1000,
+    enabled: !!inicioFiltro,
   });
 
   const entradas = lancPeriodo.filter(l => l.tipo === 'entrada').reduce((s, l) => s + (l.valor || 0), 0);
   const saidas = lancPeriodo.filter(l => l.tipo === 'saida').reduce((s, l) => s + (l.valor || 0), 0);
   const ajustes = lancPeriodo.filter(l => l.tipo === 'ajuste').reduce((s, l) => s + (l.valor || 0), 0);
-  const saldoAnterior = lancAnteriores.reduce((s, l) => {
-    if (l.tipo === 'entrada') return s + (l.valor || 0);
-    if (l.tipo === 'saida') return s - (l.valor || 0);
-    if (l.tipo === 'ajuste') return s + (l.valor || 0); // valor já vem com sinal
-    return s;
-  }, 0);
+  const saldoAnterior = saldoAnteriorCalc || 0;
   const saldoAtual = saldoAnterior + entradas - saidas + ajustes;
 
   const recebPendente = contasReceber.filter(c => c.status === 'pendente' || c.status === 'parcial').reduce((s, c) => s + ((c.valor_total || 0) - (c.valor_pago || 0)), 0);
