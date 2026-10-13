@@ -21,13 +21,15 @@ export default function MenuAtendimento({ currentPath }) {
   const currentFullPath = location.pathname.replace('/', '') + location.search;
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: funcoes = [] } = useQuery({
     queryKey: ['funcoes'],
     queryFn: () => base44.entities.FuncaoFuncionario.list(),
     enabled: !!user && user?.role !== 'admin',
+    staleTime: 5 * 60 * 1000,
   });
 
   // Admin vê todas as abas

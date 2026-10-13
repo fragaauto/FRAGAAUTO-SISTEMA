@@ -104,7 +104,10 @@ export default function NovoAtendimento() {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryFn: async () => {
+      const page = await base44.entities.Produto.filter({ ativo: true }, { limit: 2000, fields: ['codigo', 'nome', 'categoria', 'valor', 'usar_faixa_preco', 'valor_minimo', 'valor_maximo', 'variacoes', 'peca_externa', 'composicao', 'fornecedores'] });
+      return page.items;
+    },
     staleTime: 10 * 60 * 1000
   });
 
@@ -124,10 +127,27 @@ export default function NovoAtendimento() {
   });
   const config = configs[0] || {};
 
-  const { data: todosAtendimentos = [] } = useQuery({
-    queryKey: ['atendimentos-count'],
-    queryFn: () => base44.entities.Atendimento.list(),
+  // Busca apenas o maior número de OS (1 registro) em vez de carregar todos os atendimentos
+  const { data: ultimoAtendimento = null } = useQuery({
+    queryKey: ['atendimento-ultimo-os'],
+    queryFn: async () => {
+      const page = await base44.entities.Atendimento.filter({}, { sort: '-numero_os', limit: 1, fields: ['numero_os'] });
+      return page.items[0] || null;
+    },
     staleTime: 60 * 1000
+  });
+
+  // Lista leve de atendimentos para o card de retorno de serviço (campos mínimos, 500 recentes)
+  const { data: atendimentosRetorno = [] } = useQuery({
+    queryKey: ['atendimentos-retorno'],
+    queryFn: async () => {
+      const page = await base44.entities.Atendimento.filter(
+        { retorno_servico: { $ne: true } },
+        { sort: '-numero_os', limit: 500, fields: ['numero_os', 'placa', 'cliente_nome', 'itens_queixa', 'itens_orcamento'] }
+      );
+      return page.items;
+    },
+    staleTime: 2 * 60 * 1000
   });
 
   const { data: usuarios = [] } = useQuery({
@@ -294,7 +314,7 @@ export default function NovoAtendimento() {
   };
 
   const origemAtendimento = formData.atendimento_origem_id
-    ? todosAtendimentos.find(a => a.id === formData.atendimento_origem_id) || null
+    ? atendimentosRetorno.find(a => a.id === formData.atendimento_origem_id) || null
     : null;
 
   const handleToggleServicoGarantia = (it, checked) => {
@@ -459,7 +479,7 @@ export default function NovoAtendimento() {
     }));
 
     // Gerar número sequencial da OS
-    const maxOs = todosAtendimentos.reduce((max, a) => Math.max(max, a.numero_os || 0), 0);
+    const maxOs = ultimoAtendimento?.numero_os || 0;
     const novoNumeroOs = maxOs + 1;
 
     const dataToSave = {
@@ -737,7 +757,7 @@ export default function NovoAtendimento() {
                     handleInputChange('retorno_servico', true);
                   }
                 }}
-                atendimentos={todosAtendimentos}
+                atendimentos={atendimentosRetorno}
                 origem={origemAtendimento}
                 servicosGarantia={formData.servicos_garantia}
                 onToggleServico={handleToggleServicoGarantia}

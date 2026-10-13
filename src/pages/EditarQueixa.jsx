@@ -68,7 +68,10 @@ export default function EditarQueixa() {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('', 3000),
+    queryFn: async () => {
+      const page = await base44.entities.Produto.filter({ ativo: true }, { limit: 3000, fields: ['codigo', 'nome', 'categoria', 'valor', 'usar_faixa_preco', 'valor_minimo', 'valor_maximo', 'variacoes', 'peca_externa', 'composicao', 'fornecedores'] });
+      return page.items;
+    },
     staleTime: 5 * 60 * 1000
   });
 

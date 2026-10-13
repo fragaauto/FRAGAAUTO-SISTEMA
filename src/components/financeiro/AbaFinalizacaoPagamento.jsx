@@ -71,17 +71,23 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   // Buscar técnicos: apenas funcionários cadastrados na aba Funcionários (menu Cadastros)
   const { data: funcionariosTec = [] } = useQuery({
     queryKey: ['tecnicos_funcionarios'],
-    queryFn: () => base44.entities.Funcionario.list(),
+    queryFn: async () => {
+      const page = await base44.entities.Funcionario.filter({ status: 'ativo' }, { fields: ['id', 'nome_completo', 'funcao_nome'] });
+      return page.items;
+    },
     staleTime: 5 * 60 * 1000,
   });
   const tecnicos = funcionariosTec
     .filter(f => f.status === 'ativo')
     .map(f => ({ id: f.id, full_name: f.nome_completo, email: null }));
 
-  // Buscar produtos para identificar itens de peça externa
+  // Buscar produtos para identificar itens de peça externa — apenas id e flag peca_externa
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos-peca-externa'],
-    queryFn: () => base44.entities.Produto.list('', 3000),
+    queryFn: async () => {
+      const page = await base44.entities.Produto.filter({}, { limit: 3000, fields: ['id', 'peca_externa'] });
+      return page.items;
+    },
     staleTime: 5 * 60 * 1000,
   });
 

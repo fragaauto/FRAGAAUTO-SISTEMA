@@ -12,7 +12,10 @@ export default function AtribuirTecnicoRapido({ atendimento, onClose }) {
 
   const { data: funcionarios = [], isLoading } = useQuery({
     queryKey: ['funcionarios'],
-    queryFn: () => base44.entities.Funcionario.filter({ status: 'ativo' }),
+    queryFn: async () => {
+      const page = await base44.entities.Funcionario.filter({ status: 'ativo' }, { fields: ['id', 'nome_completo', 'funcao_nome'] });
+      return page.items;
+    },
     staleTime: 5 * 60 * 1000,
   });
 

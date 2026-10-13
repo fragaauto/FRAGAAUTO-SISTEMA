@@ -206,18 +206,20 @@ export default function Atendimentos() {
     const timeout = setTimeout(async () => {
       setBuscandoServer(true);
       try {
+        const searchOpts = { sort: '-created_date', limit: 50, fields: ATENDIMENTO_LIST_FIELDS };
         const queries = [];
         if (!isNaN(termo)) {
-          queries.push(base44.entities.Atendimento.filter({ numero_os: parseInt(termo) }, '-created_date', 50));
+          queries.push(base44.entities.Atendimento.filter({ numero_os: parseInt(termo) }, searchOpts));
         }
-        queries.push(base44.entities.Atendimento.filter({ cliente_nome: { $regex: padrao, $options: 'i' } }, '-created_date', 50));
-        queries.push(base44.entities.Atendimento.filter({ placa: { $regex: padrao, $options: 'i' } }, '-created_date', 50));
-        queries.push(base44.entities.Atendimento.filter({ modelo: { $regex: padrao, $options: 'i' } }, '-created_date', 50));
+        queries.push(base44.entities.Atendimento.filter({ cliente_nome: { $regex: padrao, $options: 'i' } }, searchOpts));
+        queries.push(base44.entities.Atendimento.filter({ placa: { $regex: padrao, $options: 'i' } }, searchOpts));
+        queries.push(base44.entities.Atendimento.filter({ modelo: { $regex: padrao, $options: 'i' } }, searchOpts));
         const resultados = await Promise.all(queries);
         const merged = [];
         const seen = new Set();
-        for (const list of resultados) {
-          for (const a of list) {
+        for (const page of resultados) {
+          const items = page.items || page;
+          for (const a of items) {
             if (!seen.has(a.id)) { seen.add(a.id); merged.push(a); }
           }
         }
