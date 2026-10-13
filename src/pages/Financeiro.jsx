@@ -124,6 +124,43 @@ export default function Financeiro() {
     enabled: !!filtroGlobal,
   });
 
+  // Totais do período via aggregate no servidor (evita truncagem do list em 1000 registros)
+  const { data: totaisPeriodoCalc = { entradas: 0, saidas: 0, ajustes: 0 } } = useQuery({
+    queryKey: ['totais-periodo-dashboard', filtroGlobal, unidadeAtual?.id],
+    queryFn: async () => {
+      const hojeCalc = new Date();
+      function calcIntervalo(filtro) {
+        if (filtro === 'hoje') return { inicio: startOfDay(hojeCalc), fim: endOfDay(hojeCalc) };
+        if (filtro === 'ontem') return { inicio: startOfDay(subDays(hojeCalc, 1)), fim: endOfDay(subDays(hojeCalc, 1)) };
+        if (filtro === 'semana') return { inicio: startOfDay(subDays(hojeCalc, hojeCalc.getDay() === 0 ? 6 : hojeCalc.getDay() - 1)), fim: endOfDay(hojeCalc) };
+        if (filtro === 'mes_passado') { const mp = subMonths(hojeCalc, 1); return { inicio: startOfMonth(mp), fim: endOfMonth(mp) }; }
+        return { inicio: startOfMonth(hojeCalc), fim: endOfMonth(hojeCalc) };
+      }
+      const { inicio, fim } = filtroGlobal ? calcIntervalo(filtroGlobal) : { inicio: null, fim: null };
+      if (!inicio) return { entradas: 0, saidas: 0, ajustes: 0 };
+      const query = { estornado: false, data_lancamento: { $gte: inicio.toISOString(), $lte: fim.toISOString() } };
+      if (unidadeAtual) {
+        if (unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID) {
+          query.$or = [{ unidade_id: UNIDADE_AUTO_PORTAS_ID }, { unidade_id: null }, { unidade_id: "" }];
+        } else {
+          query.unidade_id = unidadeAtual.id;
+        }
+      }
+      const { rows } = await base44.entities.LancamentoFinanceiro.aggregate({
+        query, groupBy: 'tipo', sum: 'valor'
+      });
+      const totais = { entradas: 0, saidas: 0, ajustes: 0 };
+      for (const row of rows || []) {
+        if (row.tipo === 'entrada') totais.entradas = row.sum_valor || 0;
+        else if (row.tipo === 'saida') totais.saidas = row.sum_valor || 0;
+        else if (row.tipo === 'ajuste') totais.ajustes = row.sum_valor || 0;
+      }
+      return totais;
+    },
+    staleTime: 60 * 1000,
+    enabled: !!filtroGlobal,
+  });
+
   if (!paginaPermitida(modulosAtivos, 'Financeiro')) {
     return <ModuloBloqueado nomeModulo="Financeiro" />;
   }
@@ -155,9 +192,9 @@ export default function Financeiro() {
     return data >= inicioFiltro && data <= fimFiltro;
   });
 
-  const entradas = lancPeriodo.filter(l => l.tipo === 'entrada').reduce((s, l) => s + (l.valor || 0), 0);
-  const saidas = lancPeriodo.filter(l => l.tipo === 'saida').reduce((s, l) => s + (l.valor || 0), 0);
-  const ajustes = lancPeriodo.filter(l => l.tipo === 'ajuste').reduce((s, l) => s + (l.valor || 0), 0);
+  const entradas = totaisPeriodoCalc.entradas;
+  const saidas = totaisPeriodoCalc.saidas;
+  const ajustes = totaisPeriodoCalc.ajustes;
   const saldoAnterior = saldoAnteriorCalc || 0;
   const saldoAtual = saldoAnterior + entradas - saidas + ajustes;
 

@@ -173,6 +173,35 @@ export default function FluxoCaixaTab({ filtroData }) {
     enabled: !!dataInicio,
   });
 
+  // Totais do período via aggregate no servidor (evita truncagem do filter em 5000 registros)
+  const { data: totaisPeriodo = { entradas: 0, saidas: 0, ajustes: 0 } } = useQuery({
+    queryKey: ['totais-periodo-caixa', dataInicio, dataFim, unidadeAtual?.id],
+    queryFn: async () => {
+      if (!dataInicio) return { entradas: 0, saidas: 0, ajustes: 0 };
+      const query = { estornado: false, data_lancamento: { $gte: dataInicio } };
+      if (dataFim) query.data_lancamento.$lte = dataFim;
+      if (unidadeAtual) {
+        if (unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID) {
+          query.$or = [{ unidade_id: UNIDADE_AUTO_PORTAS_ID }, { unidade_id: null }, { unidade_id: "" }];
+        } else {
+          query.unidade_id = unidadeAtual.id;
+        }
+      }
+      const { rows } = await base44.entities.LancamentoFinanceiro.aggregate({
+        query, groupBy: 'tipo', sum: 'valor'
+      });
+      const totais = { entradas: 0, saidas: 0, ajustes: 0 };
+      for (const row of rows || []) {
+        if (row.tipo === 'entrada') totais.entradas = row.sum_valor || 0;
+        else if (row.tipo === 'saida') totais.saidas = row.sum_valor || 0;
+        else if (row.tipo === 'ajuste') totais.ajustes = row.sum_valor || 0;
+      }
+      return totais;
+    },
+    staleTime: 60 * 1000,
+    enabled: !!dataInicio,
+  });
+
   const filtrados = lancamentos.filter(l => {
     const data = l.data_lancamento || l.created_date || '';
     const dentroPeriodo = filtroData
@@ -191,9 +220,9 @@ export default function FluxoCaixaTab({ filtroData }) {
     return dentroPeriodo && matchForma && matchTipo && matchBusca;
   });
 
-  const entradas = filtrados.filter(l => l.tipo === 'entrada').reduce((s, l) => s + (l.valor || 0), 0);
-  const saidas = filtrados.filter(l => l.tipo === 'saida').reduce((s, l) => s + (l.valor || 0), 0);
-  const ajustes = filtrados.filter(l => l.tipo === 'ajuste').reduce((s, l) => s + (l.valor || 0), 0);
+  const entradas = totaisPeriodo.entradas;
+  const saidas = totaisPeriodo.saidas;
+  const ajustes = totaisPeriodo.ajustes;
   const saldo = entradas - saidas + ajustes;
 
   const saldoAnterior = saldoAnteriorCalc || 0;

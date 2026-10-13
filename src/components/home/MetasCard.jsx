@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useQuery } from '@tanstack/react-query';
@@ -9,18 +9,6 @@ import { Target, ArrowRight } from 'lucide-react';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 
 const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
-
-function calcularFaturamento(lancamentos, de, ate) {
-  return lancamentos
-    .filter(l => {
-      if (l.estornado) return false;
-      const dataRef = l.data_lancamento || l.created_date;
-      if (!dataRef) return false;
-      const data = new Date(dataRef);
-      return data >= de && data <= ate;
-    })
-    .reduce((sum, l) => sum + (l.valor || 0), 0);
-}
 
 function BarraMeta({ label, atual, meta, cor }) {
   const pct = meta > 0 ? Math.min((atual / meta) * 100, 100) : 0;
@@ -82,20 +70,44 @@ export default function MetasCard() {
     enabled: !!unidadeAtual,
   });
 
-  const { data: lancamentosBrutos = [] } = useQuery({
-    queryKey: ['lancamentos_metas_todos'],
-    queryFn: () => base44.entities.LancamentoFinanceiro.filter({ tipo: 'entrada' }, '-data_lancamento', 5000),
+  // Faturamento via aggregate no servidor (evita truncagem do filter em 5000 registros)
+  const { data: faturamento = { dia: 0, semana: 0, mes: 0 } } = useQuery({
+    queryKey: ['faturamento-metas', unidadeAtual?.id],
+    queryFn: async () => {
+      const agora = new Date();
+      const inicioDia = startOfDay(agora).toISOString();
+      const fimDia = endOfDay(agora).toISOString();
+      const inicioSemanaRaw = startOfWeek(agora, { weekStartsOn: 1 });
+      const inicioMes = startOfMonth(agora);
+      // Limita a semana aos dias dentro do mês corrente
+      const inicioSemana = inicioSemanaRaw < inicioMes ? inicioMes : inicioSemanaRaw;
+      const fimSemana = endOfWeek(agora, { weekStartsOn: 1 }).toISOString();
+      const fimMes = endOfMonth(agora).toISOString();
+
+      const buildQuery = (inicio, fim) => {
+        const query = { tipo: 'entrada', estornado: false, data_lancamento: { $gte: inicio, $lte: fim } };
+        if (unidadeAtual) {
+          if (unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID) {
+            query.$or = [{ unidade_id: UNIDADE_AUTO_PORTAS_ID }, { unidade_id: null }, { unidade_id: "" }];
+          } else {
+            query.unidade_id = unidadeAtual.id;
+          }
+        }
+        return query;
+      };
+
+      const [rDia, rSemana, rMes] = await Promise.all([
+        base44.entities.LancamentoFinanceiro.aggregate({ query: buildQuery(inicioDia, fimDia), groupBy: 'tipo', sum: 'valor' }),
+        base44.entities.LancamentoFinanceiro.aggregate({ query: buildQuery(inicioSemana.toISOString(), fimSemana), groupBy: 'tipo', sum: 'valor' }),
+        base44.entities.LancamentoFinanceiro.aggregate({ query: buildQuery(inicioMes.toISOString(), fimMes), groupBy: 'tipo', sum: 'valor' }),
+      ]);
+
+      const extract = (r) => (r.rows?.[0]?.sum_valor) || 0;
+      return { dia: extract(rDia), semana: extract(rSemana), mes: extract(rMes) };
+    },
     staleTime: 2 * 60 * 1000,
     enabled: !!unidadeAtual,
   });
-
-  const lancamentos = useMemo(() => {
-    if (!unidadeAtual) return lancamentosBrutos;
-    return lancamentosBrutos.filter(l => {
-      if (l.unidade_id) return l.unidade_id === unidadeAtual.id;
-      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
-    });
-  }, [lancamentosBrutos, unidadeAtual]);
 
   const metasAtivas = metas.filter(m => m.ativa !== false);
 
@@ -103,15 +115,9 @@ export default function MetasCard() {
   const metasComValor = metasAtivas.filter(m => m.meta_dia > 0 || m.meta_semana > 0 || m.meta_mes > 0);
   if (metasComValor.length === 0) return null;
 
-  const agora = new Date();
-  const faturadoDia = calcularFaturamento(lancamentos, startOfDay(agora), endOfDay(agora));
-  const inicioSemana = startOfWeek(agora, { weekStartsOn: 1 });
-  const fimSemana = endOfWeek(agora, { weekStartsOn: 1 });
-  const inicioMes = startOfMonth(agora);
-  // Limita a semana aos dias dentro do mês corrente
-  const inicioSemanaNoMes = inicioSemana < inicioMes ? inicioMes : inicioSemana;
-  const faturadoSemana = calcularFaturamento(lancamentos, inicioSemanaNoMes, fimSemana);
-  const faturadoMes = calcularFaturamento(lancamentos, startOfMonth(agora), endOfMonth(agora));
+  const faturadoDia = faturamento.dia;
+  const faturadoSemana = faturamento.semana;
+  const faturadoMes = faturamento.mes;
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-6 pb-2">
