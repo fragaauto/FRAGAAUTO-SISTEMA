@@ -111,9 +111,13 @@ export default function NovoAtendimento() {
     staleTime: 10 * 60 * 1000
   });
 
+  // Clientes: carrega apenas campos mínimos para autocompletar (nome, telefone, cpf, endereco)
   const { data: clientesBrutos = [] } = useQuery({
     queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list('-created_date', 100000),
+    queryFn: async () => {
+      const page = await base44.entities.Cliente.filter({}, { sort: '-created_date', limit: 2000, fields: ['nome', 'telefone', 'cpf_cnpj', 'endereco'] });
+      return page.items;
+    },
     staleTime: 5 * 60 * 1000
   });
 

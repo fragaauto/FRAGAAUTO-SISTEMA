@@ -78,7 +78,6 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
     staleTime: 5 * 60 * 1000,
   });
   const tecnicos = funcionariosTec
-    .filter(f => f.status === 'ativo')
     .map(f => ({ id: f.id, full_name: f.nome_completo, email: null }));
 
   // Buscar produtos para identificar itens de peça externa — apenas id e flag peca_externa
