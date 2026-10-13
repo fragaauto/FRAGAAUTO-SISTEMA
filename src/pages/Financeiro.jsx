@@ -67,7 +67,7 @@ export default function Financeiro() {
 
   const { data: lancamentosBrutos = [] } = useQuery({
     queryKey: ['lancamentos'],
-    queryFn: () => base44.entities.LancamentoFinanceiro.list('-data_lancamento', 1000),
+    queryFn: () => base44.entities.LancamentoFinanceiro.list('-data_lancamento', 300),
     staleTime: 2 * 60 * 1000,
   });
   const lancamentos = filtrarPorUnidade(lancamentosBrutos, unidadeAtual);
@@ -161,6 +161,34 @@ export default function Financeiro() {
     enabled: !!filtroGlobal,
   });
 
+  // Contagem de entradas com atendimento no período (para ticket médio) via servidor
+  const { data: countAtendimentosPeriodo = 0 } = useQuery({
+    queryKey: ['count-atendimentos-periodo', filtroGlobal, unidadeAtual?.id],
+    queryFn: async () => {
+      const hojeCalc = new Date();
+      function calcIntervalo(filtro) {
+        if (filtro === 'hoje') return { inicio: startOfDay(hojeCalc), fim: endOfDay(hojeCalc) };
+        if (filtro === 'ontem') return { inicio: startOfDay(subDays(hojeCalc, 1)), fim: endOfDay(subDays(hojeCalc, 1)) };
+        if (filtro === 'semana') return { inicio: startOfDay(subDays(hojeCalc, hojeCalc.getDay() === 0 ? 6 : hojeCalc.getDay() - 1)), fim: endOfDay(hojeCalc) };
+        if (filtro === 'mes_passado') { const mp = subMonths(hojeCalc, 1); return { inicio: startOfMonth(mp), fim: endOfMonth(mp) }; }
+        return { inicio: startOfMonth(hojeCalc), fim: endOfMonth(hojeCalc) };
+      }
+      const { inicio, fim } = filtroGlobal ? calcIntervalo(filtroGlobal) : { inicio: null, fim: null };
+      if (!inicio) return 0;
+      const query = { estornado: false, tipo: 'entrada', atendimento_id: { $exists: true }, data_lancamento: { $gte: inicio.toISOString(), $lte: fim.toISOString() } };
+      if (unidadeAtual) {
+        if (unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID) {
+          query.$or = [{ unidade_id: UNIDADE_AUTO_PORTAS_ID }, { unidade_id: null }, { unidade_id: "" }];
+        } else {
+          query.unidade_id = unidadeAtual.id;
+        }
+      }
+      return await base44.entities.LancamentoFinanceiro.count(query);
+    },
+    staleTime: 60 * 1000,
+    enabled: !!filtroGlobal,
+  });
+
   if (!paginaPermitida(modulosAtivos, 'Financeiro')) {
     return <ModuloBloqueado nomeModulo="Financeiro" />;
   }
@@ -202,8 +230,8 @@ export default function Financeiro() {
   const pagarPendente = contasPagar.filter(c => c.status === 'pendente').reduce((s, c) => s + (c.valor || 0), 0);
   const contasVencidas = contasPagar.filter(c => c.status === 'pendente' && new Date(c.data_vencimento) < hoje).length;
 
-  const ticketMedio = lancPeriodo.filter(l => l.tipo === 'entrada' && l.atendimento_id).length > 0
-    ? entradas / lancPeriodo.filter(l => l.tipo === 'entrada' && l.atendimento_id).length
+  const ticketMedio = countAtendimentosPeriodo > 0
+    ? entradas / countAtendimentosPeriodo
     : 0;
 
   return (

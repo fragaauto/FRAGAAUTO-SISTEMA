@@ -42,9 +42,9 @@ export default function ClientesTab() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      // Gera código sequencial automático
-      const todos = await base44.entities.Cliente.list();
-      const maxCodigo = todos.reduce((max, c) => Math.max(max, c.codigo || 0), 0);
+      // Gera código sequencial automático (busca apenas o maior código existente)
+      const { items } = await base44.entities.Cliente.filter({}, { sort: '-codigo', limit: 1, fields: ['codigo'] });
+      const maxCodigo = (items[0]?.codigo) || 0;
       return base44.entities.Cliente.create({ ...data, codigo: maxCodigo + 1, unidade_id: unidadeAtual?.id || null });
     },
     onSuccess: () => { queryClient.invalidateQueries(['clientes']); toast.success('Cliente cadastrado!'); closeModal(); }

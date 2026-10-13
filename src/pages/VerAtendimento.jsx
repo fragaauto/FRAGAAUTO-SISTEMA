@@ -146,6 +146,13 @@ export default function VerAtendimento() {
     base44.auth.me().then(setUser).catch(() => setUser(null));
   }, []);
 
+  // Redirecionar se não houver id (evita navigate durante render → tela em branco)
+  React.useEffect(() => {
+    if (!id) {
+      navigate(createPageUrl('Atendimentos'));
+    }
+  }, [id, navigate]);
+
 
 
   const { data: atendimento, isLoading, error } = useQuery({
@@ -171,16 +178,19 @@ export default function VerAtendimento() {
     staleTime: 10 * 60 * 1000
   });
 
+  // Produtos e checklistItems só carregam quando necessários (edição ou assistente IA)
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list(),
-    staleTime: 10 * 60 * 1000
+    staleTime: 10 * 60 * 1000,
+    enabled: modoEdicaoQueixa || modoEdicaoOrcamento || showAssistenteIA
   });
 
   const { data: checklistItems = [] } = useQuery({
     queryKey: ['checklistItems'],
     queryFn: () => base44.entities.ChecklistItem.list(),
-    staleTime: 10 * 60 * 1000
+    staleTime: 10 * 60 * 1000,
+    enabled: showAssistenteIA
   });
 
   const { data: funcoes = [] } = useQuery({
@@ -538,8 +548,11 @@ export default function VerAtendimento() {
 
 
   if (!id) {
-    navigate(createPageUrl('Atendimentos'));
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-orange-50/30">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    );
   }
 
   if (isLoading) {

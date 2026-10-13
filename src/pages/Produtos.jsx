@@ -125,7 +125,18 @@ export default function Produtos() {
 
   const { data: produtosBrutos = [], isLoading } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('', 3000),
+    queryFn: async () => {
+      const { items } = await base44.entities.Produto.filter({}, { 
+        sort: 'nome', 
+        limit: 2000,
+        fields: ['codigo', 'nome', 'categoria', 'unidade', 'valor', 'usar_faixa_preco', 
+                 'valor_minimo', 'valor_maximo', 'custo', 'descricao', 'vantagens', 'desvantagens',
+                 'peca_externa', 'aplicacao_universal', 'modelos_compativeis', 'ativo', 
+                 'controla_estoque', 'estoque_atual', 'estoque_minimo', 'estoque_desejado',
+                 'localizacao_estoque', 'fornecedores', 'fotos', 'composicao', 'variacoes', 'unidade_id']
+      });
+      return items;
+    },
     staleTime: 5 * 60 * 1000
   });
 

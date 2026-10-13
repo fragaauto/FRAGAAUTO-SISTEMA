@@ -256,9 +256,16 @@ export default function EditarQueixa() {
     }
   };
 
+  useEffect(() => {
+    if (!id) navigate(createPageUrl('Atendimentos'));
+  }, [id, navigate]);
+
   if (!id) {
-    navigate(createPageUrl('Atendimentos'));
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    );
   }
 
   if (checkingAuth || isLoading || !atendimento) {
