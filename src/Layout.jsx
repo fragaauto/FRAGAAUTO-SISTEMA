@@ -70,10 +70,11 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.me()
       .then(async (authUser) => {
         if (!mounted) return;
-        // Busca o registro completo para garantir campos customizados (funcao_id, modulos_liberados, aprovado)
+        // Busca apenas campos customizados necessários (não carrega todo o registro)
         try {
-          const full = await base44.entities.User.filter({ id: authUser.id });
-          const merged = (full && full.length) ? { ...authUser, ...full[0] } : authUser;
+          const page = await base44.entities.User.filter({ id: authUser.id }, { fields: ['funcao_id', 'modulos_liberados', 'aprovado'] });
+          const full = page.items || [];
+          const merged = (full.length) ? { ...authUser, ...full[0] } : authUser;
           if (mounted) setUser(merged);
         } catch {
           if (mounted) setUser(authUser);

@@ -22,14 +22,20 @@ export default function MenuAtendimento({ currentPath }) {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   const { data: funcoes = [] } = useQuery({
     queryKey: ['funcoes'],
-    queryFn: () => base44.entities.FuncaoFuncionario.list(),
+    queryFn: async () => {
+      const page = await base44.entities.FuncaoFuncionario.filter({}, { fields: ['id', 'nome', 'abas_atendimento'] });
+      return page.items;
+    },
     enabled: !!user && user?.role !== 'admin',
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // Admin vê todas as abas

@@ -181,7 +181,10 @@ export default function VerAtendimento() {
   // Produtos e checklistItems só carregam quando necessários (edição ou assistente IA)
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryFn: async () => {
+      const page = await base44.entities.Produto.filter({ ativo: true }, { limit: 2000, fields: ['codigo', 'nome', 'categoria', 'valor', 'usar_faixa_preco', 'valor_minimo', 'valor_maximo', 'variacoes', 'peca_externa', 'composicao', 'fornecedores', 'controla_estoque', 'estoque_atual'] });
+      return page.items;
+    },
     staleTime: 10 * 60 * 1000,
     enabled: modoEdicaoQueixa || modoEdicaoOrcamento || showAssistenteIA
   });

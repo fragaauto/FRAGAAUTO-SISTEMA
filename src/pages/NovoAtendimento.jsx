@@ -141,13 +141,13 @@ export default function NovoAtendimento() {
     staleTime: 60 * 1000
   });
 
-  // Lista leve de atendimentos para o card de retorno de serviço (campos mínimos, 500 recentes)
+  // Lista leve de atendimentos para o card de retorno de serviço (campos mínimos, sem itens)
   const { data: atendimentosRetorno = [] } = useQuery({
     queryKey: ['atendimentos-retorno'],
     queryFn: async () => {
       const page = await base44.entities.Atendimento.filter(
         { retorno_servico: { $ne: true } },
-        { sort: '-numero_os', limit: 500, fields: ['numero_os', 'placa', 'cliente_nome', 'itens_queixa', 'itens_orcamento'] }
+        { sort: '-numero_os', limit: 200, fields: ['numero_os', 'placa', 'cliente_nome', 'modelo', 'marca'] }
       );
       return page.items;
     },
@@ -318,8 +318,16 @@ export default function NovoAtendimento() {
   };
 
   const origemAtendimento = formData.atendimento_origem_id
-    ? atendimentosRetorno.find(a => a.id === formData.atendimento_origem_id) || null
+    ? atendimentosRetorno.find(a => a.id === formData.atendimento_origem_id) || origemCompleto || null
     : null;
+
+  // Busca a OS de origem completa (com itens) apenas quando um retorno é vinculado
+  const { data: origemCompleto = null } = useQuery({
+    queryKey: ['atendimento-origem', formData.atendimento_origem_id],
+    queryFn: () => base44.entities.Atendimento.get(formData.atendimento_origem_id),
+    enabled: !!formData.atendimento_origem_id,
+    staleTime: 2 * 60 * 1000,
+  });
 
   const handleToggleServicoGarantia = (it, checked) => {
     setFormData(prev => {

@@ -80,11 +80,11 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const tecnicos = funcionariosTec
     .map(f => ({ id: f.id, full_name: f.nome_completo, email: null }));
 
-  // Buscar produtos para identificar itens de peça externa — apenas id e flag peca_externa
+  // Buscar apenas produtos marcados como peça externa (conjunto muito menor que todos os produtos)
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos-peca-externa'],
     queryFn: async () => {
-      const page = await base44.entities.Produto.filter({}, { limit: 3000, fields: ['id', 'peca_externa'] });
+      const page = await base44.entities.Produto.filter({ peca_externa: true }, { limit: 500, fields: ['id', 'peca_externa'] });
       return page.items;
     },
     staleTime: 5 * 60 * 1000,

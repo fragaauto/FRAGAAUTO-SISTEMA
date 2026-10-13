@@ -133,51 +133,40 @@ export default function Atendimentos() {
   const [servicoLiberado, setServicoLiberado] = useState({});
   const POR_PAGINA = 20;
 
-  // Campos mínimos para a lista — exclui assinaturas base64, checklist, fotos, histórico, textos longos
+  // Campos mínimos para a lista — exclui assinaturas base64, checklist, fotos, histórico, textos longos, itens
   const ATENDIMENTO_LIST_FIELDS = [
     'numero_os', 'venda_direta', 'cliente_nome', 'cliente_telefone',
     'placa', 'modelo', 'marca', 'ano', 'data_entrada', 'created_date',
     'status', 'status_pagamento', 'valor_final', 'valor_final_pago',
-    'data_pagamento', 'unidade_id', 'tecnicos_responsaveis', 'tecnico',
-    'itens_queixa', 'itens_orcamento'
+    'data_pagamento', 'unidade_id', 'tecnicos_responsaveis', 'tecnico'
   ];
 
   // Busca server-side por data para suportar anos de histórico
   const { data: atendimentosBrutos = [], isLoading } = useQuery({
     queryKey: ['atendimentos', dataInicio, dataFim],
     queryFn: async () => {
-      const opts = { sort: '-data_entrada', limit: 500, fields: ATENDIMENTO_LIST_FIELDS };
+      const opts = { sort: '-data_entrada', limit: 150, fields: ATENDIMENTO_LIST_FIELDS };
       if (dataInicio || dataFim) {
         const dateFilter = {};
         if (dataInicio) dateFilter.$gte = dataInicio + 'T00:00:00.000Z';
         if (dataFim) dateFilter.$lte = dataFim + 'T23:59:59.000Z';
-        const [porDataEntrada, porCreatedDate] = await Promise.all([
-          base44.entities.Atendimento.filter({ data_entrada: dateFilter }, { ...opts, sort: '-data_entrada' }),
-          base44.entities.Atendimento.filter({ created_date: dateFilter }, { ...opts, sort: '-created_date', limit: 200 }),
-        ]);
-        const ids = new Set(porDataEntrada.items.map(a => a.id));
-        return [...porDataEntrada.items, ...porCreatedDate.items.filter(a => !ids.has(a.id))];
+        const page = await base44.entities.Atendimento.filter({ data_entrada: dateFilter }, opts);
+        return page.items;
       }
       const noventa = new Date();
       noventa.setDate(noventa.getDate() - 90);
-      const [porDataEntrada, porCreatedDate] = await Promise.all([
-        base44.entities.Atendimento.filter(
-          { data_entrada: { $gte: noventa.toISOString() } },
-          { ...opts, sort: '-data_entrada' }
-        ),
-        base44.entities.Atendimento.filter(
-          { created_date: { $gte: noventa.toISOString() } },
-          { ...opts, sort: '-created_date', limit: 200 }
-        ),
-      ]);
-      const ids = new Set(porDataEntrada.items.map(a => a.id));
-      return [...porDataEntrada.items, ...porCreatedDate.items.filter(a => !ids.has(a.id))];
+      const page = await base44.entities.Atendimento.filter(
+        { data_entrada: { $gte: noventa.toISOString() } },
+        opts
+      );
+      return page.items;
     },
     staleTime: 2 * 60 * 1000
   });
 
   const [resultadosBuscaServer, setResultadosBuscaServer] = useState([]);
   const [buscandoServer, setBuscandoServer] = useState(false);
+  const [resultadosBuscaServerProduto, setResultadosBuscaServerProduto] = useState([]);
 
   // Constrói padrão regex insensível a acentos (ex: "tulio" → "t[uúùûü]l[iíìîï]o")
   const buildAccentPattern = (termo) => {
@@ -232,18 +221,56 @@ export default function Atendimentos() {
     return () => clearTimeout(timeout);
   }, [search]);
 
+  // Busca server-side por produto/serviço nos itens dos atendimentos
+  useEffect(() => {
+    if (!produtoFilter || produtoFilter.trim().length < 2) {
+      setResultadosBuscaServerProduto([]);
+      return;
+    }
+    const termo = produtoFilter.trim();
+    const padrao = buildAccentPattern(termo);
+    const timeout = setTimeout(async () => {
+      setBuscandoServer(true);
+      try {
+        const searchOpts = { sort: '-created_date', limit: 50, fields: ATENDIMENTO_LIST_FIELDS };
+        const resultados = await Promise.all([
+          base44.entities.Atendimento.filter({ 'itens_orcamento.nome': { $regex: padrao, $options: 'i' } }, searchOpts),
+          base44.entities.Atendimento.filter({ 'itens_queixa.nome': { $regex: padrao, $options: 'i' } }, searchOpts),
+        ]);
+        const merged = [];
+        const seen = new Set();
+        for (const page of resultados) {
+          const items = page.items || page;
+          for (const a of items) {
+            if (!seen.has(a.id)) { seen.add(a.id); merged.push(a); }
+          }
+        }
+        setResultadosBuscaServerProduto(merged);
+      } catch {
+        setResultadosBuscaServerProduto([]);
+      }
+      setBuscandoServer(false);
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [produtoFilter]);
+
   const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
 
   const atendimentos = useMemo(() => {
-    const base = search.trim().length >= 2
-      ? resultadosBuscaServer
-      : [...atendimentosBrutos];
+    let base;
+    if (search.trim().length >= 2) {
+      base = resultadosBuscaServer;
+    } else if (produtoFilter && produtoFilter.trim().length >= 2) {
+      base = resultadosBuscaServerProduto;
+    } else {
+      base = [...atendimentosBrutos];
+    }
     if (!unidadeAtual) return base;
     return base.filter((a) => {
       if (a.unidade_id) return a.unidade_id === unidadeAtual.id;
       return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
     });
-  }, [atendimentosBrutos, resultadosBuscaServer, unidadeAtual, search]);
+  }, [atendimentosBrutos, resultadosBuscaServer, resultadosBuscaServerProduto, unidadeAtual, search, produtoFilter]);
 
   const { data: configs = [] } = useQuery({
     queryKey: ['configuracoes'],
@@ -287,12 +314,9 @@ export default function Atendimentos() {
     const matchDataFim = !dataFim || dataAtendimento <= new Date(dataFim + 'T23:59:59');
 
     let matchProduto = true;
-    if (produtoFilter) {
-      const todosItens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
-      matchProduto = todosItens.some((item) =>
-      item.produto_id === produtoFilter ||
-      item.nome?.toLowerCase().includes(produtoFilter.toLowerCase())
-      );
+    // produtoFilter agora é resolvido via busca server-side (resultadosBuscaServerProduto)
+    if (produtoFilter && produtoFilter.trim().length >= 2) {
+      matchProduto = resultadosBuscaServerProduto.some(p => p.id === a.id);
     }
 
     const matchVendaDireta = !vendaDiretaFilter || a.venda_direta === true;
@@ -424,10 +448,7 @@ export default function Atendimentos() {
   const semTecnico = (a) => {
     if (a.status !== 'concluido') return false;
     if (a.tecnicos_responsaveis?.length || a.tecnico) return false;
-    // Considera técnicos atribuídos nos itens (queixa + orçamento)
-    const itens = [...(a.itens_queixa || []), ...(a.itens_orcamento || [])];
-    const temTecnicosEmItens = itens.some(i => i.tecnicos?.length);
-    return !temTecnicosEmItens;
+    return true;
   };
 
   return (
