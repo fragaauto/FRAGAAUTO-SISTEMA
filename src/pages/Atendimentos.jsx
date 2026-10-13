@@ -133,37 +133,45 @@ export default function Atendimentos() {
   const [servicoLiberado, setServicoLiberado] = useState({});
   const POR_PAGINA = 20;
 
+  // Campos mínimos para a lista — exclui assinaturas base64, checklist, fotos, histórico, textos longos
+  const ATENDIMENTO_LIST_FIELDS = [
+    'numero_os', 'venda_direta', 'cliente_nome', 'cliente_telefone',
+    'placa', 'modelo', 'marca', 'ano', 'data_entrada', 'created_date',
+    'status', 'status_pagamento', 'valor_final', 'valor_final_pago',
+    'data_pagamento', 'unidade_id', 'tecnicos_responsaveis', 'tecnico',
+    'itens_queixa', 'itens_orcamento'
+  ];
+
   // Busca server-side por data para suportar anos de histórico
   const { data: atendimentosBrutos = [], isLoading } = useQuery({
     queryKey: ['atendimentos', dataInicio, dataFim],
     queryFn: async () => {
+      const opts = { sort: '-data_entrada', limit: 500, fields: ATENDIMENTO_LIST_FIELDS };
       if (dataInicio || dataFim) {
         const dateFilter = {};
         if (dataInicio) dateFilter.$gte = dataInicio + 'T00:00:00.000Z';
         if (dataFim) dateFilter.$lte = dataFim + 'T23:59:59.000Z';
         const [porDataEntrada, porCreatedDate] = await Promise.all([
-          base44.entities.Atendimento.filter({ data_entrada: dateFilter }, '-data_entrada', 2000),
-          base44.entities.Atendimento.filter({ created_date: dateFilter }, '-created_date', 500),
+          base44.entities.Atendimento.filter({ data_entrada: dateFilter }, { ...opts, sort: '-data_entrada' }),
+          base44.entities.Atendimento.filter({ created_date: dateFilter }, { ...opts, sort: '-created_date', limit: 200 }),
         ]);
-        const ids = new Set(porDataEntrada.map(a => a.id));
-        return [...porDataEntrada, ...porCreatedDate.filter(a => !ids.has(a.id))];
+        const ids = new Set(porDataEntrada.items.map(a => a.id));
+        return [...porDataEntrada.items, ...porCreatedDate.items.filter(a => !ids.has(a.id))];
       }
       const noventa = new Date();
       noventa.setDate(noventa.getDate() - 90);
       const [porDataEntrada, porCreatedDate] = await Promise.all([
         base44.entities.Atendimento.filter(
           { data_entrada: { $gte: noventa.toISOString() } },
-          '-data_entrada',
-          2000
+          { ...opts, sort: '-data_entrada' }
         ),
         base44.entities.Atendimento.filter(
           { created_date: { $gte: noventa.toISOString() } },
-          '-created_date',
-          500
+          { ...opts, sort: '-created_date', limit: 200 }
         ),
       ]);
-      const ids = new Set(porDataEntrada.map(a => a.id));
-      return [...porDataEntrada, ...porCreatedDate.filter(a => !ids.has(a.id))];
+      const ids = new Set(porDataEntrada.items.map(a => a.id));
+      return [...porDataEntrada.items, ...porCreatedDate.items.filter(a => !ids.has(a.id))];
     },
     staleTime: 2 * 60 * 1000
   });
