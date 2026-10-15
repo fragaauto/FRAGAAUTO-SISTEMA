@@ -461,7 +461,7 @@ export default function NovoAtendimento() {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     console.log('💾 [SALVAR] Iniciando salvamento...');
     
     // Validar campos obrigatórios apenas se NÃO for venda direta
@@ -490,9 +490,16 @@ export default function NovoAtendimento() {
       ...data
     }));
 
-    // Gerar número sequencial da OS
-    const maxOs = ultimoAtendimento?.numero_os || 0;
-    const novoNumeroOs = maxOs + 1;
+    // Gerar número sequencial da OS — busca o maior número no momento do salvamento (não usa cache)
+    let novoNumeroOs = 1;
+    try {
+      const page = await base44.entities.Atendimento.filter({}, { sort: '-numero_os', limit: 1, fields: ['numero_os'] });
+      const maxOs = page.items[0]?.numero_os || 0;
+      novoNumeroOs = maxOs + 1;
+    } catch (e) {
+      console.error('Erro ao buscar maior OS, usando fallback:', e);
+    }
+    queryClient.invalidateQueries(['atendimento-ultimo-os']);
 
     const dataToSave = {
       unidade_id: unidadeAtual?.id || null,
