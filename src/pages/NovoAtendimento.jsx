@@ -46,6 +46,7 @@ import SeletorProdutos from '../components/orcamento/SeletorProdutos';
 import ModalCadastroProduto from '../components/produtos/ModalCadastroProduto';
 import BuscarClienteModal from '../components/atendimento/BuscarClienteModal';
 import ModalCadastrarCliente from '../components/atendimento/ModalCadastrarCliente';
+import { filtrarClientes } from '@/lib/clienteSearch';
 import ChecklistAssistente from '../components/checklist/ChecklistAssistente';
 import RetornoServicoCard from '../components/atendimento/RetornoServicoCard';
 import SeletorVariacao from '../components/produtos/SeletorVariacao';
@@ -111,12 +112,21 @@ export default function NovoAtendimento() {
     staleTime: 10 * 60 * 1000
   });
 
-  // Clientes: carrega apenas campos mínimos para autocompletar (nome, telefone, cpf, endereco)
+  // Clientes: carrega TODOS os registros (campos mínimos) para autocompletar —
+  // a busca no servidor por $regex é inviável sem índice, então paginamos e filtramos no app.
   const { data: clientesBrutos = [] } = useQuery({
-    queryKey: ['clientes'],
+    queryKey: ['clientes-todos'],
     queryFn: async () => {
-      const page = await base44.entities.Cliente.filter({}, { sort: '-created_date', limit: 2000, fields: ['nome', 'telefone', 'cpf_cnpj', 'endereco'] });
-      return page.items;
+      const all = [];
+      let cursor = null;
+      do {
+        const page = await base44.entities.Cliente.filter({}, {
+          sort: '-created_date', limit: 5000, fields: ['nome', 'telefone', 'cpf_cnpj', 'endereco'], cursor,
+        });
+        all.push(...page.items);
+        cursor = page.has_more ? page.next_cursor : null;
+      } while (cursor);
+      return all;
     },
     staleTime: 5 * 60 * 1000
   });
@@ -285,15 +295,8 @@ export default function NovoAtendimento() {
 
   // Sugestões calculadas sempre a partir do estado atual de busca e clientes
   const sugestoesCalculadas = useMemo(() => {
-    const q = buscaNome.trim().toLowerCase();
-    if (q.length < 2 || clienteSelecionado) return [];
-    return clientes.filter(c => {
-      const nome = (c.nome || '').toLowerCase();
-      const tel = (c.telefone || '').replace(/\D/g, '');
-      const cpf = (c.cpf_cnpj || '').replace(/\D/g, '');
-      const qDigits = q.replace(/\D/g, '');
-      return nome.includes(q) || (qDigits.length >= 2 && (tel.includes(qDigits) || cpf.includes(qDigits)));
-    }).slice(0, 8);
+    if (buscaNome.trim().length < 2 || clienteSelecionado) return [];
+    return filtrarClientes(clientes, buscaNome, { limite: 8 });
   }, [buscaNome, clientes, clienteSelecionado]);
 
   const handleNomeClienteChange = (value) => {

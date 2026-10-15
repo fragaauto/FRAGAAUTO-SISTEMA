@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { filtrarClientes } from '@/lib/clienteSearch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +11,7 @@ export default function BuscarClienteModal({ clientes, onSelect, onCreate, onClo
   const [busca, setBusca] = useState('');
   const [novoCliente, setNovoCliente] = useState({ nome: '', telefone: '', cpf_cnpj: '', email: '' });
 
-  const clientesFiltrados = clientes.filter(c => {
-    const q = busca.toLowerCase();
-    return c.nome?.toLowerCase().includes(q) || c.telefone?.includes(q) || c.cpf_cnpj?.replace(/\D/g, '').includes(busca.replace(/\D/g, ''));
-  });
+  const clientesFiltrados = useMemo(() => filtrarClientes(clientes, busca, { limite: 50 }), [clientes, busca]);
 
   const handleCriar = () => {
     if (!novoCliente.nome || !novoCliente.telefone) return;
