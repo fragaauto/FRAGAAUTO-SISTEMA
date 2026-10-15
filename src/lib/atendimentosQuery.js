@@ -22,15 +22,16 @@ export function buildAtendimentosQuery({ unidadeId, search = '', produtoFilter =
   if (statusFilter !== 'all') conditions.push({ status: statusFilter });
   const term = search.trim();
   if (term) {
-    const os = term.match(/^(?:(?:n[º°o]?\s*)?o\.?s\.?\s*)?[#:\s]*(\d+)$/i);
-    const plate = term.replace(/[\s-]/g, '').toUpperCase();
-    if (os) conditions.push({ numero_os: Number(os[1]) });
-    else if (/^[A-Z]{3}\d[A-Z0-9]{0,3}$/.test(plate)) {
-      conditions.push({ placa: { $regex: `^${plate.slice(0, 3)}[\\s-]*${plate.slice(3)}${plate.length === 7 ? '$' : ''}`, $options: 'i' } });
-    } else {
-      const pattern = { $regex: accentPattern(term), $options: 'i' };
-      conditions.push({ $or: [{ cliente_nome: pattern }, { modelo: pattern }, { placa: { $regex: escapeRegex(term), $options: 'i' } }] });
-    }
+    const digits = term.replace(/\D/g, '');
+    const textPattern = { $regex: accentPattern(term), $options: 'i' };
+    const platePattern = { $regex: escapeRegex(term.replace(/[\s-]/g, '')), $options: 'i' };
+    const orConditions = [
+      { cliente_nome: textPattern },
+      { modelo: textPattern },
+      { placa: platePattern },
+    ];
+    if (digits && /^\d+$/.test(digits)) orConditions.push({ numero_os: Number(digits) });
+    conditions.push({ $or: orConditions });
   }
   if (produtoFilter.trim().length >= 2) {
     const pattern = { $regex: accentPattern(produtoFilter.trim()), $options: 'i' };
