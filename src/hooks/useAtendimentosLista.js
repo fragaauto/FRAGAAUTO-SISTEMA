@@ -7,6 +7,7 @@ export default function useAtendimentosLista({ search, produtoFilter, unidadeLoa
   const [terms, setTerms] = useState({ search: '', produtoFilter: '' });
   const [dataRecente] = useState(() => {
     const date = new Date();
+    date.setHours(0, 0, 0, 0);
     date.setDate(date.getDate() - 90);
     return date.toISOString();
   });
@@ -43,5 +44,5 @@ export default function useAtendimentosLista({ search, produtoFilter, unidadeLoa
   };
   return { atendimentos: result.data?.items || [], totalRegistros: count.data, pagina: current.index + 1,
     temProxima: !!result.data?.has_more, mudarPagina, refetch: result.refetch, error: result.error,
-    isLoading: unidadeLoading || debouncing || result.isPending };
+    isLoading: unidadeLoading || debouncing || result.isPending || (result.isFetching && !result.data) };
 }

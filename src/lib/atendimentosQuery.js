@@ -1,3 +1,5 @@
+import { accentPattern, buildAtendimentoSearchQuery } from '@/lib/atendimentoSearchQuery';
+
 export const ATENDIMENTOS_POR_PAGINA = 20;
 export const ATENDIMENTOS_LIST_FIELDS = [
   'numero_os', 'venda_direta', 'cliente_nome', 'cliente_telefone',
@@ -6,12 +8,7 @@ export const ATENDIMENTOS_LIST_FIELDS = [
   'data_pagamento', 'unidade_id', 'tecnicos_responsaveis', 'tecnico',
 ];
 const UNIDADE_LEGADA = '69ea76b72f920804f5d68eab';
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const accentPattern = (value) => {
-  const accents = { a: 'aáàâãä', e: 'eéèêë', i: 'iíìîï', o: 'oóòôõö', u: 'uúùûü', c: 'cç', n: 'nñ' };
-  return Array.from(value.normalize('NFD').replace(/[\u0300-\u036f]/g, ''))
-    .map((char) => accents[char.toLowerCase()] ? `[${accents[char.toLowerCase()]}]` : escapeRegex(char)).join('');
-};
+
 
 export function buildAtendimentosQuery({ unidadeId, search = '', produtoFilter = '', statusFilter = 'all', dataInicio = '', dataFim = '', vendaDiretaFilter = false, dataRecente }) {
   const conditions = [];
@@ -21,18 +18,7 @@ export function buildAtendimentosQuery({ unidadeId, search = '', produtoFilter =
   if (vendaDiretaFilter) conditions.push({ venda_direta: true });
   if (statusFilter !== 'all') conditions.push({ status: statusFilter });
   const term = search.trim();
-  if (term) {
-    const digits = term.replace(/\D/g, '');
-    const textPattern = { $regex: accentPattern(term), $options: 'i' };
-    const platePattern = { $regex: escapeRegex(term.replace(/[\s-]/g, '')), $options: 'i' };
-    const orConditions = [
-      { cliente_nome: textPattern },
-      { modelo: textPattern },
-      { placa: platePattern },
-    ];
-    if (digits && /^\d+$/.test(digits)) orConditions.push({ numero_os: Number(digits) });
-    conditions.push({ $or: orConditions });
-  }
+  if (term) conditions.push(buildAtendimentoSearchQuery(term));
   if (produtoFilter.trim().length >= 2) {
     const pattern = { $regex: accentPattern(produtoFilter.trim()), $options: 'i' };
     conditions.push({ $or: [{ 'itens_queixa.nome': pattern }, { 'itens_orcamento.nome': pattern }] });
@@ -46,5 +32,9 @@ export function buildAtendimentosQuery({ unidadeId, search = '', produtoFilter =
   }
   if (!dataInicio && !dataFim && !term && produtoFilter.trim().length < 2) range.$gte = dataRecente;
   if (Object.keys(range).length) conditions.push({ data_entrada: range });
-  return conditions.length ? { $and: conditions } : {};
+  const query = Object.assign({}, ...conditions.filter((condition) => !condition.$or));
+  const alternatives = conditions.filter((condition) => condition.$or);
+  if (alternatives.length === 1) Object.assign(query, alternatives[0]);
+  if (alternatives.length > 1) query.$and = alternatives;
+  return query;
 }

@@ -331,7 +331,9 @@ export default function Atendimentos() {
                 placeholder="Buscar por placa, modelo, cliente ou Nº OS..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 h-12" />
+                className="pl-10 h-12"
+                autoComplete="off"
+                spellCheck={false} />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-56 h-12">
