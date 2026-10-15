@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -8,7 +8,6 @@ import { estornarEstoque } from '@/lib/estoqueComposto';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Plus,
@@ -19,8 +18,6 @@ import {
   FileText,
   Loader2,
   Filter,
-  CheckSquare,
-  ChevronDown,
   Tag,
   Trash2,
   Lock,
@@ -51,7 +48,9 @@ import {
   SelectValue } from
 "@/components/ui/select";
 import { toast } from "sonner";
-import Paginacao from '@/components/ui/Paginacao';
+import PaginacaoAtendimentos from '@/components/atendimento/PaginacaoAtendimentos';
+import useAtendimentosLista from '@/hooks/useAtendimentosLista';
+import { ATENDIMENTOS_POR_PAGINA } from '@/lib/atendimentosQuery';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ReciboAtendimento from '@/components/financeiro/ReciboAtendimento';
 import { FileCheck } from 'lucide-react';
@@ -119,7 +118,7 @@ export default function Atendimentos() {
   const [searchParams] = useSearchParams();
   const vendaDiretaFilter = searchParams.get('venda_direta') === 'true';
   const queryClient = useQueryClient();
-  const { unidadeAtual, filtroUnidade } = useUnidade();
+  const { unidadeAtual, loading: unidadeLoading } = useUnidade();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dataInicio, setDataInicio] = useState('');
@@ -127,150 +126,14 @@ export default function Atendimentos() {
   const [produtoFilter, setProdutoFilter] = useState('');
   const [selecionados, setSelecionados] = useState([]);
   const [statusEmMassa, setStatusEmMassa] = useState('');
-  const [pagina, setPagina] = useState(1);
   const [reciboAtendimento, setReciboAtendimento] = useState(null);
   const [atribuirTecnico, setAtribuirTecnico] = useState(null);
   const [servicoLiberado, setServicoLiberado] = useState({});
-  const POR_PAGINA = 20;
-
-  // Campos mínimos para a lista — exclui assinaturas base64, checklist, fotos, histórico, textos longos, itens
-  const ATENDIMENTO_LIST_FIELDS = [
-    'numero_os', 'venda_direta', 'cliente_nome', 'cliente_telefone',
-    'placa', 'modelo', 'marca', 'ano', 'data_entrada', 'created_date',
-    'status', 'status_pagamento', 'valor_final', 'valor_final_pago',
-    'data_pagamento', 'unidade_id', 'tecnicos_responsaveis', 'tecnico'
-  ];
-
-  // Busca server-side por data para suportar anos de histórico
-  const { data: atendimentosBrutos = [], isLoading } = useQuery({
-    queryKey: ['atendimentos', dataInicio, dataFim],
-    queryFn: async () => {
-      const opts = { sort: '-data_entrada', limit: 150, fields: ATENDIMENTO_LIST_FIELDS };
-      if (dataInicio || dataFim) {
-        const dateFilter = {};
-        if (dataInicio) dateFilter.$gte = dataInicio + 'T00:00:00.000Z';
-        if (dataFim) dateFilter.$lte = dataFim + 'T23:59:59.000Z';
-        const page = await base44.entities.Atendimento.filter({ data_entrada: dateFilter }, opts);
-        return page.items;
-      }
-      const noventa = new Date();
-      noventa.setDate(noventa.getDate() - 90);
-      const page = await base44.entities.Atendimento.filter(
-        { data_entrada: { $gte: noventa.toISOString() } },
-        opts
-      );
-      return page.items;
-    },
-    staleTime: 2 * 60 * 1000
+  const POR_PAGINA = ATENDIMENTOS_POR_PAGINA;
+  const { atendimentos, totalRegistros, pagina, temProxima, mudarPagina, isLoading, error, refetch } = useAtendimentosLista({
+    search, produtoFilter, statusFilter, dataInicio, dataFim, vendaDiretaFilter,
+    unidadeId: unidadeAtual?.id, unidadeLoading,
   });
-
-  const [resultadosBuscaServer, setResultadosBuscaServer] = useState([]);
-  const [buscandoServer, setBuscandoServer] = useState(false);
-  const [resultadosBuscaServerProduto, setResultadosBuscaServerProduto] = useState([]);
-
-  // Constrói padrão regex insensível a acentos (ex: "tulio" → "t[uúùûü]l[iíìîï]o")
-  const buildAccentPattern = (termo) => {
-    const map = {
-      a: 'aáàâãäAÁÀÂÃÄ', e: 'eéèêëEÉÈÊË', i: 'iíìîïIÍÌÎÏ',
-      o: 'oóòôõöOÓÒÔÕÖ', u: 'uúùûüUÚÙÛÜ', c: 'cçCÇ', n: 'nñNÑ'
-    };
-    return termo.split('').map(ch => {
-      const lower = ch.toLowerCase();
-      if (map[lower]) return '[' + map[lower] + ']';
-      return ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }).join('');
-  };
-
-  // Normaliza string removendo acentos e minificando (para filtro client-side)
-  const normalizeStr = (str) => (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
-  // Busca server-side: considera TODAS as OS salvas (não apenas os últimos 90 dias)
-  useEffect(() => {
-    if (!search || search.trim().length < 2) {
-      setResultadosBuscaServer([]);
-      return;
-    }
-    const termo = search.trim();
-    const padrao = buildAccentPattern(termo);
-    const timeout = setTimeout(async () => {
-      setBuscandoServer(true);
-      try {
-        const searchOpts = { sort: '-created_date', limit: 50, fields: ATENDIMENTO_LIST_FIELDS };
-        const queries = [];
-        if (!isNaN(termo)) {
-          queries.push(base44.entities.Atendimento.filter({ numero_os: parseInt(termo) }, searchOpts));
-        }
-        queries.push(base44.entities.Atendimento.filter({ cliente_nome: { $regex: padrao, $options: 'i' } }, searchOpts));
-        queries.push(base44.entities.Atendimento.filter({ placa: { $regex: padrao, $options: 'i' } }, searchOpts));
-        queries.push(base44.entities.Atendimento.filter({ modelo: { $regex: padrao, $options: 'i' } }, searchOpts));
-        const resultados = await Promise.all(queries);
-        const merged = [];
-        const seen = new Set();
-        for (const page of resultados) {
-          const items = page.items || page;
-          for (const a of items) {
-            if (!seen.has(a.id)) { seen.add(a.id); merged.push(a); }
-          }
-        }
-        setResultadosBuscaServer(merged);
-      } catch {
-        setResultadosBuscaServer([]);
-      }
-      setBuscandoServer(false);
-    }, 400);
-    return () => clearTimeout(timeout);
-  }, [search]);
-
-  // Busca server-side por produto/serviço nos itens dos atendimentos
-  useEffect(() => {
-    if (!produtoFilter || produtoFilter.trim().length < 2) {
-      setResultadosBuscaServerProduto([]);
-      return;
-    }
-    const termo = produtoFilter.trim();
-    const padrao = buildAccentPattern(termo);
-    const timeout = setTimeout(async () => {
-      setBuscandoServer(true);
-      try {
-        const searchOpts = { sort: '-created_date', limit: 50, fields: ATENDIMENTO_LIST_FIELDS };
-        const resultados = await Promise.all([
-          base44.entities.Atendimento.filter({ 'itens_orcamento.nome': { $regex: padrao, $options: 'i' } }, searchOpts),
-          base44.entities.Atendimento.filter({ 'itens_queixa.nome': { $regex: padrao, $options: 'i' } }, searchOpts),
-        ]);
-        const merged = [];
-        const seen = new Set();
-        for (const page of resultados) {
-          const items = page.items || page;
-          for (const a of items) {
-            if (!seen.has(a.id)) { seen.add(a.id); merged.push(a); }
-          }
-        }
-        setResultadosBuscaServerProduto(merged);
-      } catch {
-        setResultadosBuscaServerProduto([]);
-      }
-      setBuscandoServer(false);
-    }, 400);
-    return () => clearTimeout(timeout);
-  }, [produtoFilter]);
-
-  const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
-
-  const atendimentos = useMemo(() => {
-    let base;
-    if (search.trim().length >= 2) {
-      base = resultadosBuscaServer;
-    } else if (produtoFilter && produtoFilter.trim().length >= 2) {
-      base = resultadosBuscaServerProduto;
-    } else {
-      base = [...atendimentosBrutos];
-    }
-    if (!unidadeAtual) return base;
-    return base.filter((a) => {
-      if (a.unidade_id) return a.unidade_id === unidadeAtual.id;
-      return unidadeAtual.id === UNIDADE_AUTO_PORTAS_ID;
-    });
-  }, [atendimentosBrutos, resultadosBuscaServer, resultadosBuscaServerProduto, unidadeAtual, search, produtoFilter]);
 
   const { data: configs = [] } = useQuery({
     queryKey: ['configuracoes'],
@@ -300,31 +163,9 @@ export default function Atendimentos() {
     setSelecionados([]);
   };
 
-  const filteredAtendimentos = atendimentos.filter((a) => {
-    const termoNorm = normalizeStr(search);
-    const matchSearch = !search ||
-    normalizeStr(a.placa).includes(termoNorm) ||
-    normalizeStr(a.modelo).includes(termoNorm) ||
-    normalizeStr(a.cliente_nome).includes(termoNorm) ||
-    (a.numero_os && String(a.numero_os).includes(search));
-    const matchStatus = statusFilter === 'all' || a.status === statusFilter;
-
-    const dataAtendimento = a.data_entrada ? new Date(a.data_entrada) : new Date(a.created_date);
-    const matchDataInicio = !dataInicio || dataAtendimento >= new Date(dataInicio + 'T00:00:00');
-    const matchDataFim = !dataFim || dataAtendimento <= new Date(dataFim + 'T23:59:59');
-
-    let matchProduto = true;
-    // produtoFilter agora é resolvido via busca server-side (resultadosBuscaServerProduto)
-    if (produtoFilter && produtoFilter.trim().length >= 2) {
-      matchProduto = resultadosBuscaServerProduto.some(p => p.id === a.id);
-    }
-
-    const matchVendaDireta = !vendaDiretaFilter || a.venda_direta === true;
-    return matchSearch && matchStatus && matchDataInicio && matchDataFim && matchProduto && matchVendaDireta;
-  }).sort((a, b) => (Number(b.numero_os) || 0) - (Number(a.numero_os) || 0));
-
-  const totalPaginas = Math.ceil(filteredAtendimentos.length / POR_PAGINA);
-  const atendimentosPaginados = filteredAtendimentos.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
+  // A página já vem filtrada e ordenada pelo servidor, sem descartar resultados encontrados.
+  const filteredAtendimentos = atendimentos;
+  const atendimentosPaginados = atendimentos;
 
   const todosStatusOpcoes = [
   ...Object.entries(STATUS_FIXOS).map(([valor, s]) => ({ valor, label: s.label, cor: s.cor })),
@@ -463,7 +304,7 @@ export default function Atendimentos() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-slate-800">{vendaDiretaFilter ? 'Vendas Diretas' : 'Atendimentos'}</h1>
-              <p className="text-slate-500">{atendimentos.length} registros</p>
+              <p className="text-slate-500">{totalRegistros != null ? `${totalRegistros} registros` : 'Atendimentos cadastrados'}</p>
             </div>
             <Link to={createPageUrl('NovoAtendimento')}>
               <Button className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto">
@@ -477,7 +318,7 @@ export default function Atendimentos() {
 
       {/* Filters */}
       <div className="max-w-4xl mx-auto px-4 py-4">
-      {!dataInicio && !dataFim && !search && (
+      {!dataInicio && !dataFim && !search.trim() && produtoFilter.trim().length < 2 && (
         <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex items-center gap-2">
           <Calendar className="w-4 h-4 flex-shrink-0" />
           Mostrando atendimentos dos últimos 90 dias. A busca por OS, cliente, placa ou modelo considera todos os registros.
@@ -489,10 +330,10 @@ export default function Atendimentos() {
             <Input
                 placeholder="Buscar por placa, modelo, cliente ou Nº OS..."
                 value={search}
-                onChange={(e) => {setSearch(e.target.value);setPagina(1);}}
+                onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 h-12" />
           </div>
-          <Select value={statusFilter} onValueChange={(v) => {setStatusFilter(v);setPagina(1);}}>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-56 h-12">
               <Filter className="w-4 h-4 mr-2 flex-shrink-0" />
               <SelectValue placeholder="Todos os status" />
@@ -517,7 +358,7 @@ export default function Atendimentos() {
           <Input
               placeholder="Filtrar por produto/serviço..."
               value={produtoFilter}
-              onChange={(e) => {setProdutoFilter(e.target.value);setPagina(1);}}
+              onChange={(e) => setProdutoFilter(e.target.value)}
               className="pl-10 h-10 text-sm" />
         </div>
 
@@ -556,7 +397,7 @@ export default function Atendimentos() {
               className={algunsSelecionados ? 'data-[state=unchecked]:bg-slate-200' : ''} />
             
             <span className="text-sm text-slate-600">
-              {selecionados.length > 0 ? `${selecionados.length} selecionado(s)` : 'Selecionar todos'}
+              {selecionados.length > 0 ? `${selecionados.length} selecionado(s)` : 'Selecionar esta página'}
             </span>
 
             {selecionados.length > 0 &&
@@ -623,10 +464,16 @@ export default function Atendimentos() {
 
       {/* List */}
       <div className="max-w-4xl mx-auto px-4 pb-8">
-        {(isLoading || buscandoServer) ?
-          <div className="flex items-center justify-center py-20">
+        {isLoading ?
+          <div className="flex items-center justify-center py-20" role="status" aria-label="Carregando atendimentos">
             <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-          </div> :
+          </div> : error ?
+          <Card className="py-8">
+            <CardContent className="text-center space-y-3">
+              <p className="text-destructive">Não foi possível carregar os atendimentos. Tente novamente.</p>
+              <Button variant="outline" onClick={() => refetch()}>Tentar novamente</Button>
+            </CardContent>
+          </Card> :
           filteredAtendimentos.length === 0 ?
           <Card className="py-12">
             <CardContent className="text-center">
@@ -843,11 +690,12 @@ export default function Atendimentos() {
                 </motion.div>);
               })}
           </div>
-          <Paginacao
-              paginaAtual={pagina}
-              totalPaginas={totalPaginas}
-              onMudar={(p) => {setPagina(p);window.scrollTo(0, 0);}}
-              totalRegistros={filteredAtendimentos.length}
+          <PaginacaoAtendimentos
+              pagina={pagina}
+              quantidade={atendimentosPaginados.length}
+              temProxima={temProxima}
+              onMudar={(p) => {mudarPagina(p);window.scrollTo(0, 0);}}
+              totalRegistros={totalRegistros}
               porPagina={POR_PAGINA} />
           </>
           }
