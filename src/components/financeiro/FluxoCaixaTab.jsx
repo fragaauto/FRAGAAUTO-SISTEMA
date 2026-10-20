@@ -83,9 +83,24 @@ export default function FluxoCaixaTab({ filtroData }) {
 
   const { unidadeAtual } = useUnidade();
 
+  // Carrega TODOS os lançamentos paginando: o filter sem opções devolve no máximo 5000
+  // registros (mais antigos primeiro), o que ocultava os lançamentos recentes.
+  const CAMPOS_LANCAMENTO = ['tipo', 'descricao', 'valor', 'data_lancamento', 'forma_pagamento', 'categoria', 'observacoes', 'unidade_id', 'atendimento_id', 'desconto_peca_externa', 'descricao_peca_externa', 'estornado', 'created_date'];
   const { data: lancamentosBrutos = [], isLoading } = useQuery({
     queryKey: ['lancamentos-todos'],
-    queryFn: () => base44.entities.LancamentoFinanceiro.filter({ estornado: false }),
+    queryFn: async () => {
+      const all = [];
+      let cursor = null;
+      do {
+        const page = await base44.entities.LancamentoFinanceiro.filter(
+          { estornado: false },
+          { sort: '-data_lancamento', limit: 5000, fields: CAMPOS_LANCAMENTO, cursor }
+        );
+        all.push(...page.items);
+        cursor = page.has_more ? page.next_cursor : null;
+      } while (cursor);
+      return all;
+    },
     staleTime: 60 * 1000,
   });
 
