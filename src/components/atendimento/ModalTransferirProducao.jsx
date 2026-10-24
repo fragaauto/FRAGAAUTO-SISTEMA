@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowRightLeft, Loader2, Undo2 } from 'lucide-react';
+import DescricaoItemGarantia from './DescricaoItemGarantia';
 import { toast } from 'sonner';
 import { garantiasDoRetorno, tecnicosDaGarantia, transferenciasPorServico, valorGarantia } from '@/lib/retornoProducao';
 
@@ -96,12 +97,13 @@ export default function ModalTransferirProducao({ atendimento, origem, transfere
                 className={`rounded-lg border p-3 ${atuais.length > 0 ? 'border-red-200 bg-red-50/50' : 'border-slate-200'}`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 truncate">{garantia.nome}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-slate-800">{garantia.nome}</p>
                     <p className="text-xs text-slate-500 mt-0.5">
                       Valor: R$ {valorGarantia(garantia).toFixed(2)} · Executado por:{' '}
                       {techsOrigem.map((t) => t.nome).join(', ') || 'sem técnico na origem'}
                     </p>
+                    <DescricaoItemGarantia item={garantia} />
                   </div>
                   {atuais.length > 0 && (
                     <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-600 text-white whitespace-nowrap">

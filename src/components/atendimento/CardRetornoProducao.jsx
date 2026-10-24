@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRightLeft, Loader2, Undo2 } from 'lucide-react';
 import ModalTransferirProducao from './ModalTransferirProducao';
+import DescricaoItemGarantia from './DescricaoItemGarantia';
 import { garantiasDoRetorno, tecnicosDaGarantia, transferenciasPorServico, valorGarantia } from '@/lib/retornoProducao';
 
 export default function CardRetornoProducao({ atendimento }) {
@@ -70,11 +71,12 @@ export default function CardRetornoProducao({ atendimento }) {
                     key={garantia.key}
                     className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2"
                   >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">{garantia.nome}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-800">{garantia.nome}</p>
                       <p className="text-xs text-slate-500">
                         R$ {valorGarantia(garantia).toFixed(2)} · Origem: {techsOrigem.join(', ') || 'sem técnico'}
                       </p>
+                      <DescricaoItemGarantia item={garantia} />
                     </div>
                     <div className="text-xs whitespace-nowrap">
                       {atuais.length > 0 ? (

@@ -34,13 +34,26 @@ export function valorGarantia(garantia) {
 // considera todos os serviços da OS de origem (retornos criados antes do vínculo).
 // A chave segue o padrão da OS de origem: queixa-<índice> / orcamento-<índice>.
 export function garantiasDoRetorno(atendimento, origem) {
+  const doOrigem = !origem
+    ? []
+    : [
+        ...(origem.itens_queixa || []).map((item, index) => ({ ...item, key: `queixa-${index}` })),
+        ...(origem.itens_orcamento || []).map((item, index) => ({ ...item, key: `orcamento-${index}` })),
+      ].filter((item) => item.nome);
+
   const salvas = (atendimento?.servicos_garantia || []).filter((g) => g && g.nome);
-  if (salvas.length > 0) return salvas;
-  if (!origem) return [];
-  return [
-    ...(origem.itens_queixa || []).map((item, index) => ({ ...item, key: `queixa-${index}` })),
-    ...(origem.itens_orcamento || []).map((item, index) => ({ ...item, key: `orcamento-${index}` })),
-  ].filter((item) => item.nome);
+  if (salvas.length === 0) return doOrigem;
+
+  // Enriquece os serviços vinculados com a descrição/especificação cadastradas na OS de origem
+  return salvas.map((g) => {
+    const item = doOrigem.find((i) => i.key === g.key);
+    if (!item) return g;
+    return {
+      ...item,
+      ...g,
+      tecnicos: normalizarTecnicos(g.tecnicos).length > 0 ? g.tecnicos : item.tecnicos,
+    };
+  });
 }
 
 // Agrupa as transferências existentes por serviço de garantia
