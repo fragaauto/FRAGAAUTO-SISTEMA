@@ -14,6 +14,7 @@ import { base44 } from '@/api/base44Client';
 import { queryClientInstance } from '@/lib/query-client';
 import { useQuery } from '@tanstack/react-query';
 import { useUnidade } from '@/lib/UnidadeContext';
+import { garantiasDoRetorno } from '@/lib/retornoProducao';
 
 export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '', modoPessoal = false, usuarioLogado = null, periodoFixo = null }) {
   const [filtroTecnico, setFiltroTecnico] = useState('todos');
@@ -42,6 +43,23 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     queryFn: () => base44.entities.Funcionario.list(),
     staleTime: 5 * 60 * 1000,
   });
+
+  // Log de transferências de produção de retornos (define quem recebe o valor no lugar do técnico original)
+  const { data: transferenciasProducao = [] } = useQuery({
+    queryKey: ['transferencias-producao'],
+    queryFn: () => base44.entities.TransferenciaProducao.list('-created_date', 3000),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const transferenciasPorAtendimento = useMemo(() => {
+    const mapa = {};
+    (transferenciasProducao || []).forEach(t => {
+      if (!t?.atendimento_id) return;
+      if (!mapa[t.atendimento_id]) mapa[t.atendimento_id] = [];
+      mapa[t.atendimento_id].push(t);
+    });
+    return mapa;
+  }, [transferenciasProducao]);
 
   // Mapa nome -> id de todos os técnicos conhecidos (funcionários ativos + técnicos já presentes nos atendimentos)
   const tecnicosComId = useMemo(() => {
@@ -278,14 +296,8 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         // Só desconta a garantia se a OS de origem foi paga (teve produção contabilizada)
         const origemFoiPago = origem && origem.status_pagamento && origem.status_pagamento !== 'pendente';
         if (!origemFoiPago) return;
-        let garantias = a.servicos_garantia || [];
-        // Se nenhum serviço foi selecionado, deduz todos os serviços da OS de origem
-        if (garantias.length === 0 && origem) {
-          garantias = [
-            ...((origem.itens_queixa || []).map(it => ({ nome: it.nome, valor_total: it.valor_total, tecnicos: it.tecnicos || [] }))),
-            ...((origem.itens_orcamento || []).map(it => ({ nome: it.nome, valor_total: it.valor_total, tecnicos: it.tecnicos || [] }))),
-          ].filter(it => it.nome);
-        }
+        // Serviços que deram garantia: os vinculados na OS ou, se não houver, todos os da OS de origem
+        const garantias = garantiasDoRetorno(a, origem);
         const origemTechs = resolverTechsOrigem(a);
         garantias.forEach(g => {
           let techs = (g.tecnicos || []).filter(t => t.nome);
@@ -312,6 +324,34 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
               tecnicoNome: tec.nome,
             });
           });
+
+          // Produção transferida: o valor descontado do técnico que fez originalmente é
+          // atribuído ao técnico que refez o serviço neste retorno (log de transferências)
+          (transferenciasPorAtendimento[a.id] || [])
+            .filter(tr => tr.servico_key === g.key)
+            .forEach(tr => {
+              const nomeDestino = tr.tecnico_destino_nome;
+              const valorTransferido = Number(tr.valor) || 0;
+              if (!nomeDestino || valorTransferido === 0) return;
+              garantirTecnico(nomeDestino);
+              acumPorTecnico[nomeDestino].valorBruto += valorTransferido;
+              acumPorTecnico[nomeDestino].servicos.push({
+                atendimentoId: a.id,
+                numeroOS: a.numero_os,
+                placa: a.placa,
+                cliente: a.cliente_nome,
+                servico: `🔄 Produção transferida — ${g.nome || 'Serviço'} (OS origem #${a.atendimento_origem_numero || '?'})`,
+                quantidade: 1,
+                valorTotal: valorTransferido,
+                valorTecnico: valorTransferido,
+                data: a.data_entrada || a.created_date,
+                dataExecucao: a.data_entrada || a.created_date,
+                isTransferencia: true,
+                tecnicoId: tr.tecnico_destino_id || nomeDestino,
+                tecnicoNome: nomeDestino,
+                transferidoDe: tr.tecnico_origem_nome || '',
+              });
+            });
         });
         Object.entries(acumPorTecnico).forEach(([nome, dados]) => {
           if (!tecnicos[nome]) {
@@ -390,7 +430,7 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
     const todosTecnicos = Object.values(tecnicos).sort((a, b) => b.valorLiquidoTotal - a.valorLiquidoTotal);
     if (filtroTecnico !== 'todos') return todosTecnicos.filter(t => t.nome === filtroTecnico);
     return todosTecnicos;
-  }, [atendimentosFiltradosPorData, taxasMap, totalImpostos, filtroTecnico, filtroProduto]);
+  }, [atendimentosFiltradosPorData, taxasMap, totalImpostos, filtroTecnico, filtroProduto, transferenciasPorAtendimento]);
 
   // Lista de todos os técnicos para o filtro
   const listaTecnicos = useMemo(() => {

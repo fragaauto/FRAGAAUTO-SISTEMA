@@ -1,0 +1,69 @@
+{
+  "name": "TransferenciaProducao",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade a que esta transfer\u00eancia pertence"
+    },
+    "atendimento_id": {
+      "type": "string",
+      "description": "ID da OS de retorno onde a transfer\u00eancia foi registrada"
+    },
+    "numero_os": {
+      "type": "number",
+      "description": "N\u00famero da OS de retorno"
+    },
+    "atendimento_origem_id": {
+      "type": "string",
+      "description": "ID da OS de origem (onde o servi\u00e7o foi executado originalmente)"
+    },
+    "atendimento_origem_numero": {
+      "type": "number",
+      "description": "N\u00famero da OS de origem"
+    },
+    "servico_key": {
+      "type": "string",
+      "description": "Chave do servi\u00e7o de garantia dentro da OS de retorno"
+    },
+    "servico_nome": {
+      "type": "string",
+      "description": "Nome do servi\u00e7o cuja produ\u00e7\u00e3o foi transferida"
+    },
+    "valor": {
+      "type": "number",
+      "description": "Valor de produ\u00e7\u00e3o transferido (parte do t\u00e9cnico de origem)"
+    },
+    "tecnico_origem_id": {
+      "type": "string"
+    },
+    "tecnico_origem_nome": {
+      "type": "string",
+      "description": "T\u00e9cnico que havia realizado o servi\u00e7o originalmente (perde a produ\u00e7\u00e3o)"
+    },
+    "tecnico_destino_id": {
+      "type": "string"
+    },
+    "tecnico_destino_nome": {
+      "type": "string",
+      "description": "T\u00e9cnico que refez o servi\u00e7o no retorno (recebe a produ\u00e7\u00e3o)"
+    },
+    "data_transferencia": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora em que a transfer\u00eancia foi realizada"
+    },
+    "usuario_nome": {
+      "type": "string",
+      "description": "Usu\u00e1rio que realizou a transfer\u00eancia"
+    },
+    "observacao": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "atendimento_id",
+    "servico_nome",
+    "tecnico_destino_nome"
+  ]
+}

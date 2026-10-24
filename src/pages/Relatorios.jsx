@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { FileSpreadsheet, Calendar, CheckCircle, XCircle, DollarSign, FileText, Users, TrendingUp, Package, FileDown, Search, X, Loader2 } from 'lucide-react';
+import { FileSpreadsheet, Calendar, CheckCircle, XCircle, DollarSign, FileText, Users, TrendingUp, Package, FileDown, Search, X, Loader2, Undo2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import RelatorioProdutos from '@/components/relatorios/RelatorioProdutos';
@@ -18,6 +18,7 @@ import ModuloBloqueado from '@/components/ModuloBloqueado';
 import { paginaPermitida } from '@/components/modulos';
 import RelatorioTecnicos from '@/components/relatorios/RelatorioTecnicos';
 import RelatorioRanking from '@/components/relatorios/RelatorioRanking';
+import RelatorioRetornos from '@/components/relatorios/RelatorioRetornos';
 import { useUnidade } from '@/lib/UnidadeContext';
 
 export default function Relatorios() {
@@ -359,6 +360,7 @@ export default function Relatorios() {
             <TabsTrigger value="produtos" className="flex items-center gap-2"><Package className="w-4 h-4" />Produtos Vendidos</TabsTrigger>
             <TabsTrigger value="ranking" className="flex items-center gap-2"><TrendingUp className="w-4 h-4" />Ranking Serviços</TabsTrigger>
             <TabsTrigger value="tecnicos" className="flex items-center gap-2"><Users className="w-4 h-4" />Produção Técnicos</TabsTrigger>
+            <TabsTrigger value="retornos" className="flex items-center gap-2 text-red-700"><Undo2 className="w-4 h-4" />Retornos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="geral">
@@ -427,6 +429,10 @@ export default function Relatorios() {
               usuarioLogado={user}
               periodoFixo={periodoFixoConfig}
             />
+          </TabsContent>
+
+          <TabsContent value="retornos">
+            <RelatorioRetornos atendimentos={atendimentos} labelPeriodo={labelPeriodo} />
           </TabsContent>
         </Tabs>
         )}

@@ -16,7 +16,7 @@ export default function useAtendimentosLista({ search, produtoFilter, unidadeLoa
     return () => clearTimeout(timer);
   }, [search, produtoFilter]);
   const query = useMemo(() => buildAtendimentosQuery({ ...filters, ...terms, dataRecente }),
-    [filters.unidadeId, filters.statusFilter, filters.dataInicio, filters.dataFim, filters.vendaDiretaFilter, terms, dataRecente]);
+    [filters.unidadeId, filters.statusFilter, filters.dataInicio, filters.dataFim, filters.vendaDiretaFilter, filters.apenasRetornos, terms, dataRecente]);
   const key = JSON.stringify(query);
   const [navigation, setNavigation] = useState({ key: '', index: 0, cursors: [null] });
   const current = navigation.key === key ? navigation : { key, index: 0, cursors: [null] };

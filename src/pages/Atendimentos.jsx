@@ -24,7 +24,8 @@ import {
   RotateCcw,
   Printer,
   MessageCircle,
-  CheckCircle2 } from
+  CheckCircle2,
+  Undo2 } from
 'lucide-react';
 import {
   AlertDialog,
@@ -124,6 +125,7 @@ export default function Atendimentos() {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [produtoFilter, setProdutoFilter] = useState('');
+  const [apenasRetornos, setApenasRetornos] = useState(false);
   const [selecionados, setSelecionados] = useState([]);
   const [statusEmMassa, setStatusEmMassa] = useState('');
   const [reciboAtendimento, setReciboAtendimento] = useState(null);
@@ -131,7 +133,7 @@ export default function Atendimentos() {
   const [servicoLiberado, setServicoLiberado] = useState({});
   const POR_PAGINA = ATENDIMENTOS_POR_PAGINA;
   const { atendimentos, totalRegistros, pagina, temProxima, mudarPagina, isLoading, error, refetch } = useAtendimentosLista({
-    search, produtoFilter, statusFilter, dataInicio, dataFim, vendaDiretaFilter,
+    search, produtoFilter, statusFilter, dataInicio, dataFim, vendaDiretaFilter, apenasRetornos,
     unidadeId: unidadeAtual?.id, unidadeLoading,
   });
 
@@ -318,7 +320,7 @@ export default function Atendimentos() {
 
       {/* Filters */}
       <div className="max-w-4xl mx-auto px-4 py-4">
-      {!dataInicio && !dataFim && !search.trim() && produtoFilter.trim().length < 2 && (
+      {!dataInicio && !dataFim && !search.trim() && produtoFilter.trim().length < 2 && !apenasRetornos && (
         <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex items-center gap-2">
           <Calendar className="w-4 h-4 flex-shrink-0" />
           Mostrando atendimentos dos últimos 90 dias. A busca por OS, cliente, placa ou modelo considera todos os registros.
@@ -383,10 +385,28 @@ export default function Atendimentos() {
                 onChange={(e) => setDataFim(e.target.value)}
                 className="h-10 text-sm" />
           </div>
-          {(dataInicio || dataFim || produtoFilter) &&
-            <Button variant="ghost" size="sm" className="h-10 text-slate-500 px-2" onClick={() => {setDataInicio('');setDataFim('');setProdutoFilter('');}}>
+          {(dataInicio || dataFim || produtoFilter || apenasRetornos) &&
+            <Button variant="ghost" size="sm" className="h-10 text-slate-500 px-2" onClick={() => {setDataInicio('');setDataFim('');setProdutoFilter('');setApenasRetornos(false);}}>
               Limpar tudo
             </Button>
+            }
+        </div>
+
+        {/* Filtro de retornos de serviço */}
+        <div className="flex items-center gap-2 mt-3">
+          <Button
+              type="button"
+              size="sm"
+              variant={apenasRetornos ? 'default' : 'outline'}
+              className={apenasRetornos ? 'h-9 bg-red-600 hover:bg-red-700 text-white' : 'h-9 border-red-200 text-red-700 hover:bg-red-50'}
+              onClick={() => setApenasRetornos((v) => !v)}>
+            <Undo2 className="w-4 h-4 mr-1" />
+            {apenasRetornos ? 'Mostrando apenas retornos' : 'Filtrar retornos de serviço'}
+          </Button>
+          {apenasRetornos && totalRegistros != null &&
+            <span className="text-xs font-semibold text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded-full">
+              {totalRegistros} retorno(s)
+            </span>
             }
         </div>
 
@@ -506,6 +526,8 @@ export default function Atendimentos() {
                     
                   <Card
                       className={`transition-all border-2 ${
+                      atendimento.retorno_servico ?
+                      'border-red-400 bg-red-50/70 shadow-sm shadow-red-100' :
                       pago ?
                       'border-green-200 bg-green-50/60' :
                       faturado ?
@@ -544,6 +566,12 @@ export default function Atendimentos() {
                               }
                             <h3 className="font-bold text-slate-800">{atendimento.placa || (atendimento.venda_direta ? '🛒 Venda Direta' : '—')}</h3>
                             <StatusBadge statusValue={atendimento.status} statusPersonalizados={statusPersonalizados} />
+                            {atendimento.retorno_servico &&
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white whitespace-nowrap">
+                                <Undo2 className="w-3 h-3" />
+                                RETORNO{atendimento.atendimento_origem_numero ? ` · OS #${String(atendimento.atendimento_origem_numero).padStart(6, '0')}` : ''}
+                              </span>
+                              }
                             {pago &&
                               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-600 text-white">
                                 <CheckCircle2 className="w-3 h-3" /> Pago

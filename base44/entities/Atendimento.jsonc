@@ -28,6 +28,52 @@
       "type": "number",
       "description": "N\u00famero da OS de origem (para exibi\u00e7\u00e3o e refer\u00eancia)"
     },
+    "servicos_garantia": {
+      "type": "array",
+      "description": "Servi\u00e7os da OS de origem que deram garantia neste retorno (a chave segue o padr\u00e3o queixa-<\u00edndice> / orcamento-<\u00edndice>). O valor desses servi\u00e7os \u00e9 descontado da produ\u00e7\u00e3o dos t\u00e9cnicos originais e pode ser transferido para o t\u00e9cnico que refez o servi\u00e7o.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Chave do item na OS de origem (ex: queixa-0, orcamento-2)"
+          },
+          "produto_id": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "valor_total": {
+            "type": "number"
+          },
+          "item_origem": {
+            "type": "string",
+            "description": "Origem do item na OS de origem: queixa ou orcamento"
+          },
+          "item_index": {
+            "type": "number",
+            "description": "\u00cdndice do item na lista de origem"
+          },
+          "tecnicos": {
+            "type": "array",
+            "description": "T\u00e9cnicos que executaram o servi\u00e7o originalmente",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "nome": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "default": []
+    },
     "cliente_id": {
       "type": "string",
       "description": "ID do cliente"

@@ -55,6 +55,7 @@ import ItemOrcamentoComEncomenda from '../components/orcamento/ItemOrcamentoComE
 import SeletorVariacao from '../components/produtos/SeletorVariacao';
 import OrcamentoWhatsAppModal from '../components/orcamento/OrcamentoWhatsAppModal';
 import TransferirUnidadeModal from '../components/atendimento/TransferirUnidadeModal';
+import CardRetornoProducao from '../components/atendimento/CardRetornoProducao';
 import TransferirChecklistModal from '../components/atendimento/TransferirChecklistModal';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '../components/atendimento/AlertaEstoqueBaixo';
 import BadgeEstoqueBaixo from '../components/atendimento/BadgeEstoqueBaixo';
@@ -810,6 +811,8 @@ export default function VerAtendimento() {
           </TabsList>
 
           <TabsContent value="resumo" className="space-y-6">
+            {atendimento.retorno_servico && <CardRetornoProducao atendimento={atendimento} />}
+
             {/* Vehicle Info */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
