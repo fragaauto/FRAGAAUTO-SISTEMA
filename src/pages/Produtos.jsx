@@ -44,13 +44,15 @@ import {
   Loader2,
   FileSpreadsheet,
   AlertTriangle,
-  Copy
+  Copy,
+  Tags
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ModuloBloqueado from '@/components/ModuloBloqueado';
 import { paginaPermitida } from '@/components/modulos';
 import Paginacao from '@/components/ui/Paginacao';
 import FormularioProduto from '../components/produtos/FormularioProduto';
+import ModalCategoriaMassa from '@/components/produtos/ModalCategoriaMassa';
 import { useUnidade } from '@/lib/UnidadeContext';
 
 const CATEGORIAS = [
@@ -88,6 +90,7 @@ export default function Produtos() {
   const [editingProduto, setEditingProduto] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [showDeleteMultiple, setShowDeleteMultiple] = useState(false);
+  const [showCategoriaModal, setShowCategoriaModal] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState(0);
   const [deleteStats, setDeleteStats] = useState({ total: 0, processed: 0, success: 0, errors: 0, errorDetails: [] });
   const [isImporting, setIsImporting] = useState(false);
@@ -269,6 +272,26 @@ export default function Produtos() {
     },
     onError: () => {
       toast.error('Erro crítico ao processar exclusões');
+    }
+  });
+
+  const categoriaMassaMutation = useMutation({
+    mutationFn: async ({ ids, categoria }) => {
+      const TAMANHO_LOTE = 500;
+      for (let i = 0; i < ids.length; i += TAMANHO_LOTE) {
+        const lote = ids.slice(i, i + TAMANHO_LOTE).map(id => ({ id, categoria }));
+        await base44.entities.Produto.bulkUpdate(lote);
+      }
+      return { quantidade: ids.length, categoria };
+    },
+    onSuccess: ({ quantidade, categoria }) => {
+      queryClient.invalidateQueries(['produtos']);
+      toast.success(`${quantidade} produto(s) na categoria "${categoria}"`);
+      setSelectedIds([]);
+      setShowCategoriaModal(false);
+    },
+    onError: () => {
+      toast.error('Erro ao alterar a categoria dos produtos');
     }
   });
 
@@ -1213,6 +1236,16 @@ export default function Produtos() {
             </div>
             <div className="flex gap-2">{selectedIds.length > 0 && (
                 <Button
+                  variant="outline"
+                  onClick={() => setShowCategoriaModal(true)}
+                  className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                >
+                  <Tags className="w-4 h-4 mr-2" />
+                  Categoria ({selectedIds.length})
+                </Button>
+              )}
+              {selectedIds.length > 0 && (
+                <Button
                   variant="destructive"
                   onClick={() => setShowDeleteMultiple(true)}
                 >
@@ -1589,6 +1622,15 @@ export default function Produtos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ModalCategoriaMassa
+        open={showCategoriaModal}
+        onOpenChange={setShowCategoriaModal}
+        quantidade={selectedIds.length}
+        categorias={categoriasFiltro.map(cat => ({ value: cat, label: categoriaLabel(cat) }))}
+        salvando={categoriaMassaMutation.isPending}
+        onConfirm={(categoria) => categoriaMassaMutation.mutate({ ids: selectedIds, categoria })}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
