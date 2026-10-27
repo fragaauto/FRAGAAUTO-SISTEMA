@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -7,38 +7,12 @@ import { useUnidade } from '@/lib/UnidadeContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Target, ArrowRight } from 'lucide-react';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import BarraMeta from '@/components/metas/BarraMeta';
+import CelebracaoMetaModal from '@/components/metas/CelebracaoMetaModal';
+import useCelebracaoMetas from '@/hooks/useCelebracaoMetas';
+import useVendasPorCategoria, { useMetasPorCategoria } from '@/hooks/useMetasCategorias';
 
 const UNIDADE_AUTO_PORTAS_ID = '69ea76b72f920804f5d68eab';
-
-function BarraMeta({ label, atual, meta, cor }) {
-  const pct = meta > 0 ? Math.min((atual / meta) * 100, 100) : 0;
-  const atingida = pct >= 100;
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{label}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">
-            R$ {atual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / R$ {meta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
-          {atingida && <span className="text-xs font-bold text-green-600">✓ Atingida!</span>}
-        </div>
-      </div>
-      <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${atingida ? 'bg-green-500' : cor}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div className="mt-0.5 text-right">
-        <span className={`text-xs font-bold ${atingida ? 'text-green-600' : 'text-slate-500'}`}>
-          {pct.toFixed(0)}%
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function MetaItemCard({ meta, faturadoDia, faturadoSemana, faturadoMes }) {
   const temAlguma = meta.meta_dia > 0 || meta.meta_semana > 0 || meta.meta_mes > 0;
@@ -62,6 +36,7 @@ function MetaItemCard({ meta, faturadoDia, faturadoSemana, faturadoMes }) {
 
 export default function MetasCard() {
   const { unidadeAtual } = useUnidade();
+  const navigate = useNavigate();
 
   const { data: metas = [] } = useQuery({
     queryKey: ['metas_vendas', unidadeAtual?.id],
@@ -111,6 +86,26 @@ export default function MetasCard() {
 
   const metasAtivas = metas.filter(m => m.ativa !== false);
 
+  // Metas e vendas por categoria (para as comemorações de meta atingida)
+  const { data: metasCategoria = [] } = useMetasPorCategoria(unidadeAtual);
+  const { data: vendasCategoria } = useVendasPorCategoria(unidadeAtual);
+
+  const vendasPorCategoria = useMemo(() => {
+    const mapa = {};
+    (vendasCategoria?.categorias || []).forEach(c => {
+      mapa[c.categoria] = Number(c.valor) || 0;
+    });
+    return mapa;
+  }, [vendasCategoria]);
+
+  const { celebracao, fechar } = useCelebracaoMetas({
+    unidadeId: unidadeAtual?.id,
+    metas: metasAtivas,
+    faturamentoMes: faturamento.mes,
+    metasCategoria,
+    vendasCategoria: vendasPorCategoria,
+  });
+
   // Não exibe se não houver metas configuradas com valores
   const metasComValor = metasAtivas.filter(m => m.meta_dia > 0 || m.meta_semana > 0 || m.meta_mes > 0);
   if (metasComValor.length === 0) return null;
@@ -121,7 +116,13 @@ export default function MetasCard() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-6 pb-2">
-      <Card className="border border-blue-200 bg-blue-50/30">
+      <Card
+        role="button"
+        tabIndex={0}
+        onClick={() => navigate(createPageUrl('Metas'))}
+        onKeyDown={(e) => e.key === 'Enter' && navigate(createPageUrl('Metas'))}
+        className="border border-blue-200 bg-blue-50/30 cursor-pointer transition-all hover:border-blue-300 hover:shadow-lg"
+      >
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -130,6 +131,7 @@ export default function MetasCard() {
             </div>
             <Link
               to={createPageUrl('Configuracoes')}
+              onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-1 text-xs text-blue-600 font-medium hover:underline"
             >
               Configurar <ArrowRight className="w-3 h-3" />
@@ -147,8 +149,15 @@ export default function MetasCard() {
               />
             ))}
           </div>
+
+          <div className="mt-4 flex items-center justify-end gap-1 text-xs font-semibold text-blue-700">
+            Ver metas por categoria
+            <ArrowRight className="w-3.5 h-3.5" />
+          </div>
         </CardContent>
       </Card>
+
+      <CelebracaoMetaModal celebracao={celebracao} onFechar={fechar} />
     </div>
   );
 }

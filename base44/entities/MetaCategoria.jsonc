@@ -1,0 +1,27 @@
+{
+  "name": "MetaCategoria",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade"
+    },
+    "categoria": {
+      "type": "string",
+      "description": "Categoria do produto/servi\u00e7o (mesmo nome usado no cadastro de produtos)"
+    },
+    "meta_mes": {
+      "type": "number",
+      "description": "Meta mensal de faturamento para a categoria (R$)"
+    },
+    "ativa": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se esta meta est\u00e1 ativa"
+    }
+  },
+  "required": [
+    "categoria",
+    "meta_mes"
+  ]
+}
