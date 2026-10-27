@@ -1,0 +1,17 @@
+{
+  "name": "CategoriaProduto",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome da categoria de produtos/servi\u00e7os (ex: El\u00e9trica, Portas, Vidros)"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o opcional para orientar o uso desta categoria"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

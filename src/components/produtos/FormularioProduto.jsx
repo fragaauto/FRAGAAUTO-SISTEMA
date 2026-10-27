@@ -36,11 +36,21 @@ export default function FormularioProduto({ formData, setFormData, atualizarMode
     staleTime: 5 * 60 * 1000
   });
 
+  const { data: categoriasCadastradas = [] } = useQuery({
+    queryKey: ['categorias-produto'],
+    queryFn: async () => {
+      const { items } = await base44.entities.CategoriaProduto.list({ sort: 'nome' });
+      return items;
+    },
+    staleTime: 5 * 60 * 1000
+  });
+
   const categoriasExistentes = useMemo(() => {
     const set = new Set(CATEGORIAS.map(c => c.label));
     (produtosLista || []).forEach(p => { if (p.categoria) set.add(p.categoria); });
+    (categoriasCadastradas || []).forEach(c => { if (c.nome) set.add(c.nome); });
     return Array.from(set).sort();
-  }, [produtosLista]);
+  }, [produtosLista, categoriasCadastradas]);
 
   const [uploadingFoto, setUploadingFoto] = useState(false);
 
