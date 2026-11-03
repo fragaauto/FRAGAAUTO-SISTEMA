@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 
 const TZ = 'America/Sao_Paulo';
-const JANELA_MINUTOS = 5;
+const INTERVALO_MINUTOS = 30;
 
 function agoraLocal() {
   const partes = new Intl.DateTimeFormat('en-CA', {
@@ -23,6 +23,8 @@ function agoraLocal() {
 
   return {
     data: `${valores.year}-${valores.month}-${valores.day}`,
+    hora,
+    minuto: valores.minute,
     minutos: Number(hora) * 60 + Number(valores.minute),
     diaSemana: diasSemana[valores.weekday],
   };
@@ -32,6 +34,12 @@ function minutosDoHorario(horario) {
   const [hora, minuto] = String(horario || '').split(':').map(Number);
   if (Number.isNaN(hora) || Number.isNaN(minuto)) return null;
   return hora * 60 + minuto;
+}
+
+function minutosDoCarimbo(carimbo) {
+  const encontrado = /^(\d{4}-\d{2}-\d{2}) (\d{2}):(\d{2})$/.exec(String(carimbo || ''));
+  if (!encontrado) return null;
+  return { data: encontrado[1], minutos: Number(encontrado[2]) * 60 + Number(encontrado[3]) };
 }
 
 export default async function (req) {
@@ -57,23 +65,40 @@ export default async function (req) {
 
       const alvo = minutosDoHorario(t.lembrete_horario);
       if (alvo === null) return false;
-      const diferenca = agora.minutos - alvo;
-      if (diferenca < 0 || diferenca >= JANELA_MINUTOS) return false;
+      if (agora.minutos < alvo) return false;
 
-      return t.lembrete_ultimo_envio !== `${agora.data} ${t.lembrete_horario}`;
+      // Reenvia a cada 30 minutos enquanto a tarefa não for concluída
+      const ultimo = minutosDoCarimbo(t.lembrete_ultimo_envio);
+      if (ultimo && ultimo.data === agora.data && (agora.minutos - ultimo.minutos) < INTERVALO_MINUTOS) return false;
+
+      return true;
     });
 
     if (devidos.length === 0) {
       return Response.json({ enviados: 0, tarefas: [] });
     }
 
-    const usuarios = await base44.asServiceRole.entities.User.list();
+    const [usuarios, registros] = await Promise.all([
+      base44.asServiceRole.entities.User.list(),
+      base44.asServiceRole.entities.RegistroRotina.filter({ data_execucao: agora.data }),
+    ]);
+
     const lista = Array.isArray(usuarios) ? usuarios : (usuarios?.items || []);
     const destinatarios = lista.filter(u => u.email && u.aprovado !== false);
 
+    const concluidos = new Map();
+    (registros || []).forEach(r => {
+      const email = String(r.funcionario_email || '').toLowerCase();
+      if (!email || !r.tarefa_id) return;
+      if (!concluidos.has(r.tarefa_id)) concluidos.set(r.tarefa_id, new Set());
+      concluidos.get(r.tarefa_id).add(email);
+    });
+
     const envios = [];
     for (const tarefa of devidos) {
+      const feitos = concluidos.get(tarefa.id);
       for (const destino of destinatarios) {
+        if (feitos && feitos.has(destino.email.toLowerCase())) continue;
         envios.push({ tarefa, destino });
       }
     }
@@ -91,17 +116,19 @@ export default async function (req) {
       respostas.forEach((r, idx) => {
         resultados.push({
           user_id: lote[idx].destino.id,
-          tarefa: lote[idx].tarefa.titulo,
+          tarefa_id: lote[idx].tarefa.id,
           ok: r.status === 'fulfilled',
           erro: r.status === 'rejected' ? String(r.reason?.message || r.reason) : null,
         });
       });
     }
 
+    // O carimbo é gravado mesmo se a entrega falhar, para manter a cadência de 30 minutos
+    const tentadas = new Set(resultados.map(r => r.tarefa_id));
+    const carimbo = `${agora.data} ${agora.hora}:${agora.minuto}`;
     for (const tarefa of devidos) {
-      await base44.asServiceRole.entities.TarefaRotina.update(tarefa.id, {
-        lembrete_ultimo_envio: `${agora.data} ${tarefa.lembrete_horario}`,
-      });
+      if (!tentadas.has(tarefa.id)) continue;
+      await base44.asServiceRole.entities.TarefaRotina.update(tarefa.id, { lembrete_ultimo_envio: carimbo });
     }
 
     const falhas = resultados.filter(r => !r.ok);

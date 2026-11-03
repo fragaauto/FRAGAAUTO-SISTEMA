@@ -1,5 +1,7 @@
 const STORAGE_KEY = 'lembretes_rotina_vistos';
 
+export const INTERVALO_REEXIBICAO_MS = 30 * 60 * 1000;
+
 export function chaveData(data = new Date()) {
   const ano = data.getFullYear();
   const mes = String(data.getMonth() + 1).padStart(2, '0');
@@ -22,11 +24,14 @@ export function marcarVisto(chave) {
 }
 
 /**
- * Retorna os lembretes que devem aparecer agora e ainda não foram vistos hoje.
+ * Retorna os lembretes que devem aparecer agora.
+ * O lembrete reaparece a cada 30 minutos após ser dispensado ("Entendi"),
+ * e some definitivamente quando a tarefa é marcada como concluída.
  */
-export function lembretesPendentes(tarefas, agora = new Date()) {
+export function lembretesPendentes(tarefas, agora = new Date(), concluidas = []) {
   const vistos = lerVistos();
   const hoje = chaveData(agora);
+  const feitas = new Set(concluidas || []);
 
   return (tarefas || [])
     .filter(t => t.lembrete_ativo && t.ativa !== false && (t.lembrete_mensagem || '').trim() && t.lembrete_horario)
@@ -46,8 +51,14 @@ export function lembretesPendentes(tarefas, agora = new Date()) {
       horaAlvo.setHours(hora, minuto, 0, 0);
       if (agora < horaAlvo) return null;
 
+      if (feitas.has(t.id)) return null;
+
       const chave = `${t.id}_${hoje}_${t.lembrete_horario}`;
-      if (vistos[chave]) return null;
+      const visto = vistos[chave];
+      if (visto) {
+        const desde = new Date(visto).getTime();
+        if (!Number.isNaN(desde) && agora.getTime() - desde < INTERVALO_REEXIBICAO_MS) return null;
+      }
 
       return { tarefa: t, chave };
     })

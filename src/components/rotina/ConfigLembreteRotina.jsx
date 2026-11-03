@@ -113,7 +113,7 @@ export default function ConfigLembreteRotina({ form, setForm }) {
               className="bg-white w-32"
             />
             <p className="text-[11px] text-slate-400 mt-1">
-              O popup aparece a partir desse horário para todos os usuários logados, e uma notificação push é enviada aos celulares com o aplicativo instalado.
+              O popup aparece a partir desse horário para todos os usuários logados, e uma notificação push é enviada aos celulares com o aplicativo instalado. Se o usuário clicar em "Entendi", o lembrete volta a cada 30 minutos até que a tarefa seja marcada como concluída.
             </p>
           </div>
         </>

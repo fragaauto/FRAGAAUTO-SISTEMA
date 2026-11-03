@@ -12,7 +12,6 @@ export default function LembreteRotinaPopup() {
   const { user, unidadeAtual } = useUnidade();
   const queryClient = useQueryClient();
   const [agora, setAgora] = useState(new Date());
-  const [ignorados, setIgnorados] = useState([]);
   const [concluindo, setConcluindo] = useState(false);
 
   useEffect(() => {
@@ -27,17 +26,30 @@ export default function LembreteRotinaPopup() {
     enabled: !!user,
   });
 
+  const { data: registros = [] } = useQuery({
+    queryKey: ['registros_rotina_lembretes', user?.email],
+    queryFn: () => base44.entities.RegistroRotina.filter({ funcionario_email: user.email }),
+    refetchInterval: 60000,
+    enabled: !!user?.email,
+  });
+
+  const concluidasHoje = useMemo(
+    () => registros.filter(r => r.data_execucao === chaveData(agora)).map(r => r.tarefa_id),
+    [registros, agora]
+  );
+
   const pendentes = useMemo(() => {
     const daUnidade = tarefas.filter(t => !t.unidade_id || t.unidade_id === unidadeAtual?.id);
-    return lembretesPendentes(daUnidade, agora);
-  }, [tarefas, agora, unidadeAtual?.id]);
+    return lembretesPendentes(daUnidade, agora, concluidasHoje);
+  }, [tarefas, agora, unidadeAtual?.id, concluidasHoje]);
 
-  const atual = pendentes.find(p => !ignorados.includes(p.chave));
+  const atual = pendentes[0];
 
+  // "Entendi" apenas adia o lembrete: ele volta em 30 minutos, até a tarefa ser concluída
   const fechar = () => {
     if (!atual) return;
     marcarVisto(atual.chave);
-    setIgnorados(prev => [...prev, atual.chave]);
+    setAgora(new Date());
   };
 
   const concluirTarefa = async () => {
@@ -59,8 +71,10 @@ export default function LembreteRotinaPopup() {
         concluida_em: hoje.toISOString(),
       });
       queryClient.invalidateQueries({ queryKey: ['registros_rotina'] });
+      queryClient.invalidateQueries({ queryKey: ['registros_rotina_lembretes'] });
+      marcarVisto(atual.chave);
+      setAgora(new Date());
       toast.success('Tarefa marcada como concluída!');
-      fechar();
     } catch {
       toast.error('Não foi possível marcar a tarefa');
     } finally {
