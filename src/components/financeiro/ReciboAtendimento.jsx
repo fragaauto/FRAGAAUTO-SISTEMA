@@ -212,7 +212,7 @@ export default function ReciboAtendimento({ atendimento, config }) {
           {/* Totais */}
           {dados.desconto > 0 && (
             <>
-              <Linha label="Subtotal" valor={fmtMoeda(dados.subtotalItens)} />
+              <Linha label="Subtotal" valor={fmtMoeda(dados.brutoItens)} />
               <div className="flex justify-between text-[13px] text-green-700">
                 <span>Desconto</span>
                 <span>- {fmtMoeda(dados.desconto)}</span>

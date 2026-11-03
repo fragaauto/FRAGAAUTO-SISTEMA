@@ -27,14 +27,16 @@ const esc = (v) =>
 
 /** Consolida tudo o que o comprovante precisa exibir (tela, impressão e WhatsApp). */
 export function montarDadosComprovante(atendimento, config, descricoesPorProduto = {}) {
-  const aprovados = [
-    ...(atendimento.itens_queixa || []).filter((i) => i.status_aprovacao === 'aprovado'),
-    ...(atendimento.itens_orcamento || []).filter((i) => i.status_aprovacao === 'aprovado'),
-  ];
+  const todosItens = [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])];
+  const aprovados = todosItens.filter((i) => i.status_aprovacao === 'aprovado');
+  // Sem nenhum item aprovado (ex: venda direta), considera todos os itens cobrados não reprovados
+  const cobrados = aprovados.length > 0
+    ? aprovados
+    : todosItens.filter((i) => i.status_aprovacao !== 'reprovado' && Number(i.valor_total || 0) > 0);
 
   const vistos = new Set();
   const itens = [];
-  aprovados.forEach((item) => {
+  cobrados.forEach((item) => {
     if (item.produto_id) {
       if (vistos.has(item.produto_id)) return;
       vistos.add(item.produto_id);
@@ -72,7 +74,10 @@ export function montarDadosComprovante(atendimento, config, descricoesPorProduto
   const veiculo = `${marcaModelo || '-'}${atendimento.ano ? ` (${atendimento.ano})` : ''}`;
 
   const valorFinal = Number(atendimento.valor_final_pago ?? atendimento.valor_final ?? 0);
-  const desconto = Number(atendimento.desconto_pagamento ?? atendimento.desconto ?? 0);
+  const brutoItens = itens.reduce((acc, i) => acc + i.quantidade * i.valorUnitario, 0);
+  const totalItens = itens.reduce((acc, i) => acc + i.valorTotal, 0);
+  const descontoItens = Math.max(0, brutoItens - totalItens);
+  const desconto = Number(atendimento.desconto_pagamento ?? atendimento.desconto ?? 0) + descontoItens;
   const formas = (atendimento.formas_pagamento_lancamento || []).map((f) => ({
     label: FORMA_LABEL[f.forma] || f.forma,
     valor: Number(f.valor || 0),
@@ -99,7 +104,8 @@ export function montarDadosComprovante(atendimento, config, descricoesPorProduto
     veiculo,
     km: limpo(atendimento.km_atual),
     itens,
-    subtotalItens: itens.reduce((acc, i) => acc + i.valorTotal, 0),
+    brutoItens,
+    subtotalItens: totalItens,
     desconto,
     valorFinal,
     formas,
@@ -155,7 +161,7 @@ export function gerarTextoComprovanteWhatsApp(d) {
   linhas.push('');
   linhas.push(linhaDivisoria);
   if (d.desconto > 0) {
-    linhas.push(`💰 Subtotal: ${fmtMoeda(d.subtotalItens)}`);
+    linhas.push(`💰 Subtotal: ${fmtMoeda(d.brutoItens)}`);
     linhas.push(`🎁 Desconto: - ${fmtMoeda(d.desconto)}`);
   }
   linhas.push(`💵 *TOTAL: ${fmtMoeda(d.valorFinal)}*`);
@@ -235,7 +241,7 @@ export function gerarHtmlComprovante(d) {
 
   const descontoHtml =
     d.desconto > 0
-      ? `<tr><td>Subtotal</td><td class="r">${fmtMoeda(d.subtotalItens)}</td></tr>
+      ? `<tr><td>Subtotal</td><td class="r">${fmtMoeda(d.brutoItens)}</td></tr>
          <tr><td>Desconto</td><td class="r">- ${fmtMoeda(d.desconto)}</td></tr>`
       : '';
 

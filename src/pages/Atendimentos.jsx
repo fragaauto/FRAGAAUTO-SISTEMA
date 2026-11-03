@@ -129,6 +129,7 @@ export default function Atendimentos() {
   const [selecionados, setSelecionados] = useState([]);
   const [statusEmMassa, setStatusEmMassa] = useState('');
   const [reciboAtendimento, setReciboAtendimento] = useState(null);
+  const [carregandoRecibo, setCarregandoRecibo] = useState(false);
   const [atribuirTecnico, setAtribuirTecnico] = useState(null);
   const [servicoLiberado, setServicoLiberado] = useState({});
   const POR_PAGINA = ATENDIMENTOS_POR_PAGINA;
@@ -226,6 +227,20 @@ export default function Atendimentos() {
   const imprimirAtendimento = (atendimento, e) => {
     e.stopPropagation();
     navigate(createPageUrl(`VerAtendimento?id=${atendimento.id}`));
+  };
+
+  const abrirComprovante = async (atendimento, e) => {
+    e.stopPropagation();
+    setReciboAtendimento(atendimento);
+    setCarregandoRecibo(true);
+    try {
+      const completo = await base44.entities.Atendimento.get(atendimento.id);
+      setReciboAtendimento(completo);
+    } catch {
+      toast.error('Não foi possível carregar os itens do comprovante');
+    } finally {
+      setCarregandoRecibo(false);
+    }
   };
 
   const enviarWhatsApp = (atendimento, e) => {
@@ -639,7 +654,7 @@ export default function Atendimentos() {
                           {/* Comprovante para concluído não pago */}
                           {!pago && atendimento.status === 'concluido' &&
                             <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                              <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => {e.stopPropagation();setReciboAtendimento(atendimento);}}>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => abrirComprovante(atendimento, e)}>
                                 <FileCheck className="w-3 h-3 mr-1" /> Comprovante
                               </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50 px-2" onClick={(e) => enviarWhatsApp(atendimento, e)}>
@@ -675,7 +690,7 @@ export default function Atendimentos() {
                               <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={(e) => imprimirAtendimento(atendimento, e)}>
                                 <Printer className="w-3 h-3 mr-1" /> Visualizar OS
                               </Button>
-                              <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => {e.stopPropagation();setReciboAtendimento(atendimento);}}>
+                              <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 px-2" onClick={(e) => abrirComprovante(atendimento, e)}>
                                 <FileCheck className="w-3 h-3 mr-1" /> Comprovante
                               </Button>
                               <Button size="sm" variant="outline" className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50 px-2" onClick={(e) => enviarWhatsApp(atendimento, e)}>
@@ -742,13 +757,17 @@ export default function Atendimentos() {
 
     {/* Modal Comprovante */}
     <Dialog open={!!reciboAtendimento} onOpenChange={(open) => !open && setReciboAtendimento(null)}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>FRAGA AUTO</DialogTitle>
+          <DialogTitle>{config.nome_empresa || 'Comprovante'}</DialogTitle>
         </DialogHeader>
-        {reciboAtendimento &&
+        {carregandoRecibo ? (
+          <div className="py-12 flex justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+          </div>
+        ) : reciboAtendimento ? (
           <ReciboAtendimento atendimento={reciboAtendimento} config={config} />
-          }
+        ) : null}
       </DialogContent>
     </Dialog>
     </>);
