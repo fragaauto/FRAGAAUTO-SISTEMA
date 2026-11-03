@@ -35,7 +35,7 @@ export default function ConfigLembreteRotina({ form, setForm }) {
           className="w-4 h-4 accent-orange-500"
         />
         <Bell className="w-4 h-4 text-orange-500" />
-        <span className="text-sm font-medium text-slate-700">Exibir lembrete em popup</span>
+        <span className="text-sm font-medium text-slate-700">Exibir lembrete e enviar notificação</span>
       </label>
 
       {form.lembrete_ativo && (
@@ -112,7 +112,9 @@ export default function ConfigLembreteRotina({ form, setForm }) {
               onChange={e => setForm(p => ({ ...p, lembrete_horario: e.target.value }))}
               className="bg-white w-32"
             />
-            <p className="text-[11px] text-slate-400 mt-1">O popup aparece a partir desse horário, para todos os usuários logados.</p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              O popup aparece a partir desse horário para todos os usuários logados, e uma notificação push é enviada aos celulares com o aplicativo instalado.
+            </p>
           </div>
         </>
       )}

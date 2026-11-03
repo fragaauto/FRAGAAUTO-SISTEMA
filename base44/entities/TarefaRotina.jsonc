@@ -56,15 +56,15 @@
     "lembrete_ativo": {
       "type": "boolean",
       "default": false,
-      "description": "Se verdadeiro, o sistema exibe um popup de lembrete nos dias e hor\u00e1rio configurados"
+      "description": "Se verdadeiro, o sistema exibe um popup de lembrete e envia notifica\u00e7\u00e3o push nos dias e hor\u00e1rio configurados"
     },
     "lembrete_mensagem": {
       "type": "string",
-      "description": "Mensagem exibida no popup do lembrete"
+      "description": "Mensagem exibida no popup e na notifica\u00e7\u00e3o push"
     },
     "lembrete_horario": {
       "type": "string",
-      "description": "Hor\u00e1rio em que o popup aparece (HH:MM)"
+      "description": "Hor\u00e1rio em que o popup aparece e a notifica\u00e7\u00e3o \u00e9 enviada (HH:MM)"
     },
     "lembrete_tipo": {
       "type": "string",
@@ -91,6 +91,10 @@
       },
       "default": [],
       "description": "Dias da semana do lembrete recorrente (0=Dom..6=S\u00e1b)"
+    },
+    "lembrete_ultimo_envio": {
+      "type": "string",
+      "description": "Controle interno: identificador do \u00faltimo envio push realizado (AAAA-MM-DD HH:MM)"
     }
   },
   "required": [
