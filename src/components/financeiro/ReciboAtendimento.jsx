@@ -1,273 +1,102 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Printer, MessageCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 import { useUnidade } from '@/lib/UnidadeContext';
 import { toast } from 'sonner';
+import {
+  fmtMoeda,
+  montarDadosComprovante,
+  gerarTextoComprovanteWhatsApp,
+  gerarHtmlComprovante,
+} from '@/lib/comprovanteServico';
 
-const FORMA_LABEL = {
-  dinheiro: 'Dinheiro',
-  pix: 'PIX',
-  cartao_credito: 'Cartão de Crédito',
-  cartao_debito: 'Cartão de Débito',
-  transferencia: 'Transferência',
-  boleto: 'Boleto',
-  faturado: 'Faturado',
-};
-
-function fmtData(val) {
-  if (!val) return '-';
-  return new Date(val).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+function Divisor() {
+  return <div className="border-t border-slate-300 my-3" />;
 }
 
-function fmtMoeda(val) {
-  return `R$ ${Number(val || 0).toFixed(2)}`;
+function SecaoTitulo({ children }) {
+  return (
+    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-1.5">
+      {children}
+    </p>
+  );
+}
+
+function Linha({ label, valor, negrito }) {
+  return (
+    <div className="flex justify-between gap-3 text-[13px] text-black">
+      <span className="text-slate-700">{label}</span>
+      <span className={negrito ? 'font-bold' : 'font-medium'}>{valor}</span>
+    </div>
+  );
 }
 
 export default function ReciboAtendimento({ atendimento, config }) {
-  const reciboRef = useRef(null);
   const { unidadeAtual } = useUnidade();
   const [enviando, setEnviando] = useState(false);
 
-  const itensAprovados = [
-    ...(atendimento.itens_queixa || []).filter(i => i.status_aprovacao === 'aprovado'),
-    ...(atendimento.itens_orcamento || []).filter(i => i.status_aprovacao === 'aprovado'),
-  ];
+  const idsProdutos = useMemo(() => {
+    const itens = [
+      ...(atendimento.itens_queixa || []).filter(i => i.status_aprovacao === 'aprovado'),
+      ...(atendimento.itens_orcamento || []).filter(i => i.status_aprovacao === 'aprovado'),
+    ];
+    return [...new Set(itens.map(i => i.produto_id).filter(Boolean))];
+  }, [atendimento.itens_queixa, atendimento.itens_orcamento]);
 
-  // Deduplicar por produto_id
-  const idsVistos = new Set();
-  const itensSemDuplicata = itensAprovados.filter(i => {
-    if (i.produto_id && idsVistos.has(i.produto_id)) return false;
-    if (i.produto_id) idsVistos.add(i.produto_id);
-    return true;
+  const { data: descricoesProdutos = {} } = useQuery({
+    queryKey: ['descricoes-produtos-comprovante', idsProdutos.join(',')],
+    queryFn: async () => {
+      const { items } = await base44.entities.Produto.filter(
+        { id: { $in: idsProdutos } },
+        { fields: ['nome', 'descricao'] }
+      );
+      return items.reduce((acc, p) => {
+        if (p.descricao) acc[p.id] = p.descricao;
+        return acc;
+      }, {});
+    },
+    enabled: idsProdutos.length > 0,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const temItens = itensSemDuplicata.length > 0;
-
-  const valorFinalPago = atendimento.valor_final_pago ?? atendimento.valor_final ?? 0;
-  const desconto = atendimento.desconto_pagamento ?? atendimento.desconto ?? 0;
-  const formas = atendimento.formas_pagamento_lancamento || [];
-  const formaUnica = atendimento.forma_pagamento_lancamento;
-  const obsCliente = atendimento.obs_externa || '';
-  const obsInterna = atendimento.obs_interna || '';
-
-  // Consolida técnicos de todas as fontes
-  const tecnicosMap = new Map();
-  (atendimento.tecnicos_responsaveis || []).forEach(t => t?.id && tecnicosMap.set(t.id, t.nome));
-  [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])].forEach(item => {
-    (item.tecnicos || []).forEach(t => t?.id && tecnicosMap.set(t.id, t.nome));
-  });
-  if (atendimento.tecnico && tecnicosMap.size === 0) tecnicosMap.set('legado', atendimento.tecnico);
-  const tecnicosResp = Array.from(tecnicosMap.entries()).map(([id, nome]) => ({ id, nome }));
-
-  const dataServico = atendimento.data_pagamento || atendimento.data_entrada || atendimento.created_date;
-  const osNum = atendimento.numero_os ? `OS #${String(atendimento.numero_os).padStart(6, '0')}` : '';
-  const nomeEmpresa = config?.nome_empresa || 'FRAGA AUTO';
-  const logoUrl = config?.logo_url || '';
-
-  // Monta técnicos por item para impressão
-  const getResponsaveisItem = (item) => {
-    const tecs = (item.tecnicos || []).map(t => t.nome).filter(Boolean);
-    return tecs.length > 0 ? tecs.join(', ') : '';
-  };
-
-  const gerarTextoWhatsApp = () => {
-    let texto = `*🧾 COMPROVANTE DE SERVIÇO*\n`;
-    texto += `*${nomeEmpresa}*\n`;
-    if (config?.cnpj) texto += `CNPJ: ${config.cnpj}\n`;
-    if (config?.endereco) texto += `📍 ${config.endereco}\n`;
-    if (config?.telefone) texto += `📞 ${config.telefone}\n`;
-    texto += `\n`;
-
-    if (osNum) texto += `*${osNum}*\n`;
-    texto += `*Data:* ${fmtData(dataServico)}\n\n`;
-
-    texto += `*CLIENTE*\n`;
-    texto += `Nome: ${atendimento.cliente_nome || '-'}\n`;
-    if (atendimento.cliente_telefone) texto += `Telefone: ${atendimento.cliente_telefone}\n`;
-    if (atendimento.cliente_cpf) texto += `CPF/CNPJ: ${atendimento.cliente_cpf}\n`;
-    texto += `\n`;
-
-    texto += `*VEÍCULO*\n`;
-    texto += `Placa: ${atendimento.placa || '-'}\n`;
-    texto += `Modelo: ${atendimento.marca ? `${atendimento.marca} ` : ''}${atendimento.modelo || '-'}${atendimento.ano ? ` (${atendimento.ano})` : ''}\n`;
-    if (atendimento.km_atual) texto += `KM: ${atendimento.km_atual}\n`;
-    texto += `\n`;
-
-    if (temItens) {
-      texto += `*SERVIÇOS / PRODUTOS*\n`;
-      itensSemDuplicata.forEach(item => {
-        const resp = getResponsaveisItem(item);
-        const obsItem = item.observacao_item || '';
-        texto += `• *${item.nome}* (${item.quantidade}x) — ${fmtMoeda(item.valor_total)}\n`;
-        if (resp) texto += `  🔧 Responsável: ${resp}\n`;
-        if (obsItem) texto += `  📝 ${obsItem}\n`;
-      });
-      texto += `\n`;
-    }
-
-    if (desconto > 0) texto += `Desconto: - ${fmtMoeda(desconto)}\n`;
-    texto += `*TOTAL: ${fmtMoeda(valorFinalPago)}*\n`;
-
-    if (formas.length > 0) {
-      texto += `\n*Pagamento:*\n`;
-      formas.forEach(f => {
-        texto += `• ${FORMA_LABEL[f.forma] || f.forma}: ${fmtMoeda(f.valor)}\n`;
-      });
-    } else if (formaUnica) {
-      texto += `\n*Pagamento:* ${FORMA_LABEL[formaUnica] || formaUnica}\n`;
-    }
-
-    if (tecnicosResp.length > 0) texto += `\n*Técnico(s):* ${tecnicosResp.map(t => t.nome).join(', ')}\n`;
-    else if (atendimento.tecnico) texto += `\n*Técnico:* ${atendimento.tecnico}\n`;
-
-    if (obsCliente) texto += `\n📝 *Observações:*\n${obsCliente}\n`;
-    if (obsInterna) texto += `\n🔧 *Obs. Técnica:*\n${obsInterna}\n`;
-
-    texto += `\n✅ Obrigado pela preferência!`;
-    return texto;
-  };
+  const dados = useMemo(
+    () => montarDadosComprovante(atendimento, config, descricoesProdutos),
+    [atendimento, config, descricoesProdutos]
+  );
 
   const handlePrint = () => {
-    const itensHtml = temItens
-      ? `<div class="section-title" style="margin-top:12px">SERVIÇOS / PRODUTOS</div>
-         <table style="width:100%;border-collapse:collapse;font-size:12px">
-           <thead>
-             <tr style="border-bottom:1px solid #ccc">
-               <th style="text-align:left;padding:4px 2px">Descrição</th>
-               <th style="text-align:center;padding:4px 2px">Qtd</th>
-               <th style="text-align:right;padding:4px 2px">Valor</th>
-             </tr>
-           </thead>
-           <tbody>
-             ${itensSemDuplicata.map(i => {
-               const resp = getResponsaveisItem(i);
-               const obsItem = i.observacao_item || '';
-               return `<tr>
-                 <td style="padding:4px 2px;vertical-align:top">
-                   <div style="font-weight:600">${i.nome}</div>
-                   ${resp ? `<div style="font-size:11px;color:#555">🔧 ${resp}</div>` : ''}
-                   ${obsItem ? `<div style="font-size:11px;color:#666;font-style:italic">📝 ${obsItem}</div>` : ''}
-                 </td>
-                 <td style="text-align:center;padding:4px 2px;vertical-align:top">${i.quantidade}x</td>
-                 <td style="text-align:right;padding:4px 2px;vertical-align:top">${fmtMoeda(i.valor_total)}</td>
-               </tr>`;
-             }).join('')}
-           </tbody>
-         </table>`
-      : '';
-
-    const descontoHtml = desconto > 0
-      ? `<div style="display:flex;justify-content:space-between;font-size:13px;color:#16a34a;margin-top:4px"><span>Desconto</span><span>- ${fmtMoeda(desconto)}</span></div>`
-      : '';
-
-    const formasHtml = formas.length > 0
-      ? `<div style="font-weight:bold;font-size:12px;margin-top:8px">Pagamento:</div>
-         ${formas.map(f => `
-           <div style="display:flex;justify-content:space-between;font-size:12px">
-             <span>${FORMA_LABEL[f.forma] || f.forma}</span>
-             <span>${fmtMoeda(f.valor)}</span>
-           </div>`).join('')}`
-      : formaUnica
-        ? `<div style="font-size:12px"><b>Pagamento:</b> ${FORMA_LABEL[formaUnica] || formaUnica}</div>`
-        : '';
-
-    const tecHtml = tecnicosResp.length > 0
-      ? `<div class="divider"></div><div class="row"><span>Técnico(s):</span><span>${tecnicosResp.map(t => t.nome).join(', ')}</span></div>`
-      : atendimento.tecnico
-        ? `<div class="divider"></div><div class="row"><span>Técnico:</span><span>${atendimento.tecnico}</span></div>`
-        : '';
-
-    const obsHtml = (obsCliente || obsInterna)
-      ? `<div class="divider"></div>
-         ${obsCliente ? `<div style="font-size:12px;margin:4px 0"><b>Observações / Garantia:</b><br>${obsCliente}</div>` : ''}
-         ${obsInterna ? `<div style="font-size:12px;margin:4px 0"><b>Obs. Técnica:</b><br>${obsInterna}</div>` : ''}`
-      : '';
-
-    const html = `
-      <html><head><title>Comprovante de Serviço</title>
-      <style>
-        body { font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #1e293b; }
-        h2 { text-align: center; margin: 0 0 4px; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
-        .center { text-align: center; color: #555; font-size: 12px; }
-        .divider { border-top: 1px dashed #ccc; margin: 10px 0; }
-        .section-title { font-weight: bold; font-size: 11px; color: #555; margin: 8px 0 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .row { display: flex; justify-content: space-between; font-size: 13px; margin: 3px 0; }
-        .total { font-weight: bold; font-size: 16px; border-top: 2px solid #1e293b; padding-top: 6px; margin-top: 6px; }
-        .footer { text-align: center; margin-top: 16px; font-size: 12px; color: #888; }
-        .os { text-align:center; font-size: 13px; font-weight:bold; margin-bottom: 4px; }
-      </style></head><body>
-      ${logoUrl ? `<div style="text-align:center;margin-bottom:8px"><img src="${logoUrl}" style="max-height:72px;max-width:200px;object-fit:contain" /></div>` : ''}
-      <h2>${nomeEmpresa}</h2>
-      ${config?.cnpj ? `<div class="center">CNPJ: ${config.cnpj}</div>` : ''}
-      ${config?.endereco ? `<div class="center">${config.endereco}</div>` : ''}
-      ${config?.telefone ? `<div class="center">Tel: ${config.telefone}</div>` : ''}
-      <div class="divider"></div>
-      ${osNum ? `<div class="os">${osNum}</div>` : ''}
-      <div class="row"><span><b>Data:</b></span><span>${fmtData(dataServico)}</span></div>
-      <div class="divider"></div>
-      <div class="section-title">Cliente</div>
-      <div class="row"><span>Nome:</span><span>${atendimento.cliente_nome || '-'}</span></div>
-      ${atendimento.cliente_telefone ? `<div class="row"><span>Telefone:</span><span>${atendimento.cliente_telefone}</span></div>` : ''}
-      ${atendimento.cliente_cpf ? `<div class="row"><span>CPF/CNPJ:</span><span>${atendimento.cliente_cpf}</span></div>` : ''}
-      <div class="divider"></div>
-      <div class="section-title">Veículo</div>
-      <div class="row"><span>Placa:</span><span>${atendimento.placa || '-'}</span></div>
-      <div class="row"><span>Modelo:</span><span>${atendimento.marca ? atendimento.marca + ' ' : ''}${atendimento.modelo || '-'}${atendimento.ano ? ' (' + atendimento.ano + ')' : ''}</span></div>
-      ${atendimento.km_atual ? `<div class="row"><span>KM:</span><span>${atendimento.km_atual}</span></div>` : ''}
-      <div class="divider"></div>
-      ${itensHtml}
-      <div class="divider"></div>
-      ${descontoHtml}
-      <div class="row total"><span>TOTAL</span><span>${fmtMoeda(valorFinalPago)}</span></div>
-      ${formasHtml}
-      ${tecHtml}
-      ${obsHtml}
-      <div class="divider"></div>
-      <div style="margin-top:32px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:32px">
-          <div style="flex:1;text-align:center">
-            <div style="border-top:1px solid #333;padding-top:6px;font-size:12px;color:#555">Assinatura do Cliente</div>
-          </div>
-          <div style="flex:1;text-align:center">
-            <div style="border-top:1px solid #333;padding-top:6px;font-size:12px;color:#555">Responsável pela Empresa</div>
-          </div>
-        </div>
-      </div>
-      <div class="divider"></div>
-      <div class="footer">✅ Obrigado pela preferência!</div>
-      </body></html>
-    `;
-
-    const win = window.open('', '_blank', 'width=560,height=800');
-    win.document.write(html);
+    const win = window.open('', '_blank', 'width=860,height=900');
+    if (!win) {
+      toast.error('Permita pop-ups no navegador para imprimir');
+      return;
+    }
+    win.document.write(gerarHtmlComprovante(dados));
     win.document.close();
-    win.print();
+    win.focus();
+    setTimeout(() => win.print(), 600);
   };
 
-  const gerarMensagemComprovante = () => {
+  const gerarMensagemPersonalizada = () => {
     const tpl = config?.mensagem_comprovante || '';
     if (!tpl) return '';
-    const veiculo = `${atendimento.marca ? atendimento.marca + ' ' : ''}${atendimento.modelo || ''}${atendimento.ano ? ' (' + atendimento.ano + ')' : ''}`.trim() || '-';
-    const valor = fmtMoeda(atendimento.valor_final_pago ?? atendimento.valor_final ?? 0);
-    const numero = atendimento.numero_os ? String(atendimento.numero_os) : '';
     return tpl
       .replace(/\{nome\}/g, atendimento.cliente_nome || '')
-      .replace(/\{veiculo\}/g, veiculo)
-      .replace(/\{numero\}/g, numero)
-      .replace(/\{valor\}/g, valor)
-      .replace(/\{nome_empresa\}/g, nomeEmpresa);
+      .replace(/\{veiculo\}/g, dados.veiculo)
+      .replace(/\{numero\}/g, atendimento.numero_os ? String(atendimento.numero_os) : '')
+      .replace(/\{valor\}/g, fmtMoeda(dados.valorFinal))
+      .replace(/\{nome_empresa\}/g, dados.nomeEmpresa);
   };
 
   const handleWhatsApp = async () => {
     const tel = atendimento.cliente_telefone?.replace(/\D/g, '') || '';
     if (!tel) { toast.error('Cliente sem telefone cadastrado'); return; }
 
-    const mensagemPersonalizada = gerarMensagemComprovante();
-    const comprovante = gerarTextoWhatsApp();
-    const mensagemFinal = mensagemPersonalizada ? `${mensagemPersonalizada}\n\n${comprovante}` : comprovante;
+    const personalizada = gerarMensagemPersonalizada();
+    const comprovante = gerarTextoComprovanteWhatsApp(dados);
+    const mensagemFinal = personalizada ? `${personalizada}\n\n${comprovante}` : comprovante;
 
     const evolutionConfigurado = config?.evolution_api_url && config?.evolution_api_key && config?.evolution_instance;
     if (!evolutionConfigurado) {
@@ -297,145 +126,161 @@ export default function ReciboAtendimento({ atendimento, config }) {
   };
 
   return (
-    <Card className="border-2 border-green-200 bg-green-50" ref={reciboRef}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold text-green-800 flex items-center gap-2">
+    <Card className="border border-slate-200 bg-white shadow-sm">
+      <CardHeader className="pb-3 border-b border-slate-100">
+        <CardTitle className="text-sm font-semibold text-slate-800 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-green-600" />
-          🧾 Comprovante de Serviço
+          Comprovante de Serviço
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 text-xs">
-        {/* Empresa */}
-        <div className="text-center pb-1 border-b border-green-200">
-          {logoUrl && (
-            <img src={logoUrl} alt="Logo" className="h-14 object-contain mx-auto mb-1" />
-          )}
-          <p className="font-bold text-black font-bold text-sm tracking-wide">{nomeEmpresa}</p>
-          {config?.cnpj && <p className="text-black font-medium">CNPJ: {config.cnpj}</p>}
-          {config?.endereco && <p className="text-black font-medium">{config.endereco}</p>}
-          {config?.telefone && <p className="text-black font-medium">Tel: {config.telefone}</p>}
-        </div>
+      <CardContent className="space-y-4">
+        <div className="border border-slate-200 rounded-md p-4 sm:p-5 bg-white text-black">
+          {/* Empresa */}
+          <div className="text-center">
+            {dados.logoUrl && (
+              <img src={dados.logoUrl} alt="Logo" className="h-14 object-contain mx-auto mb-2" />
+            )}
+            <p className="font-bold uppercase tracking-wide text-[15px] text-black">{dados.nomeEmpresa}</p>
+            {dados.cnpj && <p className="text-[11.5px] text-slate-700">CNPJ: {dados.cnpj}</p>}
+            {dados.endereco && <p className="text-[11.5px] text-slate-700">{dados.endereco}</p>}
+            {dados.telefone && <p className="text-[11.5px] text-slate-700">Tel: {dados.telefone}</p>}
+          </div>
 
-        {/* OS + Data */}
-        <div className="space-y-0.5">
-          {osNum && <div className="flex justify-between"><span className="text-black font-medium">Nº OS:</span><span className="font-mono font-bold text-black font-bold">{osNum}</span></div>}
-          <div className="flex justify-between"><span className="text-black font-medium">Data:</span><span className="font-medium text-black font-bold">{fmtData(dataServico)}</span></div>
-        </div>
+          <Divisor />
 
-        <div className="border-t border-green-200" />
+          <div className="space-y-0.5">
+            {dados.osNum && <Linha label="Nº OS:" valor={dados.osNum} negrito />}
+            <Linha label="Data:" valor={dados.data} />
+          </div>
 
-        {/* Cliente */}
-        <div className="space-y-0.5">
-          <p className="font-semibold text-black font-semibold uppercase text-xs">Cliente</p>
-          <div className="flex justify-between"><span className="text-black font-medium">Nome:</span><span className="font-medium text-black font-bold">{atendimento.cliente_nome || '-'}</span></div>
-          {atendimento.cliente_telefone && <div className="flex justify-between"><span className="text-black font-medium">Tel:</span><span className="text-black font-bold">{atendimento.cliente_telefone}</span></div>}
-          {atendimento.cliente_cpf && <div className="flex justify-between"><span className="text-black font-medium">CPF/CNPJ:</span><span className="text-black font-bold">{atendimento.cliente_cpf}</span></div>}
-        </div>
+          <Divisor />
 
-        <div className="border-t border-green-200" />
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <SecaoTitulo>Cliente</SecaoTitulo>
+              <Linha label="Nome:" valor={dados.clienteNome} negrito />
+              {dados.clienteTelefone && <Linha label="Telefone:" valor={dados.clienteTelefone} />}
+              {dados.clienteCpf && <Linha label="CPF/CNPJ:" valor={dados.clienteCpf} />}
+            </div>
+            <div>
+              <SecaoTitulo>Veículo</SecaoTitulo>
+              <Linha label="Placa:" valor={dados.placa} negrito />
+              <Linha label="Modelo:" valor={dados.veiculo} />
+              {dados.km && <Linha label="KM:" valor={dados.km} />}
+            </div>
+          </div>
 
-        {/* Veículo */}
-        <div className="space-y-0.5">
-          <p className="font-semibold text-black font-semibold uppercase text-xs">Veículo</p>
-          <div className="flex justify-between"><span className="text-black font-medium">Placa:</span><span className="font-bold text-black font-bold">{atendimento.placa || '-'}</span></div>
-          <div className="flex justify-between"><span className="text-black font-medium">Modelo:</span><span className="text-black font-bold">{atendimento.marca ? `${atendimento.marca} ` : ''}{atendimento.modelo || '-'}{atendimento.ano ? ` (${atendimento.ano})` : ''}</span></div>
-          {atendimento.km_atual && <div className="flex justify-between"><span className="text-black font-medium">KM:</span><span className="text-black font-bold">{atendimento.km_atual}</span></div>}
-        </div>
-
-        {/* Itens com responsáveis e observações */}
-        {temItens && (
-          <>
-            <div className="border-t border-green-200" />
-            <div className="space-y-2">
-              <p className="font-semibold text-black font-semibold uppercase text-xs">Serviços / Produtos</p>
-              {itensSemDuplicata.map((item, idx) => {
-                const resp = getResponsaveisItem(item);
-                const obsItem = item.observacao_item || '';
-                return (
-                  <div key={idx} className="bg-white rounded border border-green-100 p-1.5 space-y-0.5">
-                    <div className="flex justify-between text-black font-bold font-medium">
-                      <span>{item.nome}{item.quantidade > 1 ? ` (${item.quantidade}x)` : ''}</span>
-                      <span className="ml-2 shrink-0">{fmtMoeda(item.valor_total)}</span>
+          {/* Itens com descrição */}
+          {dados.itens.length > 0 && (
+            <>
+              <Divisor />
+              <SecaoTitulo>Serviços realizados</SecaoTitulo>
+              <div className="space-y-3">
+                {dados.itens.map((item, idx) => (
+                  <div key={idx} className="border-b border-dashed border-slate-200 pb-2.5 last:border-0 last:pb-0">
+                    <div className="flex justify-between gap-3 items-start">
+                      <div className="text-[13px] font-bold text-black">
+                        {item.nome}{item.variacao ? ` — ${item.variacao}` : ''}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-[13px] font-bold text-black">{fmtMoeda(item.valorTotal)}</div>
+                        <div className="text-[10.5px] text-slate-500">
+                          {item.quantidade}x {fmtMoeda(item.valorUnitario)}
+                        </div>
+                      </div>
                     </div>
-                    {resp && (
-                      <div className="text-black font-medium text-xs">🔧 {resp}</div>
+                    {item.descricao && (
+                      <p className="text-[12px] text-slate-700 mt-1 leading-snug">{item.descricao}</p>
                     )}
-                    {obsItem && (
-                      <div className="text-black font-medium text-xs italic">📝 {obsItem}</div>
+                    {item.observacao && (
+                      <p className="text-[11.5px] text-slate-600 mt-0.5 italic">Obs.: {item.observacao}</p>
+                    )}
+                    {item.obsCliente && (
+                      <p className="text-[11.5px] text-slate-600 mt-0.5">Obs. cliente: {item.obsCliente}</p>
+                    )}
+                    {item.tecnicos && (
+                      <p className="text-[11px] text-slate-500 mt-0.5">Técnico: {item.tecnicos}</p>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          </>
-        )}
+                ))}
+              </div>
+            </>
+          )}
 
-        <div className="border-t border-green-200" />
+          <Divisor />
 
-        {/* Desconto + Total */}
-        {desconto > 0 && (
-          <div className="flex justify-between text-green-700">
-            <span>Desconto</span>
-            <span>- {fmtMoeda(desconto)}</span>
+          {/* Totais */}
+          {dados.desconto > 0 && (
+            <>
+              <Linha label="Subtotal" valor={fmtMoeda(dados.subtotalItens)} />
+              <div className="flex justify-between text-[13px] text-green-700">
+                <span>Desconto</span>
+                <span>- {fmtMoeda(dados.desconto)}</span>
+              </div>
+            </>
+          )}
+          <div className="flex justify-between items-center border-t-2 border-black mt-2 pt-2">
+            <span className="text-[13px] font-bold uppercase tracking-wide text-black">Total</span>
+            <span className="text-lg font-bold text-black">{fmtMoeda(dados.valorFinal)}</span>
           </div>
-        )}
-        <div className="flex justify-between font-bold text-sm text-green-800 border-t border-green-300 pt-2">
-          <span>TOTAL</span>
-          <span>{fmtMoeda(valorFinalPago)}</span>
+
+          {dados.formas.length > 0 && (
+            <div className="mt-2">
+              <SecaoTitulo>Forma de pagamento</SecaoTitulo>
+              {dados.formas.map((f, idx) => (
+                <div key={idx} className="flex justify-between text-[12.5px] text-black">
+                  <span>{f.label}</span>
+                  <span>{fmtMoeda(f.valor)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {dados.formas.length === 0 && dados.formaUnica && (
+            <div className="mt-2">
+              <SecaoTitulo>Forma de pagamento</SecaoTitulo>
+              <div className="flex justify-between text-[12.5px] text-black">
+                <span>{dados.formaUnica}</span>
+                <span>{fmtMoeda(dados.valorFinal)}</span>
+              </div>
+            </div>
+          )}
+
+          {dados.tecnicos.length > 0 && (
+            <div className="mt-3 pt-2 border-t border-slate-200">
+              <SecaoTitulo>Técnico(s) responsável(is)</SecaoTitulo>
+              <p className="text-[12.5px] text-black">{dados.tecnicos.join(', ')}</p>
+            </div>
+          )}
+
+          {(dados.obsCliente || dados.obsInterna) && (
+            <div className="mt-3 pt-2 border-t border-slate-200 space-y-1.5">
+              {dados.obsCliente && (
+                <div>
+                  <SecaoTitulo>Observações / Garantia</SecaoTitulo>
+                  <p className="text-[12.5px] text-black">{dados.obsCliente}</p>
+                </div>
+              )}
+              {dados.obsInterna && (
+                <div>
+                  <SecaoTitulo>Observação técnica</SecaoTitulo>
+                  <p className="text-[12.5px] text-black">{dados.obsInterna}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Formas de pagamento */}
-        {formas.length > 0 && (
-          <div className="space-y-1">
-            <p className="font-semibold text-black font-medium">Pagamento:</p>
-            {formas.map((f, idx) => (
-              <div key={idx} className="flex justify-between text-black font-semibold">
-                <Badge variant="outline" className="text-xs py-0 h-5">{FORMA_LABEL[f.forma] || f.forma}</Badge>
-                <span>{fmtMoeda(f.valor)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        {!formas.length && formaUnica && (
-          <div className="flex justify-between text-black font-semibold">
-            <span className="text-black font-medium">Pagamento:</span>
-            <Badge variant="outline" className="text-xs py-0 h-5">{FORMA_LABEL[formaUnica] || formaUnica}</Badge>
-          </div>
-        )}
-
-        {/* Técnico(s) */}
-        {tecnicosResp.length > 0 && (
-          <div className="flex justify-between text-black font-semibold">
-            <span className="text-black font-medium">Técnico(s):</span>
-            <span className="text-right">{tecnicosResp.map(t => t.nome).join(', ')}</span>
-          </div>
-        )}
-        {!tecnicosResp.length && atendimento.tecnico && (
-          <div className="flex justify-between text-black font-semibold">
-            <span className="text-black font-medium">Técnico:</span>
-            <span>{atendimento.tecnico}</span>
-          </div>
-        )}
-
-        {/* Observações */}
-        {obsCliente && (
-          <div className="p-2 bg-white border border-green-200 rounded text-black font-semibold">
-            <span className="font-semibold">Obs / Garantia: </span>{obsCliente}
-          </div>
-        )}
-        {obsInterna && (
-          <div className="p-2 bg-white border border-green-200 rounded text-black font-semibold">
-            <span className="font-semibold">Obs. Técnica: </span>{obsInterna}
-          </div>
-        )}
-
-        {/* Botões */}
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handlePrint} className="flex-1 border-slate-300">
-            <Printer className="w-3 h-3 mr-1" /> Imprimir
+            <Printer className="w-3.5 h-3.5 mr-1.5" /> Imprimir
           </Button>
-          <Button size="sm" onClick={handleWhatsApp} disabled={enviando} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-            {enviando ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <MessageCircle className="w-3 h-3 mr-1" />}
+          <Button
+            size="sm"
+            onClick={handleWhatsApp}
+            disabled={enviando}
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+          >
+            {enviando ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5 mr-1.5" />}
             {enviando ? 'Enviando...' : 'WhatsApp'}
           </Button>
         </div>
