@@ -52,6 +52,45 @@
     "ativa": {
       "type": "boolean",
       "default": true
+    },
+    "lembrete_ativo": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se verdadeiro, o sistema exibe um popup de lembrete nos dias e hor\u00e1rio configurados"
+    },
+    "lembrete_mensagem": {
+      "type": "string",
+      "description": "Mensagem exibida no popup do lembrete"
+    },
+    "lembrete_horario": {
+      "type": "string",
+      "description": "Hor\u00e1rio em que o popup aparece (HH:MM)"
+    },
+    "lembrete_tipo": {
+      "type": "string",
+      "enum": [
+        "unico",
+        "recorrente"
+      ],
+      "enumColors": [
+        "blue",
+        "purple"
+      ],
+      "default": "unico",
+      "description": "unico = aparece uma \u00fanica vez na data informada; recorrente = repete nos dias da semana selecionados"
+    },
+    "lembrete_data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do lembrete pontual (YYYY-MM-DD)"
+    },
+    "lembrete_dias": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": [],
+      "description": "Dias da semana do lembrete recorrente (0=Dom..6=S\u00e1b)"
     }
   },
   "required": [

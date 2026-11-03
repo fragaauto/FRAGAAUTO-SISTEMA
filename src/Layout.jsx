@@ -30,6 +30,7 @@ import AguardandoAprovacao from '@/components/AguardandoAprovacao';
 import AcessoForaHorario from '@/components/AcessoForaHorario';
 import SeletorUnidade from '@/components/SeletorUnidade';
 import BotaoConsultaFlutuante from '@/components/consulta/BotaoConsultaFlutuante';
+import LembreteRotinaPopup from '@/components/rotina/LembreteRotinaPopup';
 
 // Todos os itens de navegação com módulo associado
 const NAV_ITEMS = [
@@ -209,6 +210,7 @@ export default function Layout({ children, currentPageName }) {
       <div className="min-h-screen">
         {children}
         <BotaoConsultaFlutuante />
+        {!isPaginaPublica && <LembreteRotinaPopup />}
       </div>
     );
   }
@@ -294,6 +296,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Botão flutuante de consultas rápidas */}
       <BotaoConsultaFlutuante />
+      <LembreteRotinaPopup />
 
     </div>
   );

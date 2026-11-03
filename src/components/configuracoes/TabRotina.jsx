@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, ExternalLink, X, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, ExternalLink, X, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import ConfigLembreteRotina from '@/components/rotina/ConfigLembreteRotina';
 
 const DIAS = [
   { idx: 1, label: 'Seg' },
@@ -30,6 +31,12 @@ const FORM_EMPTY = {
   links: [],
   ordem: 0,
   ativa: true,
+  lembrete_ativo: false,
+  lembrete_mensagem: '',
+  lembrete_horario: '',
+  lembrete_tipo: 'unico',
+  lembrete_data: '',
+  lembrete_dias: [],
 };
 
 export default function TabRotina() {
@@ -76,6 +83,12 @@ export default function TabRotina() {
     if (!form.titulo.trim()) return toast.error('Informe o título');
     if (!form.funcao_id) return toast.error('Selecione a função');
     if (!form.dias_semana.length) return toast.error('Selecione ao menos um dia');
+    if (form.lembrete_ativo) {
+      if (!form.lembrete_mensagem?.trim()) return toast.error('Informe a mensagem do lembrete');
+      if (!form.lembrete_horario) return toast.error('Informe o horário do lembrete');
+      if (form.lembrete_tipo === 'unico' && !form.lembrete_data) return toast.error('Informe a data do lembrete');
+      if (form.lembrete_tipo === 'recorrente' && !(form.lembrete_dias || []).length) return toast.error('Selecione os dias do lembrete');
+    }
     const funcao = funcoes.find(f => f.id === form.funcao_id);
     const payload = { ...form, funcao_nome: funcao?.nome || '' };
     if (editing) updateMutation.mutate({ id: editing.id, data: payload });
@@ -163,6 +176,17 @@ export default function TabRotina() {
                             >{d.label}</span>
                           ))}
                         </div>
+                        {t.lembrete_ativo && (
+                          <div className="flex items-center gap-1 mt-1.5 text-[10px] font-medium text-purple-600">
+                            <Bell className="w-3 h-3" />
+                            {t.lembrete_horario}
+                            <span className="text-purple-400">
+                              {t.lembrete_tipo === 'unico'
+                                ? `· ${(t.lembrete_data || '').split('-').reverse().join('/')}`
+                                : `· ${DIAS.filter(d => (t.lembrete_dias || []).includes(d.idx)).map(d => d.label).join(', ')}`}
+                            </span>
+                          </div>
+                        )}
                         {t.links?.length > 0 && (
                           <div className="flex gap-1 mt-1.5 flex-wrap">
                             {t.links.map((l, i) => (
@@ -290,6 +314,9 @@ export default function TabRotina() {
                 </Button>
               </div>
             </div>
+
+            {/* Lembrete em popup */}
+            <ConfigLembreteRotina form={form} setForm={setForm} />
 
             {/* Ordem + Ativa */}
             <div className="flex gap-3">
