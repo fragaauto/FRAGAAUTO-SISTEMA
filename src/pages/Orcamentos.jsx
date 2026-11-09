@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, FileText, Loader2, Trash2, Printer, CheckCircle2, XCircle, ClipboardList, Send } from 'lucide-react';
+import { Plus, Search, FileText, Loader2, Trash2, Printer, CheckCircle2, XCircle, ClipboardList, Send, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from "sonner";
@@ -66,6 +66,39 @@ export default function Orcamentos() {
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }) => base44.entities.OrcamentoAvulso.update(id, { status }),
     onSuccess: () => qc.invalidateQueries(['orcamentos_avulsos']),
+  });
+
+  const duplicarMutation = useMutation({
+    mutationFn: async (orcamento) => {
+      const user = await base44.auth.me();
+      const todos = await base44.entities.OrcamentoAvulso.list('-numero', 1);
+      const numero = (todos[0]?.numero || 0) + 1;
+
+      return base44.entities.OrcamentoAvulso.create({
+        unidade_id: orcamento.unidade_id || unidadeAtual?.id || null,
+        numero,
+        cliente_nome: orcamento.cliente_nome || '',
+        cliente_telefone: orcamento.cliente_telefone || '',
+        cliente_cpf: orcamento.cliente_cpf || '',
+        veiculo_placa: orcamento.veiculo_placa || '',
+        veiculo_modelo: orcamento.veiculo_modelo || '',
+        veiculo_ano: orcamento.veiculo_ano || '',
+        veiculo_km: orcamento.veiculo_km || '',
+        itens: (orcamento.itens || []).map(i => ({ ...i })),
+        subtotal: orcamento.subtotal || 0,
+        desconto: orcamento.desconto || 0,
+        total: orcamento.total || 0,
+        observacoes: orcamento.observacoes || '',
+        validade_dias: orcamento.validade_dias || 7,
+        status: 'pendente',
+        usuario_nome: user?.full_name || user?.email || '',
+      });
+    },
+    onSuccess: (novo) => {
+      qc.invalidateQueries(['orcamentos_avulsos']);
+      toast.success(`Orçamento duplicado (ORC #${String(novo.numero).padStart(4, '0')})`);
+    },
+    onError: () => toast.error('Erro ao duplicar orçamento'),
   });
 
   const converterEmOS = async (orcamento) => {
@@ -212,6 +245,15 @@ export default function Orcamentos() {
                           </Button>
                           <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setPrintOrcamento(o)}>
                             <Printer className="w-3 h-3" /> Imprimir
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1 border-slate-200"
+                            disabled={duplicarMutation.isPending}
+                            onClick={() => duplicarMutation.mutate(o)}
+                          >
+                            <Copy className="w-3 h-3" /> Duplicar
                           </Button>
                           {o.status === 'pendente' && (
                             <>
