@@ -54,6 +54,31 @@
         }
       }
     },
+    "fotos": {
+      "type": "array",
+      "description": "Fotos anexadas ao or\u00e7amento. A primeira \u00e9 enviada junto da mensagem no WhatsApp.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL p\u00fablica da foto"
+          },
+          "descricao": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o ou nome do arquivo"
+          },
+          "data_upload": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usuario": {
+            "type": "string"
+          }
+        }
+      },
+      "default": []
+    },
     "desconto": {
       "type": "number",
       "default": 0

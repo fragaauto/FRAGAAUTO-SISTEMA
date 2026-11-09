@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Trash2, Search, UserPlus, CheckCircle2 } from 'lucide-react';
 import { toast } from "sonner";
 import { filtrarProdutos } from '@/lib/produtoSearch';
+import FotosOrcamentoAvulso from '@/components/orcamentos/FotosOrcamentoAvulso';
 
 export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose, onSaved }) {
   const isEdit = !!orcamento;
@@ -27,6 +28,7 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
   });
 
   const [itens, setItens] = useState(orcamento?.itens || []);
+  const [fotos, setFotos] = useState(orcamento?.fotos || []);
   const [busca, setBusca] = useState('');
   const [buscaCliente, setBuscaCliente] = useState('');
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
@@ -146,6 +148,7 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
         subtotal,
         total,
         itens: itens.map(({ _produto_id, ...rest }) => rest),
+        fotos,
         unidade_id: unidadeAtual?.id || null,
         usuario_nome: user?.full_name || '',
         status: orcamento?.status || 'pendente',
@@ -342,6 +345,9 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
               </div>
             ))}
           </div>
+
+          {/* Fotos */}
+          <FotosOrcamentoAvulso fotos={fotos} onChange={setFotos} />
 
           {/* Totais e condições */}
           <div className="border-t pt-3 grid grid-cols-2 gap-3">

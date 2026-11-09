@@ -69,6 +69,8 @@ export default function OrcamentoMensagemModal({ orc, config, onClose, formatoSi
   const [editando, setEditando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState(null);
+  const fotos = orc?.fotos || [];
+  const [fotoSelecionada, setFotoSelecionada] = useState(fotos.length > 0 ? 0 : -1);
 
   const evolutionConfigurado = config?.evolution_api_url && config?.evolution_api_key && config?.evolution_instance;
 
@@ -83,16 +85,18 @@ export default function OrcamentoMensagemModal({ orc, config, onClose, formatoSi
     if (!tel) { toast.error('Telefone inválido'); return; }
     setEnviando(true);
     setResultado(null);
+    const foto = fotoSelecionada >= 0 ? fotos[fotoSelecionada] : null;
     try {
       const res = await base44.functions.invoke('enviarMensagemWhatsApp', {
         telefone: tel,
         mensagem,
         unidade_id: unidadeAtual?.id || null,
+        ...(foto?.url ? { midiaUrl: foto.url, midiaTipo: 'image' } : {}),
       });
       if (res.data?.ok) {
         setResultado({ ok: true });
         await base44.entities.OrcamentoAvulso.update(orc.id, { ultimo_envio_whatsapp: new Date().toISOString() });
-        toast.success('Mensagem enviada com sucesso!');
+        toast.success(foto ? 'Mensagem e foto enviadas!' : 'Mensagem enviada com sucesso!');
         setTimeout(() => onClose(), 1500);
       } else {
         const errMsg = res.data?.error || 'Erro ao enviar mensagem.';
@@ -151,6 +155,34 @@ export default function OrcamentoMensagemModal({ orc, config, onClose, formatoSi
               <p className={`text-sm font-medium ${resultado.ok ? 'text-green-700' : resultado.semWhatsapp ? 'text-yellow-700' : 'text-red-700'}`}>
                 {resultado.ok ? 'Mensagem enviada com sucesso!' : resultado.erro}
               </p>
+            </div>
+          )}
+
+          {fotos.length > 0 && (
+            <div>
+              <Label className="mb-2 block">Foto que vai junto com o orçamento</Label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFotoSelecionada(-1)}
+                  className={`h-16 w-16 rounded-lg border-2 text-[10px] font-semibold flex items-center justify-center ${fotoSelecionada === -1 ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-slate-200 text-slate-400'}`}
+                >
+                  Sem foto
+                </button>
+                {fotos.map((f, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setFotoSelecionada(i)}
+                    className={`rounded-lg overflow-hidden border-2 ${fotoSelecionada === i ? 'border-blue-500' : 'border-transparent'}`}
+                  >
+                    <img src={f.url} alt={f.descricao || `Foto ${i + 1}`} className="h-16 w-16 object-cover" />
+                  </button>
+                ))}
+              </div>
+              {!evolutionConfigurado && (
+                <p className="text-xs text-amber-600 mt-1">Com o link manual do WhatsApp a foto não é anexada automaticamente.</p>
+              )}
             </div>
           )}
 

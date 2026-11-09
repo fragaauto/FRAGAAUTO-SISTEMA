@@ -85,6 +85,7 @@ export default function Orcamentos() {
         veiculo_ano: orcamento.veiculo_ano || '',
         veiculo_km: orcamento.veiculo_km || '',
         itens: (orcamento.itens || []).map(i => ({ ...i })),
+        fotos: (orcamento.fotos || []).map(f => ({ ...f })),
         subtotal: orcamento.subtotal || 0,
         desconto: orcamento.desconto || 0,
         total: orcamento.total || 0,
