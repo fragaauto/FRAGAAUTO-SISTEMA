@@ -10,6 +10,7 @@ export default function RetornoServicoCard({
   onToggle,
   atendimentos,
   origem,
+  carregando = false,
   servicosGarantia = [],
   onSelectOrigem,
   onToggleServico,
@@ -88,7 +89,11 @@ export default function RetornoServicoCard({
               </div>
             )}
 
-            {origem && itensOrigem.length === 0 && (
+            {origem && carregando && itensOrigem.length === 0 && (
+              <p className="text-xs text-slate-500">Carregando serviços da OS de origem...</p>
+            )}
+
+            {origem && !carregando && itensOrigem.length === 0 && (
               <p className="text-xs text-slate-500">A OS de origem não possui serviços cadastrados.</p>
             )}
           </div>

@@ -7,6 +7,7 @@ export const ATENDIMENTOS_LIST_FIELDS = [
   'status', 'status_pagamento', 'valor_final', 'valor_final_pago',
   'data_pagamento', 'unidade_id', 'tecnicos_responsaveis', 'tecnico',
   'retorno_servico', 'atendimento_origem_numero',
+  'execucao_encomenda', 'encomenda_origem_numero',
 ];
 const UNIDADE_LEGADA = '69ea76b72f920804f5d68eab';
 

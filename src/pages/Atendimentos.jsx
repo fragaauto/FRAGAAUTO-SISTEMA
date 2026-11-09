@@ -25,6 +25,7 @@ import {
   Printer,
   MessageCircle,
   CheckCircle2,
+  Package,
   Undo2 } from
 'lucide-react';
 import {
@@ -585,6 +586,12 @@ export default function Atendimentos() {
                               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white whitespace-nowrap">
                                 <Undo2 className="w-3 h-3" />
                                 RETORNO{atendimento.atendimento_origem_numero ? ` · OS #${String(atendimento.atendimento_origem_numero).padStart(6, '0')}` : ''}
+                              </span>
+                              }
+                            {atendimento.execucao_encomenda &&
+                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-700 text-white whitespace-nowrap">
+                                <Package className="w-3 h-3" />
+                                ENCOMENDA{atendimento.encomenda_origem_numero ? ` · OS #${String(atendimento.encomenda_origem_numero).padStart(6, '0')}` : ''}
                               </span>
                               }
                             {pago &&

@@ -394,6 +394,15 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
             });
           });
         });
+        Object.entries(acumPorTecnico).forEach(([nome, dados]) => {
+          if (!tecnicos[nome]) {
+            tecnicos[nome] = { nome, qtdAtendimentos: 0, valorBrutoTotal: 0, valorLiquidoTotal: 0, atendimentosConcluidos: 0, servicos: [] };
+          }
+          tecnicos[nome].valorBrutoTotal += dados.valorBruto;
+          tecnicos[nome].valorLiquidoTotal += dados.valorBruto * fatorLiquido;
+          tecnicos[nome].servicos.push(...dados.servicos);
+        });
+        return;
       }
 
       if (itensComSource.length === 0) {

@@ -334,7 +334,7 @@ export default function NovoAtendimento() {
   });
 
   const origemAtendimento = formData.atendimento_origem_id
-    ? atendimentosRetorno.find(a => a.id === formData.atendimento_origem_id) || origemCompleto || null
+    ? origemCompleto || atendimentosRetorno.find(a => a.id === formData.atendimento_origem_id) || null
     : null;
 
   // OS de origem da execução de encomenda (peça encomendada em uma OS anterior)
@@ -823,6 +823,7 @@ export default function NovoAtendimento() {
                 }}
                 atendimentos={atendimentosRetorno}
                 origem={origemAtendimento}
+                carregando={!!formData.atendimento_origem_id && !origemCompleto}
                 servicosGarantia={formData.servicos_garantia}
                 onToggleServico={handleToggleServicoGarantia}
                 onSelectOrigem={(a) => {

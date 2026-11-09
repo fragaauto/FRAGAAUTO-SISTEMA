@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import {
   DollarSign, Plus, Trash2, CheckCircle2, AlertTriangle, Loader2,
   CreditCard, Banknote, Smartphone, Building2, FileText, Receipt, RotateCcw, Lock,
-  Wrench, X
+  Wrench, X, Package
 } from 'lucide-react';
 import ReciboAtendimento from './ReciboAtendimento';
 import { baixarEstoque, estornarEstoque } from '@/lib/estoqueComposto';
@@ -329,6 +329,9 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       }
 
       const isFaturado = pagamentos.some(p => p.forma === 'faturado');
+      // OS de execução de encomenda: a peça já foi cobrada na OS de origem,
+      // portanto não gera receita no financeiro — apenas produção para o técnico.
+      const somenteProducao = !!atendimento.execucao_encomenda;
       // Faturado = pendente de recebimento, não considerado pago ainda
       const statusPag = isFaturado ? 'faturado' : 'pago';
       const custoExterno = parseFloat(custoPecasExternas) || 0;
@@ -373,7 +376,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       // Faturado NÃO entra no fluxo de caixa — vai apenas para Contas a Receber
       for (let i = 0; i < pagamentos.length; i++) {
         const pag = pagamentos[i];
-        if (pag.forma === 'faturado') continue;
+        if (pag.forma === 'faturado' || somenteProducao) continue;
         const valorBruto = parseFloat(pag.valor) || 0;
         let taxa = getTaxaForma(pag.forma);
         if (pag.forma === 'cartao_credito' && parcelasSelecionadas[i] > 1) {
@@ -406,7 +409,7 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       }
 
       // Conta a receber se faturado — lançado como "A Receber" no financeiro
-      if (isFaturado) {
+      if (isFaturado && !somenteProducao) {
         await base44.entities.ContaReceber.create({
           unidade_id: atendimento.unidade_id,
           cliente_id: atendimento.cliente_id,
@@ -937,6 +940,16 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
       {/* Recibo — aparece apenas após lançado */}
       {jaLancado && (
         <ReciboAtendimento atendimento={atendimento} config={config} />
+      )}
+
+      {atendimento.execucao_encomenda && (
+        <div className="flex items-start gap-2 rounded-xl border-2 border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800">
+          <Package className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <p>
+            <strong>Execução de encomenda:</strong> não gera lançamento no financeiro. Ao finalizar, apenas a produção
+            do técnico (valor das peças menos o custo) entra no relatório de técnicos.
+          </p>
+        </div>
       )}
 
       {/* Botão Lançar no Caixa */}
