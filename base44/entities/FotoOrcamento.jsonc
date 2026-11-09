@@ -1,0 +1,79 @@
+{
+  "name": "FotoOrcamento",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade do atendimento"
+    },
+    "atendimento_id": {
+      "type": "string",
+      "description": "ID do atendimento (OS) ao qual a foto do or\u00e7amento pertence"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL p\u00fablica da foto anexada ao or\u00e7amento"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o ou nome do arquivo"
+    },
+    "usuario": {
+      "type": "string",
+      "description": "Usu\u00e1rio que anexou a foto"
+    }
+  },
+  "required": [
+    "atendimento_id",
+    "url"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": {
+        "$exists": true
+      }
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    }
+  }
+}

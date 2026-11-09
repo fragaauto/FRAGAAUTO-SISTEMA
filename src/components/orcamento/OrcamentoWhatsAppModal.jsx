@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Copy, CheckCheck } from 'lucide-react';
+import { MessageCircle, Copy, CheckCheck, Loader2, Image as ImageIcon, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 function gerarTextoOrcamento(atendimento, config) {
@@ -155,8 +157,43 @@ function gerarTextoOrcamento(atendimento, config) {
 
 export default function OrcamentoWhatsAppModal({ atendimento, config, onClose }) {
   const [copiado, setCopiado] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [fotoSelecionadaId, setFotoSelecionadaId] = useState(null);
 
   const texto = useMemo(() => gerarTextoOrcamento(atendimento, config), [atendimento, config]);
+
+  const { data: fotos = [] } = useQuery({
+    queryKey: ['fotos_orcamento', atendimento?.id],
+    queryFn: () => base44.entities.FotoOrcamento.filter({ atendimento_id: atendimento.id }),
+    enabled: !!atendimento?.id,
+  });
+
+  const foto = fotos.find(f => f.id === fotoSelecionadaId) || fotos[0] || null;
+
+  const enviarComFoto = async () => {
+    if (!foto) return;
+    if (!(atendimento.cliente_telefone || '').replace(/\D/g, '')) {
+      toast.error('Cliente sem telefone cadastrado');
+      return;
+    }
+    setEnviando(true);
+    try {
+      const res = await base44.functions.invoke('enviarMensagemWhatsApp', {
+        telefone: atendimento.cliente_telefone,
+        mensagem: texto,
+        midiaUrl: foto.url,
+        midiaTipo: 'imagem',
+        unidade_id: atendimento.unidade_id,
+      });
+      if (res?.data?.ok === false) throw new Error(res.data.error || 'Falha no envio');
+      toast.success('Orçamento enviado com a foto!');
+      onClose?.();
+    } catch (err) {
+      toast.error(err?.message || 'Não foi possível enviar pelo WhatsApp');
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   const copiar = () => {
     navigator.clipboard.writeText(texto);
@@ -183,7 +220,30 @@ export default function OrcamentoWhatsAppModal({ atendimento, config, onClose })
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto space-y-3">
+          {fotos.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-green-600" />
+                Foto que vai junto com o orçamento (como legenda)
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {fotos.map(f => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setFotoSelecionadaId(f.id)}
+                    className={`shrink-0 rounded-lg border-2 overflow-hidden transition-all ${
+                      foto?.id === f.id ? 'border-green-600 ring-2 ring-green-200' : 'border-slate-200 hover:border-green-300'
+                    }`}
+                  >
+                    <img src={f.url} alt={f.descricao || 'Foto do orçamento'} className="h-16 w-20 object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <pre className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-700 whitespace-pre-wrap font-mono leading-relaxed">
             {texto}
           </pre>
@@ -202,6 +262,21 @@ export default function OrcamentoWhatsAppModal({ atendimento, config, onClose })
             Abrir WhatsApp
           </Button>
         </div>
+
+        {foto && (
+          <Button
+            onClick={enviarComFoto}
+            disabled={enviando}
+            className="w-full bg-green-700 hover:bg-green-800 flex-shrink-0"
+          >
+            {enviando ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
+            {enviando ? 'Enviando...' : 'Enviar foto + orçamento pelo WhatsApp'}
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   );

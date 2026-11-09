@@ -54,6 +54,7 @@ import ItemOrcamento from '../components/orcamento/ItemOrcamento';
 import ItemOrcamentoComEncomenda from '../components/orcamento/ItemOrcamentoComEncomenda';
 import SeletorVariacao from '../components/produtos/SeletorVariacao';
 import OrcamentoWhatsAppModal from '../components/orcamento/OrcamentoWhatsAppModal';
+import FotosOrcamento from '../components/orcamento/FotosOrcamento';
 import TransferirUnidadeModal from '../components/atendimento/TransferirUnidadeModal';
 import CardRetornoProducao from '../components/atendimento/CardRetornoProducao';
 import TransferirChecklistModal from '../components/atendimento/TransferirChecklistModal';
@@ -1475,6 +1476,11 @@ export default function VerAtendimento() {
                 Enviar por WhatsApp
               </Button>
             </div>
+            <FotosOrcamento
+              atendimentoId={atendimento.id}
+              unidadeId={atendimento.unidade_id}
+              readOnly={pagamentoLancado}
+            />
             <AdicionarItemOrcamento
               atendimento={atendimento}
               produtos={produtos}
