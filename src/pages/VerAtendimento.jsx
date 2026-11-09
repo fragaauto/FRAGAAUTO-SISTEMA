@@ -55,6 +55,7 @@ import ItemOrcamentoComEncomenda from '../components/orcamento/ItemOrcamentoComE
 import SeletorVariacao from '../components/produtos/SeletorVariacao';
 import OrcamentoWhatsAppModal from '../components/orcamento/OrcamentoWhatsAppModal';
 import FotosOrcamento from '../components/orcamento/FotosOrcamento';
+import DuplicarOrcamentoButton from '../components/orcamento/DuplicarOrcamentoButton';
 import TransferirUnidadeModal from '../components/atendimento/TransferirUnidadeModal';
 import CardRetornoProducao from '../components/atendimento/CardRetornoProducao';
 import TransferirChecklistModal from '../components/atendimento/TransferirChecklistModal';
@@ -1462,7 +1463,8 @@ export default function VerAtendimento() {
           </TabsContent>}
 
           {podeVerOrcamento && <TabsContent value="orcamento" className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2 flex-wrap">
+              <DuplicarOrcamentoButton atendimento={atendimento} usuarioNome={user?.full_name || user?.email} />
               <Button
                 variant="outline"
                 size="sm"
