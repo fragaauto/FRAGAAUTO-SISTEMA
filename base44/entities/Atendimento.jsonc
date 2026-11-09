@@ -74,6 +74,75 @@
       },
       "default": []
     },
+    "execucao_encomenda": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se true, este atendimento \u00e9 a execu\u00e7\u00e3o/instala\u00e7\u00e3o de pe\u00e7a(s) encomendada(s) em uma OS anterior. O t\u00e9cnico recebe o valor da pe\u00e7a j\u00e1 descontado o custo informado na OS de origem."
+    },
+    "encomenda_origem_id": {
+      "type": "string",
+      "description": "ID da OS anterior onde a pe\u00e7a foi encomendada"
+    },
+    "encomenda_origem_numero": {
+      "type": "number",
+      "description": "N\u00famero da OS anterior onde a pe\u00e7a foi encomendada"
+    },
+    "itens_encomenda": {
+      "type": "array",
+      "description": "Pe\u00e7as encomendadas na OS de origem que ser\u00e3o instaladas nesta OS. A produ\u00e7\u00e3o do t\u00e9cnico considera valor_total - custo.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Chave do item na OS de origem (ex: queixa-0, orcamento-2)"
+          },
+          "produto_id": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "valor_total": {
+            "type": "number",
+            "description": "Valor de venda da pe\u00e7a na OS de origem"
+          },
+          "custo": {
+            "type": "number",
+            "description": "Custo da pe\u00e7a informado na OS de origem (descontado da produ\u00e7\u00e3o)"
+          },
+          "item_origem": {
+            "type": "string",
+            "description": "Origem do item na OS de origem: queixa ou orcamento"
+          },
+          "item_index": {
+            "type": "number"
+          },
+          "atendimento_origem_id": {
+            "type": "string"
+          },
+          "atendimento_origem_numero": {
+            "type": "number"
+          },
+          "tecnicos": {
+            "type": "array",
+            "description": "T\u00e9cnicos que fizeram a encomenda originalmente",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "nome": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "default": []
+    },
     "cliente_id": {
       "type": "string",
       "description": "ID do cliente"

@@ -364,6 +364,38 @@ export default function RelatorioTecnicos({ atendimentos = [], config = {}, labe
         return;
       }
 
+      // Execução de encomenda: o técnico que instala a peça encomendada em uma OS anterior
+      // recebe o valor da peça já descontado o custo informado na OS de origem.
+      if (a.execucao_encomenda) {
+        (a.itens_encomenda || []).filter(it => it.nome).forEach(it => {
+          const valorPeca = Number(it.valor_total) || 0;
+          const custoPeca = Number(it.custo) || 0;
+          const liquido = valorPeca - custoPeca;
+          const techs = tecnicosResponsaveis;
+          if (techs.length === 0) return;
+          const valorPorTec = (liquido * razaoPagamento) / techs.length;
+          techs.forEach(tec => {
+            garantirTecnico(tec.nome);
+            acumPorTecnico[tec.nome].valorBruto += valorPorTec;
+            acumPorTecnico[tec.nome].servicos.push({
+              atendimentoId: a.id,
+              numeroOS: a.numero_os,
+              placa: a.placa,
+              cliente: a.cliente_nome,
+              servico: `📦 Execução de encomenda — ${it.nome} (OS origem #${it.atendimento_origem_numero || '?'})`,
+              quantidade: 1,
+              valorTotal: liquido * razaoPagamento,
+              valorTecnico: valorPorTec,
+              data: a.data_entrada || a.created_date,
+              dataExecucao: a.data_entrada || a.created_date,
+              isEncomenda: true,
+              tecnicoId: tec.id || tec.nome,
+              tecnicoNome: tec.nome,
+            });
+          });
+        });
+      }
+
       if (itensComSource.length === 0) {
         // Sem itens: atribui o valor_final dividido entre técnicos responsáveis (limitado ao que foi pago)
         const valorPorTec = (valorBrutoAtendimento * razaoPagamento) / tecnicosResponsaveis.length;

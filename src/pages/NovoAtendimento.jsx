@@ -49,6 +49,7 @@ import ModalCadastrarCliente from '../components/atendimento/ModalCadastrarClien
 import { filtrarClientes } from '@/lib/clienteSearch';
 import ChecklistAssistente from '../components/checklist/ChecklistAssistente';
 import RetornoServicoCard from '../components/atendimento/RetornoServicoCard';
+import ExecucaoEncomendaCard from '../components/atendimento/ExecucaoEncomendaCard';
 import SeletorVariacao from '../components/produtos/SeletorVariacao';
 import { useUnidade } from '@/lib/UnidadeContext';
 
@@ -79,6 +80,10 @@ export default function NovoAtendimento() {
     atendimento_origem_id: '',
     atendimento_origem_numero: '',
     servicos_garantia: [],
+    execucao_encomenda: false,
+    encomenda_origem_id: '',
+    encomenda_origem_numero: '',
+    itens_encomenda: [],
     cliente_nome: '',
     cliente_telefone: '',
     placa: '',
@@ -157,7 +162,7 @@ export default function NovoAtendimento() {
     queryFn: async () => {
       const page = await base44.entities.Atendimento.filter(
         { retorno_servico: { $ne: true } },
-        { sort: '-numero_os', limit: 200, fields: ['numero_os', 'placa', 'cliente_nome', 'modelo', 'marca'] }
+        { sort: '-numero_os', limit: 200, fields: ['numero_os', 'placa', 'cliente_nome', 'cliente_telefone', 'cliente_cpf', 'cliente_endereco', 'modelo', 'marca', 'ano'] }
       );
       return page.items;
     },
@@ -320,10 +325,6 @@ export default function NovoAtendimento() {
     toast.success(`Cliente ${cliente.nome} selecionado`);
   };
 
-  const origemAtendimento = formData.atendimento_origem_id
-    ? atendimentosRetorno.find(a => a.id === formData.atendimento_origem_id) || origemCompleto || null
-    : null;
-
   // Busca a OS de origem completa (com itens) apenas quando um retorno é vinculado
   const { data: origemCompleto = null } = useQuery({
     queryKey: ['atendimento-origem', formData.atendimento_origem_id],
@@ -331,6 +332,43 @@ export default function NovoAtendimento() {
     enabled: !!formData.atendimento_origem_id,
     staleTime: 2 * 60 * 1000,
   });
+
+  const origemAtendimento = formData.atendimento_origem_id
+    ? atendimentosRetorno.find(a => a.id === formData.atendimento_origem_id) || origemCompleto || null
+    : null;
+
+  // OS de origem da execução de encomenda (peça encomendada em uma OS anterior)
+  const { data: origemEncomenda = null } = useQuery({
+    queryKey: ['atendimento-origem-encomenda', formData.encomenda_origem_id],
+    queryFn: () => base44.entities.Atendimento.get(formData.encomenda_origem_id),
+    enabled: !!formData.encomenda_origem_id,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const handleToggleItemEncomenda = (it, checked) => {
+    setFormData(prev => {
+      const key = it._key;
+      const existe = (prev.itens_encomenda || []).some(i => i.key === key);
+      if (checked && !existe) {
+        return { ...prev, itens_encomenda: [...prev.itens_encomenda, {
+          key,
+          produto_id: it.produto_id || '',
+          nome: it.nome,
+          valor_total: Number(it.valor_total) || 0,
+          custo: Number(it.custo) || 0,
+          item_origem: it._source,
+          item_index: it._index,
+          atendimento_origem_id: prev.encomenda_origem_id || '',
+          atendimento_origem_numero: prev.encomenda_origem_numero || null,
+          tecnicos: it.tecnicos || [],
+        }] };
+      }
+      if (!checked && existe) {
+        return { ...prev, itens_encomenda: prev.itens_encomenda.filter(i => i.key !== key) };
+      }
+      return prev;
+    });
+  };
 
   const handleToggleServicoGarantia = (it, checked) => {
     setFormData(prev => {
@@ -512,6 +550,10 @@ export default function NovoAtendimento() {
       atendimento_origem_id: formData.atendimento_origem_id || '',
       atendimento_origem_numero: formData.atendimento_origem_numero || null,
       servicos_garantia: formData.servicos_garantia || [],
+      execucao_encomenda: formData.execucao_encomenda || false,
+      encomenda_origem_id: formData.encomenda_origem_id || '',
+      encomenda_origem_numero: formData.encomenda_origem_numero || null,
+      itens_encomenda: formData.itens_encomenda || [],
       cliente_nome: formData.cliente_nome || '',
       cliente_telefone: formData.cliente_telefone || '',
       cliente_cpf: formData.cliente_cpf || '',
@@ -792,6 +834,41 @@ export default function NovoAtendimento() {
                     atendimento_origem_id: a.id,
                     atendimento_origem_numero: a.numero_os,
                     servicos_garantia: [],
+                    cliente_nome: a.cliente_nome || prev.cliente_nome,
+                    cliente_telefone: a.cliente_telefone || prev.cliente_telefone,
+                    cliente_cpf: a.cliente_cpf || prev.cliente_cpf,
+                    cliente_endereco: a.cliente_endereco || prev.cliente_endereco,
+                    placa: a.placa || prev.placa,
+                    modelo: a.modelo || prev.modelo,
+                    marca: a.marca || prev.marca,
+                    ano: a.ano || prev.ano,
+                  }));
+                }}
+              />
+
+              {/* Execução de encomenda */}
+              <ExecucaoEncomendaCard
+                ativo={formData.execucao_encomenda}
+                onToggle={(checked) => {
+                  if (!checked) {
+                    setFormData(prev => ({ ...prev, execucao_encomenda: false, encomenda_origem_id: '', encomenda_origem_numero: '', itens_encomenda: [] }));
+                  } else {
+                    handleInputChange('execucao_encomenda', true);
+                  }
+                }}
+                recentes={atendimentosRetorno}
+                origem={origemEncomenda}
+                itens={formData.itens_encomenda}
+                onToggleItem={handleToggleItemEncomenda}
+                onSelectOrigem={(a) => {
+                  setClienteSelecionado(null);
+                  setBuscaNome(a.cliente_nome || '');
+                  setFormData(prev => ({
+                    ...prev,
+                    execucao_encomenda: true,
+                    encomenda_origem_id: a.id,
+                    encomenda_origem_numero: a.numero_os,
+                    itens_encomenda: [],
                     cliente_nome: a.cliente_nome || prev.cliente_nome,
                     cliente_telefone: a.cliente_telefone || prev.cliente_telefone,
                     cliente_cpf: a.cliente_cpf || prev.cliente_cpf,
