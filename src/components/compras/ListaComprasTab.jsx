@@ -13,10 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Plus, Package, Check, Loader2, Trash2, Search, Edit, ChevronDown, ChevronUp, ShoppingBag, X, Printer, Share2, Save, MapPin, Tag, Building2, RotateCcw } from 'lucide-react';
 import EditarProdutoItemCard from './EditarProdutoItemCard';
+import FotoProdutoCompra from './FotoProdutoCompra';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-function NovaListaModal({ open, onClose, produtos, onSaved }) {
+function NovaListaModal({ open, onClose, produtos, onSaved, onProdutoAtualizado }) {
   const [nome, setNome] = useState('');
   const [obs, setObs] = useState('');
   const [itens, setItens] = useState([]); // produtos cadastrados
@@ -36,14 +37,14 @@ function NovaListaModal({ open, onClose, produtos, onSaved }) {
     setBusca('');
     if (itens.find(i => i.produto_id === p.id)) return toast.error('Já adicionado');
     const fornPrincipal = p.fornecedores?.find(f => f.principal) || p.fornecedores?.[0];
-    setItens(prev => [...prev, {
+    setItens(prev => [{
       produto_id: p.id,
       produto_nome: p.nome,
       codigo: p.codigo,
       quantidade: 1,
       obs: '',
       preco_compra_fornecedor: fornPrincipal?.preco_compra || null,
-    }]);
+    }, ...prev]);
   };
 
   const updateItem = (idx, field, val) => {
@@ -52,7 +53,7 @@ function NovaListaModal({ open, onClose, produtos, onSaved }) {
 
   const addLivre = () => {
     if (!novoLivre.nome.trim()) return toast.error('Informe o nome do produto');
-    setItensLivres(prev => [...prev, { ...novoLivre, quantidade: parseInt(novoLivre.quantidade) || 1 }]);
+    setItensLivres(prev => [{ ...novoLivre, quantidade: parseInt(novoLivre.quantidade) || 1 }, ...prev]);
     setNovoLivre({ nome: '', quantidade: 1, obs: '' });
   };
 
@@ -107,7 +108,10 @@ function NovaListaModal({ open, onClose, produtos, onSaved }) {
               <div className="space-y-2">
                 {itens.map((it, idx) => (
                   <div key={idx} className="bg-white border rounded-lg p-2 space-y-2">
-                    <span className="text-sm font-medium block break-words">{it.produto_nome}</span>
+                    <div className="flex items-center gap-2">
+                      <FotoProdutoCompra prod={produtos.find(p => p.id === it.produto_id)} onAtualizado={onProdutoAtualizado} />
+                      <span className="text-sm font-medium block break-words">{it.produto_nome}</span>
+                    </div>
                     <div className="flex gap-2 items-center">
                       <Input type="number" min={1} value={it.quantidade}
                         onChange={e => updateItem(idx, 'quantidade', parseInt(e.target.value) || 1)}
@@ -173,14 +177,14 @@ function EditarListaModal({ lista, produtos, onClose, onSaved, onProdutoAtualiza
   const addProduto = (p) => {
     setBusca('');
     const fornPrincipal = p.fornecedores?.find(f => f.principal) || p.fornecedores?.[0];
-    setItens(prev => [...prev, {
+    setItens(prev => [{
       produto_id: p.id,
       produto_nome: p.nome,
       codigo: p.codigo,
       quantidade: 1,
       obs: '',
       preco_compra_fornecedor: fornPrincipal?.preco_compra || null,
-    }]);
+    }, ...prev]);
   };
 
   const updateItem = (idx, field, val) => {
@@ -189,7 +193,7 @@ function EditarListaModal({ lista, produtos, onClose, onSaved, onProdutoAtualiza
 
   const addLivre = () => {
     if (!novoLivre.nome.trim()) return toast.error('Informe o nome do produto');
-    setItensLivres(prev => [...prev, { ...novoLivre, quantidade: parseInt(novoLivre.quantidade) || 1 }]);
+    setItensLivres(prev => [{ ...novoLivre, quantidade: parseInt(novoLivre.quantidade) || 1 }, ...prev]);
     setNovoLivre({ nome: '', quantidade: 1, obs: '' });
   };
 
@@ -295,11 +299,12 @@ function imprimirLista(lista, produtos = []) {
       localizacao: prod?.localizacao_estoque || '',
       cod_fornecedor: forn?.codigo_fornecedor || '',
       fornecedor_nome: forn?.fornecedor_nome || '',
+      foto: prod?.fotos?.[0]?.url || '',
     };
   });
   const itensLivres = (lista.itens_livres || []).map(i => ({
     nome: i.nome, qtd: i.quantidade, obs: i.obs, tipo: 'livre',
-    codigo: '', localizacao: '', cod_fornecedor: '', fornecedor_nome: '',
+    codigo: '', localizacao: '', cod_fornecedor: '', fornecedor_nome: '', foto: '',
   }));
   const todosItens = [...itensEstoque, ...itensLivres];
 
@@ -309,7 +314,11 @@ function imprimirLista(lista, produtos = []) {
       i.localizacao ? `<span style="color:#3b82f6;font-size:10px;">📍 ${i.localizacao}</span>` : '',
       i.cod_fornecedor ? `<span style="color:#7c3aed;font-size:10px;">Forn: ${i.cod_fornecedor}${i.fornecedor_nome ? ` (${i.fornecedor_nome})` : ''}</span>` : '',
     ].filter(Boolean).join(' ');
+    const fotoCell = i.foto
+      ? `<img src="${i.foto}" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;display:block;" />`
+      : `<div style="width:52px;height:52px;border-radius:4px;border:1px dashed #cbd5e1;background:#f8fafc;"></div>`;
     return `<tr>
+      <td style="padding:8px;border-bottom:1px solid #e2e8f0;width:60px;vertical-align:middle;">${fotoCell}</td>
       <td style="padding:8px;border-bottom:1px solid #e2e8f0;">
         <div>${i.nome}${i.tipo === 'livre' ? ' <span style="font-size:10px;color:#f97316">*</span>' : ''}</div>
         ${info ? `<div style="margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;">${info}</div>` : ''}
@@ -322,7 +331,7 @@ function imprimirLista(lista, produtos = []) {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${lista.nome}</title>
   <style>body{font-family:Arial,sans-serif;padding:24px;color:#1e293b}h2{margin-bottom:4px}p{margin:0 0 16px;color:#64748b;font-size:13px}table{width:100%;border-collapse:collapse}th{background:#1e40af;color:white;padding:8px;text-align:left;font-size:13px}tr:nth-child(even){background:#f8fafc}.footer{margin-top:16px;font-size:11px;color:#94a3b8}@media print{button{display:none}}</style></head>
   <body><h2>${lista.nome}</h2><p>${lista.observacoes || ''} — ${todosItens.length} itens — gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
-  <table><thead><tr><th>Produto</th><th style="width:60px;text-align:center">Qtd</th><th>Observação</th></tr></thead><tbody>${linhas}</tbody></table>
+  <table><thead><tr><th style="width:60px">Foto</th><th>Produto</th><th style="width:60px;text-align:center">Qtd</th><th>Observação</th></tr></thead><tbody>${linhas}</tbody></table>
   <p class="footer">* Produto não cadastrado no sistema</p>
   <script>window.onload=()=>window.print()</script></body></html>`;
   const w = window.open('', '_blank');
@@ -375,8 +384,11 @@ function ProdutoItemCard({ it, produtos, onRefetchProdutos }) {
 
   return (
     <div className="bg-slate-50 rounded-lg px-3 py-2 text-sm border border-slate-100">
-      <div className="flex items-center justify-between">
-        <span className="font-medium text-slate-800">{it.produto_nome}</span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <FotoProdutoCompra prod={prod} onAtualizado={onRefetchProdutos} />
+          <span className="font-medium text-slate-800 break-words">{it.produto_nome}</span>
+        </div>
         <div className="flex items-center gap-2">
           {precoCompraLista > 0 && (
             <span className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
@@ -640,6 +652,7 @@ export default function ListaComprasTab() {
         onClose={() => setShowNova(false)}
         produtos={produtos}
         onSaved={() => { setShowNova(false); qc.invalidateQueries(['listas-compras']); }}
+        onProdutoAtualizado={refetchProdutos}
       />
     </div>
   );

@@ -108,8 +108,11 @@ export default function Compras() {
     const prod = adicionandoALista;
     const jaExiste = (lista.itens || []).find(i => i.produto_id === prod.id);
     const novosItens = jaExiste
-      ? (lista.itens || []).map(i => i.produto_id === prod.id ? { ...i, quantidade: (i.quantidade || 0) + qtdAdicionar } : i)
-      : [...(lista.itens || []), { produto_id: prod.id, produto_nome: prod.nome, codigo: prod.codigo, quantidade: qtdAdicionar, obs: `Estoque: ${prod.estoque_atual || 0}` }];
+      ? [
+          { ...jaExiste, quantidade: (jaExiste.quantidade || 0) + qtdAdicionar },
+          ...(lista.itens || []).filter(i => i.produto_id !== prod.id),
+        ]
+      : [{ produto_id: prod.id, produto_nome: prod.nome, codigo: prod.codigo, quantidade: qtdAdicionar, obs: `Estoque: ${prod.estoque_atual || 0}` }, ...(lista.itens || [])];
     setSalvandoItemLista(true);
     await base44.entities.ListaCompras.update(lista.id, { itens: novosItens });
     setSalvandoItemLista(false);

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { X, Save, Tag, MapPin, Building2, Package, Plus, Loader2, Pencil, Check } from 'lucide-react';
+import FotoProdutoCompra from './FotoProdutoCompra';
 
 export default function EditarProdutoItemCard({ it, idx, produtos, onUpdateItem, onRemoveItem, onProdutoAtualizado }) {
   const prod = produtos.find(p => p.id === it.produto_id);
@@ -77,7 +78,10 @@ export default function EditarProdutoItemCard({ it, idx, produtos, onUpdateItem,
     <div className="bg-white border rounded-lg p-2.5 space-y-2.5">
       {/* Nome + remover */}
       <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-medium break-words flex-1 min-w-0">{it.produto_nome}</span>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <FotoProdutoCompra prod={prod} onAtualizado={onProdutoAtualizado} />
+          <span className="text-sm font-medium break-words min-w-0">{it.produto_nome}</span>
+        </div>
         <button onClick={() => onRemoveItem(idx)} className="flex-shrink-0 mt-0.5">
           <X className="w-4 h-4 text-red-400 hover:text-red-600" />
         </button>
