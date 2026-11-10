@@ -14,10 +14,12 @@ import { ptBR } from 'date-fns/locale';
 import ListaComprasTab from '../components/compras/ListaComprasTab';
 import { filtrarProdutos } from '@/lib/produtoSearch';
 import ImportarXMLTab from '../components/compras/ImportarXMLTab';
+import ImportarPDFTab from '../components/compras/ImportarPDFTab';
 
 const TABS = [
   { id: 'listas', label: '📋 Listas de Compras' },
   { id: 'xml', label: '📄 Importar NF-e (XML)' },
+  { id: 'pdf', label: '🧾 Entrada por PDF' },
   { id: 'historico', label: '📦 Histórico de Compras' },
   { id: 'estoque', label: '⚠️ Estoque Baixo' },
 ];
@@ -190,6 +192,8 @@ export default function Compras() {
         {tab === 'listas' && <ListaComprasTab />}
 
         {tab === 'xml' && <ImportarXMLTab />}
+
+        {tab === 'pdf' && <ImportarPDFTab />}
 
         {tab === 'historico' && (
           <div className="space-y-3">

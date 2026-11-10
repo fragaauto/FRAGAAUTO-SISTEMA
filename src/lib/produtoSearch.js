@@ -43,3 +43,47 @@ export function matchProduto(p, termo) {
 export function filtrarProdutos(produtos, termo) {
   return (produtos || []).filter((p) => matchProduto(p, termo));
 }
+
+// Sugere o produto cadastrado correspondente a um item de nota de compra:
+// primeiro pelo código; depois pela descrição, escolhendo o cadastro mais próximo.
+export function encontrarProdutoPorItem(produtos, item = {}) {
+  const lista = produtos || [];
+  const codigo = codigoNumerico(item.codigo || '');
+  if (codigo) {
+    const porCodigo = lista.find((p) => codigoNumerico(p.codigo) === codigo);
+    if (porCodigo) return porCodigo;
+  }
+
+  const descricao = normalizar(item.descricao || item.nome || '');
+  const palavras = descricao
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 4 && !VAZIAS.includes(t) && !/^\d+$/.test(t));
+
+  if (palavras.length === 0) return null;
+
+  const candidatos = lista.filter((p) => palavras.some((t) => normalizar(p?.nome).includes(t)));
+  if (candidatos.length === 0) return null;
+
+  const avaliar = (p) => {
+    const nome = normalizar(p?.nome);
+    const cobertura = palavras.filter((t) => nome.includes(t)).length / palavras.length;
+    const diferenca = Math.abs(nome.length - descricao.length);
+    return { cobertura, diferenca };
+  };
+
+  let melhor = null;
+  for (const p of candidatos) {
+    const nota = avaliar(p);
+    if (nota.cobertura < 0.5) continue;
+    if (
+      !melhor ||
+      nota.cobertura > melhor.nota.cobertura + 0.001 ||
+      (Math.abs(nota.cobertura - melhor.nota.cobertura) <= 0.001 && nota.diferenca < melhor.nota.diferenca)
+    ) {
+      melhor = { produto: p, nota };
+    }
+  }
+
+  return melhor?.produto || null;
+}
