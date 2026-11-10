@@ -12,6 +12,7 @@ import { ShoppingCart, Package, AlertTriangle, Check, Loader2, FileText, Shoppin
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ListaComprasTab from '../components/compras/ListaComprasTab';
+import { filtrarProdutos } from '@/lib/produtoSearch';
 import ImportarXMLTab from '../components/compras/ImportarXMLTab';
 
 const TABS = [
@@ -44,6 +45,8 @@ export default function Compras() {
   });
 
   const estoqueBaixo = produtos.filter(p => p.controla_estoque && (p.estoque_atual || 0) <= (p.estoque_minimo || 0) && (p.estoque_minimo || 0) > 0);
+  // Sem busca: apenas estoque baixo. Com busca: todos os produtos cadastrados (estoque baixo primeiro)
+  const ehEstoqueBaixo = (p) => p.controla_estoque && (p.estoque_atual || 0) <= (p.estoque_minimo || 0) && (p.estoque_minimo || 0) > 0;
   const [showGerarLista, setShowGerarLista] = useState(false);
   const [itensLista, setItensLista] = useState([]);
   const [nomeLista, setNomeLista] = useState('');
@@ -74,6 +77,10 @@ export default function Compras() {
   const [salvandoItemLista, setSalvandoItemLista] = useState(false);
 
   const [buscaEstoque, setBuscaEstoque] = useState('');
+  // Sem busca: apenas estoque baixo. Com busca: todos os produtos cadastrados (estoque baixo primeiro)
+  const produtosVisiveis = buscaEstoque.trim()
+    ? filtrarProdutos(produtos, buscaEstoque).sort((a, b) => Number(ehEstoqueBaixo(b)) - Number(ehEstoqueBaixo(a)))
+    : estoqueBaixo;
   const [corrigindoProduto, setCorrigindoProduto] = useState(null);
   const [novoEstoque, setNovoEstoque] = useState(0);
   const [novoMinimo, setNovoMinimo] = useState(0);
@@ -235,13 +242,17 @@ export default function Compras() {
               <div className="relative flex-1 max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
-                  placeholder="Buscar por nome, código ou categoria..."
+                  placeholder="Buscar em todos os produtos: nome, código ou categoria..."
                   value={buscaEstoque}
                   onChange={e => setBuscaEstoque(e.target.value)}
                   className="pl-9 h-9"
                 />
               </div>
-              <p className="text-sm text-slate-500 whitespace-nowrap">{estoqueBaixo.length} produto(s) com estoque baixo</p>
+              <p className="text-sm text-slate-500 whitespace-nowrap">
+                {buscaEstoque.trim()
+                  ? `${produtosVisiveis.length} produto(s) encontrado(s)`
+                  : `${estoqueBaixo.length} produto(s) com estoque baixo`}
+              </p>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -265,24 +276,17 @@ export default function Compras() {
                 )}
               </div>
             </div>
-            {estoqueBaixo.length === 0 ? (
-              <div className="text-center py-12 text-green-600">
+            {produtosVisiveis.length === 0 ? (
+              <div className={`text-center py-12 ${buscaEstoque.trim() ? 'text-slate-400' : 'text-green-600'}`}>
                 <Check className="w-12 h-12 mx-auto mb-2" />
-                <p className="font-semibold">Estoque em dia!</p>
+                <p className="font-semibold">{buscaEstoque.trim() ? 'Nenhum produto encontrado' : 'Estoque em dia!'}</p>
               </div>
             ) : (
-              estoqueBaixo
-              .filter(p => {
-                const b = buscaEstoque.trim().toLowerCase();
-                if (!b) return true;
-                return (p.nome || '').toLowerCase().includes(b)
-                  || (p.codigo || '').toLowerCase().includes(b)
-                  || (p.categoria || '').toLowerCase().includes(b);
-              })
+              produtosVisiveis
               .map(prod => {
                 const qtdFalta = Math.max(0, (prod.estoque_desejado || prod.estoque_minimo || 0) - (prod.estoque_atual || 0));
                 return (
-                  <Card key={prod.id} className={`border-2 ${(prod.estoque_atual || 0) <= 0 ? 'border-red-200 bg-red-50' : 'border-orange-200 bg-orange-50'}`}>
+                  <Card key={prod.id} className={`border-2 ${(prod.estoque_atual || 0) <= 0 ? 'border-red-200 bg-red-50' : qtdFalta > 0 ? 'border-orange-200 bg-orange-50' : 'border-slate-200 bg-white'}`}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>

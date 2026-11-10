@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Plus, Package, Check, Loader2, Trash2, Search, Edit, ChevronDown, ChevronUp, ShoppingBag, X, Printer, Share2, Save, MapPin, Tag, Building2, RotateCcw } from 'lucide-react';
 import EditarProdutoItemCard from './EditarProdutoItemCard';
 import FotoProdutoCompra from './FotoProdutoCompra';
+import { filtrarProdutos } from '@/lib/produtoSearch';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -26,11 +27,8 @@ function NovaListaModal({ open, onClose, produtos, onSaved, onProdutoAtualizado 
   const [novoLivre, setNovoLivre] = useState({ nome: '', quantidade: 1, obs: '' });
   const [saving, setSaving] = useState(false);
 
-  const produtosFiltrados = busca.length > 1
-    ? produtos.filter(p =>
-        p.nome?.toLowerCase().includes(busca.toLowerCase()) ||
-        p.codigo?.toLowerCase().includes(busca.toLowerCase())
-      ).slice(0, 8)
+  const produtosFiltrados = busca.trim()
+    ? filtrarProdutos(produtos, busca).slice(0, 12)
     : [];
 
   const addProduto = (p) => {
@@ -167,11 +165,10 @@ function EditarListaModal({ lista, produtos, onClose, onSaved, onProdutoAtualiza
   const [novoLivre, setNovoLivre] = useState({ nome: '', quantidade: 1, obs: '' });
   const [saving, setSaving] = useState(false);
 
-  const produtosFiltrados = busca.length > 1
-    ? produtos.filter(p =>
-        (p.nome?.toLowerCase().includes(busca.toLowerCase()) || p.codigo?.toLowerCase().includes(busca.toLowerCase())) &&
-        !itens.find(i => i.produto_id === p.id)
-      ).slice(0, 8)
+  const produtosFiltrados = busca.trim()
+    ? filtrarProdutos(produtos, busca)
+        .filter(p => !itens.find(i => i.produto_id === p.id))
+        .slice(0, 12)
     : [];
 
   const addProduto = (p) => {
