@@ -117,7 +117,21 @@ export default function AbaFinalizacaoPagamento({ atendimento, onUpdate }) {
   const jaLancado = atendimento.status_pagamento === 'pago' || atendimento.status_pagamento === 'parcial' || atendimento.status_pagamento === 'faturado';
   const isFaturadoPendente = atendimento.status_pagamento === 'faturado';
 
-  const [tecnicosSelecionados, setTecnicosSelecionados] = useState(atendimento.tecnicos_responsaveis || []);
+  // Técnicos já atribuídos aos serviços da OS (aba Orçamento) — a aba de
+  // pagamento lê essa atribuição para pré-selecionar os responsáveis.
+  const tecnicosDosServicos = React.useMemo(() => {
+    const mapa = new Map();
+    [...(atendimento.itens_queixa || []), ...(atendimento.itens_orcamento || [])].forEach(item => {
+      (item.tecnicos || []).forEach(t => {
+        if (t?.id && !mapa.has(t.id)) mapa.set(t.id, { id: t.id, nome: t.nome });
+      });
+    });
+    return [...mapa.values()];
+  }, [atendimento.itens_queixa, atendimento.itens_orcamento]);
+
+  const [tecnicosSelecionados, setTecnicosSelecionados] = useState(
+    () => (atendimento.tecnicos_responsaveis?.length ? atendimento.tecnicos_responsaveis : tecnicosDosServicos)
+  );
   const [obsInterna, setObsInterna] = useState(atendimento.obs_interna || '');
   const [obsExterna, setObsExterna] = useState(atendimento.obs_externa || '');
   const autoSaveTimer = useRef(null);
