@@ -122,20 +122,21 @@ export function filtrarProdutos(produtos, termo) {
 }
 
 // Sugere o produto cadastrado correspondente a um item de nota de compra:
-// primeiro pelo código; depois pela descrição, escolhendo o cadastro mais próximo.
+// primeiro pelo código do fornecedor (critério principal); depois pelo código
+// interno; por último pela descrição, escolhendo o cadastro mais próximo.
 export function encontrarProdutoPorItem(produtos, item = {}) {
   const lista = produtos || [];
   const codigo = codigoNumerico(item.codigo || '');
 
-  // 1) código interno do produto igual ao código da nota
+  // 1) código do fornecedor já cadastrado no produto (prioridade)
+  const porCodigoFornecedor = encontrarProdutoPorCodigoFornecedor(lista, item.codigo, item.fornecedor);
+  if (porCodigoFornecedor) return porCodigoFornecedor;
+
+  // 2) código interno do produto igual ao código da nota
   if (codigo) {
     const porCodigo = lista.find((p) => codigoNumerico(p.codigo) === codigo);
     if (porCodigo) return porCodigo;
   }
-
-  // 2) código do fornecedor já cadastrado no produto
-  const porCodigoFornecedor = encontrarProdutoPorCodigoFornecedor(lista, item.codigo, item.fornecedor);
-  if (porCodigoFornecedor) return porCodigoFornecedor;
 
   const descricao = normalizar(item.descricao || item.nome || '');
   const palavras = descricao
