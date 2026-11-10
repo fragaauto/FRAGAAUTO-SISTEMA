@@ -3,11 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Check, Link2, Search, Unlink, X } from 'lucide-react';
-import { filtrarProdutos } from '@/lib/produtoSearch';
+import { filtrarProdutos, codigosIguais } from '@/lib/produtoSearch';
 
 const money = (v) => `R$ ${(Number(v) || 0).toFixed(2)}`;
 
-export default function ItemNotaPDF({ item, produtos, onChange, onVincular, onDesvincular, onIgnorar }) {
+export default function ItemNotaPDF({ item, produtos, fornecedor, onChange, onVincular, onDesvincular, onIgnorar }) {
   const [busca, setBusca] = useState('');
   const [abrirBusca, setAbrirBusca] = useState(false);
   const produto = produtos.find((p) => p.id === item.produto_id) || null;
@@ -15,6 +15,10 @@ export default function ItemNotaPDF({ item, produtos, onChange, onVincular, onDe
   const custoAtual = Number(produto?.custo) || 0;
   const custoNovo = Number(item.custo_unitario) || 0;
   const custoMudou = !!produto && custoAtual > 0 && Math.abs(custoNovo - custoAtual) >= 0.01;
+  const codigoJaCadastrado =
+    !!produto &&
+    !!item.codigo &&
+    (produto.fornecedores || []).some((f) => codigosIguais(f.codigo_fornecedor, item.codigo));
 
   const resultados = busca.trim()
     ? filtrarProdutos(produtos, busca).slice(0, 8)
@@ -27,8 +31,12 @@ export default function ItemNotaPDF({ item, produtos, onChange, onVincular, onDe
         <div className="flex-1 min-w-0">
           <p className="font-medium text-slate-800 text-sm leading-snug">{item.descricao}</p>
           <p className="text-xs text-slate-500 mt-0.5">
-            {item.codigo ? `Cód. nota: ${item.codigo}` : 'Sem código na nota'}
+            {item.codigo ? `Cód. fornecedor: ${item.codigo}` : 'Sem código na nota'}
+            {codigoJaCadastrado && <span className="text-green-600 font-medium"> · já cadastrado no produto</span>}
           </p>
+          {fornecedor && (
+            <p className="text-xs text-slate-400 mt-0.5">Fornecedor: {fornecedor}</p>
+          )}
           {custoMudou && (
             <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-100 rounded-md px-2 py-0.5">
               <AlertTriangle className="w-3 h-3" />
@@ -87,6 +95,9 @@ export default function ItemNotaPDF({ item, produtos, onChange, onVincular, onDe
                   className="h-8 text-sm"
                 />
               </div>
+              <p className="text-[10px] text-slate-400 leading-tight">
+                Grava custo, venda, fornecedor e código dele no cadastro
+              </p>
             </>
           ) : (
             <div>

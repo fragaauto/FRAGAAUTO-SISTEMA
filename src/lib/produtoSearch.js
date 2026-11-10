@@ -16,6 +16,83 @@ const VAZIAS = ['cod', 'codigo', 'cód', 'código', 'ref', 'referencia', 'refer�
 // Compara códigos sem zeros à esquerda e sem separadores ("0327" ~ "327")
 const codigoNumerico = (valor) => normalizar(valor).replace(/^0+/, '').replace(/[\s.\-_/]/g, '');
 
+// Código do fornecedor cadastrado no produto (lista de fornecedores do cadastro)
+export function codigosIguais(a, b) {
+  const ca = codigoNumerico(a);
+  const cb = codigoNumerico(b);
+  return !!ca && ca === cb;
+}
+
+const codigosFornecedorDoProduto = (p) =>
+  (Array.isArray(p?.fornecedores) ? p.fornecedores : [])
+    .map((f) => ({ codigo: codigoNumerico(f?.codigo_fornecedor), fornecedor: normalizar(f?.fornecedor_nome) }))
+    .filter((f) => f.codigo);
+
+// Procura o produto pelo código que o fornecedor usa (cadastrado em Fornecedores do produto)
+export function encontrarProdutoPorCodigoFornecedor(produtos, codigo, fornecedor) {
+  const alvo = codigoNumerico(codigo || '');
+  if (!alvo) return null;
+
+  const encontrados = (produtos || []).filter((p) =>
+    codigosFornecedorDoProduto(p).some((f) => f.codigo === alvo)
+  );
+  if (encontrados.length === 0) return null;
+
+  const nomeFornecedor = normalizar(fornecedor || '');
+  const palavra = nomeFornecedor.split(/\s+/).find((t) => t.length >= 4);
+  if (palavra) {
+    const preferido = encontrados.find((p) =>
+      codigosFornecedorDoProduto(p).some((f) => f.codigo === alvo && f.fornecedor.includes(palavra))
+    );
+    if (preferido) return preferido;
+  }
+  return encontrados[0];
+}
+
+// Localiza o cadastro do fornecedor pelo nome que aparece na nota
+export function encontrarFornecedorPorNome(fornecedores, nome) {
+  const alvo = normalizar(nome || '');
+  if (!alvo) return null;
+  return (
+    (fornecedores || []).find((f) => {
+      const n = normalizar(f?.nome || '');
+      return !!n && (n === alvo || n.includes(alvo) || alvo.includes(n));
+    }) || null
+  );
+}
+
+// Insere ou atualiza o fornecedor na lista de fornecedores do produto,
+// guardando o código usado por ele e o último preço de compra.
+export function mesclarFornecedorProduto(
+  fornecedores = [],
+  { fornecedor_id, fornecedor_nome, codigo_fornecedor, preco_compra } = {}
+) {
+  const lista = (Array.isArray(fornecedores) ? fornecedores : []).map((f) => ({ ...f }));
+  const nome = normalizar(fornecedor_nome || '');
+  const codigo = String(codigo_fornecedor || '').trim();
+
+  const indice = lista.findIndex((f) => {
+    if (fornecedor_id && f?.fornecedor_id === fornecedor_id) return true;
+    const nomeLista = normalizar(f?.fornecedor_nome || '');
+    if (!nome || !nomeLista) return false;
+    return nomeLista === nome || nomeLista.includes(nome) || nome.includes(nomeLista);
+  });
+
+  const dados = {};
+  if (fornecedor_id) dados.fornecedor_id = fornecedor_id;
+  if (fornecedor_nome) dados.fornecedor_nome = fornecedor_nome;
+  if (codigo) dados.codigo_fornecedor = codigo;
+  if (Number(preco_compra) > 0) dados.preco_compra = Number(preco_compra);
+
+  if (indice >= 0) {
+    lista[indice] = { ...lista[indice], ...dados };
+  } else {
+    lista.push({ ...dados, principal: lista.length === 0 });
+  }
+
+  return lista;
+}
+
 export function matchProduto(p, termo) {
   const termos = normalizar(termo)
     .split(/\s+/)
@@ -49,10 +126,16 @@ export function filtrarProdutos(produtos, termo) {
 export function encontrarProdutoPorItem(produtos, item = {}) {
   const lista = produtos || [];
   const codigo = codigoNumerico(item.codigo || '');
+
+  // 1) código interno do produto igual ao código da nota
   if (codigo) {
     const porCodigo = lista.find((p) => codigoNumerico(p.codigo) === codigo);
     if (porCodigo) return porCodigo;
   }
+
+  // 2) código do fornecedor já cadastrado no produto
+  const porCodigoFornecedor = encontrarProdutoPorCodigoFornecedor(lista, item.codigo, item.fornecedor);
+  if (porCodigoFornecedor) return porCodigoFornecedor;
 
   const descricao = normalizar(item.descricao || item.nome || '');
   const palavras = descricao

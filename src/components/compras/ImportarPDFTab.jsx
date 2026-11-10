@@ -8,7 +8,11 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AlertTriangle, Check, FileText, Loader2, Package, Upload, X } from 'lucide-react';
 import ItemNotaPDF from './ItemNotaPDF';
-import { encontrarProdutoPorItem } from '@/lib/produtoSearch';
+import {
+  encontrarProdutoPorItem,
+  encontrarFornecedorPorNome,
+  mesclarFornecedorProduto,
+} from '@/lib/produtoSearch';
 
 const num = (v) => {
   const n = parseFloat(String(v ?? '').replace(',', '.'));
@@ -55,6 +59,12 @@ export default function ImportarPDFTab() {
     staleTime: 60 * 1000,
   });
 
+  const { data: fornecedores = [] } = useQuery({
+    queryKey: ['fornecedores'],
+    queryFn: () => base44.entities.Fornecedor.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -95,9 +105,10 @@ export default function ImportarPDFTab() {
         data_nota: dados.data_nota || '',
       });
 
+      const nomeFornecedor = dados.fornecedor || '';
       setItens(
         lista.map((item, i) => {
-          const match = encontrarProdutoPorItem(produtos, item);
+          const match = encontrarProdutoPorItem(produtos, { ...item, fornecedor: nomeFornecedor });
           return {
             key: `item-${i}`,
             codigo: item.codigo || '',
@@ -162,17 +173,32 @@ export default function ImportarPDFTab() {
     }
     setSalvando(true);
     try {
+      const fornecedorCadastro = encontrarFornecedorPorNome(fornecedores, nota?.fornecedor);
+      const fornecedorNome = fornecedorCadastro?.nome || nota?.fornecedor || '';
+
       for (const item of selecionados) {
         const prod = produtos.find((p) => p.id === item.produto_id);
         const qtd = num(item.quantidade);
         const custo = num(item.custo_unitario);
         const precoVenda = item.preco_venda === '' ? num(prod?.valor) : num(item.preco_venda);
 
-        await base44.entities.Produto.update(prod.id, {
+        const atualizacao = {
           estoque_atual: (Number(prod.estoque_atual) || 0) + qtd,
           custo,
           valor: precoVenda,
-        });
+        };
+
+        // Grava o fornecedor da nota e o código usado por ele no cadastro do produto
+        if (fornecedorNome) {
+          atualizacao.fornecedores = mesclarFornecedorProduto(prod.fornecedores, {
+            fornecedor_id: fornecedorCadastro?.id,
+            fornecedor_nome: fornecedorNome,
+            codigo_fornecedor: item.codigo,
+            preco_compra: custo,
+          });
+        }
+
+        await base44.entities.Produto.update(prod.id, atualizacao);
 
         await base44.entities.MovimentoEstoque.create({
           produto_id: prod.id,
@@ -212,6 +238,7 @@ export default function ImportarPDFTab() {
       if (fileRef.current) fileRef.current.value = '';
       qc.invalidateQueries({ queryKey: ['produtos-estoque'] });
       qc.invalidateQueries({ queryKey: ['produtos'] });
+      qc.invalidateQueries({ queryKey: ['fornecedores'] });
       qc.invalidateQueries({ queryKey: ['compras'] });
       qc.invalidateQueries({ queryKey: ['movimentos-estoque'] });
     } catch (err) {
@@ -287,7 +314,7 @@ export default function ImportarPDFTab() {
               <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <p>
                 <strong>{comCustoAlterado.length} produto(s)</strong> com preço de custo diferente do cadastro.
-                Ao dar entrada, o novo custo será gravado e o preço de venda será mantido, salvo se você alterar o campo Venda.
+                Ao dar entrada, o novo custo será gravado no cadastro e o preço de venda será o que estiver no campo Venda.
               </p>
             </div>
           )}
@@ -298,6 +325,7 @@ export default function ImportarPDFTab() {
                 key={item.key}
                 item={item}
                 produtos={produtos}
+                fornecedor={nota.fornecedor}
                 onChange={(campo, valor) => atualizarItem(idx, campo, valor)}
                 onVincular={(produto) => vincular(idx, produto)}
                 onDesvincular={() => desvincular(idx)}
