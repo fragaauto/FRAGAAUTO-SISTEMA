@@ -121,53 +121,34 @@ export function filtrarProdutos(produtos, termo) {
   return (produtos || []).filter((p) => matchProduto(p, termo));
 }
 
-// Sugere o produto cadastrado correspondente a um item de nota de compra:
-// primeiro pelo código do fornecedor (critério principal); depois pelo código
-// interno; por último pela descrição, escolhendo o cadastro mais próximo.
+// Todas as palavras significativas de um texto (ignora acentos, pontuação e
+// palavras de ligação; mantém números, que diferenciam peças parecidas).
+const palavrasChave = (valor) =>
+  normalizar(valor)
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t && !VAZIAS.includes(t));
+
+// Descrição da nota e nome do cadastro descrevem exatamente a mesma peça?
+const mesmaDescricao = (nomeProduto, descricaoItem) => {
+  const a = [...new Set(palavrasChave(nomeProduto))];
+  const b = [...new Set(palavrasChave(descricaoItem))];
+  if (a.length === 0 || a.length !== b.length) return false;
+  return a.every((t) => b.includes(t));
+};
+
+// Sugere o produto cadastrado correspondente a um item de nota de compra.
+// Critério 1: código do fornecedor cadastrado no produto.
+// Critério 2: descrição da peça igual ao nome do produto.
+// Sem correspondência segura devolve null — a relação fica para o usuário.
 export function encontrarProdutoPorItem(produtos, item = {}) {
   const lista = produtos || [];
-  const codigo = codigoNumerico(item.codigo || '');
 
-  // 1) código do fornecedor já cadastrado no produto (prioridade)
   const porCodigoFornecedor = encontrarProdutoPorCodigoFornecedor(lista, item.codigo, item.fornecedor);
   if (porCodigoFornecedor) return porCodigoFornecedor;
 
-  // 2) código interno do produto igual ao código da nota
-  if (codigo) {
-    const porCodigo = lista.find((p) => codigoNumerico(p.codigo) === codigo);
-    if (porCodigo) return porCodigo;
-  }
+  const descricao = item.descricao || item.nome || '';
+  if (!palavrasChave(descricao).length) return null;
 
-  const descricao = normalizar(item.descricao || item.nome || '');
-  const palavras = descricao
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length >= 4 && !VAZIAS.includes(t) && !/^\d+$/.test(t));
-
-  if (palavras.length === 0) return null;
-
-  const candidatos = lista.filter((p) => palavras.some((t) => normalizar(p?.nome).includes(t)));
-  if (candidatos.length === 0) return null;
-
-  const avaliar = (p) => {
-    const nome = normalizar(p?.nome);
-    const cobertura = palavras.filter((t) => nome.includes(t)).length / palavras.length;
-    const diferenca = Math.abs(nome.length - descricao.length);
-    return { cobertura, diferenca };
-  };
-
-  let melhor = null;
-  for (const p of candidatos) {
-    const nota = avaliar(p);
-    if (nota.cobertura < 0.5) continue;
-    if (
-      !melhor ||
-      nota.cobertura > melhor.nota.cobertura + 0.001 ||
-      (Math.abs(nota.cobertura - melhor.nota.cobertura) <= 0.001 && nota.diferenca < melhor.nota.diferenca)
-    ) {
-      melhor = { produto: p, nota };
-    }
-  }
-
-  return melhor?.produto || null;
+  return lista.find((p) => mesmaDescricao(p?.nome, descricao)) || null;
 }
