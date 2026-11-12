@@ -21,8 +21,8 @@ export default function ItemNotaPDF({ item, produtos, fornecedor, onChange, onVi
     (produto.fornecedores || []).some((f) => codigosIguais(f.codigo_fornecedor, item.codigo));
 
   const resultados = busca.trim()
-    ? filtrarProdutos(produtos, busca).slice(0, 8)
-    : produtos.slice(0, 8);
+    ? filtrarProdutos(produtos, busca).slice(0, 12)
+    : produtos.slice(0, 12);
 
   return (
     <div className={`rounded-xl border-2 p-3 ${item.ignorar ? 'border-slate-200 bg-slate-50 opacity-60' : custoMudou ? 'border-amber-300 bg-amber-50/50' : produto ? 'border-green-200 bg-white' : 'border-red-200 bg-red-50/40'}`}>
@@ -76,8 +76,8 @@ export default function ItemNotaPDF({ item, produtos, fornecedor, onChange, onVi
           {produto ? (
             <>
               <div className="flex items-center gap-1.5 text-xs">
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 max-w-[180px] truncate">
-                  <Link2 className="w-3 h-3 mr-1" /> {produto.nome}
+                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 whitespace-normal text-left leading-snug items-start py-1">
+                  <Link2 className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" /> {produto.nome}
                 </Badge>
                 <span className="text-slate-400">Est. {produto.estoque_atual || 0}</span>
                 <button onClick={onDesvincular} className="text-slate-400 hover:text-red-500 ml-auto">
@@ -119,16 +119,20 @@ export default function ItemNotaPDF({ item, produtos, fornecedor, onChange, onVi
                     placeholder="Nome ou código..."
                     className="h-8 text-sm mb-1"
                   />
-                  <div className="max-h-40 overflow-y-auto">
+                  <div className="max-h-72 overflow-y-auto">
                     {resultados.map((p) => (
                       <button
                         key={p.id}
                         type="button"
                         onClick={() => { onVincular(p); setAbrirBusca(false); setBusca(''); }}
-                        className="w-full text-left px-2 py-1.5 rounded-md hover:bg-blue-50 text-xs"
+                        className="w-full text-left px-2 py-2 rounded-md hover:bg-blue-50 text-xs border-b border-slate-100 last:border-0"
                       >
-                        <p className="font-medium text-slate-700 truncate">{p.nome}</p>
-                        <p className="text-slate-400">Cód: {p.codigo} · Custo: {money(p.custo)} · Venda: {money(p.valor)}</p>
+                        <p className="font-medium text-slate-800 leading-snug break-words">{p.nome}</p>
+                        <p className="text-slate-500 mt-0.5 leading-snug">
+                          Cód: {p.codigo} · Custo: {money(p.custo)} · Venda: {money(p.valor)}
+                          {p.estoque_atual !== undefined && ` · Est: ${p.estoque_atual}`}
+                          {p.localizacao_estoque ? ` · Local: ${p.localizacao_estoque}` : ''}
+                        </p>
                       </button>
                     ))}
                     {resultados.length === 0 && (
