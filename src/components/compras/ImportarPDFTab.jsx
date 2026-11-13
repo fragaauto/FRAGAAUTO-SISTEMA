@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AlertTriangle, Check, FileText, Loader2, Package, Upload, X } from 'lucide-react';
 import ItemNotaPDF from './ItemNotaPDF';
+import ModalNovoProdutoNota from './ModalNovoProdutoNota';
 import {
   encontrarProdutoPorItem,
   encontrarFornecedorPorNome,
@@ -52,6 +53,8 @@ export default function ImportarPDFTab() {
   const [itens, setItens] = useState([]);
   const [nomeArquivo, setNomeArquivo] = useState('');
   const [concluido, setConcluido] = useState(false);
+  const [novosProdutos, setNovosProdutos] = useState([]);
+  const [novoProdutoIdx, setNovoProdutoIdx] = useState(null);
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos-estoque'],
@@ -65,6 +68,9 @@ export default function ImportarPDFTab() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const produtosCompleto = useMemo(() => [...produtos, ...novosProdutos], [produtos, novosProdutos]);
+  const fornecedorCadastro = encontrarFornecedorPorNome(fornecedores, nota?.fornecedor);
+
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -76,6 +82,7 @@ export default function ImportarPDFTab() {
     setConcluido(false);
     setNota(null);
     setItens([]);
+    setNovosProdutos([]);
     setNomeArquivo(file.name);
     try {
       const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
@@ -159,9 +166,16 @@ export default function ImportarPDFTab() {
     });
   };
 
+  // Produto cadastrado direto da nota: entra na lista e já fica relacionado ao item
+  const aoCadastrarProduto = (produto) => {
+    setNovosProdutos((prev) => [...prev, produto]);
+    if (novoProdutoIdx !== null) vincular(novoProdutoIdx, produto);
+    setNovoProdutoIdx(null);
+  };
+
   const selecionados = itens.filter((i) => !i.ignorar && i.produto_id && num(i.quantidade) > 0);
   const comCustoAlterado = selecionados.filter((i) => {
-    const prod = produtos.find((p) => p.id === i.produto_id);
+    const prod = produtosCompleto.find((p) => p.id === i.produto_id);
     return prod && num(prod.custo) > 0 && Math.abs(num(i.custo_unitario) - num(prod.custo)) >= 0.01;
   });
   const totalEntrada = selecionados.reduce((s, i) => s + num(i.quantidade) * num(i.custo_unitario), 0);
@@ -177,7 +191,7 @@ export default function ImportarPDFTab() {
       const fornecedorNome = fornecedorCadastro?.nome || nota?.fornecedor || '';
 
       for (const item of selecionados) {
-        const prod = produtos.find((p) => p.id === item.produto_id);
+        const prod = produtosCompleto.find((p) => p.id === item.produto_id);
         const qtd = num(item.quantidade);
         const custo = num(item.custo_unitario);
         const precoVenda = item.preco_venda === '' ? num(prod?.valor) : num(item.preco_venda);
@@ -216,7 +230,7 @@ export default function ImportarPDFTab() {
         numero_nf: nota?.numero_nota || '',
         data_compra: nota?.data_nota && !isNaN(new Date(nota.data_nota)) ? new Date(nota.data_nota).toISOString() : new Date().toISOString(),
         itens: selecionados.map((i) => {
-          const prod = produtos.find((p) => p.id === i.produto_id);
+          const prod = produtosCompleto.find((p) => p.id === i.produto_id);
           return {
             produto_id: prod.id,
             produto_nome: prod.nome,
@@ -233,6 +247,7 @@ export default function ImportarPDFTab() {
       toast.success(`Entrada registrada em ${selecionados.length} produto(s).`);
       setConcluido(true);
       setItens([]);
+      setNovosProdutos([]);
       setNota(null);
       setNomeArquivo('');
       if (fileRef.current) fileRef.current.value = '';
@@ -250,6 +265,7 @@ export default function ImportarPDFTab() {
   const limpar = () => {
     setNota(null);
     setItens([]);
+    setNovosProdutos([]);
     setConcluido(false);
     setNomeArquivo('');
     if (fileRef.current) fileRef.current.value = '';
@@ -324,21 +340,39 @@ export default function ImportarPDFTab() {
               <ItemNotaPDF
                 key={item.key}
                 item={item}
-                produtos={produtos}
+                produtos={produtosCompleto}
                 fornecedor={nota.fornecedor}
                 onChange={(campo, valor) => atualizarItem(idx, campo, valor)}
                 onVincular={(produto) => vincular(idx, produto)}
                 onDesvincular={() => desvincular(idx)}
+                onCadastrarNovo={() => setNovoProdutoIdx(idx)}
                 onIgnorar={() => atualizarItem(idx, 'ignorar', !item.ignorar)}
               />
             ))}
           </div>
 
+          {novoProdutoIdx !== null && itens[novoProdutoIdx] && (
+            <ModalNovoProdutoNota
+              open={novoProdutoIdx !== null}
+              item={itens[novoProdutoIdx]}
+              fornecedor={
+                fornecedorCadastro
+                  ? { id: fornecedorCadastro.id, nome: fornecedorCadastro.nome }
+                  : nota?.fornecedor
+                    ? { nome: nota.fornecedor }
+                    : null
+              }
+              produtos={produtosCompleto}
+              onClose={() => setNovoProdutoIdx(null)}
+              onCriado={aoCadastrarProduto}
+            />
+          )}
+
           <Card className="border-slate-200 bg-slate-50">
             <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex-1 text-sm text-slate-600">
                 <p><strong>{selecionados.length}</strong> de {itens.length} item(ns) serão lançados</p>
-                <p className="text-slate-400 text-xs">Só itens relacionados a um produto cadastrado dão entrada no estoque</p>
+                <p className="text-slate-400 text-xs">Só entram no estoque os itens relacionados ou cadastrados como produto</p>
               </div>
               <div className="flex items-center justify-between sm:justify-end gap-4">
                 <div className="text-right">

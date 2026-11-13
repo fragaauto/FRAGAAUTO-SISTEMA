@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Check, Link2, Search, Unlink, X } from 'lucide-react';
+import { AlertTriangle, Check, Link2, PackagePlus, Search, Unlink, X } from 'lucide-react';
 import { filtrarProdutos, codigosIguais } from '@/lib/produtoSearch';
 
 const money = (v) => `R$ ${(Number(v) || 0).toFixed(2)}`;
 
-export default function ItemNotaPDF({ item, produtos, fornecedor, onChange, onVincular, onDesvincular, onIgnorar }) {
+export default function ItemNotaPDF({ item, produtos, fornecedor, onChange, onVincular, onDesvincular, onCadastrarNovo, onIgnorar }) {
   const [busca, setBusca] = useState('');
   const [abrirBusca, setAbrirBusca] = useState(false);
   const produto = produtos.find((p) => p.id === item.produto_id) || null;
@@ -100,7 +100,7 @@ export default function ItemNotaPDF({ item, produtos, fornecedor, onChange, onVi
               </p>
             </>
           ) : (
-            <div>
+            <div className="space-y-1.5">
               <Button
                 type="button"
                 variant="outline"
@@ -109,6 +109,15 @@ export default function ItemNotaPDF({ item, produtos, fornecedor, onChange, onVi
                 className="w-full justify-start text-slate-600 h-8"
               >
                 <Search className="w-3.5 h-3.5 mr-1.5" /> Relacionar produto
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onCadastrarNovo}
+                className="w-full justify-start text-blue-700 border-blue-300 bg-blue-50 hover:bg-blue-100 h-8"
+              >
+                <PackagePlus className="w-3.5 h-3.5 mr-1.5" /> Cadastrar novo produto
               </Button>
               {abrirBusca && (
                 <div className="mt-1.5 border border-slate-200 rounded-lg bg-white shadow-sm p-1.5">
