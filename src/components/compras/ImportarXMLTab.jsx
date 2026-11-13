@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Upload, FileText, Check, AlertTriangle, Loader2, Plus, RefreshCw, Package, DollarSign, X, Link, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { registrarAvisoPreco } from '@/lib/avisoPreco';
 
 // Parse XML de NF-e no browser
 function parseNFe(xmlStr) {
@@ -192,6 +193,7 @@ export default function ImportarXMLTab() {
   const processar = async () => {
     setProcessando(true);
     let criados = 0, atualizados = 0;
+    const alteracoesPreco = [];
     try {
       for (const item of itensConfig) {
         if (item.acao === 'ignorar') continue;
@@ -217,6 +219,13 @@ export default function ImportarXMLTab() {
             custo_unitario: item.custo_unitario,
             data_movimento: new Date().toISOString(),
             observacoes: `Entrada via NF-e ${nfeData.numero_nf}`,
+          });
+          alteracoesPreco.push({
+            produto_id: novoProd.id,
+            codigo: item.criar_codigo || '',
+            nome: item.criar_nome,
+            preco_antigo: 0,
+            preco_novo: Number(item.preco_venda) || 0,
           });
           criados++;
         } else if (item.acao === 'atualizar' && item.produto_id) {
@@ -262,6 +271,15 @@ export default function ImportarXMLTab() {
             data_movimento: new Date().toISOString(),
             observacoes: `Entrada via NF-e ${nfeData.numero_nf}`,
           });
+          if (Math.abs((Number(prod?.valor) || 0) - (Number(item.preco_venda) || 0)) >= 0.01) {
+            alteracoesPreco.push({
+              produto_id: item.produto_id,
+              codigo: prod?.codigo || item.codigo || '',
+              nome: prod?.nome || item.nome,
+              preco_antigo: Number(prod?.valor) || 0,
+              preco_novo: Number(item.preco_venda) || 0,
+            });
+          }
           atualizados++;
         }
       }
@@ -297,6 +315,12 @@ export default function ImportarXMLTab() {
         compra_id: compra.id,
         categoria: 'fornecedor_pecas',
       });
+
+      try {
+        await registrarAvisoPreco(alteracoesPreco, { origem: 'nota fiscal (XML)' });
+      } catch {
+        // o aviso é opcional e não deve impedir a importação
+      }
 
       toast.success(`✅ Processado! ${criados} criados, ${atualizados} atualizados. Conta a pagar gerada.`);
       setConcluido(true);

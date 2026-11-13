@@ -14,6 +14,7 @@ import {
   encontrarFornecedorPorNome,
   mesclarFornecedorProduto,
 } from '@/lib/produtoSearch';
+import { registrarAvisoPreco } from '@/lib/avisoPreco';
 
 const num = (v) => {
   const n = parseFloat(String(v ?? '').replace(',', '.'));
@@ -189,6 +190,7 @@ export default function ImportarPDFTab() {
     try {
       const fornecedorCadastro = encontrarFornecedorPorNome(fornecedores, nota?.fornecedor);
       const fornecedorNome = fornecedorCadastro?.nome || nota?.fornecedor || '';
+      const alteracoesPreco = [];
 
       for (const item of selecionados) {
         const prod = produtosCompleto.find((p) => p.id === item.produto_id);
@@ -213,6 +215,16 @@ export default function ImportarPDFTab() {
         }
 
         await base44.entities.Produto.update(prod.id, atualizacao);
+
+        if (Math.abs(num(prod.valor) - precoVenda) >= 0.01) {
+          alteracoesPreco.push({
+            produto_id: prod.id,
+            codigo: prod.codigo || '',
+            nome: prod.nome,
+            preco_antigo: num(prod.valor),
+            preco_novo: precoVenda,
+          });
+        }
 
         await base44.entities.MovimentoEstoque.create({
           produto_id: prod.id,
@@ -243,6 +255,12 @@ export default function ImportarPDFTab() {
         status: 'confirmada',
         observacoes: 'Entrada gerada a partir de PDF de nota de compra',
       });
+
+      try {
+        await registrarAvisoPreco(alteracoesPreco, { origem: 'nota de compra (PDF)' });
+      } catch {
+        // o aviso é opcional e não deve impedir a entrada no estoque
+      }
 
       toast.success(`Entrada registrada em ${selecionados.length} produto(s).`);
       setConcluido(true);

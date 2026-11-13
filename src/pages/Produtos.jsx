@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { registrarAvisoPreco } from '@/lib/avisoPreco';
 import { 
   Plus, 
   Search, 
@@ -475,7 +476,7 @@ export default function Produtos() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.codigo || !formData.nome || !formData.categoria) {
       toast.error('Preencha todos os campos obrigatórios (código, nome, categoria)');
       return;
@@ -504,10 +505,29 @@ export default function Produtos() {
       ...(!editingProduto && { unidade_id: unidadeAtual?.id || null })
     };
 
-    if (editingProduto) {
-      updateMutation.mutate({ id: editingProduto.id, data });
-    } else {
-      createMutation.mutate(data);
+    try {
+      if (editingProduto) {
+        const precoAntigo = Number(editingProduto.valor) || 0;
+        await updateMutation.mutateAsync({ id: editingProduto.id, data });
+        registrarAvisoPreco([{
+          produto_id: editingProduto.id,
+          codigo: data.codigo,
+          nome: data.nome,
+          preco_antigo: precoAntigo,
+          preco_novo: data.valor,
+        }], { origem: 'cadastro manual' }).catch(() => {});
+      } else {
+        const criado = await createMutation.mutateAsync(data);
+        registrarAvisoPreco([{
+          produto_id: criado?.id,
+          codigo: data.codigo,
+          nome: data.nome,
+          preco_antigo: 0,
+          preco_novo: data.valor,
+        }], { origem: 'cadastro manual' }).catch(() => {});
+      }
+    } catch (err) {
+      toast.error('Não foi possível salvar o produto: ' + (err.message || err));
     }
   };
 

@@ -1,0 +1,56 @@
+{
+  "name": "AvisoPrecoLido",
+  "type": "object",
+  "properties": {
+    "aviso_id": {
+      "type": "string",
+      "description": "ID do aviso j\u00e1 visualizado pelo usu\u00e1rio"
+    },
+    "usuario_email": {
+      "type": "string",
+      "description": "E-mail do usu\u00e1rio que visualizou o aviso"
+    }
+  },
+  "required": [
+    "aviso_id",
+    "usuario_email"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
