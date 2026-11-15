@@ -15,6 +15,8 @@ import Orcamentos from './pages/Orcamentos';
 import MuralAnonimo from './pages/MuralAnonimo';
 import AssinarAtendimento from './pages/AssinarAtendimento';
 import Metas from './pages/Metas';
+import Promocoes from './pages/Promocoes';
+import PromocaoPublica from './pages/PromocaoPublica';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -73,6 +75,8 @@ const AuthenticatedApp = () => {
       <Route path="/MuralAnonimo" element={<LayoutWrapper currentPageName="MuralAnonimo"><MuralAnonimo /></LayoutWrapper>} />
       <Route path="/AssinarAtendimento" element={<LayoutWrapper currentPageName="AssinarAtendimento"><AssinarAtendimento /></LayoutWrapper>} />
       <Route path="/Metas" element={<LayoutWrapper currentPageName="Metas"><Metas /></LayoutWrapper>} />
+      <Route path="/Promocoes" element={<LayoutWrapper currentPageName="Promocoes"><Promocoes /></LayoutWrapper>} />
+      <Route path="/PromocaoPublica" element={<PromocaoPublica />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

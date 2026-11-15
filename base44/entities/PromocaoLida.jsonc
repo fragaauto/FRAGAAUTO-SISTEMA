@@ -1,0 +1,56 @@
+{
+  "name": "PromocaoLida",
+  "type": "object",
+  "properties": {
+    "promocao_id": {
+      "type": "string",
+      "description": "ID da promo\u00e7\u00e3o j\u00e1 visualizada pelo usu\u00e1rio no pop-up"
+    },
+    "usuario_email": {
+      "type": "string",
+      "description": "E-mail do usu\u00e1rio que visualizou a promo\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "promocao_id",
+    "usuario_email"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

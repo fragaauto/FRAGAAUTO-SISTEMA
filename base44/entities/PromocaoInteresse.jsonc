@@ -1,0 +1,104 @@
+{
+  "name": "PromocaoInteresse",
+  "type": "object",
+  "properties": {
+    "promocao_id": {
+      "type": "string"
+    },
+    "promocao_titulo": {
+      "type": "string"
+    },
+    "cliente_nome": {
+      "type": "string"
+    },
+    "cliente_telefone": {
+      "type": "string"
+    },
+    "produtos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "valor_promocional": {
+            "type": "number"
+          }
+        }
+      },
+      "default": []
+    },
+    "observacao": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "novo",
+        "em_contato",
+        "convertido",
+        "descartado"
+      ],
+      "enumColors": [
+        "blue",
+        "yellow",
+        "green",
+        "gray"
+      ],
+      "default": "novo"
+    }
+  },
+  "required": [
+    "promocao_id",
+    "cliente_nome"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    }
+  }
+}

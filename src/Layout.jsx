@@ -17,7 +17,8 @@ import {
   Loader2,
   LogOut,
   ShoppingBag,
-  MessageSquare
+  MessageSquare,
+  Megaphone
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -32,6 +33,7 @@ import SeletorUnidade from '@/components/SeletorUnidade';
 import BotaoConsultaFlutuante from '@/components/consulta/BotaoConsultaFlutuante';
 import LembreteRotinaPopup from '@/components/rotina/LembreteRotinaPopup';
 import AvisoPrecoPopup from '@/components/avisos/AvisoPrecoPopup';
+import PopupPromocao from '@/components/promocoes/PopupPromocao';
 
 // Todos os itens de navegação com módulo associado
 const NAV_ITEMS = [
@@ -40,6 +42,7 @@ const NAV_ITEMS = [
   { name: 'Atendimentos', icon: FileText, path: 'Atendimentos', modulo: 'atendimentos' },
   { name: 'Controle de Encomendas', icon: Package, path: 'ControleEncomendas', modulo: 'encomendas' },
   { name: 'Marketing Direto', icon: TrendingUp, path: 'Remarketing', modulo: 'remarketing' },
+  { name: 'Promoções', icon: Megaphone, path: 'Promocoes', modulo: 'remarketing' },
   { name: 'Relatórios', icon: FileText, path: 'Relatorios', modulo: 'relatorios' },
   { name: 'Produtos', icon: Package, path: 'Produtos', modulo: 'estoque' },
   { name: 'Cadastros', icon: Users, path: 'Cadastros', modulo: 'clientes' },
@@ -213,6 +216,7 @@ export default function Layout({ children, currentPageName }) {
         <BotaoConsultaFlutuante />
         {!isPaginaPublica && <LembreteRotinaPopup />}
         {!isPaginaPublica && <AvisoPrecoPopup />}
+        {!isPaginaPublica && <PopupPromocao />}
       </div>
     );
   }
@@ -300,6 +304,7 @@ export default function Layout({ children, currentPageName }) {
       <BotaoConsultaFlutuante />
       <LembreteRotinaPopup />
       <AvisoPrecoPopup />
+      <PopupPromocao />
 
     </div>
   );

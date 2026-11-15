@@ -48,7 +48,7 @@ export const TODOS_MODULOS = [
     nome: 'Marketing Direto',
     descricao: 'Recuperação de vendas e campanhas de mensagem',
     icone: '📣',
-    paginas: ['Remarketing'],
+    paginas: ['Remarketing', 'Promocoes'],
   },
   {
     id: 'encomendas',
