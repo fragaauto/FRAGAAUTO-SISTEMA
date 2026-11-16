@@ -40,6 +40,10 @@
     "valor": {
       "type": "number"
     },
+    "motivo": {
+      "type": "string",
+      "description": "Para que serve o vale, escrito pela empresa (ex: desconto para instala\u00e7\u00e3o do produto)"
+    },
     "validade": {
       "type": "string",
       "format": "date",

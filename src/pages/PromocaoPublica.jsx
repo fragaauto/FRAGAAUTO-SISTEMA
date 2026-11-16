@@ -28,7 +28,7 @@ function CardProdutoPublico({ produto, marcado, onToggle }) {
     >
       <div className="relative">
         {produto.foto_url ? (
-          <img src={produto.foto_url} alt={produto.nome} className="w-full h-40 object-cover" />
+          <img src={produto.foto_url} alt={produto.nome} className="w-full h-40 object-contain bg-white p-2" />
         ) : (
           <div className="w-full h-40 bg-slate-100 flex items-center justify-center">
             <Megaphone className="w-10 h-10 text-slate-300" />
@@ -119,7 +119,7 @@ export default function PromocaoPublica() {
       .map((p) => `• ${p.nome} - ${brl(p.valor_promocional)}`)
       .join('\n');
     const linhaVale = valeEmitido
-      ? `\nVale desconto: ${valeEmitido.codigo} (${descreverVale(promocao)}, válido até ${dataBr(valeEmitido.validade)})`
+      ? `\nVale desconto: ${valeEmitido.codigo} (${descreverVale(promocao)}${valeEmitido.motivo ? ` - ${valeEmitido.motivo}` : ''}, válido até ${dataBr(valeEmitido.validade)})`
       : '';
     return `Olá! Vi a promoção "${promocao.titulo}" e tenho interesse em:\n${itens}\n\nMeu nome: ${nome}${telefone ? `\nTelefone: ${telefone}` : ''}${observacao ? `\nObs: ${observacao}` : ''}${linhaVale}`;
   };
@@ -160,6 +160,7 @@ export default function PromocaoPublica() {
             cliente_telefone: telefone,
             tipo: promocao.vale_tipo || 'percentual',
             valor: Number(promocao.vale_valor) || 0,
+            motivo: promocao.vale_motivo || '',
             validade: dataValidadeVale(promocao.vale_validade_dias),
             status: 'disponivel',
           });
@@ -214,6 +215,9 @@ export default function PromocaoPublica() {
               <p className="text-sm text-slate-700">
                 {descreverVale(promocao)} • válido até {dataBr(valeEmitido.validade)}
               </p>
+              {valeEmitido.motivo && (
+                <p className="text-xs font-semibold text-amber-800 mt-1">{valeEmitido.motivo}</p>
+              )}
               <p className="text-xs text-slate-500 mt-1">Apresente este código no atendimento.</p>
             </div>
           )}
@@ -272,6 +276,9 @@ export default function PromocaoPublica() {
               <p className="text-xs text-slate-600">
                 Ao enviar seu interesse você recebe na hora um código de vale para usar no atendimento.
               </p>
+              {promocao.vale_motivo && (
+                <p className="text-xs font-semibold text-amber-800 mt-1">{promocao.vale_motivo}</p>
+              )}
             </div>
           </div>
         )}

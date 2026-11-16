@@ -51,6 +51,7 @@ export default function ValesPromocao({ vales, onStatus, onExcluir }) {
                 <p className="text-sm text-slate-700 mt-1">{v.cliente_nome}</p>
                 <p className="text-xs text-slate-500">
                   {v.promocao_titulo || '—'}
+                  {v.motivo ? ` • ${v.motivo}` : ''}
                   {v.cliente_telefone ? ` • ${v.cliente_telefone}` : ''}
                   {v.validade ? ` • válido até ${dataBr(v.validade)}` : ''}
                   {v.created_date

@@ -49,6 +49,7 @@ export default function FormularioPromocao({
     vale_tipo: promocao?.vale_tipo || 'percentual',
     vale_valor: promocao?.vale_valor ?? 0,
     vale_validade_dias: promocao?.vale_validade_dias ?? 30,
+    vale_motivo: promocao?.vale_motivo || '',
   });
   const [whatsapp, setWhatsapp] = useState(promocao?.whatsapp_retorno || whatsappPadrao || '');
   const [dataFim, setDataFim] = useState(promocao?.data_fim || '');
@@ -142,6 +143,7 @@ export default function FormularioPromocao({
       vale_tipo: vale.vale_tipo,
       vale_valor: Number(vale.vale_valor) || 0,
       vale_validade_dias: Number(vale.vale_validade_dias) || 30,
+      vale_motivo: (vale.vale_motivo || '').trim(),
       whatsapp_retorno: whatsapp,
       data_fim: dataFim || null,
       ativa,

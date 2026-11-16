@@ -58,6 +58,18 @@ export default function ConfigValeDesconto({ valor, onChange, clientesDestino })
               />
             </div>
           </div>
+          <div>
+            <Label className="text-xs">Motivo / para que serve o vale</Label>
+            <Input
+              value={valor?.vale_motivo || ''}
+              onChange={(e) => alterar('vale_motivo', e.target.value)}
+              placeholder="Ex: desconto para instalação do produto"
+              className="h-9"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              O cliente vê este motivo no vale e a equipe na aba "Vales emitidos".
+            </p>
+          </div>
           <p className="text-xs text-slate-600">
             Cada cliente que reservar pela página recebe um código com {descricao || 'o desconto configurado'},
             válido por {valor?.vale_validade_dias ?? 30} dia(s). A equipe acompanha e baixa os vales na aba

@@ -26,7 +26,9 @@ export default function DisparoPromocaoModal({
   const [gruposSel, setGruposSel] = useState(promocao.grupos_ids || []);
   const [imagem, setImagem] = useState(promocao.imagem_mensagem_url || '');
   const [audio, setAudio] = useState(promocao.audio_url || '');
-  const [intervalo, setIntervalo] = useState(5);
+  const [intervalo, setIntervalo] = useState(8);
+  const [pausarACada, setPausarACada] = useState(20);
+  const [pausaMinutos, setPausaMinutos] = useState(5);
   const [enviando, setEnviando] = useState(false);
   const [enviados, setEnviados] = useState(0);
   const [erros, setErros] = useState(0);
@@ -53,6 +55,12 @@ export default function DisparoPromocaoModal({
   const preview = montarMensagem(promocao, destinatarios[0]?.nome || 'Cliente');
   const processados = enviados + erros;
   const progresso = destinatarios.length ? Math.round((processados / destinatarios.length) * 100) : 0;
+
+  const pausasPrevistas =
+    pausarACada > 0 ? Math.floor(Math.max(0, destinatarios.length - 1) / pausarACada) : 0;
+  const minutosPrevistos = Math.round(
+    (destinatarios.length * intervalo + pausasPrevistas * pausaMinutos * 60) / 60
+  );
 
   const anexar = async (file, tipo) => {
     if (!file) return;
@@ -111,7 +119,13 @@ export default function DisparoPromocaoModal({
         setErros((v) => v + 1);
         setResultados((prev) => [...prev, { nome: cliente.nome, ok: false, erro: e.message }]);
       }
-      if (i < destinatarios.length - 1 && !cancelRef.current) await esperar(intervalo);
+      if (!cancelRef.current && i < destinatarios.length - 1) {
+        await esperar(intervalo);
+        // Pausa longa a cada bloco de envios para reduzir o risco de bloqueio do WhatsApp
+        if (pausarACada > 0 && (i + 1) % pausarACada === 0 && pausaMinutos > 0) {
+          await esperar(pausaMinutos * 60);
+        }
+      }
     }
 
     setEnviando(false);
@@ -252,18 +266,56 @@ export default function DisparoPromocaoModal({
           </div>
 
           {!enviando && processados === 0 && (
-            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg p-2">
-              <Clock className="w-4 h-4 text-amber-600" />
-              <span className="text-xs text-amber-700">Intervalo entre envios</span>
-              <Input
-                type="number"
-                min={2}
-                max={120}
-                value={intervalo}
-                onChange={(e) => setIntervalo(Number(e.target.value) || 5)}
-                className="w-20 h-8"
-              />
-              <span className="text-xs text-amber-700">segundos</span>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+              <p className="text-xs font-semibold text-amber-800 flex items-center gap-1">
+                <Clock className="w-4 h-4" /> Ritmo do disparo (ajuda a evitar bloqueio do WhatsApp)
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label className="text-xs text-amber-800">Intervalo por envio</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={2}
+                      max={600}
+                      value={intervalo}
+                      onChange={(e) => setIntervalo(Math.max(2, Number(e.target.value) || 2))}
+                      className="h-8"
+                    />
+                    <span className="text-xs text-amber-700">seg</span>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-amber-800">Pausar a cada</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={pausarACada}
+                      onChange={(e) => setPausarACada(Math.max(1, Number(e.target.value) || 1))}
+                      className="h-8"
+                    />
+                    <span className="text-xs text-amber-700">envios</span>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-amber-800">Duração da pausa</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={0}
+                      value={pausaMinutos}
+                      onChange={(e) => setPausaMinutos(Math.max(0, Number(e.target.value) || 0))}
+                      className="h-8"
+                    />
+                    <span className="text-xs text-amber-700">min</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-[11px] text-amber-700">
+                {destinatarios.length} envio(s) • pausas de {pausaMinutos} min a cada {pausarACada} • tempo estimado ≈{' '}
+                {minutosPrevistos} min
+              </p>
             </div>
           )}
 
