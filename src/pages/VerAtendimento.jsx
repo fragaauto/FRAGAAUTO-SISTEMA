@@ -125,6 +125,7 @@ export default function VerAtendimento() {
   const [queixaTextoEdit, setQueixaTextoEdit] = useState('');
   const [searchProdutoQueixa, setSearchProdutoQueixa] = useState('');
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [enviandoLinkOrcamento, setEnviandoLinkOrcamento] = useState(false);
   const [showAssistenteIA, setShowAssistenteIA] = useState(false);
   const [textoTecnico, setTextoTecnico] = useState('');
   const [processandoIA, setProcessandoIA] = useState(false);
@@ -2134,23 +2135,50 @@ export default function VerAtendimento() {
               
               <div className="flex flex-col gap-2">
                 <Button
-                  onClick={() => {
+                  onClick={async () => {
+                    if (!atendimento.cliente_telefone) {
+                      toast.error('Cliente sem telefone cadastrado');
+                      return;
+                    }
                     const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
                     const mensagemPersonalizada = configs[0]?.mensagem_link_cliente || '';
                     let mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n📋 Seu orçamento está pronto para aprovação.\n\n*Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n\n`;
-                    
+
                     if (mensagemPersonalizada) {
                       mensagem += `${mensagemPersonalizada}\n\n`;
                     }
-                    
+
                     mensagem += `${linkAprovacao}`;
-                    window.open(`https://wa.me/${atendimento.cliente_telefone?.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`, '_blank');
-                    setShowLinkDialog(false);
+
+                    setEnviandoLinkOrcamento(true);
+                    try {
+                      const res = await base44.functions.invoke('enviarMensagemWhatsApp', {
+                        telefone: atendimento.cliente_telefone.replace(/\D/g, ''),
+                        mensagem,
+                        unidade_id: atendimento.unidade_id || null,
+                      });
+                      if (res.data?.ok) {
+                        toast.success('Link do orçamento enviado via WhatsApp!');
+                        setShowLinkDialog(false);
+                      } else {
+                        throw new Error(res.data?.error || 'Erro ao enviar');
+                      }
+                    } catch (err) {
+                      window.open(`https://wa.me/${atendimento.cliente_telefone.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`, '_blank');
+                      toast.warning('Envio automático indisponível. Abrindo WhatsApp Web...');
+                    } finally {
+                      setEnviandoLinkOrcamento(false);
+                    }
                   }}
+                  disabled={enviandoLinkOrcamento}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Abrir WhatsApp
+                  {enviandoLinkOrcamento ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                  )}
+                  Enviar via WhatsApp
                 </Button>
                 
                 <Button
