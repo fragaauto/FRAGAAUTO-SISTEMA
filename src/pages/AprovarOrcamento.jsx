@@ -599,6 +599,13 @@ export default function AprovarOrcamento() {
           </CardContent>
         </Card>
 
+        {/* Três quadros de orçamento (queixa / urgência / completo) */}
+        <SeletorPacotes
+          itens={itensParaPacotes}
+          selecionado={pacoteSelecionado}
+          onSelecionar={selecionarPacote}
+        />
+
         {/* Queixa inicial */}
         {atendimento.queixa_inicial && (
           <Card className="border-blue-300 bg-blue-50/40">
@@ -616,13 +623,6 @@ export default function AprovarOrcamento() {
             </CardContent>
           </Card>
         )}
-
-        {/* Três quadros de orçamento (queixa / urgência / completo) */}
-        <SeletorPacotes
-          itens={itensParaPacotes}
-          selecionado={pacoteSelecionado}
-          onSelecionar={selecionarPacote}
-        />
 
         {/* Botão Aprovar Todos */}
         {(itensQueixa.length > 0 || itensChecklist.length > 0) && (
