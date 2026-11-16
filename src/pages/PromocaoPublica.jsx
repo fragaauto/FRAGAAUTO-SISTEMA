@@ -350,8 +350,17 @@ export default function PromocaoPublica() {
             className="w-full bg-orange-500 hover:bg-orange-600"
           >
             {enviando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageCircle className="w-4 h-4 mr-2" />}
-            Enviar interesse
+            Clique aqui e reserve sua oferta já!
           </Button>
+          {promocao.vale_ativo && Number(promocao.vale_valor) > 0 && (
+            <p className="flex items-start gap-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <Ticket className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <span>
+                Reservando sua oferta por esta página você ganha um cupom de desconto de{' '}
+                {descreverVale(promocao)}. O código é gerado na hora e aparece para você após o envio.
+              </span>
+            </p>
+          )}
         </div>
       </div>
 
