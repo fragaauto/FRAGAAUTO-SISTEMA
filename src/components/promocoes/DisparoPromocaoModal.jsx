@@ -11,9 +11,17 @@ import {
   Send, Loader2, CheckCircle2, XCircle, Link2, Image as ImageIcon,
   Mic, Upload, X, Clock,
 } from 'lucide-react';
-import { linkPublico, montarMensagem, uploadArquivoPublico } from '@/lib/promocao';
+import { linkPublico, montarMensagem, uploadArquivoPublico, filtrarClientes, descreverVale } from '@/lib/promocao';
 
-export default function DisparoPromocaoModal({ promocao, grupos, clientes, unidadeId, onClose, onConcluido }) {
+export default function DisparoPromocaoModal({
+  promocao,
+  grupos,
+  clientes,
+  carregandoClientes,
+  unidadeId,
+  onClose,
+  onConcluido,
+}) {
   const [todos, setTodos] = useState(promocao.todos_clientes || false);
   const [gruposSel, setGruposSel] = useState(promocao.grupos_ids || []);
   const [imagem, setImagem] = useState(promocao.imagem_mensagem_url || '');
@@ -28,13 +36,18 @@ export default function DisparoPromocaoModal({ promocao, grupos, clientes, unida
   const imgRef = useRef(null);
   const audioRef = useRef(null);
 
-  const destinatarios = useMemo(() => {
-    const comTelefone = clientes.filter((c) => c.telefone && !c.bloqueado);
-    if (todos) return comTelefone;
-    const ids = new Set();
-    grupos.filter((g) => gruposSel.includes(g.id)).forEach((g) => (g.cliente_ids || []).forEach((id) => ids.add(id)));
-    return comTelefone.filter((c) => ids.has(c.id));
-  }, [clientes, grupos, gruposSel, todos]);
+  const filtros = useMemo(() => promocao.filtros_clientes || {}, [promocao.filtros_clientes]);
+
+  const destinatarios = useMemo(
+    () =>
+      filtrarClientes(clientes, {
+        todos,
+        grupos,
+        gruposIds: gruposSel,
+        filtros,
+      }),
+    [clientes, grupos, gruposSel, todos, filtros]
+  );
 
   const link = linkPublico(promocao.id);
   const preview = montarMensagem(promocao, destinatarios[0]?.nome || 'Cliente');
@@ -205,9 +218,37 @@ export default function DisparoPromocaoModal({ promocao, grupos, clientes, unida
                 </label>
               ))}
             </div>
+            {(filtros.codigo_de !== '' && filtros.codigo_de != null) ||
+            (filtros.codigo_ate !== '' && filtros.codigo_ate != null) ||
+            filtros.nome_iniciais ? (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {filtros.codigo_de !== '' && filtros.codigo_de != null && (
+                  <span className="text-xs bg-slate-100 text-slate-600 rounded px-2 py-0.5">
+                    código de {filtros.codigo_de}
+                  </span>
+                )}
+                {filtros.codigo_ate !== '' && filtros.codigo_ate != null && (
+                  <span className="text-xs bg-slate-100 text-slate-600 rounded px-2 py-0.5">
+                    código até {filtros.codigo_ate}
+                  </span>
+                )}
+                {filtros.nome_iniciais && (
+                  <span className="text-xs bg-slate-100 text-slate-600 rounded px-2 py-0.5">
+                    nome: {filtros.nome_iniciais}
+                  </span>
+                )}
+              </div>
+            ) : null}
             <p className="text-xs text-slate-500 mt-2">
-              {destinatarios.length} cliente(s) receberão a campanha
+              {carregandoClientes
+                ? 'Carregando clientes...'
+                : `${destinatarios.length} cliente(s) receberão a campanha`}
             </p>
+            {descreverVale(promocao) && (
+              <p className="text-xs text-amber-700 mt-1">
+                🎟️ Cada reserva pela página gera um vale de {descreverVale(promocao)}
+              </p>
+            )}
           </div>
 
           {!enviando && processados === 0 && (
@@ -256,7 +297,11 @@ export default function DisparoPromocaoModal({ promocao, grupos, clientes, unida
             {!enviando && (
               <>
                 <Button variant="outline" onClick={onClose} className="flex-1">Fechar</Button>
-                <Button onClick={iniciar} className="flex-1 bg-green-600 hover:bg-green-700">
+                <Button
+                  onClick={iniciar}
+                  disabled={carregandoClientes}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
                   <Upload className="w-4 h-4 mr-2" /> Iniciar disparo
                 </Button>
               </>

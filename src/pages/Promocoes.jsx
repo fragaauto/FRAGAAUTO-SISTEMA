@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Megaphone, Plus, Loader2 } from 'lucide-react';
+import { Megaphone, Plus, Loader2, Ticket } from 'lucide-react';
 import { useUnidade } from '@/lib/UnidadeContext';
 import { paginaPermitida } from '@/components/modulos';
 import ModuloBloqueado from '@/components/ModuloBloqueado';
@@ -13,6 +13,7 @@ import CardPromocao from '@/components/promocoes/CardPromocao';
 import FormularioPromocao from '@/components/promocoes/FormularioPromocao';
 import DisparoPromocaoModal from '@/components/promocoes/DisparoPromocaoModal';
 import InteressesPromocao from '@/components/promocoes/InteressesPromocao';
+import ValesPromocao from '@/components/promocoes/ValesPromocao';
 
 export default function Promocoes() {
   const { unidadeAtual } = useUnidade();
@@ -28,22 +29,44 @@ export default function Promocoes() {
     staleTime: 30 * 1000,
   });
 
-  const { data: produtos = [] } = useQuery({
+  // Produtos só são carregados quando o formulário abre (evita travar a página)
+  const { data: produtos = [], isLoading: carregandoProdutos } = useQuery({
     queryKey: ['produtos-promocao'],
     queryFn: () => base44.entities.Produto.list('-created_date'),
     staleTime: 5 * 60 * 1000,
+    enabled: formAberto,
   });
 
   const { data: grupos = [] } = useQuery({
     queryKey: ['grupos-clientes'],
     queryFn: () => base44.entities.GrupoClientes.list(),
     staleTime: 5 * 60 * 1000,
+    enabled: formAberto || !!disparo,
   });
 
-  const { data: clientes = [] } = useQuery({
+  const { data: listasPrecos = [] } = useQuery({
+    queryKey: ['listas-precos-promocao'],
+    queryFn: () => base44.entities.ListaPrecos.list(),
+    staleTime: 5 * 60 * 1000,
+    enabled: formAberto,
+  });
+
+  // Clientes só são carregados ao abrir o disparo
+  const { data: clientes = [], isLoading: carregandoClientes } = useQuery({
     queryKey: ['clientes-promocao'],
     queryFn: () => base44.entities.Cliente.list(),
     staleTime: 5 * 60 * 1000,
+    enabled: !!disparo,
+  });
+
+  const { data: vales = [] } = useQuery({
+    queryKey: ['vales-promocao'],
+    queryFn: async () => {
+      const page = await base44.entities.PromocaoVale.list({ sort: '-created_date', limit: 200 });
+      return page.items || [];
+    },
+    staleTime: 30 * 1000,
+    enabled: aba === 'vales',
   });
 
   const { data: interesses = [] } = useQuery({
@@ -72,15 +95,12 @@ export default function Promocoes() {
 
   const config = configs[0] || {};
   const modulosAtivos = config.modulos_ativos ?? null;
-  const clientesComTelefone = useMemo(
-    () => clientes.filter((c) => c.telefone && !c.bloqueado).length,
-    [clientes]
-  );
 
   const recarregar = () => {
     qc.invalidateQueries({ queryKey: ['promocoes'] });
     qc.invalidateQueries({ queryKey: ['interesses-promocao'] });
     qc.invalidateQueries({ queryKey: ['interesses-por-promocao'] });
+    qc.invalidateQueries({ queryKey: ['vales-promocao'] });
     setFormAberto(false);
     setEditando(null);
   };
@@ -105,6 +125,17 @@ export default function Promocoes() {
   const excluirInteresse = async (interesse) => {
     await base44.entities.PromocaoInteresse.delete(interesse.id);
     recarregar();
+  };
+
+  const alterarStatusVale = async (vale, status) => {
+    await base44.entities.PromocaoVale.update(vale.id, { status });
+    qc.invalidateQueries({ queryKey: ['vales-promocao'] });
+  };
+
+  const excluirVale = async (vale) => {
+    if (!confirm(`Excluir o vale ${vale.codigo}?`)) return;
+    await base44.entities.PromocaoVale.delete(vale.id);
+    qc.invalidateQueries({ queryKey: ['vales-promocao'] });
   };
 
   if (!paginaPermitida(modulosAtivos, 'Promocoes')) {
@@ -139,6 +170,9 @@ export default function Promocoes() {
           <TabsList className="w-full sm:w-auto">
             <TabsTrigger value="campanhas">Campanhas ({promocoes.length})</TabsTrigger>
             <TabsTrigger value="interesses">Interesses ({interesses.length})</TabsTrigger>
+            <TabsTrigger value="vales" className="flex items-center gap-1">
+              <Ticket className="w-3 h-3" /> Vales ({vales.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="campanhas" className="space-y-3 mt-4">
@@ -181,6 +215,10 @@ export default function Promocoes() {
               onExcluir={excluirInteresse}
             />
           </TabsContent>
+
+          <TabsContent value="vales" className="mt-4">
+            <ValesPromocao vales={vales} onStatus={alterarStatusVale} onExcluir={excluirVale} />
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -188,8 +226,9 @@ export default function Promocoes() {
         <FormularioPromocao
           promocao={editando}
           produtos={produtos}
+          carregandoProdutos={carregandoProdutos}
+          listas={listasPrecos}
           grupos={grupos}
-          totalClientes={clientesComTelefone}
           whatsappPadrao={config.whatsapp_atendimento || ''}
           unidadeId={unidadeAtual?.id}
           onClose={() => { setFormAberto(false); setEditando(null); }}
@@ -202,6 +241,7 @@ export default function Promocoes() {
           promocao={disparo}
           grupos={grupos}
           clientes={clientes}
+          carregandoClientes={carregandoClientes}
           unidadeId={unidadeAtual?.id}
           onClose={() => setDisparo(null)}
           onConcluido={() => qc.invalidateQueries({ queryKey: ['promocoes'] })}

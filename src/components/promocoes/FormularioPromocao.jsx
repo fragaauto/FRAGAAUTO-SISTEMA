@@ -6,13 +6,29 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2, Save, Megaphone } from 'lucide-react';
+import { Loader2, Save, Megaphone, Tag } from 'lucide-react';
 import SeletorProdutosPromocao from './SeletorProdutosPromocao';
 import UploadsPromocao from './UploadsPromocao';
+import FiltrosClientes from './FiltrosClientes';
+import ConfigValeDesconto from './ConfigValeDesconto';
 import { fotoProdutoCadastro } from '@/lib/promocao';
+import { calcularPrecoLista } from '@/lib/listaPrecos';
 
-export default function FormularioPromocao({ promocao, produtos, grupos, totalClientes, whatsappPadrao, unidadeId, onClose, onSaved }) {
+const numeroOuNulo = (v) => (v === '' || v === null || v === undefined ? null : Number(v));
+
+export default function FormularioPromocao({
+  promocao,
+  produtos,
+  carregandoProdutos,
+  listas = [],
+  grupos = [],
+  whatsappPadrao,
+  unidadeId,
+  onClose,
+  onSaved,
+}) {
   const editando = !!promocao;
   const [titulo, setTitulo] = useState(promocao?.titulo || '');
   const [texto, setTexto] = useState(promocao?.texto || '');
@@ -24,8 +40,16 @@ export default function FormularioPromocao({ promocao, produtos, grupos, totalCl
   const [precos, setPrecos] = useState(
     Object.fromEntries((promocao?.produtos || []).map((p) => [p.produto_id, p.valor_promocional]))
   );
+  const [listaPrecoId, setListaPrecoId] = useState(promocao?.lista_preco_id || 'tabela');
   const [gruposIds, setGruposIds] = useState(promocao?.grupos_ids || []);
   const [todosClientes, setTodosClientes] = useState(promocao?.todos_clientes || false);
+  const [filtros, setFiltros] = useState(promocao?.filtros_clientes || {});
+  const [vale, setVale] = useState({
+    vale_ativo: promocao?.vale_ativo || false,
+    vale_tipo: promocao?.vale_tipo || 'percentual',
+    vale_valor: promocao?.vale_valor ?? 0,
+    vale_validade_dias: promocao?.vale_validade_dias ?? 30,
+  });
   const [whatsapp, setWhatsapp] = useState(promocao?.whatsapp_retorno || whatsappPadrao || '');
   const [dataFim, setDataFim] = useState(promocao?.data_fim || '');
   const [ativa, setAtiva] = useState(promocao?.ativa !== false);
@@ -34,6 +58,16 @@ export default function FormularioPromocao({ promocao, produtos, grupos, totalCl
   const primeiraRenderizacao = useRef(true);
 
   const ativos = useMemo(() => produtos.filter((p) => p.ativo !== false), [produtos]);
+
+  const listaSelecionada = useMemo(
+    () => listas.find((l) => l.id === listaPrecoId) || null,
+    [listas, listaPrecoId]
+  );
+
+  const precoReferencia = (p) => {
+    const daLista = listaSelecionada ? calcularPrecoLista(p, listaSelecionada) : null;
+    return Number(daLista ?? p.valor ?? 0) || 0;
+  };
 
   const candidatos = useMemo(() => {
     if (modo === 'todos') return ativos;
@@ -53,7 +87,7 @@ export default function FormularioPromocao({ promocao, produtos, grupos, totalCl
     setSelecionados(candidatos.map((p) => p.id));
   }, [modo, categorias, produtos.length]);
 
-  const valorPromocional = (p) => Number(precos[p.id] ?? p.valor ?? 0);
+  const valorPromocional = (p) => Number(precos[p.id] ?? precoReferencia(p));
 
   const toggleProduto = (id) => {
     setSelecionados((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
@@ -65,9 +99,16 @@ export default function FormularioPromocao({ promocao, produtos, grupos, totalCl
     );
   };
 
+  const trocarLista = (id) => {
+    setListaPrecoId(id);
+    // Recalcula os valores promocionais a partir da nova referência
+    setPrecos({});
+  };
+
   const salvar = async () => {
     if (!titulo.trim()) return toast.error('Informe o título da promoção');
-    const escolhidos = ativos.filter((p) => selecionados.includes(p.id));
+    const selecionadosSet = new Set(selecionados);
+    const escolhidos = ativos.filter((p) => selecionadosSet.has(p.id));
     if (escolhidos.length === 0) return toast.error('Selecione ao menos um produto');
 
     const dados = {
@@ -83,13 +124,24 @@ export default function FormularioPromocao({ promocao, produtos, grupos, totalCl
         categoria: p.categoria || '',
         descricao: p.descricao || '',
         foto_url: fotoProdutoCadastro(p),
-        valor_original: Number(p.valor) || 0,
+        valor_original: precoReferencia(p),
         valor_promocional: valorPromocional(p),
       })),
+      lista_preco_id: listaSelecionada?.id || '',
+      lista_preco_nome: listaSelecionada?.nome || '',
       modo_selecao: modo,
       categorias,
       grupos_ids: gruposIds,
       todos_clientes: todosClientes,
+      filtros_clientes: {
+        codigo_de: numeroOuNulo(filtros.codigo_de),
+        codigo_ate: numeroOuNulo(filtros.codigo_ate),
+        nome_iniciais: filtros.nome_iniciais || '',
+      },
+      vale_ativo: !!vale.vale_ativo,
+      vale_tipo: vale.vale_tipo,
+      vale_valor: Number(vale.vale_valor) || 0,
+      vale_validade_dias: Number(vale.vale_validade_dias) || 30,
       whatsapp_retorno: whatsapp,
       data_fim: dataFim || null,
       ativa,
@@ -134,7 +186,7 @@ export default function FormularioPromocao({ promocao, produtos, grupos, totalCl
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
                 placeholder="Escreva a mensagem que o cliente vai receber. Use {nome} para o nome do cliente."
-                className="min-h-[100px]"
+                className="min-h-[90px]"
               />
             </div>
             <div>
@@ -145,6 +197,30 @@ export default function FormularioPromocao({ promocao, produtos, grupos, totalCl
               <Label>WhatsApp para receber interesses</Label>
               <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="Ex: 54999998888" />
             </div>
+          </div>
+
+          <div>
+            <Label className="mb-1 block flex items-center gap-1">
+              <Tag className="w-4 h-4 text-slate-500" /> Preço de referência da promoção
+            </Label>
+            <Select value={listaPrecoId} onValueChange={trocarLista}>
+              <SelectTrigger className="sm:w-80">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="tabela">Preço de tabela (cadastro)</SelectItem>
+                {listas.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-slate-500 mt-1">
+              {listaSelecionada
+                ? `Os valores riscados na página usam a lista "${listaSelecionada.nome}".`
+                : 'Usa o valor de venda do cadastro do produto. Escolha uma lista (ex: sem instalação) para usar outro preço.'}
+            </p>
           </div>
 
           <div>
@@ -161,6 +237,8 @@ export default function FormularioPromocao({ promocao, produtos, grupos, totalCl
               onTodos={alternarTodos}
               precos={precos}
               onPrecoChange={(id, valor) => setPrecos((prev) => ({ ...prev, [id]: valor }))}
+              precoReferencia={precoReferencia}
+              carregando={carregandoProdutos}
             />
           </div>
 
@@ -173,29 +251,18 @@ export default function FormularioPromocao({ promocao, produtos, grupos, totalCl
 
           <div>
             <Label className="mb-2 block">Lista de clientes para disparo</Label>
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                <Checkbox checked={todosClientes} onCheckedChange={(v) => setTodosClientes(!!v)} />
-                Todos os clientes com telefone ({totalClientes})
-              </label>
-              {grupos.map((g) => (
-                <label key={g.id} className="flex items-center gap-2 text-sm text-slate-700">
-                  <Checkbox
-                    checked={gruposIds.includes(g.id)}
-                    onCheckedChange={() =>
-                      setGruposIds((prev) =>
-                        prev.includes(g.id) ? prev.filter((i) => i !== g.id) : [...prev, g.id]
-                      )
-                    }
-                  />
-                  {g.nome} ({g.cliente_ids?.length || 0} clientes)
-                </label>
-              ))}
-              {grupos.length === 0 && (
-                <p className="text-xs text-slate-500">Nenhum grupo cadastrado. Você pode disparar para todos os clientes.</p>
-              )}
-            </div>
+            <FiltrosClientes
+              grupos={grupos}
+              gruposIds={gruposIds}
+              onGruposChange={setGruposIds}
+              todos={todosClientes}
+              onTodosChange={setTodosClientes}
+              filtros={filtros}
+              onFiltrosChange={setFiltros}
+            />
           </div>
+
+          <ConfigValeDesconto valor={vale} onChange={setVale} />
 
           <div className="flex flex-col sm:flex-row gap-4 bg-slate-50 rounded-lg p-3">
             <label className="flex items-center gap-2 text-sm text-slate-700">

@@ -1,0 +1,116 @@
+{
+  "name": "PromocaoVale",
+  "type": "object",
+  "properties": {
+    "promocao_id": {
+      "type": "string",
+      "description": "ID da promo\u00e7\u00e3o que gerou o vale"
+    },
+    "promocao_titulo": {
+      "type": "string",
+      "description": "T\u00edtulo da promo\u00e7\u00e3o (cache)"
+    },
+    "interesse_id": {
+      "type": "string",
+      "description": "ID do interesse (reserva) que gerou o vale"
+    },
+    "codigo": {
+      "type": "string",
+      "description": "C\u00f3digo do vale apresentado pelo cliente no atendimento"
+    },
+    "cliente_nome": {
+      "type": "string"
+    },
+    "cliente_telefone": {
+      "type": "string"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "percentual",
+        "fixo"
+      ],
+      "enumColors": [
+        "purple",
+        "green"
+      ],
+      "default": "percentual",
+      "description": "percentual = desconto em %, fixo = desconto em R$"
+    },
+    "valor": {
+      "type": "number"
+    },
+    "validade": {
+      "type": "string",
+      "format": "date",
+      "description": "Data limite para uso do vale"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "disponivel",
+        "utilizado",
+        "cancelado"
+      ],
+      "enumColors": [
+        "green",
+        "blue",
+        "gray"
+      ],
+      "default": "disponivel"
+    },
+    "observacao": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "promocao_id",
+    "codigo",
+    "cliente_nome"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {},
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    }
+  }
+}

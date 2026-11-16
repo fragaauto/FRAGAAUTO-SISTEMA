@@ -16,11 +16,11 @@
     },
     "banner_url": {
       "type": "string",
-      "description": "Banner de topo da p\u00e1gina p\u00fablica"
+      "description": "Banner de topo da p\u00e1gina p\u00fablica (propor\u00e7\u00e3o recomendada 8:3, ex: 1600x600 px)"
     },
     "artes": {
       "type": "array",
-      "description": "Artes promocionais exibidas ao longo da p\u00e1gina p\u00fablica",
+      "description": "Artes promocionais exibidas ao longo da p\u00e1gina p\u00fablica (propor\u00e7\u00e3o recomendada 1:1, ex: 1080x1080 px)",
       "items": {
         "type": "object",
         "properties": {
@@ -68,6 +68,14 @@
       },
       "default": []
     },
+    "lista_preco_id": {
+      "type": "string",
+      "description": "Lista de pre\u00e7os usada como refer\u00eancia de valor na campanha (vazio = pre\u00e7o de tabela do cadastro)"
+    },
+    "lista_preco_nome": {
+      "type": "string",
+      "description": "Nome da lista de pre\u00e7os de refer\u00eancia (cache para exibi\u00e7\u00e3o)"
+    },
     "modo_selecao": {
       "type": "string",
       "enum": [
@@ -103,6 +111,24 @@
       "default": false,
       "description": "Se verdadeiro, dispara para todos os clientes com telefone"
     },
+    "filtros_clientes": {
+      "type": "object",
+      "description": "Filtros adicionais aplicados sobre os grupos/todos os clientes no disparo",
+      "properties": {
+        "codigo_de": {
+          "type": "number",
+          "description": "C\u00f3digo inicial do cliente (faixa)"
+        },
+        "codigo_ate": {
+          "type": "number",
+          "description": "C\u00f3digo final do cliente (faixa)"
+        },
+        "nome_iniciais": {
+          "type": "string",
+          "description": "Letras iniciais do nome do cliente separadas por v\u00edrgula (ex: A, B, C)"
+        }
+      }
+    },
     "whatsapp_retorno": {
       "type": "string",
       "description": "N\u00famero do WhatsApp que recebe os interesses dos clientes"
@@ -128,6 +154,34 @@
       "type": "boolean",
       "default": true,
       "description": "Exibe os produtos em oferta em um pop-up para todos os usu\u00e1rios do sistema"
+    },
+    "vale_ativo": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se verdadeiro, quem reservar produtos pela p\u00e1gina p\u00fablica recebe um vale desconto extra"
+    },
+    "vale_tipo": {
+      "type": "string",
+      "enum": [
+        "percentual",
+        "fixo"
+      ],
+      "enumColors": [
+        "purple",
+        "green"
+      ],
+      "default": "percentual",
+      "description": "Tipo do vale desconto oferecido na reserva"
+    },
+    "vale_valor": {
+      "type": "number",
+      "default": 0,
+      "description": "Valor do vale (percentual quando vale_tipo = percentual, em R$ quando fixo)"
+    },
+    "vale_validade_dias": {
+      "type": "number",
+      "default": 30,
+      "description": "Quantidade de dias de validade do vale a partir da reserva"
     },
     "total_enviados": {
       "type": "number",

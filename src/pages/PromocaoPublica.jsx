@@ -6,8 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Loader2, CheckCircle2, MessageCircle, Megaphone, Circle } from 'lucide-react';
-import { brl, normalizarTelefone, promocaoEncerrada } from '@/lib/promocao';
+import { Loader2, CheckCircle2, MessageCircle, Megaphone, Circle, Ticket } from 'lucide-react';
+import {
+  brl,
+  normalizarTelefone,
+  promocaoEncerrada,
+  descreverVale,
+  gerarCodigoVale,
+  dataValidadeVale,
+  dataBr,
+} from '@/lib/promocao';
 
 function CardProdutoPublico({ produto, marcado, onToggle }) {
   return (
@@ -66,6 +74,7 @@ export default function PromocaoPublica() {
   const [observacao, setObservacao] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [concluido, setConcluido] = useState(false);
+  const [valeEmitido, setValeEmitido] = useState(null);
 
   const { data: promocao, isLoading } = useQuery({
     queryKey: ['promocao-publica', id],
@@ -109,7 +118,10 @@ export default function PromocaoPublica() {
     const itens = selecionadosLista
       .map((p) => `• ${p.nome} - ${brl(p.valor_promocional)}`)
       .join('\n');
-    return `Olá! Vi a promoção "${promocao.titulo}" e tenho interesse em:\n${itens}\n\nMeu nome: ${nome}${telefone ? `\nTelefone: ${telefone}` : ''}${observacao ? `\nObs: ${observacao}` : ''}`;
+    const linhaVale = valeEmitido
+      ? `\nVale desconto: ${valeEmitido.codigo} (${descreverVale(promocao)}, válido até ${dataBr(valeEmitido.validade)})`
+      : '';
+    return `Olá! Vi a promoção "${promocao.titulo}" e tenho interesse em:\n${itens}\n\nMeu nome: ${nome}${telefone ? `\nTelefone: ${telefone}` : ''}${observacao ? `\nObs: ${observacao}` : ''}${linhaVale}`;
   };
 
   const numeroRetorno = normalizarTelefone(promocao?.whatsapp_retorno);
@@ -123,7 +135,7 @@ export default function PromocaoPublica() {
 
     setEnviando(true);
     try {
-      await base44.entities.PromocaoInteresse.create({
+      const interesse = await base44.entities.PromocaoInteresse.create({
         promocao_id: promocao.id,
         promocao_titulo: promocao.titulo,
         cliente_nome: nome.trim(),
@@ -136,6 +148,26 @@ export default function PromocaoPublica() {
           valor_promocional: p.valor_promocional,
         })),
       });
+
+      if (promocao.vale_ativo && Number(promocao.vale_valor) > 0) {
+        try {
+          const vale = await base44.entities.PromocaoVale.create({
+            promocao_id: promocao.id,
+            promocao_titulo: promocao.titulo,
+            interesse_id: interesse?.id || '',
+            codigo: gerarCodigoVale(promocao),
+            cliente_nome: nome.trim(),
+            cliente_telefone: telefone,
+            tipo: promocao.vale_tipo || 'percentual',
+            valor: Number(promocao.vale_valor) || 0,
+            validade: dataValidadeVale(promocao.vale_validade_dias),
+            status: 'disponivel',
+          });
+          setValeEmitido(vale);
+        } catch (erroVale) {
+          console.error('Falha ao gerar vale', erroVale);
+        }
+      }
       setConcluido(true);
     } catch (e) {
       toast.error('Não foi possível enviar seu interesse: ' + e.message);
@@ -171,6 +203,20 @@ export default function PromocaoPublica() {
             Recebemos o seu interesse em {selecionadosLista.length} produto(s).{' '}
             {linkWhats ? 'Envie também a mensagem no WhatsApp para agilizar o atendimento.' : 'Nossa equipe entrará em contato.'}
           </p>
+
+          {valeEmitido && (
+            <div className="mt-4 border-2 border-dashed border-amber-400 bg-amber-50 rounded-xl p-4">
+              <Ticket className="w-7 h-7 text-amber-600 mx-auto mb-1" />
+              <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">Seu vale desconto</p>
+              <p className="font-mono text-2xl font-bold tracking-widest text-slate-800 my-1">
+                {valeEmitido.codigo}
+              </p>
+              <p className="text-sm text-slate-700">
+                {descreverVale(promocao)} • válido até {dataBr(valeEmitido.validade)}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Apresente este código no atendimento.</p>
+            </div>
+          )}
           {linkWhats && (
             <Button asChild className="w-full mt-5 bg-green-600 hover:bg-green-700">
               <a href={linkWhats} target="_blank" rel="noreferrer">
@@ -188,9 +234,9 @@ export default function PromocaoPublica() {
       {/* Banner */}
       <div className="relative w-full">
         {promocao.banner_url ? (
-          <img src={promocao.banner_url} alt={promocao.titulo} className="w-full h-64 sm:h-80 object-cover" />
+          <img src={promocao.banner_url} alt={promocao.titulo} className="w-full aspect-[8/3] object-cover" />
         ) : (
-          <div className="w-full h-40 bg-gradient-to-r from-orange-500 to-orange-600" />
+          <div className="w-full aspect-[8/3] bg-gradient-to-r from-orange-500 to-orange-600" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8">
@@ -213,6 +259,20 @@ export default function PromocaoPublica() {
                 Promoção válida até {promocao.data_fim.split('-').reverse().join('/')}
               </p>
             )}
+          </div>
+        )}
+
+        {promocao.vale_ativo && Number(promocao.vale_valor) > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+            <Ticket className="w-7 h-7 text-amber-600 flex-shrink-0" />
+            <div>
+              <p className="font-bold text-slate-800">
+                Ganhe {descreverVale(promocao)} reservando pela página
+              </p>
+              <p className="text-xs text-slate-600">
+                Ao enviar seu interesse você recebe na hora um código de vale para usar no atendimento.
+              </p>
+            </div>
           </div>
         )}
 

@@ -43,10 +43,13 @@ export default function UploadsPromocao({ bannerUrl, onBannerChange, artes, onAr
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm font-medium text-slate-700 mb-2">Banner do topo da página</p>
+        <p className="text-sm font-medium text-slate-700">Banner do topo da página</p>
+        <p className="text-xs text-slate-500 mb-2">
+          Proporção recomendada <strong>8:3 (paisagem)</strong> — ex: 1600 × 600 px. Mínimo 1200 × 450 px.
+        </p>
         {bannerUrl ? (
           <div className="relative rounded-xl overflow-hidden border border-slate-200">
-            <img src={bannerUrl} alt="Banner" className="w-full h-40 object-cover" />
+            <img src={bannerUrl} alt="Banner" className="w-full aspect-[8/3] object-cover" />
             <Button
               type="button"
               size="icon"
@@ -61,7 +64,7 @@ export default function UploadsPromocao({ bannerUrl, onBannerChange, artes, onAr
           <button
             type="button"
             onClick={() => bannerRef.current?.click()}
-            className="w-full h-28 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center text-slate-500 hover:border-orange-400 hover:text-orange-500 transition-colors"
+            className="w-full aspect-[8/3] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center text-slate-500 hover:border-orange-400 hover:text-orange-500 transition-colors"
           >
             {enviandoBanner ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-6 h-6 mb-1" />}
             <span className="text-sm">{enviandoBanner ? 'Enviando...' : 'Enviar banner'}</span>
@@ -77,7 +80,10 @@ export default function UploadsPromocao({ bannerUrl, onBannerChange, artes, onAr
       </div>
 
       <div>
-        <p className="text-sm font-medium text-slate-700 mb-2">Artes promocionais (aparecem ao longo da página)</p>
+        <p className="text-sm font-medium text-slate-700">Artes promocionais (aparecem ao longo da página)</p>
+        <p className="text-xs text-slate-500 mb-2">
+          Proporção recomendada <strong>1:1 (quadrada)</strong> — ex: 1080 × 1080 px.
+        </p>
         <div className="grid grid-cols-3 gap-2">
           {(artes || []).map((arte, idx) => (
             <div key={idx} className="relative rounded-lg overflow-hidden border border-slate-200">
