@@ -622,12 +622,31 @@ export default function AprovarOrcamento() {
                           </span>
                         </div>
                       )}
-                      <p className="text-sm text-slate-600">
-                        {item.aplicar_promocao && Number(item.desconto_item) > 0 && (
-                          <span className="text-emerald-600 font-semibold mr-1">- R$ {Number(item.desconto_item).toFixed(2)}</span>
-                        )}
-                        {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
-                      </p>
+                      {item.aplicar_promocao ? (
+                        <div className="mt-2 space-y-1">
+                          <p className="text-sm text-slate-500">
+                            Preço normal:{' '}
+                            <span className="line-through">
+                              R$ {(Number(item.valor_promocao_original) > 0 ? Number(item.valor_promocao_original) : Number(item.valor_unitario) || 0).toFixed(2)}
+                            </span>
+                          </p>
+                          <p className="text-xl font-extrabold text-red-600">
+                            Preço promocional: R${' '}
+                            {(Number(item.valor_unitario) - (Number(item.desconto_item) || 0) / (Number(item.quantidade) || 1)).toFixed(2)}
+                          </p>
+                          <p className="text-sm font-semibold text-slate-700">
+                            {Number(item.quantidade) > 1 ? `${item.quantidade}x = R$ ${Number(item.valor_total || 0).toFixed(2)} · ` : ''}
+                            Válido até:{' '}
+                            {item.promocao_validade
+                              ? new Date(`${String(item.promocao_validade).slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR')
+                              : '—'}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-600">
+                          {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
+                        </p>
+                      )}
                       
                       {item.observacao_item && (
                         <div className="mt-3 p-3 bg-blue-100 border-l-4 border-blue-500 rounded">
@@ -708,12 +727,31 @@ export default function AprovarOrcamento() {
                           </span>
                         </div>
                       )}
-                      <p className="text-sm text-slate-600">
-                        {item.aplicar_promocao && Number(item.desconto_item) > 0 && (
-                          <span className="text-emerald-600 font-semibold mr-1">- R$ {Number(item.desconto_item).toFixed(2)}</span>
-                        )}
-                        {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
-                      </p>
+                      {item.aplicar_promocao ? (
+                        <div className="mt-2 space-y-1">
+                          <p className="text-sm text-slate-500">
+                            Preço normal:{' '}
+                            <span className="line-through">
+                              R$ {(Number(item.valor_promocao_original) > 0 ? Number(item.valor_promocao_original) : Number(item.valor_unitario) || 0).toFixed(2)}
+                            </span>
+                          </p>
+                          <p className="text-xl font-extrabold text-red-600">
+                            Preço promocional: R${' '}
+                            {(Number(item.valor_unitario) - (Number(item.desconto_item) || 0) / (Number(item.quantidade) || 1)).toFixed(2)}
+                          </p>
+                          <p className="text-sm font-semibold text-slate-700">
+                            {Number(item.quantidade) > 1 ? `${item.quantidade}x = R$ ${Number(item.valor_total || 0).toFixed(2)} · ` : ''}
+                            Válido até:{' '}
+                            {item.promocao_validade
+                              ? new Date(`${String(item.promocao_validade).slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR')
+                              : '—'}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-600">
+                          {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
+                        </p>
+                      )}
                       
                       {item.comentario_tecnico && (
                         <div className="mt-3 p-3 bg-amber-100 border-l-4 border-amber-500 rounded">
