@@ -260,7 +260,12 @@ export default function NovoAtendimento() {
               observacao_item: pv.observacao || '',
               comentario_tecnico: data.comentario || '',
               origem: 'checklist',
-              item_checklist: data.item
+              item_checklist: data.item,
+              aplicar_promocao: !!pv.aplicar_promocao,
+              promocao_id: pv.promocao_id || '',
+              promocao_titulo: pv.promocao_titulo || '',
+              promocao_validade: pv.promocao_validade || '',
+              valor_promocao_original: Number(pv.valor_promocao_original) || 0
             });
           }
         });

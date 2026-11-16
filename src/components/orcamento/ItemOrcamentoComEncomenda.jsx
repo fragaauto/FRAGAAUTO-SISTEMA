@@ -8,6 +8,9 @@ import { Package, X, Check, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Wrench } from 'lucide-react';
 import AtribuirTecnicoModal from './AtribuirTecnicoModal';
+import { useOfertasPromocao, buscarOferta, aplicarDescontoPromocao, removerDescontoPromocao, rotuloPromocaoItem } from '@/lib/promocaoProduto';
+import BoxPromocaoItem from '@/components/promocoes/BoxPromocaoItem';
+import SeloPromocao from '@/components/promocoes/SeloPromocao';
 
 /**
  * Versão completa de ItemOrcamento com suporte a encomenda.
@@ -24,6 +27,15 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
   // Estado local para refletir imediatamente os valores editados
   const [localItem, setLocalItem] = useState(item);
   const editingRef = React.useRef(false);
+  const { data: ofertas } = useOfertasPromocao();
+  const oferta = buscarOferta(ofertas, item);
+
+  const handlePromocaoToggle = (checked) => {
+    const base = { ...localItem, sob_encomenda: sobEncomendaLocal };
+    const atualizado = checked ? aplicarDescontoPromocao(base, oferta) : removerDescontoPromocao(base);
+    setLocalItem(atualizado);
+    onUpdate(atualizado);
+  };
 
   React.useEffect(() => {
     if (!editingRef.current) {
@@ -184,6 +196,24 @@ export default function ItemOrcamentoComEncomenda({ item, onUpdate, onRemove, re
             </Button>
           )}
         </div>
+
+        {(oferta || item.aplicar_promocao) && (
+          <>
+            <BoxPromocaoItem
+              oferta={oferta}
+              aplicado={!!item.aplicar_promocao}
+              valorAtual={localItem.valor_unitario}
+              readOnly={readOnly}
+              onToggle={handlePromocaoToggle}
+            />
+            {item.aplicar_promocao && !oferta && (
+              <div className="mt-1 flex items-center gap-2 flex-wrap">
+                <SeloPromocao />
+                <span className="text-xs font-bold text-[#15333E]">{rotuloPromocaoItem(item)}</span>
+              </div>
+            )}
+          </>
+        )}
 
         {readOnly ? (
           <div className="flex items-center gap-4 flex-wrap text-sm text-slate-600">

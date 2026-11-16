@@ -17,6 +17,8 @@ import {
 import { matchProduto } from '@/lib/produtoSearch';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 import BadgeEstoqueBaixo from '@/components/atendimento/BadgeEstoqueBaixo';
+import { useOfertasPromocao, buscarOferta, aplicarDescontoPromocao, removerDescontoPromocao } from '@/lib/promocaoProduto';
+import BoxPromocaoItem from '@/components/promocoes/BoxPromocaoItem';
 
 const STATUS_CONFIG = {
   ok: { icon: CheckCircle2, color: 'bg-green-500 hover:bg-green-600', textColor: 'text-green-600' },
@@ -30,6 +32,7 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
   const [searchProduto, setSearchProduto] = useState('');
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [produtoAlerta, setProdutoAlerta] = useState(null);
+  const { data: ofertas } = useOfertasPromocao();
   const [alertaQtd, setAlertaQtd] = useState(1);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -133,6 +136,20 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
       ...novosProdutos[index], 
       valor_customizado: valorNum 
     };
+    onChange({
+      ...value,
+      item: item.item,
+      categoria: item.categoria,
+      produtos: novosProdutos
+    });
+  };
+
+  const handleProdutoPromocao = (index, checked) => {
+    const novosProdutos = [...produtosVinculados];
+    const pv = novosProdutos[index];
+    const oferta = buscarOferta(ofertas, pv);
+    if (!oferta) return;
+    novosProdutos[index] = checked ? aplicarDescontoPromocao(pv, oferta) : removerDescontoPromocao(pv);
     onChange({
       ...value,
       item: item.item,
@@ -335,6 +352,20 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
                               <p className="font-medium text-sm">{produto.nome}</p>
                               <BadgeEstoqueBaixo produto={produto} onClick={setProdutoAlerta} />
                             </div>
+
+                            {(buscarOferta(ofertas, pv) || pv.aplicar_promocao) && (
+                              <BoxPromocaoItem
+                                oferta={buscarOferta(ofertas, pv)}
+                                aplicado={!!pv.aplicar_promocao}
+                                valorAtual={valorUnitario}
+                                onToggle={(checked) => handleProdutoPromocao(idx, checked)}
+                              />
+                            )}
+                            {pv.aplicar_promocao && !buscarOferta(ofertas, pv) && (
+                              <span className="inline-block rounded border-2 border-[#15333E] bg-[#EBC75C] px-2 py-1 text-[10px] font-extrabold uppercase text-[#0f0e0e]">
+                                Produto em promoção
+                              </span>
+                            )}
                             
                             <div className="grid grid-cols-2 gap-2">
                               <div>

@@ -14,6 +14,7 @@ import { Copy, MessageCircle, Printer, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { dataBr } from '@/lib/promocao';
 
 export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
   if (!atendimento) return null;
@@ -61,6 +62,7 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
         if (item.quantidade > 1) t += ` _(x${item.quantidade})_`;
         t += `\n`;
         if (item.observacao_item) t += `   📝 _${item.observacao_item}_\n`;
+        if (item.aplicar_promocao) t += `   🔥 *PRODUTO EM PROMOÇÃO${item.promocao_validade ? ` VALIDO ATÉ ${dataBr(item.promocao_validade)}` : ''}*\n`;
         t += `   📍 Local/Porta: _________________\n`;
         t += `   ◻ Pendente  ◻ Em Andamento  ◻ Concluído\n`;
       });
@@ -127,6 +129,7 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
             .item-nome { font-weight: bold; font-size: 13px; }
             .item-qtd { font-size: 11px; font-style: italic; }
             .item-obs { font-size: 11px; margin: 2px 0 2px 4px; font-style: italic; }
+            .item-promo { display: inline-block; margin: 3px 0 3px 4px; padding: 2px 6px; background: #EBC75C; border: 2px solid #15333E; border-radius: 3px; font-size: 10px; letter-spacing: 0.3px; }
             .item-campo { margin: 3px 0; font-size: 12px; }
             .item-status { display: flex; gap: 8px; font-size: 11px; margin-top: 3px; }
             .checklist-item { margin: 4px 0; font-size: 13px; }
@@ -181,6 +184,7 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
             : itensAprovados.map((item, idx) => `
               <div class="item-box">
                 <div class="item-nome">${idx + 1}. ${item.nome} ${item.quantidade > 1 ? `<span class="item-qtd">(x${item.quantidade})</span>` : ''}</div>
+                ${item.aplicar_promocao ? `<div class="item-promo">🔥 <strong>PRODUTO EM PROMOÇÃO${item.promocao_validade ? ` VALIDO ATÉ ${dataBr(item.promocao_validade)}` : ''}</strong></div>` : ''}
                 ${item.observacao_item ? `<div class="item-obs">📝 <em>${item.observacao_item}</em></div>` : ''}
                 <div class="item-campo">📍 Local/Porta: _________________</div>
                 <div class="item-status">◻ Pendente &nbsp; ◻ Em Andamento &nbsp; ◻ Concluído</div>

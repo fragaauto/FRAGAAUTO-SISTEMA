@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Copy, CheckCheck, Loader2, Image as ImageIcon, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { rotuloPromocaoItem } from '@/lib/promocaoProduto';
 
 function gerarTextoOrcamento(atendimento, config) {
   const nomeEmpresa = config?.nome_empresa || 'Oficina';
@@ -64,6 +65,7 @@ function gerarTextoOrcamento(atendimento, config) {
       const precoStr = desc > 0 ? `R$ ${bruto.toFixed(2)} - com desconto: *R$ ${total.toFixed(2)}*` : `*R$ ${total.toFixed(2)}*`;
       let linha = `${statusEmoji} ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = ${precoStr}`;
       if (item.observacao_item) linha += `\n  _📝 ${item.observacao_item}_`;
+      if (item.aplicar_promocao) linha += `\n  🔥 *${rotuloPromocaoItem(item)}*`;
       linhas.push(linha);
     });
     const subtotalQueixa = itensQueixa.reduce((a, i) => a + Number(i.valor_total || 0), 0);
@@ -87,6 +89,7 @@ function gerarTextoOrcamento(atendimento, config) {
       const precoStr = desc > 0 ? `R$ ${bruto.toFixed(2)} - com desconto: *R$ ${total.toFixed(2)}*` : `*R$ ${total.toFixed(2)}*`;
       let linha = `${statusEmoji} ${item.nome} — ${item.quantidade}x R$ ${Number(item.valor_unitario || 0).toFixed(2)} = ${precoStr}`;
       if (item.observacao_item) linha += `\n  _📝 ${item.observacao_item}_`;
+      if (item.aplicar_promocao) linha += `\n  🔥 *${rotuloPromocaoItem(item)}*`;
       const fotoUrl = item.foto_url || (atendimento.checklist || []).find(c => c.item === item.item_checklist || c.item === item.nome)?.foto_url;
       if (fotoUrl) linha += `\n  📸 *Ver foto:* ${fotoUrl}`;
       linhas.push(linha);

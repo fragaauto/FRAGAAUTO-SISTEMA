@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { dataBr } from '@/lib/promocao';
 
 export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
   setIsGeneratingPDF(true);
@@ -31,6 +32,13 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
     const itensChecklistFiltrados = (atendimento.itens_orcamento || []).filter(
       item => !produtosNaQueixa.has(item.produto_id)
     );
+
+    const seloPromocao = (item) => item?.aplicar_promocao
+      ? `<div style="margin-top:6px;display:inline-block;background:#EBC75C;border:2px solid #15333E;border-radius:3px;padding:2px 6px;font-size:10px;font-weight:800;text-transform:uppercase;color:#0f0e0e">${item.promocao_validade ? `Produto em promoção — válido até ${dataBr(item.promocao_validade)}` : 'Produto em promoção'}</div>`
+      : '';
+    const precoUnitarioHTML = (item) => `${item?.aplicar_promocao && Number(item.valor_promocao_original) > 0
+      ? `<div style="font-size:10px;color:#94a3b8;text-decoration:line-through">R$ ${Number(item.valor_promocao_original).toFixed(2)}</div>`
+      : ''}R$ ${Number(item?.valor_unitario || 0).toFixed(2)}`;
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -145,13 +153,14 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
                     return `
                     <tr>
                       <td>${item.nome}
+                        ${seloPromocao(item)}
                         ${tecnicosItem ? `<div style="margin-top:4px;font-size:11px;color:#7c3aed">🔧 Técnico(s): ${tecnicosItem}</div>` : ''}
                         ${item.observacao_item ? `<div style="margin-top:6px;padding:8px;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:4px"><strong style="font-size:11px;color:#1e40af">📝 Observações:</strong><p style="font-size:11px;color:#1e3a8a;margin:4px 0 0">${item.observacao_item}</p></div>` : ''}
                         ${item.vantagens ? `<div style="margin-top:6px;padding:8px;background:#f0fdf4;border-left:3px solid #22c55e;border-radius:4px"><strong style="font-size:11px;color:#166534">✓ Benefícios:</strong><p style="font-size:11px;color:#15803d;margin:4px 0 0">${item.vantagens}</p></div>` : ''}
                         ${item.desvantagens ? `<div style="margin-top:6px;padding:8px;background:#fef2f2;border-left:3px solid #f59e0b;border-radius:4px"><strong style="font-size:11px;color:#92400e">⚠️ Riscos:</strong><p style="font-size:11px;color:#78350f;margin:4px 0 0">${item.desvantagens}</p></div>` : ''}
                       </td>
                       <td style="text-align:center">${item.quantidade}</td>
-                      <td style="text-align:right">R$ ${Number(item.valor_unitario || 0).toFixed(2)}</td>
+                      <td style="text-align:right">${precoUnitarioHTML(item)}</td>
                       <td style="text-align:right;font-weight:600">R$ ${Number(item.valor_total || 0).toFixed(2)}</td>
                       <td style="text-align:center"><span style="padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;${statusStyle}">${statusLabel}</span></td>
                     </tr>`;
@@ -198,13 +207,14 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
                     return `
                     <tr>
                       <td>${item.nome}
+                        ${seloPromocao(item)}
                         ${tecnicosItem ? `<div style="margin-top:4px;font-size:11px;color:#7c3aed">🔧 Técnico(s): ${tecnicosItem}</div>` : ''}
                         ${item.observacao_item ? `<div style="margin-top:6px;padding:8px;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:4px"><strong style="font-size:11px;color:#1e40af">📝 Observações:</strong><p style="font-size:11px;color:#1e3a8a;margin:4px 0 0">${item.observacao_item}</p></div>` : ''}
                         ${item.vantagens ? `<div style="margin-top:6px;padding:8px;background:#f0fdf4;border-left:3px solid #22c55e;border-radius:4px"><strong style="font-size:11px;color:#166534">✓ Benefícios:</strong><p style="font-size:11px;color:#15803d;margin:4px 0 0">${item.vantagens}</p></div>` : ''}
                         ${item.desvantagens ? `<div style="margin-top:6px;padding:8px;background:#fef2f2;border-left:3px solid #f59e0b;border-radius:4px"><strong style="font-size:11px;color:#92400e">⚠️ Riscos:</strong><p style="font-size:11px;color:#78350f;margin:4px 0 0">${item.desvantagens}</p></div>` : ''}
                       </td>
                       <td style="text-align:center">${item.quantidade}</td>
-                      <td style="text-align:right">R$ ${Number(item.valor_unitario || 0).toFixed(2)}</td>
+                      <td style="text-align:right">${precoUnitarioHTML(item)}</td>
                       <td style="text-align:right;font-weight:600">R$ ${Number(item.valor_total || 0).toFixed(2)}</td>
                       <td style="text-align:center"><span style="padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;${statusStyle}">${statusLabel}</span></td>
                     </tr>`;

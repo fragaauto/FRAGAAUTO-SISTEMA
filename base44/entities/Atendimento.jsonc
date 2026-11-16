@@ -323,6 +323,28 @@
           "custo_encomenda_valor": {
             "type": "number",
             "description": "Custo da encomenda preenchido no formul\u00e1rio (transferido para Pe\u00e7as Externas)"
+          },
+          "aplicar_promocao": {
+            "type": "boolean",
+            "default": false,
+            "description": "Se true, o pre\u00e7o unit\u00e1rio deste item \u00e9 o pre\u00e7o promocional da campanha"
+          },
+          "promocao_id": {
+            "type": "string",
+            "description": "ID da promo\u00e7\u00e3o aplicada ao item"
+          },
+          "promocao_titulo": {
+            "type": "string",
+            "description": "T\u00edtulo da promo\u00e7\u00e3o aplicada (cache)"
+          },
+          "promocao_validade": {
+            "type": "string",
+            "format": "date",
+            "description": "Data final da promo\u00e7\u00e3o aplicada"
+          },
+          "valor_promocao_original": {
+            "type": "number",
+            "description": "Valor unit\u00e1rio antes do desconto da promo\u00e7\u00e3o"
           }
         }
       }
@@ -382,6 +404,23 @@
                 "variacao_nome": {
                   "type": "string",
                   "description": "Nome da varia\u00e7\u00e3o selecionada"
+                },
+                "aplicar_promocao": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "promocao_id": {
+                  "type": "string"
+                },
+                "promocao_titulo": {
+                  "type": "string"
+                },
+                "promocao_validade": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "valor_promocao_original": {
+                  "type": "number"
                 }
               }
             }
@@ -490,6 +529,28 @@
           "custo_encomenda_valor": {
             "type": "number",
             "description": "Custo da encomenda preenchido no formul\u00e1rio (transferido para Pe\u00e7as Externas)"
+          },
+          "aplicar_promocao": {
+            "type": "boolean",
+            "default": false,
+            "description": "Se true, o pre\u00e7o unit\u00e1rio deste item \u00e9 o pre\u00e7o promocional da campanha"
+          },
+          "promocao_id": {
+            "type": "string",
+            "description": "ID da promo\u00e7\u00e3o aplicada ao item"
+          },
+          "promocao_titulo": {
+            "type": "string",
+            "description": "T\u00edtulo da promo\u00e7\u00e3o aplicada (cache)"
+          },
+          "promocao_validade": {
+            "type": "string",
+            "format": "date",
+            "description": "Data final da promo\u00e7\u00e3o aplicada"
+          },
+          "valor_promocao_original": {
+            "type": "number",
+            "description": "Valor unit\u00e1rio antes do desconto da promo\u00e7\u00e3o"
           }
         }
       }

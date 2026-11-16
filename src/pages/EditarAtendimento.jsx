@@ -150,7 +150,12 @@ export default function EditarAtendimento() {
                 id: p.id,
                 quantidade: Number(p.quantidade) || 1,
                 valor_customizado: valorFinal,
-                observacao: p.observacao || p.observacao_item || ''
+                observacao: p.observacao || p.observacao_item || '',
+                aplicar_promocao: !!p.aplicar_promocao,
+                promocao_id: p.promocao_id || '',
+                promocao_titulo: p.promocao_titulo || '',
+                promocao_validade: p.promocao_validade || '',
+                valor_promocao_original: Number(p.valor_promocao_original) || 0
               };
             }).filter(Boolean); // Remove nulls
 
@@ -327,7 +332,12 @@ export default function EditarAtendimento() {
               comentario_tecnico: data.comentario || '',
               origem: 'checklist',
               item_checklist: data.item,
-              foto_url: data.foto_url || null
+              foto_url: data.foto_url || null,
+              aplicar_promocao: !!pv.aplicar_promocao,
+              promocao_id: pv.promocao_id || '',
+              promocao_titulo: pv.promocao_titulo || '',
+              promocao_validade: pv.promocao_validade || '',
+              valor_promocao_original: Number(pv.valor_promocao_original) || 0
             });
           }
         });

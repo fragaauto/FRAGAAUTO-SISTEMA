@@ -614,7 +614,18 @@ export default function AprovarOrcamento() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="font-semibold text-slate-800">{item.nome}</p>
+                      {item.aplicar_promocao && (
+                        <div className="mt-2 inline-block rounded border-2 border-[#15333E] bg-[#EBC75C] px-2 py-1">
+                          <span className="text-[11px] font-extrabold uppercase tracking-wide text-[#0f0e0e]">
+                            🔥 Produto em promoção
+                            {item.promocao_validade ? ` · válido até ${new Date(`${String(item.promocao_validade).slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR')}` : ''}
+                          </span>
+                        </div>
+                      )}
                       <p className="text-sm text-slate-600">
+                        {item.aplicar_promocao && Number(item.valor_promocao_original) > 0 && (
+                          <span className="line-through text-slate-400 mr-1">R$ {Number(item.valor_promocao_original).toFixed(2)}</span>
+                        )}
                         {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
                       </p>
                       
@@ -689,7 +700,18 @@ export default function AprovarOrcamento() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="font-semibold text-slate-800">{item.nome}</p>
+                      {item.aplicar_promocao && (
+                        <div className="mt-2 inline-block rounded border-2 border-[#15333E] bg-[#EBC75C] px-2 py-1">
+                          <span className="text-[11px] font-extrabold uppercase tracking-wide text-[#0f0e0e]">
+                            🔥 Produto em promoção
+                            {item.promocao_validade ? ` · válido até ${new Date(`${String(item.promocao_validade).slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR')}` : ''}
+                          </span>
+                        </div>
+                      )}
                       <p className="text-sm text-slate-600">
+                        {item.aplicar_promocao && Number(item.valor_promocao_original) > 0 && (
+                          <span className="line-through text-slate-400 mr-1">R$ {Number(item.valor_promocao_original).toFixed(2)}</span>
+                        )}
                         {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
                       </p>
                       

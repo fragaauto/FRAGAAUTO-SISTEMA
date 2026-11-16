@@ -7,9 +7,18 @@ import { Trash2, Wrench, Package, Tag } from 'lucide-react';
 import AtribuirTecnicoModal from './AtribuirTecnicoModal';
 import SeletorListaPreco from '@/components/precos/SeletorListaPreco';
 import { calcularPrecoLista, listasAplicaveisProduto } from '@/lib/listaPrecos';
+import { useOfertasPromocao, buscarOferta, aplicarDescontoPromocao, removerDescontoPromocao, rotuloPromocaoItem } from '@/lib/promocaoProduto';
+import BoxPromocaoItem from '@/components/promocoes/BoxPromocaoItem';
+import SeloPromocao from '@/components/promocoes/SeloPromocao';
 
 export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = false, listasPrecos = [], produtos = [] }) {
   const [mostrarModalTecnico, setMostrarModalTecnico] = useState(false);
+  const { data: ofertas } = useOfertasPromocao();
+  const oferta = buscarOferta(ofertas, item);
+
+  const handlePromocaoToggle = (checked) => {
+    onUpdate(checked ? aplicarDescontoPromocao(item, oferta) : removerDescontoPromocao(item));
+  };
   const handleQuantidadeChange = (e) => {
     const value = e.target.value;
     if (value === '') {
@@ -140,6 +149,24 @@ export default function ItemOrcamento({ item, onUpdate, onRemove, readOnly = fal
           <p className="text-xs text-slate-500 mt-1 italic leading-relaxed">{item.observacao_item}</p>
         )}
         
+        {(oferta || item.aplicar_promocao) && (
+          <>
+            <BoxPromocaoItem
+              oferta={oferta}
+              aplicado={!!item.aplicar_promocao}
+              valorAtual={item.valor_unitario}
+              readOnly={readOnly}
+              onToggle={handlePromocaoToggle}
+            />
+            {item.aplicar_promocao && !oferta && (
+              <div className="mt-1 flex items-center gap-2 flex-wrap">
+                <SeloPromocao />
+                <span className="text-xs font-bold text-[#15333E]">{rotuloPromocaoItem(item)}</span>
+              </div>
+            )}
+          </>
+        )}
+
         {readOnly ? (
           <div className="flex items-center gap-4 flex-wrap text-sm text-slate-600">
             <span><span className="text-slate-400">Qtd:</span> {item.quantidade}</span>
