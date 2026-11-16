@@ -48,7 +48,9 @@ function CardProdutoPublico({ produto, marcado, onToggle }) {
           <p className="text-xs text-slate-500 mt-1 line-clamp-2">{produto.descricao}</p>
         )}
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-xs text-slate-400 line-through">{brl(produto.valor_original)}</span>
+          {Number(produto.valor_original) > 0 && (
+            <span className="text-xs text-slate-400 line-through">{brl(produto.valor_original)}</span>
+          )}
           <span className="text-lg font-bold text-orange-600">{brl(produto.valor_promocional)}</span>
         </div>
         <p className={`text-xs mt-1 font-medium ${marcado ? 'text-orange-600' : 'text-slate-400'}`}>

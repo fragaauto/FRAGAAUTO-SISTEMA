@@ -36,7 +36,7 @@
     },
     "produtos": {
       "type": "array",
-      "description": "Produtos/servi\u00e7os em promo\u00e7\u00e3o (fotografia do cadastro no momento da cria\u00e7\u00e3o)",
+      "description": "Produtos/servi\u00e7os em promo\u00e7\u00e3o (fotografia do cadastro no momento da cria\u00e7\u00e3o) e itens personalizados criados na campanha",
       "items": {
         "type": "object",
         "properties": {
@@ -63,6 +63,11 @@
           },
           "valor_promocional": {
             "type": "number"
+          },
+          "personalizado": {
+            "type": "boolean",
+            "default": false,
+            "description": "Se verdadeiro, \u00e9 um item criado na campanha e n\u00e3o um produto do estoque"
           }
         }
       },

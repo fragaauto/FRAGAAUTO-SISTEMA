@@ -13,6 +13,7 @@ import SeletorProdutosPromocao from './SeletorProdutosPromocao';
 import UploadsPromocao from './UploadsPromocao';
 import FiltrosClientes from './FiltrosClientes';
 import ConfigValeDesconto from './ConfigValeDesconto';
+import ItensPersonalizadosPromocao from './ItensPersonalizadosPromocao';
 import { fotoProdutoCadastro } from '@/lib/promocao';
 import { calcularPrecoLista } from '@/lib/listaPrecos';
 
@@ -39,6 +40,18 @@ export default function FormularioPromocao({
   const [selecionados, setSelecionados] = useState((promocao?.produtos || []).map((p) => p.produto_id));
   const [precos, setPrecos] = useState(
     Object.fromEntries((promocao?.produtos || []).map((p) => [p.produto_id, p.valor_promocional]))
+  );
+  const [personalizados, setPersonalizados] = useState(
+    (promocao?.produtos || [])
+      .filter((p) => p.personalizado)
+      .map((p) => ({
+        uid: p.produto_id || `custom_${Math.random().toString(36).slice(2, 7)}`,
+        nome: p.nome || '',
+        descricao: p.descricao || '',
+        foto_url: p.foto_url || '',
+        valor_original: p.valor_original ?? null,
+        valor_promocional: p.valor_promocional ?? 0,
+      }))
   );
   const [listaPrecoId, setListaPrecoId] = useState(promocao?.lista_preco_id || 'tabela');
   const [gruposIds, setGruposIds] = useState(promocao?.grupos_ids || []);
@@ -110,7 +123,9 @@ export default function FormularioPromocao({
     if (!titulo.trim()) return toast.error('Informe o título da promoção');
     const selecionadosSet = new Set(selecionados);
     const escolhidos = ativos.filter((p) => selecionadosSet.has(p.id));
-    if (escolhidos.length === 0) return toast.error('Selecione ao menos um produto');
+    if (escolhidos.length === 0 && personalizados.length === 0) {
+      return toast.error('Selecione ao menos um produto');
+    }
 
     const dados = {
       unidade_id: promocao?.unidade_id || unidadeId || null,
@@ -118,16 +133,30 @@ export default function FormularioPromocao({
       texto: texto.trim(),
       banner_url: bannerUrl,
       artes,
-      produtos: escolhidos.map((p) => ({
-        produto_id: p.id,
-        codigo: p.codigo || '',
-        nome: p.nome || '',
-        categoria: p.categoria || '',
-        descricao: p.descricao || '',
-        foto_url: fotoProdutoCadastro(p),
-        valor_original: precoReferencia(p),
-        valor_promocional: valorPromocional(p),
-      })),
+      produtos: [
+        ...escolhidos.map((p) => ({
+          produto_id: p.id,
+          codigo: p.codigo || '',
+          nome: p.nome || '',
+          categoria: p.categoria || '',
+          descricao: p.descricao || '',
+          foto_url: fotoProdutoCadastro(p),
+          valor_original: precoReferencia(p),
+          valor_promocional: valorPromocional(p),
+          personalizado: false,
+        })),
+        ...personalizados.map((p) => ({
+          produto_id: p.uid,
+          codigo: '',
+          nome: p.nome,
+          categoria: 'Personalizado',
+          descricao: p.descricao || '',
+          foto_url: p.foto_url || '',
+          valor_original: Number(p.valor_original) || 0,
+          valor_promocional: Number(p.valor_promocional) || 0,
+          personalizado: true,
+        })),
+      ],
       lista_preco_id: listaSelecionada?.id || '',
       lista_preco_nome: listaSelecionada?.nome || '',
       modo_selecao: modo,
@@ -243,6 +272,8 @@ export default function FormularioPromocao({
               carregando={carregandoProdutos}
             />
           </div>
+
+          <ItensPersonalizadosPromocao itens={personalizados} onChange={setPersonalizados} />
 
           <UploadsPromocao
             bannerUrl={bannerUrl}
