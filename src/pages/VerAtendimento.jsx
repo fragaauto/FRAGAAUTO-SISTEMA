@@ -43,6 +43,7 @@ import AssistenteIAModal from '../components/atendimento/AssistenteIAModal';
 import { gerarPDF } from '../components/atendimento/GerarPDF';
 import { gerarPDFAssinatura } from '../components/atendimento/GerarPDFAssinatura';
 import { calcularSubtotais } from '../components/atendimento/calcularTotais';
+import { getPublicUrl } from '@/lib/publicUrl';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
 import OrdemServicoTecnica from '../components/OrdemServicoTecnica';
 import ImpressaoQueixa from '../components/atendimento/ImpressaoQueixa';
@@ -2129,7 +2130,7 @@ export default function VerAtendimento() {
               <div className="p-3 bg-slate-100 rounded-lg">
                 <p className="text-xs text-slate-500 mb-1">Link de aprovação:</p>
                 <p className="text-sm text-slate-700 break-all">
-                  {`${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`}
+                  {`${getPublicUrl(createPageUrl('AprovarOrcamento'))}?id=${id}`}
                 </p>
               </div>
               
@@ -2140,7 +2141,7 @@ export default function VerAtendimento() {
                       toast.error('Cliente sem telefone cadastrado');
                       return;
                     }
-                    const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
+                    const linkAprovacao = `${getPublicUrl(createPageUrl('AprovarOrcamento'))}?id=${id}`;
                     const mensagemPersonalizada = configs[0]?.mensagem_link_cliente || '';
                     let mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n📋 Seu orçamento está pronto para aprovação.\n\n*Veículo:* ${atendimento.placa} - ${atendimento.modelo}\n\n`;
 
@@ -2183,7 +2184,7 @@ export default function VerAtendimento() {
                 
                 <Button
                   onClick={() => {
-                    const linkAprovacao = `${window.location.origin}${createPageUrl('AprovarOrcamento')}?id=${id}`;
+                    const linkAprovacao = `${getPublicUrl(createPageUrl('AprovarOrcamento'))}?id=${id}`;
                     const mensagemPersonalizada = configs[0]?.mensagem_link_cliente || '';
                     
                     let textoCompleto = '';
@@ -2229,7 +2230,7 @@ export default function VerAtendimento() {
               <div className="p-3 bg-slate-100 rounded-lg">
                 <p className="text-xs text-slate-500 mb-1">Link de assinatura:</p>
                 <p className="text-sm text-slate-700 break-all">
-                  {`${window.location.origin}${createPageUrl('AssinarAtendimento')}?id=${id}`}
+                  {`${getPublicUrl(createPageUrl('AssinarAtendimento'))}?id=${id}`}
                 </p>
               </div>
               <div className="flex flex-col gap-2">
@@ -2241,7 +2242,7 @@ export default function VerAtendimento() {
                     }
                     setEnviandoLinkAssinatura(true);
                     try {
-                      const link = `${window.location.origin}${createPageUrl('AssinarAtendimento')}?id=${id}`;
+                      const link = `${getPublicUrl(createPageUrl('AssinarAtendimento'))}?id=${id}`;
                       const nomeEmpresa = configs[0]?.nome_empresa || 'Fraga Auto Portas';
                       const mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n✍️ Você recebeu um link para confirmar e assinar digitalmente o atendimento do seu veículo.\n\n*Veículo:* ${atendimento.placa || ''} - ${atendimento.modelo || ''}\n\n📋 No link você verá todos os dados do atendimento, fotos anexadas (com data e hora) e observações. Após revisar, basta assinar na tela.\n\n🔗 Acesse aqui: ${link}\n\n— ${nomeEmpresa}`;
                       const res = await base44.functions.invoke('enviarMensagemWhatsApp', {
@@ -2256,7 +2257,7 @@ export default function VerAtendimento() {
                         throw new Error(res.data?.error || 'Erro ao enviar');
                       }
                     } catch (err) {
-                      const link = `${window.location.origin}${createPageUrl('AssinarAtendimento')}?id=${id}`;
+                      const link = `${getPublicUrl(createPageUrl('AssinarAtendimento'))}?id=${id}`;
                       const mensagem = `*Olá ${atendimento.cliente_nome}!*\n\n✍️ Você recebeu um link para confirmar e assinar digitalmente o atendimento do seu veículo.\n\n*Veículo:* ${atendimento.placa || ''} - ${atendimento.modelo || ''}\n\n🔗 Acesse aqui: ${link}`;
                       window.open(`https://wa.me/${atendimento.cliente_telefone?.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`, '_blank');
                       toast.warning('Envio automático indisponível. Abrindo WhatsApp Web...');
@@ -2276,7 +2277,7 @@ export default function VerAtendimento() {
                 </Button>
                 <Button
                   onClick={() => {
-                    const link = `${window.location.origin}${createPageUrl('AssinarAtendimento')}?id=${id}`;
+                    const link = `${getPublicUrl(createPageUrl('AssinarAtendimento'))}?id=${id}`;
                     navigator.clipboard.writeText(link);
                     toast.success('Link copiado!');
                   }}

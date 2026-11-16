@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { getPublicUrl } from '@/lib/publicUrl';
 
 export const brl = (v) =>
   Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -9,7 +10,7 @@ export function fotoProdutoCadastro(produto) {
 
 export function linkPublico(promocaoId) {
   if (!promocaoId) return '';
-  return `${window.location.origin}/PromocaoPublica?id=${promocaoId}`;
+  return getPublicUrl(`/PromocaoPublica?id=${promocaoId}`);
 }
 
 export function promocaoEncerrada(promocao) {
