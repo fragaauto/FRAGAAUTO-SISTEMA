@@ -33,7 +33,13 @@ function CardProdutoPublico({ produto, marcado, onToggle, semInstalacao }) {
     >
       <div className="relative">
         {produto.foto_url ? (
-          <img src={produto.foto_url} alt={produto.nome} className="w-full h-40 object-contain bg-white p-2" />
+          <img
+            src={produto.foto_url}
+            alt={produto.nome}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-40 object-contain bg-white p-2"
+          />
         ) : (
           <div className="w-full h-40 bg-slate-100 flex items-center justify-center">
             <Megaphone className="w-10 h-10 text-slate-300" />
@@ -284,7 +290,12 @@ export default function PromocaoPublica() {
       {/* Banner */}
       <div className="relative w-full">
         {promocao.banner_url ? (
-          <img src={promocao.banner_url} alt={promocao.titulo} className="w-full aspect-[8/3] object-cover" />
+          <img
+            src={promocao.banner_url}
+            alt={promocao.titulo}
+            decoding="async"
+            className="w-full aspect-[8/3] object-cover"
+          />
         ) : (
           <div className="w-full aspect-[8/3] bg-gradient-to-r from-orange-500 to-orange-600" />
         )}
@@ -330,7 +341,13 @@ export default function PromocaoPublica() {
         )}
 
         {artes[0] && (
-          <img src={artes[0].url} alt={artes[0].descricao || 'Arte promocional'} className="w-full rounded-2xl shadow-sm" />
+          <img
+            src={artes[0].url}
+            alt={artes[0].descricao || 'Arte promocional'}
+            loading="lazy"
+            decoding="async"
+            className="w-full rounded-2xl shadow-sm"
+          />
         )}
 
         {produtos.length === 0 ? (
@@ -353,6 +370,8 @@ export default function PromocaoPublica() {
                 <img
                   src={artes[idx + 1].url}
                   alt={artes[idx + 1].descricao || 'Arte promocional'}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full rounded-2xl shadow-sm"
                 />
               )}
@@ -361,7 +380,14 @@ export default function PromocaoPublica() {
         )}
 
         {artes.slice(blocos.length).map((arte, idx) => (
-          <img key={idx} src={arte.url} alt={arte.descricao || 'Arte'} className="w-full rounded-2xl shadow-sm" />
+          <img
+            key={idx}
+            src={arte.url}
+            alt={arte.descricao || 'Arte'}
+            loading="lazy"
+            decoding="async"
+            className="w-full rounded-2xl shadow-sm"
+          />
         ))}
 
         {/* Formulário de interesse */}
