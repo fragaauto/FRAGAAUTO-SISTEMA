@@ -17,7 +17,7 @@ import {
   dataBr,
 } from '@/lib/promocao';
 
-function CardProdutoPublico({ produto, marcado, onToggle }) {
+function CardProdutoPublico({ produto, marcado, onToggle, semInstalacao }) {
   return (
     <button
       type="button"
@@ -51,7 +51,10 @@ function CardProdutoPublico({ produto, marcado, onToggle }) {
           {Number(produto.valor_original) > 0 && (
             <span className="text-xs text-slate-400 line-through">{brl(produto.valor_original)}</span>
           )}
-          <span className="text-lg font-bold text-orange-600">{brl(produto.valor_promocional)}</span>
+          <span className="text-lg font-bold text-orange-600">
+            {brl(produto.valor_promocional)}
+            {semInstalacao ? ' *' : ''}
+          </span>
         </div>
         <p className={`text-xs mt-1 font-medium ${marcado ? 'text-orange-600' : 'text-slate-400'}`}>
           {marcado ? '✓ Tenho interesse' : 'Toque para marcar interesse'}
@@ -98,6 +101,7 @@ export default function PromocaoPublica() {
 
   const produtos = promocao?.produtos || [];
   const artes = promocao?.artes || [];
+  const semInstalacao = /sem\s*instala/i.test(promocao?.lista_preco_nome || '');
 
   const blocos = useMemo(() => {
     const lista = [];
@@ -300,6 +304,7 @@ export default function PromocaoPublica() {
                     key={produto.produto_id}
                     produto={produto}
                     marcado={selecionados.includes(produto.produto_id)}
+                    semInstalacao={semInstalacao}
                     onToggle={() => toggle(produto)}
                   />
                 ))}
@@ -362,6 +367,12 @@ export default function PromocaoPublica() {
             </p>
           )}
         </div>
+
+        {semInstalacao && (
+          <p className="text-xs text-slate-500 text-center leading-relaxed">
+            * Valores somente do produto. Não inclui instalação.
+          </p>
+        )}
       </div>
 
       {selecionadosLista.length > 0 && (
