@@ -120,12 +120,12 @@ export default function PromocaoPublica() {
     );
   };
 
-  const montarTextoWhats = () => {
+  const montarTextoWhats = (vale = valeEmitido) => {
     const itens = selecionadosLista
       .map((p) => `• ${p.nome} - ${brl(p.valor_promocional)}`)
       .join('\n');
-    const linhaVale = valeEmitido
-      ? `\nVale desconto: ${valeEmitido.codigo} (${descreverVale(promocao)}${valeEmitido.motivo ? ` - ${valeEmitido.motivo}` : ''}, válido até ${dataBr(valeEmitido.validade)})`
+    const linhaVale = vale
+      ? `\nVale desconto: ${vale.codigo} (${descreverVale(promocao)}${vale.motivo ? ` - ${vale.motivo}` : ''}, válido até ${dataBr(vale.validade)})`
       : '';
     return `Olá! Vi a promoção "${promocao.titulo}" e tenho interesse em:\n${itens}\n\nMeu nome: ${nome}${telefone ? `\nTelefone: ${telefone}` : ''}${observacao ? `\nObs: ${observacao}` : ''}${linhaVale}`;
   };
@@ -148,6 +148,7 @@ export default function PromocaoPublica() {
 
     setErro('');
     setEnviando(true);
+    let valeGerado = null;
     try {
       const interesse = await base44.entities.PromocaoInteresse.create({
         promocao_id: promocao.id,
@@ -165,7 +166,7 @@ export default function PromocaoPublica() {
 
       if (promocao.vale_ativo && Number(promocao.vale_valor) > 0) {
         try {
-          const vale = await base44.entities.PromocaoVale.create({
+          valeGerado = await base44.entities.PromocaoVale.create({
             promocao_id: promocao.id,
             promocao_titulo: promocao.titulo,
             interesse_id: interesse?.id || '',
@@ -178,12 +179,18 @@ export default function PromocaoPublica() {
             validade: dataValidadeVale(promocao.vale_validade_dias),
             status: 'disponivel',
           });
-          setValeEmitido(vale);
+          setValeEmitido(valeGerado);
         } catch (erroVale) {
           console.error('Falha ao gerar vale', erroVale);
         }
       }
       setConcluido(true);
+
+      if (numeroRetorno) {
+        const url = `https://wa.me/${numeroRetorno}?text=${encodeURIComponent(montarTextoWhats(valeGerado))}`;
+        const janela = window.open(url, '_blank');
+        if (!janela) window.location.href = url;
+      }
     } catch (e) {
       setErro('Não foi possível enviar seu interesse: ' + (e?.message || 'tente novamente.'));
     }
