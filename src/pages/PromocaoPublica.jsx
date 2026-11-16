@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import OfertasProgressivas from '@/components/promocoes/OfertasProgressivas';
 import { Loader2, CheckCircle2, MessageCircle, Megaphone, Circle, Ticket, Flame } from 'lucide-react';
 import {
   brl,
@@ -133,11 +134,6 @@ export default function PromocaoPublica() {
   const produtos = promocao?.produtos || [];
   const artes = promocao?.artes || [];
   const semInstalacao = /(sem|s\/)\s*(instala|m[ãa]o\s*de\s*obra)/i.test(promocao?.lista_preco_nome || '');
-
-  // Exibe as ofertas em lotes: em celulares fracos abrir 27 fotos de uma vez
-  // travava o navegador interno do WhatsApp e a página fechava sozinha.
-  const [visiveis, setVisiveis] = useState(8);
-  const produtosVisiveis = produtos.slice(0, visiveis);
 
   const selecionadosLista = produtos.filter((p) => selecionados.includes(p.produto_id));
   const total = selecionadosLista.reduce((acc, p) => acc + (Number(p.valor_promocional) || 0), 0);
@@ -352,29 +348,19 @@ export default function PromocaoPublica() {
         {produtos.length === 0 ? (
           <p className="text-center text-slate-500">Nenhum produto nesta promoção.</p>
         ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {produtosVisiveis.map((produto) => (
-                <CardProdutoPublico
-                  key={produto.produto_id}
-                  produto={produto}
-                  marcado={selecionados.includes(produto.produto_id)}
-                  semInstalacao={semInstalacao}
-                  onToggle={() => toggle(produto)}
-                />
-              ))}
-            </div>
-            {produtos.length > visiveis && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setVisiveis((v) => v + 8)}
-                className="w-full border-orange-300 text-orange-600"
-              >
-                Ver mais {Math.min(8, produtos.length - visiveis)} ofertas ({produtos.length - visiveis} restantes)
-              </Button>
+          <OfertasProgressivas
+            key={promocao.id}
+            produtos={produtos}
+            renderProduto={(produto) => (
+              <CardProdutoPublico
+                key={produto.produto_id}
+                produto={produto}
+                marcado={selecionados.includes(produto.produto_id)}
+                semInstalacao={semInstalacao}
+                onToggle={() => toggle(produto)}
+              />
             )}
-          </>
+          />
         )}
 
         {artes.slice(1).map((arte, idx) => (
