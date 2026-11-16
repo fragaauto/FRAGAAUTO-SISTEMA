@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { rotuloPromocaoItem } from '@/lib/promocaoProduto';
 
 export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
   const [modo, setModo] = useState('a4'); // 'a4' ou 'cupom'
@@ -172,7 +173,9 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
       head: [['#', 'Descrição', 'Qtd', 'Valor Unit.', 'Total']],
       body: (o.itens || []).map((i, idx) => [
         idx + 1,
-        i.observacao ? `${i.nome}\n${i.observacao}` : i.nome,
+        [i.nome, i.observacao, i.aplicar_promocao ? `🔥 ${rotuloPromocaoItem(i)}` : '']
+          .filter(Boolean)
+          .join('\n'),
         i.quantidade,
         `R$ ${(i.valor_unitario || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         `R$ ${(i.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
@@ -291,6 +294,7 @@ export default function OrcamentoPrintModal({ orcamento, config, onClose }) {
           <span><b>R$ ${(i.valor_total || 0).toFixed(2)}</b></span>
         </div>
         ${i.observacao ? `<div style="font-size:9px;color:#555;">${i.observacao}</div>` : ''}
+        ${i.aplicar_promocao ? `<div style="font-size:9px;color:#b45309;font-weight:bold;">🔥 ${rotuloPromocaoItem(i)}</div>` : ''}
       </div>
     `).join('');
 

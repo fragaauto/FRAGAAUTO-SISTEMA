@@ -73,7 +73,8 @@ function totalItem(item, valorUnitario) {
  * O preço unitário do item é preservado; o valor entra como desconto na linha.
  */
 export function descontoUnitarioPromocao(item, oferta) {
-  const base = Number(oferta?.valor_original) || Number(item?.valor_unitario ?? item?.valor_customizado ?? 0) || 0;
+  // O preço do item é a referência: o cliente paga exatamente o preço promocional da campanha
+  const base = Number(item?.valor_unitario ?? item?.valor_customizado ?? 0) || Number(oferta?.valor_original) || 0;
   const promo = Number(oferta?.valor_promocional) || 0;
   return Math.max(0, base - promo);
 }

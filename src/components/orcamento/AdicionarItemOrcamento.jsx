@@ -15,6 +15,14 @@ import { base44 } from '@/api/base44Client';
 import { useUnidade } from '@/lib/UnidadeContext';
 import { calcularPrecoLista, listasAplicaveisProduto } from '@/lib/listaPrecos';
 import SeletorListaPreco from '@/components/precos/SeletorListaPreco';
+import BoxPromocaoItem from '@/components/promocoes/BoxPromocaoItem';
+import {
+  useOfertasPromocao,
+  buscarOferta,
+  aplicarDescontoPromocao,
+  removerDescontoPromocao,
+  rotuloPromocaoItem,
+} from '@/lib/promocaoProduto';
 
 export default function AdicionarItemOrcamento({ atendimento, produtos, user, onSave, isLoading }) {
   const { unidadeAtual } = useUnidade();
@@ -24,6 +32,7 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
     enabled: !!unidadeAtual?.id,
     staleTime: 5 * 60 * 1000,
   });
+  const { data: ofertas } = useOfertasPromocao();
   const [search, setSearch] = useState('');
   const [itensLocais, setItensLocais] = useState([]);
   const [aberto, setAberto] = useState(false);
@@ -104,8 +113,23 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
       if (field === 'valor_unitario') val = parseFloat(val) || 0;
       novo[idx] = { ...novo[idx], [field]: val };
       if (field === 'quantidade' || field === 'valor_unitario') {
+        // Item com promoção aplicada: recalcula o desconto para a nova quantidade/valor
+        if (novo[idx].aplicar_promocao) {
+          const ofertaItem = buscarOferta(ofertas, novo[idx]);
+          if (ofertaItem) novo[idx] = aplicarDescontoPromocao(novo[idx], ofertaItem);
+        }
         novo[idx].valor_total = Math.max(0, (novo[idx].quantidade || 1) * (novo[idx].valor_unitario || 0) - (Number(novo[idx].desconto_item) || 0));
       }
+      return novo;
+    });
+  };
+
+  const togglePromocao = (idx, checked) => {
+    setItensLocais(prev => {
+      const novo = [...prev];
+      const ofertaItem = buscarOferta(ofertas, novo[idx]);
+      novo[idx] = checked ? aplicarDescontoPromocao(novo[idx], ofertaItem) : removerDescontoPromocao(novo[idx]);
+      novo[idx].valor_total = Math.max(0, (novo[idx].quantidade || 1) * (novo[idx].valor_unitario || 0) - (Number(novo[idx].desconto_item) || 0));
       return novo;
     });
   };
@@ -258,6 +282,15 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
                         className="h-8 text-sm" />
                     </div>
                   </div>
+                  <BoxPromocaoItem
+                    oferta={buscarOferta(ofertas, item)}
+                    aplicado={!!item.aplicar_promocao}
+                    valorAtual={item.valor_unitario}
+                    onToggle={(checked) => togglePromocao(idx, checked)}
+                  />
+                  {item.aplicar_promocao && !buscarOferta(ofertas, item) && (
+                    <p className="text-[11px] font-bold uppercase text-[#0f7a3d]">{rotuloPromocaoItem(item)}</p>
+                  )}
                   {item.produto_id && listasAplicaveisProduto(listasPrecos, produtos.find(p => p.id === item.produto_id)).length > 0 && (
                     <div className="mt-2">
                       <Label className="text-xs">Lista de Preço</Label>

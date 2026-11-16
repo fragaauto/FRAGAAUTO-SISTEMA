@@ -10,11 +10,17 @@ import { addDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { useUnidade } from '@/lib/UnidadeContext';
+import { rotuloPromocaoItem } from '@/lib/promocaoProduto';
 
 function gerarMensagemOrcamento(orc, config, formatoSimples = false) {
   const nomeEmpresa = config.nome_empresa || 'nossa empresa';
   const listaItens = (orc.itens || [])
-    .map(i => `• ${i.nome}${i.observacao ? `\n   ${i.observacao}` : ''} - R$ ${(i.valor_total || 0).toFixed(2)}`)
+    .map(i => {
+      const linhas = [`• ${i.nome}`];
+      if (i.observacao) linhas.push(`   ${i.observacao}`);
+      if (i.aplicar_promocao) linhas.push(`   🔥 ${rotuloPromocaoItem(i)}`);
+      return `${linhas.join('\n')} - R$ ${(i.valor_total || 0).toFixed(2)}`;
+    })
     .join('\n');
   const total = orc.total || 0;
 

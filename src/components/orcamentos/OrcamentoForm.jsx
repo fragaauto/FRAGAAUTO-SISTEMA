@@ -10,6 +10,14 @@ import { Loader2, Plus, Trash2, Search, UserPlus, CheckCircle2 } from 'lucide-re
 import { toast } from "sonner";
 import { filtrarProdutos } from '@/lib/produtoSearch';
 import FotosOrcamentoAvulso from '@/components/orcamentos/FotosOrcamentoAvulso';
+import BoxPromocaoItem from '@/components/promocoes/BoxPromocaoItem';
+import {
+  useOfertasPromocao,
+  buscarOferta,
+  aplicarDescontoPromocao,
+  removerDescontoPromocao,
+  rotuloPromocaoItem,
+} from '@/lib/promocaoProduto';
 
 export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose, onSaved }) {
   const isEdit = !!orcamento;
@@ -47,6 +55,8 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: ofertas } = useOfertasPromocao();
+
   // Busca de clientes
   const clientesFiltrados = buscaCliente.length >= 2
     ? clientes.filter(c => {
@@ -81,9 +91,10 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
     : [];
 
   const adicionarProduto = (p) => {
-    if (itens.some(i => i._produto_id === p.id)) { toast.error('Produto já adicionado'); return; }
+    if (itens.some(i => i.produto_id === p.id)) { toast.error('Produto já adicionado'); return; }
     setItens(prev => [...prev, {
-      _produto_id: p.id,
+      produto_id: p.id,
+      codigo_produto: p.codigo || '',
       nome: p.nome,
       quantidade: 1,
       valor_unitario: Number(p.valor) || 0,
@@ -104,8 +115,23 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
       if (field === 'valor_unitario') val = parseFloat(val) || 0;
       novo[idx] = { ...novo[idx], [field]: val };
       if (field === 'quantidade' || field === 'valor_unitario') {
+        // Item com promoção aplicada: recalcula o desconto para a nova quantidade/valor
+        if (novo[idx].aplicar_promocao) {
+          const ofertaItem = buscarOferta(ofertas, novo[idx]);
+          if (ofertaItem) novo[idx] = aplicarDescontoPromocao(novo[idx], ofertaItem);
+        }
         novo[idx].valor_total = Math.max(0, (novo[idx].quantidade || 1) * (novo[idx].valor_unitario || 0) - (Number(novo[idx].desconto_item) || 0));
       }
+      return novo;
+    });
+  };
+
+  const togglePromocao = (idx, checked) => {
+    setItens(prev => {
+      const novo = [...prev];
+      const ofertaItem = buscarOferta(ofertas, novo[idx]);
+      novo[idx] = checked ? aplicarDescontoPromocao(novo[idx], ofertaItem) : removerDescontoPromocao(novo[idx]);
+      novo[idx].valor_total = Math.max(0, (novo[idx].quantidade || 1) * (novo[idx].valor_unitario || 0) - (Number(novo[idx].desconto_item) || 0));
       return novo;
     });
   };
@@ -341,6 +367,15 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
                     <p className="h-8 flex items-center text-sm font-bold text-green-700">R$ {(item.valor_total || 0).toFixed(2)}</p>
                   </div>
                 </div>
+                <BoxPromocaoItem
+                  oferta={buscarOferta(ofertas, item)}
+                  aplicado={!!item.aplicar_promocao}
+                  valorAtual={item.valor_unitario}
+                  onToggle={(checked) => togglePromocao(idx, checked)}
+                />
+                {item.aplicar_promocao && !buscarOferta(ofertas, item) && (
+                  <p className="text-[11px] font-bold uppercase text-[#0f7a3d]">{rotuloPromocaoItem(item)}</p>
+                )}
                 <Input className="text-xs h-7" placeholder="Observação do item..." value={item.observacao || ''} onChange={e => atualizarItem(idx, 'observacao', e.target.value)} />
               </div>
             ))}
