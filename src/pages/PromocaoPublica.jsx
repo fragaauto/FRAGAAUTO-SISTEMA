@@ -101,7 +101,7 @@ export default function PromocaoPublica() {
 
   const produtos = promocao?.produtos || [];
   const artes = promocao?.artes || [];
-  const semInstalacao = /sem\s*instala/i.test(promocao?.lista_preco_nome || '');
+  const semInstalacao = /(sem|s\/)\s*(instala|m[ãa]o\s*de\s*obra)/i.test(promocao?.lista_preco_nome || '');
 
   const blocos = useMemo(() => {
     const lista = [];
