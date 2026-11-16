@@ -203,6 +203,11 @@
     "total_interesses": {
       "type": "number",
       "default": 0
+    },
+    "total_visitas": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantidade de aberturas da p\u00e1gina p\u00fablica da promo\u00e7\u00e3o"
     }
   },
   "required": [

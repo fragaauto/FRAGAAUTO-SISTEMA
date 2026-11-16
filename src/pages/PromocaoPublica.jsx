@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -106,6 +106,13 @@ export default function PromocaoPublica() {
   });
 
   const encerrada = promocaoEncerrada(promocao);
+
+  const visitaRegistrada = useRef(false);
+  useEffect(() => {
+    if (!promocao?.id || visitaRegistrada.current) return;
+    visitaRegistrada.current = true;
+    base44.functions.invoke('registrarVisitaPromocao', { promocao_id: promocao.id }).catch(() => {});
+  }, [promocao?.id]);
 
   useEffect(() => {
     if (!isLoading && (!promocao || encerrada)) {

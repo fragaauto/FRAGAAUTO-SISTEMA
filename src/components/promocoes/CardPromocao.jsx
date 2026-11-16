@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Megaphone, Send, Link2, ExternalLink, Pencil, Trash2, Power, Users } from 'lucide-react';
+import { Megaphone, Send, Link2, ExternalLink, Pencil, Trash2, Power, Users, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { brl, linkPublico, promocaoEncerrada } from '@/lib/promocao';
 
@@ -84,6 +84,9 @@ export default function CardPromocao({ promocao, interesses, onEditar, onDispara
               </Button>
               <span className="text-xs text-slate-500 flex items-center gap-1 ml-auto">
                 <Users className="w-3 h-3" /> {interesses} interesse(s) • {promocao.total_enviados || 0} envio(s)
+              </span>
+              <span className="text-xs text-slate-500 flex items-center gap-1">
+                <Eye className="w-3 h-3" /> {promocao.total_visitas || 0} visita(s)
               </span>
             </div>
           </div>
