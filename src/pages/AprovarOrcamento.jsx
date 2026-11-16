@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import AssinaturaDigital from '../components/assinatura/AssinaturaDigital';
 import CondicoesEspeciais from '../components/orcamento/CondicoesEspeciais';
+import SeletorPacotes from '../components/aprovacao/SeletorPacotes';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -50,6 +51,7 @@ export default function AprovarOrcamento() {
   const [formaPagamentoSelecionada, setFormaPagamentoSelecionada] = useState('');
   const [totaisAtualizados, setTotaisAtualizados] = useState({ totalAprovado: 0, totalReprovado: 0 });
   const [tudoPreenchido, setTudoPreenchido] = useState(false);
+  const [pacoteSelecionado, setPacoteSelecionado] = useState(null);
 
   // Atualizar totais automaticamente quando decisões mudarem
   useEffect(() => {
@@ -104,6 +106,13 @@ export default function AprovarOrcamento() {
     staleTime: 5 * 60 * 1000
   });
 
+  // Classificação dos itens do checklist nos quadros do orçamento
+  const { data: checklistItens = [] } = useQuery({
+    queryKey: ['checklist-items'],
+    queryFn: () => base44.entities.ChecklistItem.list(),
+    staleTime: 5 * 60 * 1000
+  });
+
   // Verificar se tudo está preenchido
   useEffect(() => {
     if (!atendimento) return;
@@ -146,6 +155,7 @@ export default function AprovarOrcamento() {
   }, [atendimento]);
 
   const toggleDecisao = (key, novaDecisao) => {
+    setPacoteSelecionado(null);
     setDecisoes(prev => {
       const decisaoAtual = prev[key]?.decisao;
       // Se clicar na mesma decisão, voltar para pendente
@@ -473,6 +483,37 @@ export default function AprovarOrcamento() {
   const itensQueixa = Object.entries(decisoes).filter(([k]) => k.startsWith('queixa_'));
   const itensChecklist = Object.entries(decisoes).filter(([k]) => k.startsWith('checklist_'));
 
+  // Itens da queixa entram no 1º quadro; itens do checklist entram conforme a
+  // classificação feita em Gerenciar Checklist (urgência = quadros 2 e 3, serviço completo = quadro 3)
+  const nivelPorNomeChecklist = {};
+  checklistItens.forEach((ci) => {
+    nivelPorNomeChecklist[ci.item] = ci.nivel_orcamento === 'servico_completo' ? 2 : 1;
+  });
+
+  const itensParaPacotes = [
+    ...itensQueixa.map(([key, { item }]) => ({ key, item, nivel: 0 })),
+    ...itensChecklist.map(([key, { item }]) => ({
+      key,
+      item,
+      nivel: nivelPorNomeChecklist[item.item_checklist] ?? 1
+    }))
+  ];
+
+  const selecionarPacote = (pacote) => {
+    const nivelPorKey = {};
+    itensParaPacotes.forEach((i) => { nivelPorKey[i.key] = i.nivel; });
+
+    const novasDecisoes = {};
+    Object.entries(decisoes).forEach(([key, value]) => {
+      const nivel = nivelPorKey[key] ?? 0;
+      novasDecisoes[key] = { ...value, decisao: nivel <= pacote.nivel ? 'aprovado' : 'reprovado' };
+    });
+
+    setDecisoes(novasDecisoes);
+    setPacoteSelecionado(pacote.id);
+    toast.success(`Quadro "${pacote.titulo}" autorizado! Confira os itens abaixo e finalize.`);
+  };
+
   if (aprovacaoEnviada) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50/30 p-4">
@@ -575,6 +616,13 @@ export default function AprovarOrcamento() {
             </CardContent>
           </Card>
         )}
+
+        {/* Três quadros de orçamento (queixa / urgência / completo) */}
+        <SeletorPacotes
+          itens={itensParaPacotes}
+          selecionado={pacoteSelecionado}
+          onSelecionar={selecionarPacote}
+        />
 
         {/* Botão Aprovar Todos */}
         {(itensQueixa.length > 0 || itensChecklist.length > 0) && (

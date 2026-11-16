@@ -664,7 +664,7 @@ export default function VerAtendimento() {
                 className="hidden sm:flex"
               >
                 <Share2 className="w-4 h-4 mr-2" />
-                Link Cliente
+                Link do Cliente (Enviar Orçamento)
               </Button>
               <Button
                 onClick={generatePDF}
@@ -747,7 +747,7 @@ export default function VerAtendimento() {
         >
           <div className="flex flex-col items-center gap-1">
             <Share2 className="w-5 h-5" />
-            <span className="text-xs">Link Cliente</span>
+            <span className="text-xs text-center leading-tight">Link do Cliente (Enviar Orçamento)</span>
           </div>
         </Button>
         <Button
@@ -757,7 +757,7 @@ export default function VerAtendimento() {
         >
           <div className="flex flex-col items-center gap-1">
             <PenTool className="w-5 h-5" />
-            <span className="text-xs">Assinar Link</span>
+            <span className="text-xs text-center leading-tight">Assinar Link - Abrir OS</span>
           </div>
         </Button>
         {atendimento.assinatura_cliente_atendimento && (

@@ -51,6 +51,7 @@ export default function GerenciarChecklist() {
     item: '',
     categoria: '',
     obrigatorio: false,
+    nivel_orcamento: 'urgencia',
     produtos_padrao: [],
     ativo: true
   });
@@ -86,7 +87,7 @@ export default function GerenciarChecklist() {
       toast.success(editingItem ? 'Item atualizado!' : 'Item criado!');
       setShowDialog(false);
       setEditingItem(null);
-      setFormData({ item: '', categoria: '', obrigatorio: false, produtos_padrao: [], ativo: true });
+      setFormData({ item: '', categoria: '', obrigatorio: false, nivel_orcamento: 'urgencia', produtos_padrao: [], ativo: true });
       setSearchProduto('');
     },
     onError: (error) => {
@@ -145,6 +146,7 @@ export default function GerenciarChecklist() {
       item: item.item,
       categoria: item.categoria,
       obrigatorio: item.obrigatorio,
+      nivel_orcamento: item.nivel_orcamento || 'urgencia',
       produtos_padrao: item.produtos_padrao || [],
       ativo: item.ativo
     });
@@ -314,7 +316,7 @@ export default function GerenciarChecklist() {
               <Button
                 onClick={() => {
                   setEditingItem(null);
-                  setFormData({ item: '', categoria: '', obrigatorio: false, produtos_padrao: [], ativo: true });
+                  setFormData({ item: '', categoria: '', obrigatorio: false, nivel_orcamento: 'urgencia', produtos_padrao: [], ativo: true });
                   setShowDialog(true);
                 }}
                 className="bg-orange-500 hover:bg-orange-600"
@@ -369,6 +371,16 @@ export default function GerenciarChecklist() {
                                 {!item.ativo && (
                                   <Badge variant="outline" className="text-xs bg-slate-100">Inativo</Badge>
                                 )}
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs ${
+                                    item.nivel_orcamento === 'servico_completo'
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                      : 'bg-amber-50 text-amber-700 border-amber-300'
+                                  }`}
+                                >
+                                  {item.nivel_orcamento === 'servico_completo' ? 'Serviço completo' : 'Urgência'}
+                                </Badge>
                               </div>
                               <p className="text-sm text-slate-500">{item.categoria}</p>
                             </div>
@@ -429,6 +441,32 @@ export default function GerenciarChecklist() {
                 checked={formData.obrigatorio}
                 onCheckedChange={(checked) => setFormData(prev => ({ ...prev, obrigatorio: checked }))}
               />
+            </div>
+            <div>
+              <Label>Quadro no orçamento do cliente</Label>
+              <p className="text-xs text-slate-500 mb-2">
+                Define em quais quadros do link do cliente este item aparece.
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { valor: 'urgencia', titulo: 'Itens de Urgência (Recomendado)', desc: 'Entra nos quadros "Itens de Urgência" e "Serviço completo"' },
+                  { valor: 'servico_completo', titulo: 'Serviço completo', desc: 'Entra somente no quadro "Serviço completo"' },
+                ].map((opcao) => (
+                  <button
+                    key={opcao.valor}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, nivel_orcamento: opcao.valor }))}
+                    className={`text-left p-3 rounded-lg border-2 transition-all ${
+                      formData.nivel_orcamento === opcao.valor
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-slate-200 hover:border-orange-300'
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-slate-800">{opcao.titulo}</p>
+                    <p className="text-xs text-slate-500">{opcao.desc}</p>
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <Label>Produtos Padrão (Opcionais)</Label>
