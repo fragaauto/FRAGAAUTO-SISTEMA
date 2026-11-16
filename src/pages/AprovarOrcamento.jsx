@@ -132,11 +132,19 @@ export default function AprovarOrcamento() {
     if (atendimento) {
       const todasDecisoes = {};
       
+      // Garante que o total do item reflita o desconto lançado (promoção/desconto manual)
+      const comTotalAtualizado = (item) => {
+        const qtd = Number(item.quantidade) || 0;
+        const unit = Number(item.valor_unitario) || 0;
+        const desc = Number(item.desconto_item) || 0;
+        return desc > 0 ? { ...item, valor_total: Math.max(0, qtd * unit - desc) } : item;
+      };
+
       // Itens da queixa - usar índice para permitir repetição
       atendimento.itens_queixa?.forEach((item, idx) => {
         todasDecisoes[`queixa_${idx}_${item.produto_id}`] = {
           tipo: 'queixa',
-          item: item,
+          item: comTotalAtualizado(item),
           decisao: item.status_aprovacao || 'pendente'
         };
       });
@@ -145,7 +153,7 @@ export default function AprovarOrcamento() {
       atendimento.itens_orcamento?.forEach((item, idx) => {
         todasDecisoes[`checklist_${idx}_${item.produto_id}`] = {
           tipo: 'checklist',
-          item: item,
+          item: comTotalAtualizado(item),
           decisao: item.status_aprovacao || 'pendente'
         };
       });

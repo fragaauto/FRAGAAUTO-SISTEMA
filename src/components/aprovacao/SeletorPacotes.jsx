@@ -41,8 +41,21 @@ const PACOTES = [
 
 const moeda = (v) => `R$ ${(Number(v) || 0).toFixed(2)}`;
 
+const dataBr = (valor) =>
+  valor ? new Date(`${String(valor).slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR') : '';
+
+/** Total do item já com o desconto lançado (promoção ou desconto manual) */
+const totalItem = (item) => {
+  const qtd = Number(item?.quantidade) || 1;
+  const unit = Number(item?.valor_unitario) || 0;
+  const desc = Number(item?.desconto_item) || 0;
+  if (desc > 0) return Math.max(0, qtd * unit - desc);
+  const salvo = Number(item?.valor_total);
+  return Number.isFinite(salvo) && salvo > 0 ? salvo : qtd * unit;
+};
+
 export default function SeletorPacotes({ itens = [], selecionado, onSelecionar, desabilitado = false }) {
-  const totalCompleto = itens.reduce((acc, i) => acc + (Number(i.item?.valor_total) || 0), 0);
+  const totalCompleto = itens.reduce((acc, i) => acc + totalItem(i.item), 0);
 
   return (
     <div className="space-y-4">
@@ -56,7 +69,7 @@ export default function SeletorPacotes({ itens = [], selecionado, onSelecionar, 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-3 items-stretch">
         {PACOTES.map((pacote) => {
           const doPacote = itens.filter((i) => i.nivel <= pacote.nivel);
-          const total = doPacote.reduce((acc, i) => acc + (Number(i.item?.valor_total) || 0), 0);
+          const total = doPacote.reduce((acc, i) => acc + totalItem(i.item), 0);
           const economia = totalCompleto - total;
           const ativo = selecionado === pacote.id;
           const Icone = pacote.icone;
@@ -92,30 +105,60 @@ export default function SeletorPacotes({ itens = [], selecionado, onSelecionar, 
                   {doPacote.length === 0 ? (
                     <p className="p-3 text-xs text-slate-400">Nenhum item neste quadro</p>
                   ) : (
-                    doPacote.map(({ key, item, nivel }) => (
-                      <div key={key} className="p-2 text-xs flex items-start gap-1.5">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="font-semibold text-slate-800 flex-1 leading-snug">{item.nome}</span>
-                            <span className="font-bold text-slate-700 whitespace-nowrap">
-                              {moeda(item.valor_total)}
-                            </span>
+                    doPacote.map(({ key, item, nivel }) => {
+                      const qtd = Number(item.quantidade) || 1;
+                      const unit = Number(item.valor_unitario) || 0;
+                      const desc = Number(item.desconto_item) || 0;
+                      const emPromocao = !!item.aplicar_promocao && desc > 0;
+                      const unitFinal = qtd > 0 ? Math.max(0, unit - desc / qtd) : unit;
+                      const unitOriginal =
+                        Number(item.valor_promocao_original) > 0 ? Number(item.valor_promocao_original) : unit;
+
+                      return (
+                        <div key={key} className="p-2 text-xs flex items-start gap-1.5">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="font-semibold text-slate-800 flex-1 leading-snug">{item.nome}</span>
+                              <span className="font-bold text-slate-700 whitespace-nowrap">
+                                {moeda(totalItem(item))}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-slate-500">
+                              {qtd}x{' '}
+                              {emPromocao ? (
+                                <>
+                                  <span className="line-through">{moeda(unitOriginal)}</span>{' '}
+                                  <span className="font-bold text-red-600">{moeda(unitFinal)}</span>
+                                </>
+                              ) : (
+                                moeda(unit)
+                              )}
+                              {nivel === 0 && <span className="ml-1 text-slate-400">· o que você pediu</span>}
+                              {nivel === 1 && <span className="ml-1 text-amber-600">· urgência</span>}
+                              {nivel === 2 && <span className="ml-1 text-emerald-600">· recomendado</span>}
+                            </div>
+                            {emPromocao && (
+                              <div className="mt-1 flex flex-wrap items-center gap-1">
+                                <span className="inline-block rounded border-2 border-[#15333E] bg-[#EBC75C] px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#0f0e0e]">
+                                  🔥 Produto em promoção
+                                </span>
+                                {item.promocao_validade && (
+                                  <span className="text-[10px] text-slate-500">
+                                    até {dataBr(item.promocao_validade)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {(item.observacao_item || item.comentario_tecnico) && (
+                              <p className="mt-1 text-[11px] text-slate-500 italic">
+                                {item.observacao_item || item.comentario_tecnico}
+                              </p>
+                            )}
                           </div>
-                          <div className="text-[11px] text-slate-500">
-                            {Number(item.quantidade) || 1}x {moeda(item.valor_unitario)}
-                            {nivel === 0 && <span className="ml-1 text-slate-400">· o que você pediu</span>}
-                            {nivel === 1 && <span className="ml-1 text-amber-600">· urgência</span>}
-                            {nivel === 2 && <span className="ml-1 text-emerald-600">· recomendado</span>}
-                          </div>
-                          {(item.observacao_item || item.comentario_tecnico) && (
-                            <p className="mt-1 text-[11px] text-slate-500 italic">
-                              {item.observacao_item || item.comentario_tecnico}
-                            </p>
-                          )}
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
 

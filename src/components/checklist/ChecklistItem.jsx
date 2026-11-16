@@ -343,6 +343,8 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
                     // Se não existe, é um item NOVO sendo adicionado agora, aí sim usar valor do cadastro
                     const isItemSalvo = pv.valor_customizado !== undefined && pv.valor_customizado !== null;
                     const valorUnitario = isItemSalvo ? Number(pv.valor_customizado) : Number(produto.valor);
+                    const descontoItem = Number(pv.desconto_item) || 0;
+                    const totalProduto = Math.max(0, (Number(pv.quantidade) || 0) * valorUnitario - descontoItem);
                     
                     return (
                       <div key={idx} className="p-3 bg-white rounded-lg border space-y-3">
@@ -412,9 +414,14 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
                             <div className="flex items-center justify-between pt-2 border-t">
                               <span className="text-xs text-slate-500">
                                 {pv.quantidade}x R$ {valorUnitario?.toFixed(2)}
+                                {descontoItem > 0 && (
+                                  <span className="ml-1 font-semibold text-emerald-700">
+                                    - R$ {descontoItem.toFixed(2)} de desconto
+                                  </span>
+                                )}
                               </span>
                               <span className="text-sm font-semibold text-green-600">
-                                Total: R$ {(valorUnitario * pv.quantidade).toFixed(2)}
+                                Total: R$ {totalProduto.toFixed(2)}
                               </span>
                             </div>
                           </div>

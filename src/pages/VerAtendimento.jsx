@@ -476,9 +476,11 @@ export default function VerAtendimento() {
     localItensChecklistRef.current[index] = updatedItem;
     const novosItens = [...localItensChecklistRef.current];
     
-    const subtotal = novosItens.reduce((acc, item) => acc + (item.valor_total || 0), 0);
-    const valor_final = subtotal - (atendimento.desconto || 0);
-    
+    const subtotal_checklist = novosItens.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+    const subtotal_queixa = (atendimento.itens_queixa || []).reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
+    const subtotal = subtotal_queixa + subtotal_checklist;
+    const valor_final = subtotal - (Number(atendimento.desconto) || 0);
+
     const historicoItem = {
       data: new Date().toISOString(),
       usuario: user?.email || 'Sistema',
@@ -489,11 +491,16 @@ export default function VerAtendimento() {
     pendingChecklistRef.current = setTimeout(() => {
       updateMutation.mutate({ 
         itens_orcamento: novosItens,
+        subtotal_checklist,
         subtotal,
         valor_final,
         historico_edicoes: [...(atendimento.historico_edicoes || []), historicoItem]
       }, {
-        onSuccess: () => { localItensChecklistRef.current = null; }
+        // Mantém a lista local sincronizada com o que foi gravado para não perder
+        // o desconto aplicado quando outro item é alterado em seguida.
+        onSuccess: (result) => {
+          localItensChecklistRef.current = result?.itens_orcamento || novosItens;
+        }
       });
     }, 300);
   };
