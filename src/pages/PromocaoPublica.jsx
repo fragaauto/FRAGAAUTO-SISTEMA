@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
 import { Loader2, CheckCircle2, MessageCircle, Megaphone, Circle, Ticket } from 'lucide-react';
 import {
   brl,
@@ -80,6 +79,7 @@ export default function PromocaoPublica() {
   const [enviando, setEnviando] = useState(false);
   const [concluido, setConcluido] = useState(false);
   const [valeEmitido, setValeEmitido] = useState(null);
+  const [erro, setErro] = useState('');
 
   const { data: promocao, isLoading } = useQuery({
     queryKey: ['promocao-publica', id],
@@ -136,9 +136,17 @@ export default function PromocaoPublica() {
     : '';
 
   const enviar = async () => {
-    if (!nome.trim()) return toast.error('Informe seu nome');
-    if (selecionadosLista.length === 0) return toast.error('Marque ao menos um produto de interesse');
+    if (!nome.trim()) {
+      setErro('Informe seu nome para reservar sua oferta.');
+      document.getElementById('nome-cliente')?.focus();
+      return;
+    }
+    if (selecionadosLista.length === 0) {
+      setErro('Marque ao menos um produto de interesse.');
+      return;
+    }
 
+    setErro('');
     setEnviando(true);
     try {
       const interesse = await base44.entities.PromocaoInteresse.create({
@@ -177,7 +185,7 @@ export default function PromocaoPublica() {
       }
       setConcluido(true);
     } catch (e) {
-      toast.error('Não foi possível enviar seu interesse: ' + e.message);
+      setErro('Não foi possível enviar seu interesse: ' + (e?.message || 'tente novamente.'));
     }
     setEnviando(false);
   };
@@ -334,7 +342,12 @@ export default function PromocaoPublica() {
           </p>
           <div>
             <Label>Seu nome *</Label>
-            <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo" />
+            <Input
+              id="nome-cliente"
+              value={nome}
+              onChange={(e) => { setNome(e.target.value); setErro(''); }}
+              placeholder="Nome completo"
+            />
           </div>
           <div>
             <Label>Telefone / WhatsApp</Label>
@@ -349,7 +362,13 @@ export default function PromocaoPublica() {
               className="min-h-[70px]"
             />
           </div>
+          {erro && (
+            <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {erro}
+            </p>
+          )}
           <Button
+            type="button"
             onClick={enviar}
             disabled={enviando}
             className="w-full bg-orange-500 hover:bg-orange-600"
@@ -383,7 +402,11 @@ export default function PromocaoPublica() {
               <p className="font-bold text-orange-600">{brl(total)}</p>
             </div>
             <Button
-              onClick={() => document.getElementById('form-interesse')?.scrollIntoView({ behavior: 'smooth' })}
+              type="button"
+              onClick={() => {
+                document.getElementById('form-interesse')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => document.getElementById('nome-cliente')?.focus({ preventScroll: true }), 400);
+              }}
               className="bg-green-600 hover:bg-green-700"
             >
               <MessageCircle className="w-4 h-4 mr-2" /> Continuar
