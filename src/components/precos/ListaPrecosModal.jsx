@@ -26,6 +26,9 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
   const [loteAjusteTipo, setLoteAjusteTipo] = useState('percentual');
   const [loteAjusteValor, setLoteAjusteValor] = useState('');
 
+  // Busca dentro dos produtos já selecionados (tabela de preços customizados)
+  const [searchItem, setSearchItem] = useState('');
+
   useEffect(() => {
     if (lista) {
       setFormData({
@@ -59,6 +62,12 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
   const produtosFiltrados = produtos.filter(p =>
     !searchProduto || p.nome?.toLowerCase().includes(searchProduto.toLowerCase()) || p.codigo?.toLowerCase().includes(searchProduto.toLowerCase())
   );
+
+  const itensFiltrados = formData.itens.filter(i => {
+    const termo = searchItem.trim().toLowerCase();
+    if (!termo) return true;
+    return i.produto_nome?.toLowerCase().includes(termo) || i.produto_codigo?.toLowerCase().includes(termo);
+  });
 
   const clientesFiltrados = clientes.filter(c =>
     !searchCliente || c.nome?.toLowerCase().includes(searchCliente.toLowerCase()) || c.telefone?.includes(searchCliente)
@@ -304,6 +313,17 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
                     </div>
                   </div>
 
+                  {/* Busca nos itens selecionados */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      placeholder={`Buscar entre os ${formData.itens.length} produto(s) selecionado(s)...`}
+                      value={searchItem}
+                      onChange={e => setSearchItem(e.target.value)}
+                      className="pl-9 h-8 text-sm"
+                    />
+                  </div>
+
                   {/* Tabela individual */}
                   <div className="border rounded-lg divide-y">
                     <div className="px-3 py-2 bg-slate-50 text-xs font-semibold text-slate-600 grid grid-cols-4 gap-2">
@@ -312,7 +332,7 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
                       <span className="text-center">Venda Atual</span>
                       <span className="text-right">Preço Customizado</span>
                     </div>
-                    {formData.itens.map(item => {
+                    {itensFiltrados.map(item => {
                       const diff = item.preco_customizado - item.preco_original;
                       const diffPct = item.preco_original ? (diff / item.preco_original * 100) : 0;
                       const produto = produtos.find(pr => pr.id === item.produto_id);
@@ -346,6 +366,9 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
                         </div>
                       );
                     })}
+                    {itensFiltrados.length === 0 && (
+                      <p className="text-center py-4 text-sm text-slate-400">Nenhum produto selecionado encontrado</p>
+                    )}
                   </div>
                 </div>
               )}
