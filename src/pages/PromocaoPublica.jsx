@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle2, MessageCircle, Megaphone, Circle, Ticket } from 'lucide-react';
+import { Loader2, CheckCircle2, MessageCircle, Megaphone, Circle, Ticket, Flame } from 'lucide-react';
 import {
   brl,
   normalizarTelefone,
@@ -17,6 +17,12 @@ import {
 } from '@/lib/promocao';
 
 function CardProdutoPublico({ produto, marcado, onToggle, semInstalacao }) {
+  const original = Number(produto.valor_original) || 0;
+  const promocional = Number(produto.valor_promocional) || 0;
+  const temDesconto = original > promocional && promocional > 0;
+  const percentual = temDesconto ? Math.round(((original - promocional) / original) * 100) : 0;
+  const economia = temDesconto ? original - promocional : 0;
+
   return (
     <button
       type="button"
@@ -40,6 +46,18 @@ function CardProdutoPublico({ produto, marcado, onToggle, semInstalacao }) {
             <Circle className="w-5 h-5 text-slate-300" />
           )}
         </div>
+        {temDesconto && (
+          <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
+            <span className="inline-flex items-center gap-1 bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white text-sm font-extrabold px-2.5 py-1 rounded-full shadow-md ring-2 ring-white/70">
+              <Flame className="w-4 h-4" />
+              -{percentual}%
+              <span className="text-[10px] font-bold uppercase tracking-wide opacity-90">OFF</span>
+            </span>
+            <span className="bg-red-600/95 text-white text-[11px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+              Economize {brl(economia)}
+            </span>
+          </div>
+        )}
       </div>
       <div className="p-3">
         <p className="font-semibold text-slate-800 text-sm leading-snug">{produto.nome}</p>
