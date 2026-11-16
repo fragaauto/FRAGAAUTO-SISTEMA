@@ -151,6 +151,10 @@
       "format": "date",
       "description": "\u00daltimo dia da promo\u00e7\u00e3o"
     },
+    "observacoes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es exibidas no fim da p\u00e1gina p\u00fablica (ex: cupom de instala\u00e7\u00e3o n\u00e3o vale para super leds)"
+    },
     "ativa": {
       "type": "boolean",
       "default": true

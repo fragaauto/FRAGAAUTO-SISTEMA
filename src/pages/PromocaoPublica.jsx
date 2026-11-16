@@ -412,6 +412,17 @@ export default function PromocaoPublica() {
           )}
         </div>
 
+        {promocao.observacoes && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+              Observações importantes
+            </p>
+            <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+              {promocao.observacoes}
+            </p>
+          </div>
+        )}
+
         {semInstalacao && (
           <p className="text-xs text-slate-500 text-center leading-relaxed">
             * Valores somente do produto. Não inclui instalação.

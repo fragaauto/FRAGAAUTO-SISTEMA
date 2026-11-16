@@ -64,6 +64,7 @@ export default function FormularioPromocao({
     vale_validade_dias: promocao?.vale_validade_dias ?? 30,
     vale_motivo: promocao?.vale_motivo || '',
   });
+  const [observacoes, setObservacoes] = useState(promocao?.observacoes || '');
   const [whatsapp, setWhatsapp] = useState(promocao?.whatsapp_retorno || whatsappPadrao || '');
   const [dataFim, setDataFim] = useState(promocao?.data_fim || '');
   const [ativa, setAtiva] = useState(promocao?.ativa !== false);
@@ -173,6 +174,7 @@ export default function FormularioPromocao({
       vale_valor: Number(vale.vale_valor) || 0,
       vale_validade_dias: Number(vale.vale_validade_dias) || 30,
       vale_motivo: (vale.vale_motivo || '').trim(),
+      observacoes: (observacoes || '').trim(),
       whatsapp_retorno: whatsapp,
       data_fim: dataFim || null,
       ativa,
@@ -296,6 +298,19 @@ export default function FormularioPromocao({
           </div>
 
           <ConfigValeDesconto valor={vale} onChange={setVale} />
+
+          <div>
+            <Label className="mb-1 block">Observações no fim da página pública</Label>
+            <Textarea
+              value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)}
+              placeholder="Ex: Cupom de instalação não é válido para super leds."
+              className="min-h-[70px]"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Este texto aparece no rodapé da página pública, para o cliente ler antes de reservar.
+            </p>
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4 bg-slate-50 rounded-lg p-3">
             <label className="flex items-center gap-2 text-sm text-slate-700">
