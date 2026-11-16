@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -134,11 +134,10 @@ export default function PromocaoPublica() {
   const artes = promocao?.artes || [];
   const semInstalacao = /(sem|s\/)\s*(instala|m[ãa]o\s*de\s*obra)/i.test(promocao?.lista_preco_nome || '');
 
-  const blocos = useMemo(() => {
-    const lista = [];
-    for (let i = 0; i < produtos.length; i += 4) lista.push(produtos.slice(i, i + 4));
-    return lista;
-  }, [produtos]);
+  // Exibe as ofertas em lotes: em celulares fracos abrir 27 fotos de uma vez
+  // travava o navegador interno do WhatsApp e a página fechava sozinha.
+  const [visiveis, setVisiveis] = useState(8);
+  const produtosVisiveis = produtos.slice(0, visiveis);
 
   const selecionadosLista = produtos.filter((p) => selecionados.includes(p.produto_id));
   const total = selecionadosLista.reduce((acc, p) => acc + (Number(p.valor_promocional) || 0), 0);
@@ -353,33 +352,32 @@ export default function PromocaoPublica() {
         {produtos.length === 0 ? (
           <p className="text-center text-slate-500">Nenhum produto nesta promoção.</p>
         ) : (
-          blocos.map((bloco, idx) => (
-            <React.Fragment key={idx}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {bloco.map((produto) => (
-                  <CardProdutoPublico
-                    key={produto.produto_id}
-                    produto={produto}
-                    marcado={selecionados.includes(produto.produto_id)}
-                    semInstalacao={semInstalacao}
-                    onToggle={() => toggle(produto)}
-                  />
-                ))}
-              </div>
-              {idx + 1 < blocos.length && artes[idx + 1] && (
-                <img
-                  src={artes[idx + 1].url}
-                  alt={artes[idx + 1].descricao || 'Arte promocional'}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full rounded-2xl shadow-sm"
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {produtosVisiveis.map((produto) => (
+                <CardProdutoPublico
+                  key={produto.produto_id}
+                  produto={produto}
+                  marcado={selecionados.includes(produto.produto_id)}
+                  semInstalacao={semInstalacao}
+                  onToggle={() => toggle(produto)}
                 />
-              )}
-            </React.Fragment>
-          ))
+              ))}
+            </div>
+            {produtos.length > visiveis && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setVisiveis((v) => v + 8)}
+                className="w-full border-orange-300 text-orange-600"
+              >
+                Ver mais {Math.min(8, produtos.length - visiveis)} ofertas ({produtos.length - visiveis} restantes)
+              </Button>
+            )}
+          </>
         )}
 
-        {artes.slice(blocos.length).map((arte, idx) => (
+        {artes.slice(1).map((arte, idx) => (
           <img
             key={idx}
             src={arte.url}
