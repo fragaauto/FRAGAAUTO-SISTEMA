@@ -104,7 +104,7 @@ export default function OrcamentoForm({ orcamento, unidadeAtual, config, onClose
       if (field === 'valor_unitario') val = parseFloat(val) || 0;
       novo[idx] = { ...novo[idx], [field]: val };
       if (field === 'quantidade' || field === 'valor_unitario') {
-        novo[idx].valor_total = (novo[idx].quantidade || 1) * (novo[idx].valor_unitario || 0);
+        novo[idx].valor_total = Math.max(0, (novo[idx].quantidade || 1) * (novo[idx].valor_unitario || 0) - (Number(novo[idx].desconto_item) || 0));
       }
       return novo;
     });

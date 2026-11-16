@@ -68,25 +68,39 @@ function totalItem(item, valorUnitario) {
   return Math.max(0, qtd * valorUnitario - desconto);
 }
 
+/**
+ * Desconto por unidade concedido pela campanha (preço de referência da campanha - preço promocional).
+ * O preço unitário do item é preservado; o valor entra como desconto na linha.
+ */
+export function descontoUnitarioPromocao(item, oferta) {
+  const base = Number(oferta?.valor_original) || Number(item?.valor_unitario ?? item?.valor_customizado ?? 0) || 0;
+  const promo = Number(oferta?.valor_promocional) || 0;
+  return Math.max(0, base - promo);
+}
+
 export function aplicarDescontoPromocao(item, oferta) {
-  const original = Number(item.valor_unitario ?? item.valor_customizado ?? 0) || 0;
-  const valorUnitario = Number(oferta.valor_promocional) || 0;
+  const quantidade = Number(item.quantidade) || 1;
+  const valorUnitario = Number(item.valor_unitario ?? item.valor_customizado ?? 0) || 0;
+  const descontoItem = Number((descontoUnitarioPromocao(item, oferta) * quantidade).toFixed(2));
   const atualizado = {
     ...item,
     aplicar_promocao: true,
     promocao_id: oferta.promocao_id,
     promocao_titulo: oferta.promocao_titulo,
     promocao_validade: oferta.validade,
-    valor_promocao_original: original > 0 ? original : Number(oferta.valor_original || 0),
+    valor_promocao_original: valorUnitario,
+    desconto_item_anterior: Number(item.desconto_item) || 0,
+    desconto_item: descontoItem,
   };
-  if ('valor_customizado' in item) {
-    return { ...atualizado, valor_customizado: valorUnitario, valor_unitario: valorUnitario, valor_total: totalItem(atualizado, valorUnitario) };
+  if ('valor_total' in item || 'valor_unitario' in item) {
+    return { ...atualizado, valor_total: Math.max(0, quantidade * valorUnitario - descontoItem) };
   }
-  return { ...atualizado, valor_unitario: valorUnitario, valor_total: totalItem(atualizado, valorUnitario) };
+  return atualizado;
 }
 
 export function removerDescontoPromocao(item) {
-  const original = Number(item.valor_promocao_original ?? item.valor_unitario ?? 0) || 0;
+  const valorUnitario = Number(item.valor_unitario ?? item.valor_customizado ?? 0) || 0;
+  const descontoAnterior = Number(item.desconto_item_anterior) || 0;
   const atualizado = {
     ...item,
     aplicar_promocao: false,
@@ -94,11 +108,13 @@ export function removerDescontoPromocao(item) {
     promocao_titulo: '',
     promocao_validade: '',
     valor_promocao_original: 0,
+    desconto_item: descontoAnterior,
+    desconto_item_anterior: 0,
   };
-  if ('valor_customizado' in item) {
-    return { ...atualizado, valor_customizado: original, valor_unitario: original, valor_total: totalItem(atualizado, original) };
+  if ('valor_total' in item || 'valor_unitario' in item) {
+    return { ...atualizado, valor_total: totalItem(atualizado, valorUnitario) };
   }
-  return { ...atualizado, valor_unitario: original, valor_total: totalItem(atualizado, original) };
+  return atualizado;
 }
 
 /** Texto usado no WhatsApp/PDF: PRODUTO EM PROMOÇÃO VALIDO ATÉ 30/11/2026 */

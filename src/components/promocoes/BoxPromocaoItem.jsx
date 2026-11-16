@@ -41,9 +41,9 @@ export default function BoxPromocaoItem({ oferta, aplicado, valorAtual, readOnly
         </label>
       )}
 
-      {readOnly && aplicado && (
-        <p className="mt-1 text-[11px] font-bold uppercase text-[#15333E]">
-          Desconto da promoção aplicado
+      {aplicado && precoOriginal > precoPromo && (
+        <p className="mt-1 text-[11px] font-bold uppercase text-[#0f7a3d]">
+          Desconto de {brl(precoOriginal - precoPromo)} por unidade lançado no item
         </p>
       )}
     </div>

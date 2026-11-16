@@ -220,7 +220,7 @@ export default function EditarQueixa() {
       // Preparar dados
       const itensComTotal = itensQueixa.map(item => ({
         ...item,
-        valor_total: item.quantidade * item.valor_unitario,
+        valor_total: Math.max(0, (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0) - (Number(item.desconto_item) || 0)),
         status_aprovacao: item.status_aprovacao || 'aprovado',
         status_servico: item.status_servico || 'aguardando_autorizacao',
         observacao_cliente: item.observacao_cliente || null
@@ -395,7 +395,7 @@ export default function EditarQueixa() {
                           {item.quantidade}x R$ {item.valor_unitario.toFixed(2)}
                         </span>
                         <span className="text-sm font-semibold text-green-600">
-                          Total: R$ {(item.quantidade * item.valor_unitario).toFixed(2)}
+                          Total: R$ {Math.max(0, (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0) - (Number(item.desconto_item) || 0)).toFixed(2)}
                         </span>
                       </div>
                     </div>

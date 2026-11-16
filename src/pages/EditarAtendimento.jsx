@@ -155,7 +155,9 @@ export default function EditarAtendimento() {
                 promocao_id: p.promocao_id || '',
                 promocao_titulo: p.promocao_titulo || '',
                 promocao_validade: p.promocao_validade || '',
-                valor_promocao_original: Number(p.valor_promocao_original) || 0
+                valor_promocao_original: Number(p.valor_promocao_original) || 0,
+                desconto_item: Number(p.desconto_item) || 0,
+                desconto_item_anterior: Number(p.desconto_item_anterior) || 0
               };
             }).filter(Boolean); // Remove nulls
 
@@ -323,7 +325,9 @@ export default function EditarAtendimento() {
               nome: produto.nome,
               quantidade: quantidade,
               valor_unitario: valorUnitario,
-              valor_total: valorUnitario * quantidade,
+              valor_total: Math.max(0, valorUnitario * quantidade - (Number(pv.desconto_item) || 0)),
+              desconto_item: Number(pv.desconto_item) || 0,
+              desconto_item_anterior: Number(pv.desconto_item_anterior) || 0,
               vantagens: produto.vantagens || '',
               desvantagens: produto.desvantagens || '',
               status_aprovacao: 'pendente',
@@ -359,7 +363,7 @@ export default function EditarAtendimento() {
     // CRÍTICO: Recalcular todos os totais
     const itensQueixa = itensQueixaBase.map(item => ({
       ...item,
-      valor_total: (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0)
+      valor_total: Math.max(0, (Number(item.quantidade) || 0) * (Number(item.valor_unitario) || 0) - (Number(item.desconto_item) || 0))
     }));
     const subtotal_queixa = itensQueixa.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);
     const subtotal_checklist = itensConsolidados.reduce((acc, item) => acc + (Number(item.valor_total) || 0), 0);

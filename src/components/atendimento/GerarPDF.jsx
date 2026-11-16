@@ -36,8 +36,8 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
     const seloPromocao = (item) => item?.aplicar_promocao
       ? `<div style="margin-top:6px;display:inline-block;background:#EBC75C;border:2px solid #15333E;border-radius:3px;padding:2px 6px;font-size:10px;font-weight:800;text-transform:uppercase;color:#0f0e0e">${item.promocao_validade ? `Produto em promoção — válido até ${dataBr(item.promocao_validade)}` : 'Produto em promoção'}</div>`
       : '';
-    const precoUnitarioHTML = (item) => `${item?.aplicar_promocao && Number(item.valor_promocao_original) > 0
-      ? `<div style="font-size:10px;color:#94a3b8;text-decoration:line-through">R$ ${Number(item.valor_promocao_original).toFixed(2)}</div>`
+    const precoUnitarioHTML = (item) => `${item?.aplicar_promocao && Number(item.desconto_item) > 0
+      ? `<div style="font-size:10px;color:#15803d;font-weight:700">- R$ ${Number(item.desconto_item).toFixed(2)}</div>`
       : ''}R$ ${Number(item?.valor_unitario || 0).toFixed(2)}`;
 
     printWindow.document.write(`

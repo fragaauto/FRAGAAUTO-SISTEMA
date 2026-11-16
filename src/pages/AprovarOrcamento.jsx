@@ -623,8 +623,8 @@ export default function AprovarOrcamento() {
                         </div>
                       )}
                       <p className="text-sm text-slate-600">
-                        {item.aplicar_promocao && Number(item.valor_promocao_original) > 0 && (
-                          <span className="line-through text-slate-400 mr-1">R$ {Number(item.valor_promocao_original).toFixed(2)}</span>
+                        {item.aplicar_promocao && Number(item.desconto_item) > 0 && (
+                          <span className="text-emerald-600 font-semibold mr-1">- R$ {Number(item.desconto_item).toFixed(2)}</span>
                         )}
                         {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
                       </p>
@@ -709,8 +709,8 @@ export default function AprovarOrcamento() {
                         </div>
                       )}
                       <p className="text-sm text-slate-600">
-                        {item.aplicar_promocao && Number(item.valor_promocao_original) > 0 && (
-                          <span className="line-through text-slate-400 mr-1">R$ {Number(item.valor_promocao_original).toFixed(2)}</span>
+                        {item.aplicar_promocao && Number(item.desconto_item) > 0 && (
+                          <span className="text-emerald-600 font-semibold mr-1">- R$ {Number(item.desconto_item).toFixed(2)}</span>
                         )}
                         {item.quantidade}x R$ {item.valor_unitario?.toFixed(2)} = R$ {item.valor_total?.toFixed(2)}
                       </p>
