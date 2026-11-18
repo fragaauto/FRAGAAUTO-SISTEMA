@@ -498,12 +498,26 @@ export default function AprovarOrcamento() {
     nivelPorNomeChecklist[ci.item] = ci.nivel_orcamento === 'servico_completo' ? 2 : 1;
   });
 
+  // O item do orçamento não guarda o nome do item do checklist, por isso a
+  // classificação também é ligada pelo produto vinculado em cada item do checklist
+  const nivelPorProduto = {};
+  (atendimento.checklist || []).forEach((ci) => {
+    const nivel = nivelPorNomeChecklist[ci.item];
+    if (nivel === undefined) return;
+    (ci.produtos || []).forEach((p) => {
+      if (p?.id && nivelPorProduto[p.id] === undefined) nivelPorProduto[p.id] = nivel;
+    });
+  });
+
   const itensParaPacotes = [
     ...itensQueixa.map(([key, { item }]) => ({ key, item, nivel: 0 })),
     ...itensChecklist.map(([key, { item }]) => ({
       key,
       item,
-      nivel: nivelPorNomeChecklist[item.item_checklist] ?? 1
+      nivel:
+        nivelPorNomeChecklist[item.item_checklist] ??
+        nivelPorProduto[item.produto_id] ??
+        1
     }))
   ];
 
