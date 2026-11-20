@@ -13,6 +13,23 @@ const normalizar = (valor) =>
 
 const VAZIAS = ['cod', 'codigo', 'cód', 'código', 'ref', 'referencia', 'referência'];
 
+// Palavras de ligação: não podem ser exigidas de todos os campos, senão a busca
+// perde peças boas (ex: "borracha de porta celta" deixava de achar o produto
+// cujo nome é "BORRACHA PORTA TRIB CORSA/CELTA/PRISMA").
+const CONECTORES = [
+  'de', 'da', 'do', 'das', 'dos', 'e', 'em', 'no', 'na', 'nos', 'nas',
+  'para', 'pra', 'por', 'com', 'sem', 'ao', 'aos', 'um', 'uma',
+];
+
+// Palavras que realmente identificam o produto no termo digitado.
+const termosDaBusca = (termo) => {
+  const todos = normalizar(termo)
+    .split(/\s+/)
+    .filter((t) => t && !VAZIAS.includes(t));
+  const significativos = todos.filter((t) => !CONECTORES.includes(t));
+  return significativos.length > 0 ? significativos : todos;
+};
+
 // Compara códigos sem zeros à esquerda e sem separadores ("0327" ~ "327")
 const codigoNumerico = (valor) => normalizar(valor).replace(/^0+/, '').replace(/[\s.\-_/]/g, '');
 
@@ -94,9 +111,7 @@ export function mesclarFornecedorProduto(
 }
 
 export function matchProduto(p, termo) {
-  const termos = normalizar(termo)
-    .split(/\s+/)
-    .filter((t) => t && !VAZIAS.includes(t));
+  const termos = termosDaBusca(termo);
 
   if (termos.length === 0) return true;
 
@@ -125,19 +140,28 @@ export function filtrarProdutos(produtos, termo) {
 // Serve para explicar na busca o motivo da recomendação
 // (ex: "Compatível com Renault Sandero").
 export function compatibilidadesEncontradas(produto, termo) {
-  const termos = normalizar(termo)
-    .split(/\s+/)
-    .filter((t) => t && !VAZIAS.includes(t));
-
+  const termos = termosDaBusca(termo);
   if (termos.length === 0) return [];
 
-  return (Array.isArray(produto?.modelos_compativeis) ? produto.modelos_compativeis : [])
-    .map((m) => String(m || '').trim())
+  const modelos = (Array.isArray(produto?.modelos_compativeis) ? produto.modelos_compativeis : [])
+    // Um cadastro pode ter vários modelos no mesmo texto ("celta;prisma;astra")
+    .flatMap((m) => String(m || '').split(/[;,\/|]+/))
+    .map((m) => m.trim())
     .filter(Boolean)
     .filter((m) => {
       const alvo = normalizar(m);
       return termos.some((t) => alvo.includes(t));
-    });
+    })
+    .map((m) => m.charAt(0).toUpperCase() + m.slice(1));
+
+  // Remove repetidos que só diferem em maiúsculas/minúsculas
+  const vistos = new Set();
+  return modelos.filter((m) => {
+    const chave = normalizar(m);
+    if (vistos.has(chave)) return false;
+    vistos.add(chave);
+    return true;
+  });
 }
 
 // Todas as palavras significativas de um texto (ignora acentos, pontuação e

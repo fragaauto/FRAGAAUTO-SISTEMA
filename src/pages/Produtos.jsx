@@ -35,6 +35,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { registrarAvisoPreco } from '@/lib/avisoPreco';
+import { matchProduto } from '@/lib/produtoSearch';
+import SeloCompatibilidade from '@/components/produtos/SeloCompatibilidade';
 import { 
   Plus, 
   Search, 
@@ -319,13 +321,7 @@ export default function Produtos() {
 
   const filteredProdutos = produtos
     .filter(p => {
-      const termos = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
-      const campos = [
-        p.nome, p.codigo, p.descricao, p.categoria, categoriaLabel(p.categoria),
-        ...(p.modelos_compativeis || []).map(m => String(m || ''))
-      ].map(c => String(c || '').toLowerCase());
-      const matchSearch = termos.length === 0 ||
-        termos.every(termo => campos.some(c => c.includes(termo)));
+      const matchSearch = matchProduto(p, search);
       const matchCategoria = categoriaFilter === 'all' || p.categoria === categoriaFilter;
       return matchSearch && matchCategoria;
     })
@@ -1541,6 +1537,7 @@ export default function Produtos() {
                               Estoque: {produto.estoque_atual || 0}
                             </span>
                           )}
+                          <SeloCompatibilidade produto={produto} termo={search} />
                          </div>
                         </div>
                       </div>
