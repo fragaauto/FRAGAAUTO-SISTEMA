@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { filtrarProdutos } from '@/lib/produtoSearch';
 
 // Seletor pesquisável (por nome ou código) para componentes de kit/composição.
 // props: produtos (lista completa), value (produto_id), onSelect(produto), placeholder
@@ -16,17 +17,8 @@ export default function SeletorComponenteKit({ produtos = [], value, onSelect, p
     [produtos, value]
   );
 
-  // filtro: ambos os termos devem bater (nome contém E código contém, quando ambos informados)
-  // na verdade juntamos nome+codigo e checamos se a string de busca (tolower) está contida
-  const filtrados = useMemo(() => {
-    const q = busca.trim().toLowerCase();
-    if (!q) return produtos;
-    const termos = q.split(/\s+/).filter(Boolean);
-    return produtos.filter(p => {
-      const alvo = `${p.codigo || ''} ${p.nome || ''}`.toLowerCase();
-      return termos.every(t => alvo.includes(t));
-    });
-  }, [produtos, busca]);
+  // mesma busca dos demais campos do sistema: nome, código, descrição, categoria e modelos compatíveis
+  const filtrados = useMemo(() => filtrarProdutos(produtos, busca), [produtos, busca]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

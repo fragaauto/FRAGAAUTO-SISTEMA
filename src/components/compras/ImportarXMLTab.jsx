@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Upload, FileText, Check, AlertTriangle, Loader2, Plus, RefreshCw, Package, DollarSign, X, Link, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { registrarAvisoPreco } from '@/lib/avisoPreco';
+import { filtrarProdutos } from '@/lib/produtoSearch';
 
 // Parse XML de NF-e no browser
 function parseNFe(xmlStr) {
@@ -48,10 +49,7 @@ function parseNFe(xmlStr) {
 function VincularProdutoModal({ itemNFe, produtos, onVincular, onClose }) {
   const [busca, setBusca] = useState('');
   const filtrados = busca.length > 1
-    ? produtos.filter(p =>
-        p.nome?.toLowerCase().includes(busca.toLowerCase()) ||
-        p.codigo?.toLowerCase().includes(busca.toLowerCase())
-      ).slice(0, 10)
+    ? filtrarProdutos(produtos, busca).slice(0, 10)
     : produtos.slice(0, 10);
 
   return (

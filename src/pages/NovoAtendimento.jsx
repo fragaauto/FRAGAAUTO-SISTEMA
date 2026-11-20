@@ -111,7 +111,7 @@ export default function NovoAtendimento() {
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: async () => {
-      const page = await base44.entities.Produto.filter({ ativo: true }, { limit: 2000, fields: ['codigo', 'nome', 'categoria', 'valor', 'usar_faixa_preco', 'valor_minimo', 'valor_maximo', 'variacoes', 'peca_externa', 'composicao', 'fornecedores'] });
+      const page = await base44.entities.Produto.filter({ ativo: true }, { limit: 2000, fields: ['codigo', 'nome', 'categoria', 'descricao', 'modelos_compativeis', 'valor', 'usar_faixa_preco', 'valor_minimo', 'valor_maximo', 'variacoes', 'peca_externa', 'composicao', 'fornecedores'] });
       return page.items;
     },
     staleTime: 10 * 60 * 1000

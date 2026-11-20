@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { filtrarProdutos } from '@/lib/produtoSearch';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -187,7 +188,7 @@ export default function VerAtendimento() {
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: async () => {
-      const page = await base44.entities.Produto.filter({ ativo: true }, { limit: 2000, fields: ['codigo', 'nome', 'categoria', 'valor', 'usar_faixa_preco', 'valor_minimo', 'valor_maximo', 'variacoes', 'peca_externa', 'composicao', 'fornecedores', 'controla_estoque', 'estoque_atual'] });
+      const page = await base44.entities.Produto.filter({ ativo: true }, { limit: 2000, fields: ['codigo', 'nome', 'categoria', 'descricao', 'modelos_compativeis', 'valor', 'usar_faixa_preco', 'valor_minimo', 'valor_maximo', 'variacoes', 'peca_externa', 'composicao', 'fornecedores', 'controla_estoque', 'estoque_atual'] });
       return page.items;
     },
     staleTime: 10 * 60 * 1000,
@@ -1203,12 +1204,7 @@ export default function VerAtendimento() {
                           
                           {searchProdutoQueixa && (
                             <div className="max-h-48 overflow-y-auto space-y-1 border rounded-lg p-2 bg-white">
-                              {produtos
-                                .filter(p => {
-                                  const search = searchProdutoQueixa.toLowerCase();
-                                  return p.nome?.toLowerCase().includes(search) ||
-                                         p.codigo?.toLowerCase().includes(search);
-                                })
+                              {filtrarProdutos(produtos, searchProdutoQueixa)
                                 .map(p => (
                                   <button
                                     key={p.id}
@@ -1232,12 +1228,7 @@ export default function VerAtendimento() {
                                     </span>
                                   </button>
                                 ))}
-                              {produtos
-                                .filter(p => {
-                                  const search = searchProdutoQueixa.toLowerCase();
-                                  return p.nome?.toLowerCase().includes(search) ||
-                                         p.codigo?.toLowerCase().includes(search);
-                                }).length === 0 && (
+                              {filtrarProdutos(produtos, searchProdutoQueixa).length === 0 && (
                                 <p className="text-center py-2 text-slate-500 text-sm">
                                   Nenhum produto encontrado
                                 </p>

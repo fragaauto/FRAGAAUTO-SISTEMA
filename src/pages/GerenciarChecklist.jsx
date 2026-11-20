@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { filtrarProdutos } from '@/lib/produtoSearch';
 import { 
   ClipboardCheck, 
   Plus, 
@@ -481,13 +482,7 @@ export default function GerenciarChecklist() {
                 />
               </div>
               <div className="border rounded-lg p-2 max-h-40 overflow-y-auto space-y-1">
-                {produtos
-                  .filter(p => {
-                    if (!searchProduto) return true;
-                    const search = searchProduto.toLowerCase();
-                    return p.nome?.toLowerCase().includes(search) ||
-                           p.codigo?.toLowerCase().includes(search);
-                  })
+                {filtrarProdutos(produtos, searchProduto)
                   .map(p => (
                     <label key={p.id} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded cursor-pointer">
                       <input
@@ -508,12 +503,7 @@ export default function GerenciarChecklist() {
                       </span>
                     </label>
                   ))}
-                {produtos.filter(p => {
-                  if (!searchProduto) return true;
-                  const search = searchProduto.toLowerCase();
-                  return p.nome?.toLowerCase().includes(search) ||
-                         p.codigo?.toLowerCase().includes(search);
-                }).length === 0 && (
+                {filtrarProdutos(produtos, searchProduto).length === 0 && (
                   <p className="text-center py-2 text-slate-500 text-sm">
                     Nenhum produto encontrado
                   </p>

@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { brl } from '@/lib/promocao';
+import { filtrarProdutos } from '@/lib/produtoSearch';
 import { Search, Loader2 } from 'lucide-react';
 
 const POR_PAGINA = 40;
@@ -32,19 +33,11 @@ export default function SeletorProdutosPromocao({
     [produtos]
   );
 
-  const termo = busca.trim().toLowerCase();
-  const lista = useMemo(() => {
-    if (!termo) return candidatos;
-    return candidatos.filter(
-      (p) =>
-        String(p.nome || '').toLowerCase().includes(termo) ||
-        String(p.codigo || '').toLowerCase().includes(termo)
-    );
-  }, [candidatos, termo]);
+  const lista = useMemo(() => filtrarProdutos(candidatos, busca), [candidatos, busca]);
 
   useEffect(() => {
     setLimite(POR_PAGINA);
-  }, [termo, modo, candidatos.length]);
+  }, [busca, modo, candidatos.length]);
 
   const visiveis = lista.slice(0, limite);
   const selecionadosSet = useMemo(() => new Set(selecionados), [selecionados]);

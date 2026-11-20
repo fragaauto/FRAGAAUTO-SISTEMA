@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Check, X, RefreshCw } from 'lucide-react';
 import { toast } from "sonner";
 import { useUnidade } from '@/lib/UnidadeContext';
+import { filtrarProdutos } from '@/lib/produtoSearch';
 
 export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
   const { unidadeAtual } = useUnidade();
@@ -59,9 +60,7 @@ export default function ListaPrecosModal({ lista, onSave, onClose, isSaving }) {
     enabled: !!unidadeAtual?.id,
   });
 
-  const produtosFiltrados = produtos.filter(p =>
-    !searchProduto || p.nome?.toLowerCase().includes(searchProduto.toLowerCase()) || p.codigo?.toLowerCase().includes(searchProduto.toLowerCase())
-  );
+  const produtosFiltrados = filtrarProdutos(produtos, searchProduto);
 
   const itensFiltrados = formData.itens.filter(i => {
     const termo = searchItem.trim().toLowerCase();
