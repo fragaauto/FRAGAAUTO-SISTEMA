@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Trash2, Save, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { filtrarProdutos } from '@/lib/produtoSearch';
+import SeloCompatibilidade from '@/components/produtos/SeloCompatibilidade';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 import BadgeEstoqueBaixo from '@/components/atendimento/BadgeEstoqueBaixo';
 import SeletorVariacao from '@/components/produtos/SeletorVariacao';
@@ -214,14 +215,17 @@ export default function AdicionarItemOrcamento({ atendimento, produtos, user, on
                     onClick={() => adicionarItem(p)}
                     className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex items-center justify-between border-b last:border-b-0"
                   >
-                    <span className="flex items-center gap-1.5">
-                      {p.codigo && <span className="text-slate-400 mr-1">{p.codigo} -</span>}
-                      {p.nome}
-                      {p.variacoes?.length > 0 && (
-                        <span className="text-xs bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
-                          {p.variacoes.length} var.
-                        </span>
-                      )}
+                    <span className="flex flex-col items-start gap-1">
+                      <span className="flex items-center gap-1.5">
+                        {p.codigo && <span className="text-slate-400 mr-1">{p.codigo} -</span>}
+                        {p.nome}
+                        {p.variacoes?.length > 0 && (
+                          <span className="text-xs bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                            {p.variacoes.length} var.
+                          </span>
+                        )}
+                      </span>
+                      <SeloCompatibilidade produto={p} termo={search} />
                     </span>
                     <span className="text-green-700 font-semibold text-xs ml-2 whitespace-nowrap">
                       {p.usar_faixa_preco

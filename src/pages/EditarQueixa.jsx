@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { filtrarProdutos } from '@/lib/produtoSearch';
+import SeloCompatibilidade from '@/components/produtos/SeloCompatibilidade';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 import BadgeEstoqueBaixo from '@/components/atendimento/BadgeEstoqueBaixo';
 import SeletorVariacao from '@/components/produtos/SeletorVariacao';
@@ -430,14 +431,17 @@ export default function EditarQueixa() {
                         onClick={() => handleAddProduto(p.id)}
                         className="w-full text-left p-2 hover:bg-slate-100 rounded text-sm flex items-center justify-between"
                       >
-                        <span className="flex items-center gap-1.5">
-                          {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
-                          {p.nome}
-                          {p.variacoes?.length > 0 && (
-                            <span className="text-xs bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
-                              {p.variacoes.length} var.
-                            </span>
-                          )}
+                        <span className="flex flex-col items-start gap-1">
+                          <span className="flex items-center gap-1.5">
+                            {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
+                            {p.nome}
+                            {p.variacoes?.length > 0 && (
+                              <span className="text-xs bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                                {p.variacoes.length} var.
+                              </span>
+                            )}
+                          </span>
+                          <SeloCompatibilidade produto={p} termo={searchProduto} />
                         </span>
                         <span className="text-green-600 font-semibold text-xs">
                           {p.usar_faixa_preco

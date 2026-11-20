@@ -7,6 +7,7 @@ import { Search, Plus, Package, Layers } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { matchProduto } from '@/lib/produtoSearch';
 import SeletorVariacao from '@/components/produtos/SeletorVariacao';
+import SeloCompatibilidade from '@/components/produtos/SeloCompatibilidade';
 
 const CATEGORIA_COLORS = {
   eletrica: 'bg-yellow-100 text-yellow-800',
@@ -114,6 +115,9 @@ export default function SeletorProdutos({ open, onClose, produtos, onSelect }) {
                     {produto.descricao && (
                       <span className="text-xs text-slate-500 truncate">{produto.descricao}</span>
                     )}
+                  </div>
+                  <div className="mt-1">
+                    <SeloCompatibilidade produto={produto} termo={search} />
                   </div>
                 </div>
                 <div className="flex items-center gap-3 ml-4">

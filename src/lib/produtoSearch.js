@@ -121,6 +121,25 @@ export function filtrarProdutos(produtos, termo) {
   return (produtos || []).filter((p) => matchProduto(p, termo));
 }
 
+// Modelos compatíveis do produto que casaram com o termo digitado.
+// Serve para explicar na busca o motivo da recomendação
+// (ex: "Compatível com Renault Sandero").
+export function compatibilidadesEncontradas(produto, termo) {
+  const termos = normalizar(termo)
+    .split(/\s+/)
+    .filter((t) => t && !VAZIAS.includes(t));
+
+  if (termos.length === 0) return [];
+
+  return (Array.isArray(produto?.modelos_compativeis) ? produto.modelos_compativeis : [])
+    .map((m) => String(m || '').trim())
+    .filter(Boolean)
+    .filter((m) => {
+      const alvo = normalizar(m);
+      return termos.some((t) => alvo.includes(t));
+    });
+}
+
 // Todas as palavras significativas de um texto (ignora acentos, pontuação e
 // palavras de ligação; mantém números, que diferenciam peças parecidas).
 const palavrasChave = (valor) =>

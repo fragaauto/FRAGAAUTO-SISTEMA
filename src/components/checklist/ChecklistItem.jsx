@@ -15,6 +15,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { matchProduto } from '@/lib/produtoSearch';
+import SeloCompatibilidade from '@/components/produtos/SeloCompatibilidade';
 import AlertaEstoqueBaixo, { estoqueBaixo } from '@/components/atendimento/AlertaEstoqueBaixo';
 import BadgeEstoqueBaixo from '@/components/atendimento/BadgeEstoqueBaixo';
 import { useOfertasPromocao, buscarOferta, aplicarDescontoPromocao, removerDescontoPromocao } from '@/lib/promocaoProduto';
@@ -476,9 +477,12 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
                               }}
                               className="w-full text-left p-2 hover:bg-slate-100 rounded text-sm flex items-center justify-between"
                             >
-                              <span>
-                                {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
-                                {p.nome}
+                              <span className="flex flex-col items-start gap-1">
+                                <span>
+                                  {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
+                                  {p.nome}
+                                </span>
+                                <SeloCompatibilidade produto={p} termo={searchProduto} />
                               </span>
                               <span className="text-green-600 font-semibold text-xs">
                                 R$ {p.valor?.toFixed(2)}

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { filtrarProdutos } from '@/lib/produtoSearch';
+import SeloCompatibilidade from '@/components/produtos/SeloCompatibilidade';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -1212,14 +1213,17 @@ export default function VerAtendimento() {
                                     onClick={() => adicionarProdutoQueixa(p.id)}
                                     className="w-full text-left p-2 hover:bg-slate-100 rounded text-sm flex items-center justify-between"
                                   >
-                                    <span className="flex items-center gap-1.5">
-                                      {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
-                                      {p.nome}
-                                      {p.variacoes?.length > 0 && (
-                                        <span className="text-xs bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
-                                          {p.variacoes.length} var.
-                                        </span>
-                                      )}
+                                    <span className="flex flex-col items-start gap-1">
+                                      <span className="flex items-center gap-1.5">
+                                        {p.codigo && <span className="text-slate-500">{p.codigo} - </span>}
+                                        {p.nome}
+                                        {p.variacoes?.length > 0 && (
+                                          <span className="text-xs bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                                            {p.variacoes.length} var.
+                                          </span>
+                                        )}
+                                      </span>
+                                      <SeloCompatibilidade produto={p} termo={searchProdutoQueixa} />
                                     </span>
                                     <span className="text-green-600 font-semibold text-xs">
                                       {p.usar_faixa_preco
