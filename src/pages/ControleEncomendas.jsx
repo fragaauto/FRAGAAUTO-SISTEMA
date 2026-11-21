@@ -45,6 +45,7 @@ import {
   Plus,
 } from 'lucide-react';
 import MenuAtendimento from '@/components/atendimento/MenuAtendimento';
+import { encomendaVisivel, observacoesDaEncomenda } from '@/lib/encomendaAtendimento';
 import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -153,6 +154,31 @@ export default function ControleEncomendas() {
     staleTime: 60 * 1000,
   });
 
+  // Atendimentos vinculados (para status da OS e observações da queixa/orçamento)
+  const idsAtendimentos = useMemo(
+    () => [...new Set(encomendas.map(e => e.atendimento_id).filter(Boolean))],
+    [encomendas]
+  );
+
+  const { data: atendimentos = [] } = useQuery({
+    queryKey: ['encomendas-atendimentos', idsAtendimentos.join(',')],
+    queryFn: async () => {
+      if (!idsAtendimentos.length) return [];
+      const page = await base44.entities.Atendimento.filter(
+        { id: { $in: idsAtendimentos } },
+        { fields: ['numero_os', 'status', 'status_pagamento', 'itens_queixa', 'itens_orcamento'], limit: 500 }
+      );
+      return page.items || [];
+    },
+    enabled: idsAtendimentos.length > 0,
+    staleTime: 60 * 1000,
+  });
+
+  const atendimentosPorId = useMemo(
+    () => Object.fromEntries(atendimentos.map(a => [a.id, a])),
+    [atendimentos]
+  );
+
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Encomenda.update(id, data),
     onSuccess: () => {
@@ -171,11 +197,22 @@ export default function ControleEncomendas() {
     },
   });
 
-  const encomendasComStatus = useMemo(() => {
-    return encomendas
-      .map(enc => ({ ...enc, _status: calcularStatus(enc), _dias: diasSemAtualizacao(enc) }))
+  const { encomendasComStatus, aguardandoFinalizacao } = useMemo(() => {
+    const todas = encomendas.map(enc => {
+      const atendimento = enc.atendimento_id ? atendimentosPorId[enc.atendimento_id] : null;
+      return {
+        ...enc,
+        _status: calcularStatus(enc),
+        _dias: diasSemAtualizacao(enc),
+        _atendimento: atendimento,
+        _obs: observacoesDaEncomenda(enc, atendimento),
+      };
+    });
+    const visiveis = todas
+      .filter(enc => encomendaVisivel(enc, enc._atendimento))
       .sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
-  }, [encomendas]);
+    return { encomendasComStatus: visiveis, aguardandoFinalizacao: todas.length - visiveis.length };
+  }, [encomendas, atendimentosPorId]);
 
   const encomendasFiltradas = useMemo(() => {
     return encomendasComStatus.filter(enc => {
@@ -276,7 +313,12 @@ export default function ControleEncomendas() {
                 <Package className="w-6 h-6 text-orange-500" />
                 Controle de Encomendas
               </h1>
-              <p className="text-slate-500">{encomendas.length} encomenda(s) registrada(s)</p>
+              <p className="text-slate-500">{encomendasComStatus.length} encomenda(s) em controle</p>
+              {aguardandoFinalizacao > 0 && (
+                <p className="text-xs text-amber-600 mt-1">
+                  {aguardandoFinalizacao} encomenda(s) aguardando a OS ser finalizada e paga
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               {lucroTotal > 0 && (
@@ -400,6 +442,15 @@ export default function ControleEncomendas() {
                             <span className="flex items-center gap-1 text-purple-600"><Bell className="w-3 h-3" /> Avisado: {format(new Date(enc.data_aviso_cliente + 'T12:00:00'), 'dd/MM/yyyy')}</span>
                           )}
                         </div>
+                        {enc._obs.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {enc._obs.map((texto, i) => (
+                              <p key={i} className="text-xs text-slate-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 whitespace-pre-line">
+                                <span className="font-semibold">Observações: </span>{texto}
+                              </p>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Ações */}
