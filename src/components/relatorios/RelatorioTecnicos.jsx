@@ -19,12 +19,12 @@ import { garantiasDoRetorno } from '@/lib/retornoProducao';
 export default function RelatorioTecnicos({ atendimentos = [], config = {}, labelPeriodo = '', modoPessoal = false, usuarioLogado = null, periodoFixo = null }) {
   const [filtroTecnico, setFiltroTecnico] = useState('todos');
   const [filtroProduto, setFiltroProduto] = useState('');
-  // Default: primeiro dia do mês atual até hoje, exceto quando há período fixo pré-configurado
+  // Default: primeiro dia do mês atual até hoje (o relatório pessoal abre sempre no mês corrente)
   const hoje = new Date();
   const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10);
   const hojeStr = hoje.toISOString().slice(0, 10);
-  const [filtroDataInicio, setFiltroDataInicio] = useState(periodoFixo?.inicio || primeiroDiaMes);
-  const [filtroDataFim, setFiltroDataFim] = useState(periodoFixo?.fim || hojeStr);
+  const [filtroDataInicio, setFiltroDataInicio] = useState(primeiroDiaMes);
+  const [filtroDataFim, setFiltroDataFim] = useState(hojeStr);
   const [tecnicoExpandido, setTecnicoExpandido] = useState(null);
   const [incluirDetalhes, setIncluirDetalhes] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
