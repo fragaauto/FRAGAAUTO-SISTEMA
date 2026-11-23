@@ -29,7 +29,20 @@ export default function Relatorios() {
   });
 
   const [user, setUser] = useState(null);
-  useEffect(() => { base44.auth.me().then(setUser).catch(() => setUser(null)); }, []);
+  useEffect(() => {
+    base44.auth.me()
+      .then(async (authUser) => {
+        // Campos customizados (função e módulos) podem não vir no me(): busca explicitamente
+        try {
+          const page = await base44.entities.User.filter({ id: authUser.id }, { fields: ['funcao_id', 'modulos_liberados'] });
+          const full = (page.items || [])[0];
+          setUser(full ? { ...authUser, ...full } : authUser);
+        } catch {
+          setUser(authUser);
+        }
+      })
+      .catch(() => setUser(null));
+  }, []);
   const { data: funcoes = [] } = useQuery({
     queryKey: ['funcoes'],
     queryFn: () => base44.entities.FuncaoFuncionario.list(),
@@ -188,8 +201,15 @@ export default function Relatorios() {
   const isAdmin = user?.role === 'admin';
   const funcaoUsuario = user?.funcao_id ? funcoes.find(f => f.id === user.funcao_id) : null;
   const podeVerRelatorioProprio = !!funcaoUsuario?.pode_ver_relatorio_proprio;
-  // Usuários comuns só veem seu próprio relatório de produção; admin vê tudo.
-  const verApenasProprio = !isAdmin && podeVerRelatorioProprio;
+  // Módulo "relatorios" liberado (na função ou no usuário) dá acesso aos relatórios gerais
+  const modulosDoUsuario = [...new Set([
+    ...(funcaoUsuario?.modulos_liberados || []),
+    ...(user?.modulos_liberados || []),
+  ])];
+  const temModuloRelatorios = modulosDoUsuario.includes('relatorios');
+  const podeAcessarRelatorios = isAdmin || temModuloRelatorios || podeVerRelatorioProprio;
+  // Sem o módulo de relatórios, o usuário comum vê apenas a própria produção; admin e quem tem o módulo veem tudo.
+  const verApenasProprio = !isAdmin && !temModuloRelatorios && podeVerRelatorioProprio;
 
   // Período fixo (pré-configurado) para visualização da produção individual
   const periodoFixoConfig = (config.restringir_periodo_producao_proprio && verApenasProprio && config.periodo_producao_proprio_inicio)
@@ -206,8 +226,8 @@ export default function Relatorios() {
   }
 
   if (!paginaPermitida(modulosAtivos, 'Relatorios')) return <ModuloBloqueado nomeModulo="Relatórios" />;
-  // Não-admin sem permissão de ver próprio relatório não acessa relatórios
-  if (!isAdmin && !podeVerRelatorioProprio) return <ModuloBloqueado nomeModulo="Relatórios" />;
+  // Sem o módulo de relatórios nem permissão de ver o próprio relatório, não acessa
+  if (!podeAcessarRelatorios) return <ModuloBloqueado nomeModulo="Relatórios" />;
 
   const labelPeriodo = periodo === 'especifica'
     ? (dataEspecifica.from ? (dataEspecifica.to ? `${format(dataEspecifica.from, 'dd/MM/yyyy')} - ${format(dataEspecifica.to, 'dd/MM/yyyy')}` : format(dataEspecifica.from, 'dd/MM/yyyy')) : 'Data específica')
