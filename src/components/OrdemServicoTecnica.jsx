@@ -22,11 +22,23 @@ export default function OrdemServicoTecnica({ atendimento, config, onClose }) {
   const nomeEmpresa = config?.nome_empresa || 'FRAGA AUTO PORTAS';
   const logoUrl = config?.logo_url || null;
 
-  // Filtrar apenas itens aprovados (deduplicar por produto_id)
-  const idsQueixa = new Set((atendimento.itens_queixa || []).filter(i => i.status_aprovacao === 'aprovado').map(i => i.produto_id));
+  // Filtrar apenas itens aprovados (a chave considera produto + variação + observação,
+  // pois o mesmo produto pode ter serviços diferentes na queixa e no checklist)
+  const chaveItem = (item) => [
+    item.produto_id || '',
+    item.variacao_id || '',
+    (item.observacao_item || '').trim().toLowerCase(),
+  ].join('|');
+
+  const chavesQueixa = new Set(
+    (atendimento.itens_queixa || [])
+      .filter(i => i.status_aprovacao === 'aprovado')
+      .map(chaveItem)
+  );
+
   const itensAprovados = [
     ...(atendimento.itens_queixa?.filter(item => item.status_aprovacao === 'aprovado') || []),
-    ...(atendimento.itens_orcamento?.filter(item => item.status_aprovacao === 'aprovado' && !idsQueixa.has(item.produto_id)) || [])
+    ...(atendimento.itens_orcamento?.filter(item => item.status_aprovacao === 'aprovado' && !chavesQueixa.has(chaveItem(item))) || [])
   ];
 
   const sep = '================================';
