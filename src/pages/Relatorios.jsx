@@ -201,15 +201,10 @@ export default function Relatorios() {
   const isAdmin = user?.role === 'admin';
   const funcaoUsuario = user?.funcao_id ? funcoes.find(f => f.id === user.funcao_id) : null;
   const podeVerRelatorioProprio = !!funcaoUsuario?.pode_ver_relatorio_proprio;
-  // Módulo "relatorios" liberado (na função ou no usuário) dá acesso aos relatórios gerais
-  const modulosDoUsuario = [...new Set([
-    ...(funcaoUsuario?.modulos_liberados || []),
-    ...(user?.modulos_liberados || []),
-  ])];
-  const temModuloRelatorios = modulosDoUsuario.includes('relatorios');
-  const podeAcessarRelatorios = isAdmin || temModuloRelatorios || podeVerRelatorioProprio;
-  // Sem o módulo de relatórios, o usuário comum vê apenas a própria produção; admin e quem tem o módulo veem tudo.
-  const verApenasProprio = !isAdmin && !temModuloRelatorios && podeVerRelatorioProprio;
+  // Relatórios gerais: liberado por função (ou admin). Sem isso, vê apenas a própria produção.
+  const podeVerRelatoriosGerais = !!funcaoUsuario?.pode_ver_relatorios_gerais;
+  const podeAcessarRelatorios = isAdmin || podeVerRelatoriosGerais || podeVerRelatorioProprio;
+  const verApenasProprio = !isAdmin && !podeVerRelatoriosGerais && podeVerRelatorioProprio;
 
   // Período fixo (pré-configurado) para visualização da produção individual
   const periodoFixoConfig = (config.restringir_periodo_producao_proprio && verApenasProprio && config.periodo_producao_proprio_inicio)

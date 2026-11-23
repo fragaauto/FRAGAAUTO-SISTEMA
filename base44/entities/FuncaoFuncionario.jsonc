@@ -21,6 +21,11 @@
       "default": false,
       "description": "Se funcion\u00e1rios com esta fun\u00e7\u00e3o podem ver seu pr\u00f3prio relat\u00f3rio de produ\u00e7\u00e3o"
     },
+    "pode_ver_relatorios_gerais": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se funcion\u00e1rios com esta fun\u00e7\u00e3o podem ver os relat\u00f3rios gerais (todos os atendimentos, produtos, ranking e produ\u00e7\u00e3o de todos os t\u00e9cnicos). Quando falso, veem apenas o pr\u00f3prio relat\u00f3rio de produ\u00e7\u00e3o (se pode_ver_relatorio_proprio estiver ativo)."
+    },
     "pode_ver_dashboards": {
       "type": "boolean",
       "default": true,

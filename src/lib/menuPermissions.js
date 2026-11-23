@@ -34,11 +34,10 @@ export function filtrarItensMenu(items, { user, funcoes, modulosAtivos }) {
     if (item.path === 'Atendimentos') return funcao?.pode_ver_menu_atendimentos !== false;
     if (item.path === 'NovoAtendimento') return funcao?.pode_ver_menu_novo_atendimento !== false;
     if (item.path === 'MuralAnonimo') return funcao?.pode_ver_mural_anonimo !== false;
-    // Relatórios: módulo "relatorios" liberado (função ou usuário) dá acesso aos relatórios gerais;
-    // pode_ver_relatorio_proprio dá acesso à própria produção.
+    // Relatórios: pode_ver_relatorios_gerais dá acesso aos relatórios completos;
+    // pode_ver_relatorio_proprio dá acesso apenas à própria produção.
     if (item.path === 'Relatorios') {
-      const mods = [...new Set([...(funcao?.modulos_liberados || []), ...(user?.modulos_liberados || [])])];
-      return funcao?.pode_ver_relatorio_proprio === true || mods.includes('relatorios');
+      return funcao?.pode_ver_relatorios_gerais === true || funcao?.pode_ver_relatorio_proprio === true;
     }
 
     // Itens sem módulo definido (exceto Home, já tratado) ficam ocultos
