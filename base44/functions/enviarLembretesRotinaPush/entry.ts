@@ -42,6 +42,23 @@ function minutosDoCarimbo(carimbo) {
   return { data: encontrado[1], minutos: Number(encontrado[2]) * 60 + Number(encontrado[3]) };
 }
 
+// Destinatários do lembrete: todos, funções selecionadas ou usuários selecionados.
+// Sem seleção, o lembrete vale para todos.
+function destinadoA(tarefa, usuario) {
+  const tipo = tarefa.lembrete_destinatarios_tipo || 'todos';
+  if (tipo === 'funcoes') {
+    const ids = tarefa.lembrete_funcoes_ids || [];
+    if (ids.length === 0) return true;
+    return ids.includes(usuario.funcao_id);
+  }
+  if (tipo === 'usuarios') {
+    const ids = tarefa.lembrete_usuarios_ids || [];
+    if (ids.length === 0) return true;
+    return ids.includes(usuario.id);
+  }
+  return true;
+}
+
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -98,6 +115,7 @@ export default async function (req) {
     for (const tarefa of devidos) {
       const feitos = concluidos.get(tarefa.id);
       for (const destino of destinatarios) {
+        if (!destinadoA(tarefa, destino)) continue;
         if (feitos && feitos.has(destino.email.toLowerCase())) continue;
         envios.push({ tarefa, destino });
       }

@@ -24,6 +24,25 @@ export function marcarVisto(chave) {
 }
 
 /**
+ * Verifica se o lembrete é destinado ao usuário logado.
+ * Sem destinatários selecionados, o lembrete vale para todos.
+ */
+export function lembreteDestinadoA(tarefa, user) {
+  const tipo = tarefa?.lembrete_destinatarios_tipo || 'todos';
+  if (tipo === 'funcoes') {
+    const ids = tarefa.lembrete_funcoes_ids || [];
+    if (ids.length === 0) return true;
+    return ids.includes(user?.funcao_id);
+  }
+  if (tipo === 'usuarios') {
+    const ids = tarefa.lembrete_usuarios_ids || [];
+    if (ids.length === 0) return true;
+    return ids.includes(user?.id);
+  }
+  return true;
+}
+
+/**
  * Retorna os lembretes que devem aparecer agora.
  * O lembrete reaparece a cada 30 minutos após ser dispensado ("Entendi"),
  * e some definitivamente quando a tarefa é marcada como concluída.

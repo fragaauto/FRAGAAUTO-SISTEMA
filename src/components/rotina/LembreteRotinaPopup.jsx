@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useUnidade } from '@/lib/UnidadeContext';
-import { chaveData, lembretesPendentes, marcarVisto } from '@/lib/lembretesRotina';
+import { chaveData, lembretesPendentes, lembreteDestinadoA, marcarVisto } from '@/lib/lembretesRotina';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Bell, CheckCircle2, Clock, ExternalLink } from 'lucide-react';
@@ -39,9 +39,9 @@ export default function LembreteRotinaPopup() {
   );
 
   const pendentes = useMemo(() => {
-    const daUnidade = tarefas.filter(t => !t.unidade_id || t.unidade_id === unidadeAtual?.id);
+    const daUnidade = tarefas.filter(t => (!t.unidade_id || t.unidade_id === unidadeAtual?.id) && lembreteDestinadoA(t, user));
     return lembretesPendentes(daUnidade, agora, concluidasHoje);
-  }, [tarefas, agora, unidadeAtual?.id, concluidasHoje]);
+  }, [tarefas, agora, unidadeAtual?.id, concluidasHoje, user]);
 
   const atual = pendentes[0];
 

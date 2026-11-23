@@ -37,6 +37,9 @@ const FORM_EMPTY = {
   lembrete_tipo: 'unico',
   lembrete_data: '',
   lembrete_dias: [],
+  lembrete_destinatarios_tipo: 'todos',
+  lembrete_funcoes_ids: [],
+  lembrete_usuarios_ids: [],
 };
 
 export default function TabRotina() {

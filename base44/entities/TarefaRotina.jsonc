@@ -92,6 +92,37 @@
       "default": [],
       "description": "Dias da semana do lembrete recorrente (0=Dom..6=S\u00e1b)"
     },
+    "lembrete_destinatarios_tipo": {
+      "type": "string",
+      "enum": [
+        "todos",
+        "funcoes",
+        "usuarios"
+      ],
+      "enumColors": [
+        "blue",
+        "purple",
+        "green"
+      ],
+      "default": "todos",
+      "description": "Para quem o lembrete aparece: todos = qualquer usu\u00e1rio logado; funcoes = apenas usu\u00e1rios das fun\u00e7\u00f5es selecionadas; usuarios = apenas os usu\u00e1rios selecionados"
+    },
+    "lembrete_funcoes_ids": {
+      "type": "array",
+      "description": "IDs das fun\u00e7\u00f5es que recebem o lembrete (quando lembrete_destinatarios_tipo = funcoes)",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "lembrete_usuarios_ids": {
+      "type": "array",
+      "description": "IDs dos usu\u00e1rios que recebem o lembrete (quando lembrete_destinatarios_tipo = usuarios)",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
     "lembrete_ultimo_envio": {
       "type": "string",
       "description": "Controle interno: identificador do \u00faltimo envio push realizado (AAAA-MM-DD HH:MM)"
