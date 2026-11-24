@@ -125,11 +125,9 @@ export default function AprovarOrcamento() {
     const itensPendentes = Object.values(decisoes).filter(d => d.decisao === 'pendente');
     const todosDecididos = itensPendentes.length === 0 && Object.keys(decisoes).length > 0;
     
-    const formaPagamentoOk = formasPagamento.length === 0 || formaPagamentoSelecionada;
-    
     const assinaturaOk = tipoAssinatura === 'digital' || (nomeAssinatura && cpfAssinatura);
     
-    setTudoPreenchido(todosDecididos && formaPagamentoOk && assinaturaOk);
+    setTudoPreenchido(todosDecididos && assinaturaOk);
   }, [decisoes, formaPagamentoSelecionada, tipoAssinatura, nomeAssinatura, cpfAssinatura, formasPagamento, atendimento]);
 
   // Inicializar decisões com status atual
@@ -373,11 +371,6 @@ export default function AprovarOrcamento() {
     
     if (Object.keys(decisoes).length === 0) {
       problemas.push('❌ Não há itens no orçamento');
-    }
-
-    // Validar forma de pagamento
-    if (formasPagamento.length > 0 && !formaPagamentoSelecionada) {
-      problemas.push('❌ Forma de pagamento não selecionada');
     }
 
     // Validar assinatura manual
@@ -957,7 +950,7 @@ export default function AprovarOrcamento() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-orange-500" />
-                Selecione a Forma de Pagamento
+                Forma de Pagamento (opcional)
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1050,9 +1043,6 @@ export default function AprovarOrcamento() {
           const itensPendentes = Object.values(decisoes).filter(d => d.decisao === 'pendente');
           if (itensPendentes.length > 0) {
             pendencias.push(`Aprovar ou Recusar todos os itens do orçamento (${itensPendentes.length} item${itensPendentes.length > 1 ? 'ns' : ''} pendente${itensPendentes.length > 1 ? 's' : ''})`);
-          }
-          if (formasPagamento.length > 0 && !formaPagamentoSelecionada) {
-            pendencias.push('Selecionar a forma de pagamento');
           }
           if (tipoAssinatura === 'manual' && !nomeAssinatura) {
             pendencias.push('Preencher o Nome Completo');
