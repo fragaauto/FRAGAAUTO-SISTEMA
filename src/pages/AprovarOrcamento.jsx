@@ -113,6 +113,11 @@ export default function AprovarOrcamento() {
     staleTime: 5 * 60 * 1000
   });
 
+  // Descrição e foto cadastradas no produto
+  const produtoDoItem = (item) => (produtos || []).find(p => p.id === item?.produto_id);
+  const descricaoProduto = (item) => produtoDoItem(item)?.descricao || '';
+  const fotoProduto = (item) => produtoDoItem(item)?.fotos?.[0]?.url || '';
+
   // Verificar se tudo está preenchido
   useEffect(() => {
     if (!atendimento) return;
@@ -684,6 +689,22 @@ export default function AprovarOrcamento() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="font-semibold text-slate-800">{item.nome}</p>
+                      {(fotoProduto(item) || descricaoProduto(item)) && (
+                        <div className="mt-2 flex items-start gap-3">
+                          {fotoProduto(item) && (
+                            <img
+                              src={fotoProduto(item)}
+                              alt={item.nome}
+                              className="w-20 h-20 rounded-lg object-cover border border-slate-200 shrink-0"
+                            />
+                          )}
+                          {descricaoProduto(item) && (
+                            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                              {descricaoProduto(item)}
+                            </p>
+                          )}
+                        </div>
+                      )}
                       {item.aplicar_promocao && (
                         <div className="mt-2 inline-block rounded border-2 border-[#15333E] bg-[#EBC75C] px-2 py-1">
                           <span className="text-[11px] font-extrabold uppercase tracking-wide text-[#0f0e0e]">
@@ -789,6 +810,22 @@ export default function AprovarOrcamento() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <p className="font-semibold text-slate-800">{item.nome}</p>
+                      {(fotoProduto(item) || descricaoProduto(item)) && (
+                        <div className="mt-2 flex items-start gap-3">
+                          {fotoProduto(item) && (
+                            <img
+                              src={fotoProduto(item)}
+                              alt={item.nome}
+                              className="w-20 h-20 rounded-lg object-cover border border-slate-200 shrink-0"
+                            />
+                          )}
+                          {descricaoProduto(item) && (
+                            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                              {descricaoProduto(item)}
+                            </p>
+                          )}
+                        </div>
+                      )}
                       {item.aplicar_promocao && (
                         <div className="mt-2 inline-block rounded border-2 border-[#15333E] bg-[#EBC75C] px-2 py-1">
                           <span className="text-[11px] font-extrabold uppercase tracking-wide text-[#0f0e0e]">

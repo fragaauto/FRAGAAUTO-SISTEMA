@@ -555,7 +555,7 @@ export default function VerAtendimento() {
     }
   });
 
-  const generatePDF = () => gerarPDF(atendimento, configs, setIsGeneratingPDF, toast);
+  const generatePDF = () => gerarPDF(atendimento, configs, setIsGeneratingPDF, toast, produtos);
 
   const shareWhatsApp = () => {
     const text = `*Orçamento Fraga Auto Portas*\n\nVeículo: ${atendimento.placa} - ${atendimento.modelo}\nValor: R$ ${atendimento.valor_final?.toFixed(2)}\n\nEntre em contato para mais detalhes.`;

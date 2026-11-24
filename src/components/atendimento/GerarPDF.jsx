@@ -1,8 +1,9 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { dataBr } from '@/lib/promocao';
+import { base44 } from '@/api/base44Client';
 
-export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
+export async function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast, produtos = []) {
   setIsGeneratingPDF(true);
 
   try {
@@ -12,6 +13,24 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
       setIsGeneratingPDF(false);
       return;
     }
+
+    // Descrição e foto vêm do cadastro do produto
+    let listaProdutos = produtos || [];
+    if (listaProdutos.length === 0) {
+      const pagina = await base44.entities.Produto.filter({}, { limit: 2000, fields: ['nome', 'descricao', 'fotos'] });
+      listaProdutos = pagina.items || [];
+    }
+    const produtosMap = new Map(listaProdutos.map(p => [p.id, p]));
+    const blocoProdutoHTML = (item) => {
+      const produto = produtosMap.get(item?.produto_id);
+      const foto = produto?.fotos?.[0]?.url || '';
+      const descricao = produto?.descricao || '';
+      if (!foto && !descricao) return '';
+      return `<div style="display:flex;gap:10px;align-items:flex-start;margin-top:6px">
+        ${foto ? `<img src="${foto}" alt="${produto?.nome || ''}" style="width:90px;height:70px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;flex-shrink:0" />` : ''}
+        ${descricao ? `<div style="font-size:11px;color:#475569;line-height:1.45;white-space:pre-wrap">${descricao}</div>` : ''}
+      </div>`;
+    };
 
     const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     const defeitosEncontrados = atendimento.checklist?.filter(item => item.status === 'com_defeito') || [];
@@ -153,6 +172,7 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
                     return `
                     <tr>
                       <td>${item.nome}
+                        ${blocoProdutoHTML(item)}
                         ${seloPromocao(item)}
                         ${tecnicosItem ? `<div style="margin-top:4px;font-size:11px;color:#7c3aed">🔧 Técnico(s): ${tecnicosItem}</div>` : ''}
                         ${item.observacao_item ? `<div style="margin-top:6px;padding:8px;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:4px"><strong style="font-size:11px;color:#1e40af">📝 Observações:</strong><p style="font-size:11px;color:#1e3a8a;margin:4px 0 0">${item.observacao_item}</p></div>` : ''}
@@ -207,6 +227,7 @@ export function gerarPDF(atendimento, configs, setIsGeneratingPDF, toast) {
                     return `
                     <tr>
                       <td>${item.nome}
+                        ${blocoProdutoHTML(item)}
                         ${seloPromocao(item)}
                         ${tecnicosItem ? `<div style="margin-top:4px;font-size:11px;color:#7c3aed">🔧 Técnico(s): ${tecnicosItem}</div>` : ''}
                         ${item.observacao_item ? `<div style="margin-top:6px;padding:8px;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:4px"><strong style="font-size:11px;color:#1e40af">📝 Observações:</strong><p style="font-size:11px;color:#1e3a8a;margin:4px 0 0">${item.observacao_item}</p></div>` : ''}
