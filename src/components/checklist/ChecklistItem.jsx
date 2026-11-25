@@ -164,7 +164,7 @@ export default function ChecklistItem({ item, value, onChange, onAutoSave, produ
     if (!file) return;
     setUploadingFoto(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
       const novoValue = { ...value, item: item.item, categoria: item.categoria, foto_url: file_url };
       if (onAutoSave) {
         onAutoSave(novoValue); // salva no banco e atualiza estado no pai

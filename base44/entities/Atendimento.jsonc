@@ -388,6 +388,10 @@
           "incluir_orcamento": {
             "type": "boolean"
           },
+          "foto_url": {
+            "type": "string",
+            "description": "URL da foto tirada ou escolhida na galeria para este item do checklist"
+          },
           "produtos": {
             "type": "array",
             "items": {
