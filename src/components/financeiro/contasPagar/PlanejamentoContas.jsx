@@ -104,7 +104,7 @@ export default function PlanejamentoContas({ contas, onNova, onEditar, onExcluir
               <div className="space-y-2">
                 {variaveis.length === 0 ? (
                   <p className="text-sm text-slate-400 text-center py-3">
-                    Nenhuma conta variável cadastrada. Use esta lista para as contas que mudam de valor todo mês.
+                    Nenhuma conta variável cadastrada. Use esta lista para boletos de fornecedores, cheque de advogada e gastos extras do mês.
                   </p>
                 ) : (
                   variaveis.map((c) => (

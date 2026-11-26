@@ -145,7 +145,7 @@ export default function FormContaPrevista({ conta, unidadeId, onClose, onSaved }
             </div>
           ) : (
             <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-              Conta variável: não é gerada automaticamente. O valor real de cada mês é cadastrado manualmente na lista de contas do mês.
+              Conta variável: não é gerada automaticamente. Ex.: boletos de fornecedores, cheque de advogada, gastos extras. O valor real de cada mês é cadastrado manualmente em "Nova conta do mês".
             </p>
           )}
 
