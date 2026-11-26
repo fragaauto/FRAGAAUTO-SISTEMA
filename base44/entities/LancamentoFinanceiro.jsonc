@@ -46,6 +46,10 @@
     "conta_pagar_id": {
       "type": "string"
     },
+    "conta_prevista_id": {
+      "type": "string",
+      "description": "ID da conta prevista (planejamento) \u00e0 qual esta sa\u00edda foi direcionada"
+    },
     "categoria": {
       "type": "string"
     },

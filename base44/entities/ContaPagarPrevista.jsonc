@@ -1,0 +1,165 @@
+{
+  "name": "ContaPagarPrevista",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade a que esta conta prevista pertence"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome da conta prevista (ex: ALUGUEL, VIVO, 13\u00ba SAL\u00c1RIO)"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": [
+        "aluguel",
+        "energia",
+        "agua",
+        "internet",
+        "telefone",
+        "folha_pagamento",
+        "impostos",
+        "contador",
+        "sistema",
+        "seguros",
+        "manutencao",
+        "fornecedor_pecas",
+        "marketing",
+        "financeiro",
+        "outros"
+      ],
+      "enumColors": [
+        "blue",
+        "yellow",
+        "blue",
+        "purple",
+        "purple",
+        "red",
+        "red",
+        "gray",
+        "gray",
+        "gray",
+        "yellow",
+        "green",
+        "pink",
+        "green",
+        "gray"
+      ],
+      "description": "Categoria usada nos agrupamentos e relat\u00f3rios"
+    },
+    "valor_previsto": {
+      "type": "number",
+      "description": "Valor previsto mensal"
+    },
+    "dia_vencimento": {
+      "type": "number",
+      "description": "Dia do m\u00eas do vencimento (1 a 31)"
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "fixa",
+        "variavel"
+      ],
+      "enumColors": [
+        "blue",
+        "yellow"
+      ],
+      "default": "fixa",
+      "description": "fixa = valor constante todo m\u00eas; variavel = valor muda a cada m\u00eas"
+    },
+    "meses_cobranca": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "description": "Meses em que a conta \u00e9 cobrada (1=Jan a 12=Dez). Ex: parcela do 13\u00ba sal\u00e1rio apenas [11, 12]"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "nome",
+    "categoria",
+    "valor_previsto",
+    "dia_vencimento"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    }
+  }
+}

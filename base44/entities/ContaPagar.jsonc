@@ -16,12 +16,34 @@
         "energia",
         "agua",
         "internet",
+        "telefone",
         "folha_pagamento",
+        "impostos",
+        "contador",
+        "sistema",
+        "seguros",
         "manutencao",
         "fornecedor_pecas",
         "marketing",
-        "impostos",
+        "financeiro",
         "outros"
+      ],
+      "enumColors": [
+        "blue",
+        "yellow",
+        "blue",
+        "purple",
+        "purple",
+        "red",
+        "red",
+        "gray",
+        "gray",
+        "gray",
+        "yellow",
+        "green",
+        "pink",
+        "green",
+        "gray"
       ]
     },
     "descricao": {
@@ -57,10 +79,24 @@
         "vencido",
         "cancelado"
       ],
+      "enumColors": [
+        "yellow",
+        "green",
+        "red",
+        "gray"
+      ],
       "default": "pendente"
     },
     "compra_id": {
       "type": "string"
+    },
+    "conta_prevista_id": {
+      "type": "string",
+      "description": "ID da conta prevista (planejamento) que gerou esta conta do m\u00eas"
+    },
+    "competencia": {
+      "type": "string",
+      "description": "M\u00eas de refer\u00eancia da conta no formato AAAA-MM (usado para n\u00e3o duplicar a gera\u00e7\u00e3o mensal)"
     },
     "usuario_lancamento": {
       "type": "string"

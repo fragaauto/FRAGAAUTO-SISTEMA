@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet, CalendarRange, Pencil, Search, Scale } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Plus, Loader2, Trash2, Download, FileSpreadsheet, CalendarRange, Pencil, Search, Scale, AlertTriangle } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -661,8 +661,14 @@ function EditarLancamentoModal({ lancamento, onClose, onSaved }) {
 function NovoLancamentoModal({ open, onClose, onSaved }) {
   const { unidadeAtual } = useUnidade();
   const hoje = new Date().toISOString().split('T')[0];
-  const [form, setForm] = useState({ tipo: 'entrada', descricao: '', valor: '', forma_pagamento: 'dinheiro', categoria: '', observacoes: '', data: hoje });
+  const [form, setForm] = useState({ tipo: 'entrada', descricao: '', valor: '', forma_pagamento: 'dinheiro', categoria: '', observacoes: '', data: hoje, conta_prevista_id: '' });
   const [saving, setSaving] = useState(false);
+
+  const { data: contasPrevistas = [] } = useQuery({
+    queryKey: ['contas-previstas'],
+    queryFn: () => base44.entities.ContaPagarPrevista.list('-created_date', 500),
+    staleTime: 60 * 1000,
+  });
 
   const save = async () => {
     if (!form.descricao || !form.valor) return toast.error('Preencha descrição e valor');
@@ -703,6 +709,27 @@ function NovoLancamentoModal({ open, onClose, onSaved }) {
             <Label>Data do Lançamento *</Label>
             <Input type="date" value={form.data} onChange={e => setForm(p=>({...p, data: e.target.value}))} />
           </div>
+          {form.tipo === 'saida' && (
+            <div className="space-y-2">
+              <Label>Conta prevista</Label>
+              <Select
+                value={form.conta_prevista_id || 'nenhuma'}
+                onValueChange={v => setForm(p => ({ ...p, conta_prevista_id: v === 'nenhuma' ? '' : v }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nenhuma">Não vincular</SelectItem>
+                  {contasPrevistas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {!form.conta_prevista_id && (
+                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                  <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  <span>Toda saída deve ser direcionada a uma conta prevista. Sem vínculo, esta saída aparece como fora do planejamento.</span>
+                </div>
+              )}
+            </div>
+          )}
           <Button onClick={save} disabled={saving} className="w-full">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Salvar
           </Button>

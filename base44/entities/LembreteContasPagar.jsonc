@@ -1,0 +1,87 @@
+{
+  "name": "LembreteContasPagar",
+  "type": "object",
+  "properties": {
+    "unidade_id": {
+      "type": "string",
+      "description": "ID da unidade"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o lembrete de envio do relat\u00f3rio est\u00e1 ativo"
+    },
+    "dia_lembrete": {
+      "type": "number",
+      "default": 25,
+      "description": "Dia do m\u00eas em que o lembrete passa a aparecer na tela"
+    },
+    "telefone": {
+      "type": "string",
+      "description": "WhatsApp que recebe o relat\u00f3rio de contas a pagar"
+    },
+    "ultimo_envio_competencia": {
+      "type": "string",
+      "description": "Compet\u00eancia (AAAA-MM) do \u00faltimo relat\u00f3rio enviado com sucesso"
+    }
+  },
+  "required": [],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    }
+  }
+}

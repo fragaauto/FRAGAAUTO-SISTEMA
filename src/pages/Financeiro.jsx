@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import FluxoCaixaChart from '@/components/financeiro/FluxoCaixaChart';
 import ContasReceberTab from '@/components/financeiro/ContasReceberTab.jsx';
-import ContasPagarTab from '@/components/financeiro/ContasPagarTab.jsx';
+import ContasAPagarTab from '@/components/financeiro/ContasAPagarTab.jsx';
 import FluxoCaixaTab from '@/components/financeiro/FluxoCaixaTab.jsx';
 import ModuloBloqueado from '@/components/ModuloBloqueado';
 import { paginaPermitida } from '@/components/modulos';
@@ -27,7 +27,7 @@ import { useUnidade } from '@/lib/UnidadeContext';
 const TABS = [
   { id: 'dashboard', label: '📊 Dashboard' },
   { id: 'receber', label: '💚 A Receber' },
-  { id: 'pagar', label: '🔴 A Pagar' },
+  { id: 'pagar', label: '🔴 Contas a Pagar' },
   { id: 'caixa', label: '💰 Fluxo de Caixa' },
 ];
 
@@ -367,7 +367,7 @@ export default function Financeiro() {
         )}
 
         {tab === 'receber' && <ContasReceberTab filtroData={filtroDataProps} />}
-        {tab === 'pagar' && <ContasPagarTab filtroData={filtroDataProps} />}
+        {tab === 'pagar' && <ContasAPagarTab />}
         {tab === 'caixa' && <FluxoCaixaTab filtroData={filtroDataProps} />}
       </div>
     </div>
