@@ -36,7 +36,7 @@ export default function FormContaPrevista({ conta, unidadeId, onClose, onSaved }
 
   const salvar = async () => {
     if (!form.nome.trim()) return toast.error('Informe o nome da conta');
-    if (!form.meses_cobranca.length) return toast.error('Selecione ao menos um mês de cobrança');
+    if (form.tipo === 'fixa' && !form.meses_cobranca.length) return toast.error('Selecione ao menos um mês de cobrança');
     setSaving(true);
     const dados = {
       nome: form.nome.trim(),
@@ -44,7 +44,7 @@ export default function FormContaPrevista({ conta, unidadeId, onClose, onSaved }
       valor_previsto: parseFloat(form.valor_previsto) || 0,
       dia_vencimento: Math.min(Math.max(parseInt(form.dia_vencimento) || 1, 1), 31),
       tipo: form.tipo,
-      meses_cobranca: form.meses_cobranca,
+      meses_cobranca: form.tipo === 'variavel' ? MESES_TODOS : form.meses_cobranca,
       ativo: form.ativo,
       observacoes: form.observacoes,
       unidade_id: conta?.unidade_id || unidadeId || null,
@@ -118,33 +118,41 @@ export default function FormContaPrevista({ conta, unidadeId, onClose, onSaved }
             </div>
           </div>
 
-          <div>
-            <Label>Meses em que é cobrada</Label>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {MESES.map((m, i) => {
-                const mes = i + 1;
-                const ativo = form.meses_cobranca.includes(mes);
-                return (
-                  <button
-                    key={mes}
-                    type="button"
-                    onClick={() => toggleMes(mes)}
-                    className={`px-2 py-1 rounded-md text-xs font-semibold border transition-all ${
-                      ativo ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-500 border-slate-200'
-                    }`}
-                  >
-                    {m}
-                  </button>
-                );
-              })}
+          {form.tipo === 'fixa' ? (
+            <div>
+              <Label>Meses em que é cobrada</Label>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {MESES.map((m, i) => {
+                  const mes = i + 1;
+                  const ativo = form.meses_cobranca.includes(mes);
+                  return (
+                    <button
+                      key={mes}
+                      type="button"
+                      onClick={() => toggleMes(mes)}
+                      className={`px-2 py-1 rounded-md text-xs font-semibold border transition-all ${
+                        ativo ? 'bg-green-600 text-white border-green-600' : 'bg-white text-slate-500 border-slate-200'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                Conta fixa: entra em todos os meses marcados. Para o 13º salário, marque só Nov e Dez.
+              </p>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
-              Deixe todos marcados para contas fixas todo mês. Para o 13º salário, marque só Nov e Dez.
+          ) : (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              Conta variável: não é gerada automaticamente. O valor real de cada mês é cadastrado manualmente na lista de contas do mês.
             </p>
-          </div>
+          )}
 
           <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
-            <span className="text-sm text-slate-700">Conta ativa (entra na geração mensal)</span>
+            <span className="text-sm text-slate-700">
+              {form.tipo === 'fixa' ? 'Conta ativa (entra na geração mensal)' : 'Conta ativa (aparece na lista de variáveis)'}
+            </span>
             <Switch checked={form.ativo} onCheckedChange={(v) => setForm((p) => ({ ...p, ativo: v }))} />
           </div>
 

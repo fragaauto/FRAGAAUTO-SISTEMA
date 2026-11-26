@@ -72,6 +72,8 @@ async function gerarContasDoMes(base44, competencia, unidadeId) {
 
   const faltando = (previstas || []).filter((p) => {
     if (p.ativo === false) return false;
+    // Somente contas fixas são geradas automaticamente; as variáveis são cadastradas mês a mês.
+    if ((p.tipo || 'fixa') !== 'fixa') return false;
     const meses = Array.isArray(p.meses_cobranca) && p.meses_cobranca.length ? p.meses_cobranca : MESES_TODOS;
     if (!meses.includes(mes)) return false;
     if (unidadeId && p.unidade_id && p.unidade_id !== unidadeId) return false;

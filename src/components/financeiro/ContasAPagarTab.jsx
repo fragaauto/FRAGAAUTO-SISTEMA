@@ -4,13 +4,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Clock, Loader2, RefreshCw, Wallet } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Clock, Loader2, Plus, RefreshCw, Wallet } from 'lucide-react';
 import { useUnidade } from '@/lib/UnidadeContext';
 import ContasDoMes from './contasPagar/ContasDoMes';
 import PlanejamentoContas from './contasPagar/PlanejamentoContas';
 import AvisoSaidasSemConta from './contasPagar/AvisoSaidasSemConta';
 import RelatorioWhatsApp from './contasPagar/RelatorioWhatsApp';
 import FormContaPrevista from './contasPagar/FormContaPrevista';
+import ModalNovaContaMes from './contasPagar/ModalNovaContaMes';
 import {
   competenciaDe,
   labelCompetencia,
@@ -28,6 +29,7 @@ export default function ContasAPagarTab() {
   const [competencia, setCompetencia] = useState(competenciaDe());
   const [formAberto, setFormAberto] = useState(null); // null | 'nova' | conta
   const [gerando, setGerando] = useState(false);
+  const [novaConta, setNovaConta] = useState(false);
   const geradoRef = useRef('');
 
   const { data: configs = [] } = useQuery({
@@ -157,6 +159,9 @@ export default function ContasAPagarTab() {
           {gerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           Gerar contas do mês
         </Button>
+        <Button size="sm" onClick={() => setNovaConta(true)} className="gap-1 bg-green-600 hover:bg-green-700">
+          <Plus className="w-3.5 h-3.5" /> Nova conta do mês
+        </Button>
       </div>
 
       {/* Resumo do mês */}
@@ -207,6 +212,19 @@ export default function ContasAPagarTab() {
         onEditar={(c) => setFormAberto(c)}
         onExcluir={excluirPrevista}
       />
+
+      {novaConta && (
+        <ModalNovaContaMes
+          competencia={competencia}
+          unidadeId={unidadeAtual?.id}
+          previstas={contasPrevistasUnidade.filter((c) => c.tipo === 'variavel' && c.ativo !== false)}
+          onClose={() => setNovaConta(false)}
+          onSalvo={() => {
+            setNovaConta(false);
+            invalidarContas();
+          }}
+        />
+      )}
 
       {formAberto && (
         <FormContaPrevista

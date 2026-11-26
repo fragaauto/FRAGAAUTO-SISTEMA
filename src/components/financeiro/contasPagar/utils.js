@@ -83,8 +83,13 @@ export async function gerarContasDoMes({ contasPrevistas, competencia, unidadeId
   const existentes = await base44.entities.ContaPagar.filter({ competencia });
   const jaGeradas = new Set((existentes || []).map((c) => c.conta_prevista_id).filter(Boolean));
 
+  // Somente contas fixas entram na geração automática; as variáveis são cadastradas manualmente todo mês.
   const faltando = (contasPrevistas || []).filter(
-    (p) => p.ativo !== false && mesesDaConta(p).includes(mes) && !jaGeradas.has(p.id)
+    (p) =>
+      p.ativo !== false &&
+      (p.tipo || 'fixa') === 'fixa' &&
+      mesesDaConta(p).includes(mes) &&
+      !jaGeradas.has(p.id)
   );
   if (!faltando.length) return 0;
 
