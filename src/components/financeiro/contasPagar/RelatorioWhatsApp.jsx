@@ -80,11 +80,11 @@ export default function RelatorioWhatsApp({ competencia, contas, lembrete, empre
             <div>
               <p className={`text-sm font-semibold ${lembreteNaTela ? 'text-amber-800' : 'text-slate-700'}`}>
                 {lembreteNaTela
-                  ? `Lembrete do dia ${diaLembrete}: envie o relatório de contas a pagar`
-                  : 'Relatório de contas a pagar no WhatsApp'}
+                  ? `O relatório diário não saiu até o dia ${diaLembrete}: envie manualmente`
+                  : 'Relatório diário de contas a pagar no WhatsApp'}
               </p>
               <p className={`text-xs ${lembreteNaTela ? 'text-amber-700' : 'text-slate-500'}`}>
-                Destino: {NOME_RELATORIO} · ({numero.slice(0, 2)}) {numero.slice(2)}
+                Envio automático todo dia às 7h · {NOME_RELATORIO} · ({numero.slice(0, 2)}) {numero.slice(2)}
                 {pendente ? ' · ainda não enviado neste mês' : ' · enviado neste mês'}
               </p>
             </div>
@@ -114,7 +114,7 @@ export default function RelatorioWhatsApp({ competencia, contas, lembrete, empre
                 <Label>Aparecer a partir do dia</Label>
                 <Input type="number" min={1} max={31} value={dia} onChange={(e) => setDia(e.target.value)} />
                 <p className="text-xs text-slate-400 mt-1">
-                  O aviso aparece na tela do auxiliar administrativo a partir deste dia, até o relatório ser enviado.
+                  O relatório é enviado automaticamente todo dia às 7h. Se o envio falhar, o aviso aparece na tela a partir deste dia até o relatório sair.
                 </p>
               </div>
               <div>

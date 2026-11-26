@@ -1,0 +1,45 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 7 * * *",
+      "one_time_date": null,
+      "timezone": "America/Sao_Paulo",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Relatorio Diario Contas a Pagar",
+  "description": "Envia todo dia \u00e0s 7h o relat\u00f3rio de contas a pagar no WhatsApp do dono.",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "relatorio_diario_contas_a_pagar",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "enviar_relatorio": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "enviarRelatorioContasPagarDiario",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Enviar relat\u00f3rio di\u00e1rio",
+            "description": "Contas a pagar no WhatsApp do dono"
+          }
+        }
+      }
+    ]
+  }
+}
