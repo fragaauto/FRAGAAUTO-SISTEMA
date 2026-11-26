@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { AlertTriangle, Check, FileText, Loader2, Package, Upload, X } from 'lucide-react';
 import ItemNotaPDF from './ItemNotaPDF';
 import ModalNovoProdutoNota from './ModalNovoProdutoNota';
+import BaixaListaComprasToggle from './BaixaListaComprasToggle';
+import { planejarBaixa, aplicarBaixaListaCompras } from '@/lib/baixaListaCompras';
 import {
   encontrarProdutoPorItem,
   encontrarFornecedorPorNome,
@@ -56,6 +58,7 @@ export default function ImportarPDFTab() {
   const [concluido, setConcluido] = useState(false);
   const [novosProdutos, setNovosProdutos] = useState([]);
   const [novoProdutoIdx, setNovoProdutoIdx] = useState(null);
+  const [baixarLista, setBaixarLista] = useState(true);
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos-estoque'],
@@ -67,6 +70,12 @@ export default function ImportarPDFTab() {
     queryKey: ['fornecedores'],
     queryFn: () => base44.entities.Fornecedor.list(),
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: listasAbertas = [] } = useQuery({
+    queryKey: ['listas-compras-abertas'],
+    queryFn: () => base44.entities.ListaCompras.filter({ status: 'aberta' }),
+    staleTime: 30 * 1000,
   });
 
   const produtosCompleto = useMemo(() => [...produtos, ...novosProdutos], [produtos, novosProdutos]);
@@ -181,6 +190,11 @@ export default function ImportarPDFTab() {
   });
   const totalEntrada = selecionados.reduce((s, i) => s + num(i.quantidade) * num(i.custo_unitario), 0);
 
+  const planosBaixa = useMemo(
+    () => planejarBaixa(listasAbertas, selecionados.map((i) => ({ produto_id: i.produto_id, quantidade: num(i.quantidade) }))),
+    [listasAbertas, selecionados]
+  );
+
   const darEntrada = async () => {
     if (selecionados.length === 0) {
       toast.error('Relacione ao menos um item a um produto cadastrado');
@@ -262,7 +276,15 @@ export default function ImportarPDFTab() {
         // o aviso é opcional e não deve impedir a entrada no estoque
       }
 
-      toast.success(`Entrada registrada em ${selecionados.length} produto(s).`);
+      let resumoBaixa = null;
+      if (baixarLista && planosBaixa.length > 0) {
+        resumoBaixa = await aplicarBaixaListaCompras(planosBaixa);
+      }
+
+      toast.success(
+        `Entrada registrada em ${selecionados.length} produto(s).` +
+          (resumoBaixa ? ` Baixa em ${resumoBaixa.itens} item(ns) da lista de compras.` : '')
+      );
       setConcluido(true);
       setItens([]);
       setNovosProdutos([]);
@@ -274,6 +296,8 @@ export default function ImportarPDFTab() {
       qc.invalidateQueries({ queryKey: ['fornecedores'] });
       qc.invalidateQueries({ queryKey: ['compras'] });
       qc.invalidateQueries({ queryKey: ['movimentos-estoque'] });
+      qc.invalidateQueries({ queryKey: ['listas-compras'] });
+      qc.invalidateQueries({ queryKey: ['listas-compras-abertas'] });
     } catch (err) {
       toast.error('Erro ao dar entrada: ' + err.message);
     }
@@ -385,6 +409,8 @@ export default function ImportarPDFTab() {
               onCriado={aoCadastrarProduto}
             />
           )}
+
+          <BaixaListaComprasToggle planos={planosBaixa} ativo={baixarLista} onChange={setBaixarLista} />
 
           <Card className="border-slate-200 bg-slate-50">
             <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">

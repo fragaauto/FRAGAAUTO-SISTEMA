@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { Upload, FileText, Check, AlertTriangle, Loader2, Plus, RefreshCw, Packa
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { registrarAvisoPreco } from '@/lib/avisoPreco';
 import { filtrarProdutos } from '@/lib/produtoSearch';
+import BaixaListaComprasToggle from './BaixaListaComprasToggle';
+import { planejarBaixa, aplicarBaixaListaCompras } from '@/lib/baixaListaCompras';
 
 // Parse XML de NF-e no browser
 function parseNFe(xmlStr) {
@@ -104,12 +106,30 @@ export default function ImportarXMLTab() {
   const [processando, setProcessando] = useState(false);
   const [concluido, setConcluido] = useState(false);
   const [vinculandoIdx, setVinculandoIdx] = useState(null); // índice do item sendo vinculado
+  const [baixarLista, setBaixarLista] = useState(true);
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos-estoque'],
     queryFn: () => base44.entities.Produto.list(),
     staleTime: 60 * 1000,
   });
+
+  const { data: listasAbertas = [] } = useQuery({
+    queryKey: ['listas-compras-abertas'],
+    queryFn: () => base44.entities.ListaCompras.filter({ status: 'aberta' }),
+    staleTime: 30 * 1000,
+  });
+
+  const planosBaixa = useMemo(
+    () =>
+      planejarBaixa(
+        listasAbertas,
+        itensConfig
+          .filter((i) => i.acao !== 'ignorar' && i.produto_id)
+          .map((i) => ({ produto_id: i.produto_id, quantidade: i.quantidade }))
+      ),
+    [listasAbertas, itensConfig]
+  );
 
   const handleFile = (e) => {
     const file = e.target.files[0];
@@ -320,10 +340,20 @@ export default function ImportarXMLTab() {
         // o aviso é opcional e não deve impedir a importação
       }
 
-      toast.success(`✅ Processado! ${criados} criados, ${atualizados} atualizados. Conta a pagar gerada.`);
+      let resumoBaixa = null;
+      if (baixarLista && planosBaixa.length > 0) {
+        resumoBaixa = await aplicarBaixaListaCompras(planosBaixa);
+      }
+
+      toast.success(
+        `✅ Processado! ${criados} criados, ${atualizados} atualizados. Conta a pagar gerada.` +
+          (resumoBaixa ? ` Baixa em ${resumoBaixa.itens} item(ns) da lista de compras.` : '')
+      );
       setConcluido(true);
       qc.invalidateQueries(['produtos-estoque']);
       qc.invalidateQueries(['compras']);
+      qc.invalidateQueries(['listas-compras']);
+      qc.invalidateQueries(['listas-compras-abertas']);
     } catch (err) {
       toast.error('Erro ao processar: ' + err.message);
     }
@@ -479,6 +509,8 @@ export default function ImportarXMLTab() {
               onClose={() => setVinculandoIdx(null)}
             />
           )}
+
+          <BaixaListaComprasToggle planos={planosBaixa} ativo={baixarLista} onChange={setBaixarLista} />
 
           {/* Resumo e botão processar */}
           {!concluido ? (
